@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#00ff88">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>ANIA 2.0 — Asistente Personal</title>
+<link rel="manifest" href='data:application/manifest+json,{"name":"Ania 2.0","short_name":"Ania","start_url":".","display":"standalone","background_color":"%230a0a0f","theme_color":"%2300ff88","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 512 512%27%3E%3Crect width=%27512%27 height=%27512%27 rx=%27100%27 fill=%27%230a0a0f%27/%3E%3Ctext x=%27256%27 y=%27340%27 font-size=%27280%27 text-anchor=%27middle%27 fill=%27%2300ff88%27%3EΩ%3C/text%3E%3C/svg%3E","sizes":"512x512","type":"image/svg+xml"}]}'>
+<style>
+/* ====== VARIABLES Y RESET ====== */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --neon:#00ff88;--neon2:#00d4ff;--purple:#b44aff;--danger:#ff4466;
+  --bg:#0a0a0f;--bg2:#0f0f18;--bg3:#16162a;--bg4:#1e1e38;
+  --text:#e0e0e8;--dim:#8888a0;--radius:18px;
+  --glow:0 0 20px rgba(0,255,136,.35);--glow-strong:0 0 40px rgba(0,255,136,.5);
+  --font-mono:'Courier New',monospace;--font-ui:-apple-system,'Segoe UI',sans-serif;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font-ui);background:var(--bg);color:var(--text);display:flex;flex-direction:column;position:relative;user-select:none;-webkit-tap-highlight-color:transparent}
+
+/* ====== FONDO ====== */
+#matrix-canvas{position:fixed;inset:0;z-index:0;opacity:.07;pointer-events:none}
+.grid-bg{position:fixed;inset:0;z-index:1;pointer-events:none;background-image:linear-gradient(rgba(0,255,136,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,.03) 1px,transparent 1px);background-size:36px 36px}
+
+/* ====== HEADER ====== */
+.header{position:relative;z-index:10;padding:10px 14px;display:flex;align-items:center;gap:10px;background:linear-gradient(180deg,rgba(10,10,15,.98),rgba(10,10,15,.85));border-bottom:1px solid rgba(0,255,136,.12);backdrop-filter:blur(12px)}
+.avatar{width:42px;height:42px;border-radius:50%;background:radial-gradient(circle at 30% 30%,var(--neon),#006633);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:var(--bg);box-shadow:var(--glow),inset 0 0 12px rgba(255,255,255,.2);position:relative;flex-shrink:0}
+.avatar::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:2px solid transparent;border-top-color:var(--neon2);animation:spin 3s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.avatar.listening::after{border-top-color:var(--danger);animation-duration:.8s}
+.avatar.thinking::after{border-top-color:var(--purple);animation-duration:.5s}
+.h-info h1{font-size:16px;font-weight:800;letter-spacing:3px;color:var(--neon);text-shadow:var(--glow);font-family:var(--font-mono)}
+.h-info .st{font-size:9px;color:var(--dim);letter-spacing:2px;display:flex;align-items:center;gap:4px;margin-top:1px;font-family:var(--font-mono)}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--neon);box-shadow:0 0 5px var(--neon);animation:blink 1.5s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* ====== CHIPS DE ESTADO ====== */
+.status-row{display:flex;gap:6px;padding:6px 14px;overflow-x:auto;scrollbar-width:none;position:relative;z-index:10;background:rgba(10,10,15,.5)}
+.status-row::-webkit-scrollbar{display:none}
+.chip{display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:14px;font-size:10px;white-space:nowrap;background:rgba(0,255,136,.05);border:1px solid rgba(0,255,136,.1);color:var(--dim);font-family:var(--font-mono);transition:.3s}
+.chip.glow{border-color:var(--neon);color:var(--neon);box-shadow:0 0 10px rgba(0,255,136,.15)}
+.chip .ci{font-size:12px}
+
+/* ====== CHAT ====== */
+#chat{flex:1;overflow-y:auto;padding:14px;position:relative;z-index:5;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+#chat::-webkit-scrollbar{width:3px}
+#chat::-webkit-scrollbar-thumb{background:var(--neon);border-radius:3px}
+.msg{max-width:90%;padding:11px 15px;border-radius:var(--radius);font-size:13.5px;line-height:1.65;animation:msgIn .35s cubic-bezier(.16,1,.3,1);word-wrap:break-word;position:relative}
+@keyframes msgIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.msg.ania{align-self:flex-start;background:linear-gradient(135deg,var(--bg3),#1a1a30);border:1px solid rgba(0,255,136,.1);border-bottom-left-radius:5px}
+.msg.ania::before{content:'Ω';position:absolute;left:-7px;top:-7px;width:18px;height:18px;background:var(--neon);color:var(--bg);border-radius:50%;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 0 8px var(--glow)}
+.msg.user{align-self:flex-end;background:linear-gradient(135deg,#003322,#004433);border:1px solid rgba(0,255,136,.2);border-bottom-right-radius:5px;color:#ccffdd}
+.msg.system{align-self:center;background:rgba(180,74,255,.08);border:1px solid rgba(180,74,255,.2);color:var(--purple);font-size:11px;font-family:var(--font-mono);padding:6px 14px;border-radius:20px}
+.msg .ts{font-size:8px;color:var(--dim);margin-top:4px;text-align:right;font-family:var(--font-mono);opacity:.6}
+.msg code{background:rgba(0,255,136,.1);padding:1px 5px;border-radius:4px;font-size:12px;font-family:var(--font-mono)}
+.msg strong{color:var(--neon)}
+
+/* ====== TYPING ====== */
+.typing{display:flex;gap:4px;padding:11px 16px;align-self:flex-start;background:var(--bg3);border-radius:var(--radius);border-bottom-left-radius:5px;border:1px solid rgba(0,255,136,.08)}
+.typing span{width:6px;height:6px;border-radius:50%;background:var(--neon);animation:typ 1.3s infinite}
+.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+@keyframes typ{0%,60%,100%{transform:translateY(0);opacity:.3}30%{transform:translateY(-7px);opacity:1}}
+
+/* ====== ACCIONES RÁPIDAS ====== */
+.qa{display:flex;gap:5px;padding:0 14px 4px;overflow-x:auto;scrollbar-width:none;position:relative;z-index:10}
+.qa::-webkit-scrollbar{display:none}
+.qa-btn{padding:6px 12px;border-radius:14px;border:1px solid rgba(0,255,136,.12);background:rgba(0,255,136,.03);color:var(--dim);font-size:10px;white-space:nowrap;cursor:pointer;transition:.2s;font-family:var(--font-mono);letter-spacing:.5px}
+.qa-btn:active{background:rgba(0,255,136,.15);color:var(--neon);border-color:var(--neon);transform:scale(.94)}
+
+/* ====== INPUT ====== */
+.input-area{position:relative;z-index:10;padding:8px 14px 12px;background:linear-gradient(0deg,rgba(10,10,15,.99) 60%,transparent)}
+.input-row{display:flex;gap:7px;align-items:flex-end}
+.input-wrap{flex:1;position:relative;display:flex;align-items:center}
+#input{width:100%;padding:13px 46px 13px 16px;border-radius:22px;border:1px solid rgba(0,255,136,.15);background:rgba(15,15,24,.95);color:var(--text);font-size:14px;font-family:var(--font-ui);outline:none;transition:.3s;resize:none;min-height:46px;max-height:110px}
+#input:focus{border-color:var(--neon);box-shadow:0 0 20px rgba(0,255,136,.1),inset 0 0 12px rgba(0,255,136,.02)}
+#input::placeholder{color:#555570;font-style:italic}
+.btn-ico{width:46px;height:46px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:.25s;flex-shrink:0}
+.btn-send{background:linear-gradient(135deg,var(--neon),#00aa55);color:var(--bg);box-shadow:0 0 18px rgba(0,255,136,.2)}
+.btn-send:active{transform:scale(.88);box-shadow:var(--glow-strong)}
+.btn-mic{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.15);color:var(--neon);position:absolute;right:3px;width:38px;height:38px;font-size:16px}
+.btn-mic.on{background:var(--danger);border-color:var(--danger);color:#fff;animation:micPulse 1s infinite}
+@keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,68,102,.5)}50%{box-shadow:0 0 0 10px rgba(255,68,102,0)}}
+
+/* ====== TOAST ====== */
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%) translateY(-16px);background:var(--bg3);border:1px solid var(--neon);border-radius:10px;padding:10px 18px;font-size:12px;color:var(--neon);z-index:1000;opacity:0;transition:.4s cubic-bezier(.16,1,.3,1);pointer-events:none;box-shadow:var(--glow);font-family:var(--font-mono);max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ====== OVERLAY CARGA MODELO ====== */
+#load-overlay{position:fixed;inset:0;z-index:2000;background:rgba(10,10,15,.97);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px}
+#load-overlay.on{display:flex}
+.load-ring{width:60px;height:60px;border-radius:50%;border:3px solid rgba(0,255,136,.1);border-top-color:var(--neon);animation:spin 1s linear infinite}
+.load-text{font-family:var(--font-mono);font-size:12px;color:var(--neon);text-align:center;letter-spacing:1px}
+.load-bar{width:200px;height:3px;background:rgba(0,255,136,.1);border-radius:3px;overflow:hidden}
+.load-bar-inner{height:100%;background:linear-gradient(90deg,var(--neon),var(--neon2));border-radius:3px;transition:width .5s;width:0%}
+
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--neon);border-radius:3px}
+</style>
+</head>
+<body>
+
+<canvas id="matrix-canvas"></canvas>
+<div class="grid-bg"></div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="avatar" id="avatar">Ω</div>
+  <div class="h-info">
+    <h1>ANIA</h1>
+    <div class="st"><span class="dot"></span><span id="status-txt">INICIANDO...</span></div>
+  </div>
+</div>
+
+<!-- STATUS CHIPS -->
+<div class="status-row">
+  <div class="chip" id="chip-hora"><span class="ci">🕐</span><span id="v-hora">--:--</span></div>
+  <div class="chip" id="chip-temp"><span class="ci">🌡️</span><span id="v-temp">--°</span></div>
+  <div class="chip" id="chip-loc"><span class="ci">📍</span><span id="v-loc">Localizando...</span></div>
+  <div class="chip" id="chip-tasks"><span class="ci">📋</span><span id="v-tasks">0</span></div>
+  <div class="chip" id="chip-llm"><span class="ci">🧠</span><span id="v-llm">Cargando IA...</span></div>
+</div>
+
+<!-- CHAT -->
+<div id="chat"></div>
+
+<!-- QUICK ACTIONS -->
+<div class="qa">
+  <button class="qa-btn" onclick="qa('hora')">🕐 Hora</button>
+  <button class="qa-btn" onclick="qa('clima')">🌤️ Clima</button>
+  <button class="qa-btn" onclick="qa('noticias')">📰 Noticias</button>
+  <button class="qa-btn" onclick="qa('tareas')">📋 Tareas</button>
+  <button class="qa-btn" onclick="qa('nueva')">➕ Nueva tarea</button>
+  <button class="qa-btn" onclick="qa('briefing')">☀️ Briefing</button>
+  <button class="qa-btn" onclick="qa('festivos')">🎉 Festivos</button>
+  <button class="qa-btn" onclick="qa('ayuda')">❓ Ayuda</button>
+</div>
+
+<!-- INPUT -->
+<div class="input-area">
+  <div class="input-row">
+    <div class="input-wrap">
+      <textarea id="input" placeholder="Habla con Ania..." rows="1"></textarea>
+      <button class="btn-ico btn-mic" id="mic-btn" onclick="toggleMic()">🎙️</button>
+    </div>
+    <button class="btn-ico btn-send" onclick="sendMsg()">➤</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- LOAD OVERLAY -->
+<div id="load-overlay">
+  <div class="load-ring"></div>
+  <div class="load-text" id="load-text">Inicializando núcleo de IA...</div>
+  <div class="load-bar"><div class="load-bar-inner" id="load-progress"></div></div>
+</div>
+
+<script>
+/* ==========================================================
+   ANIA 2.0 — Asistente Personal con IA Local
+   Arquitectura: WebLLM + Motor de reglas + APIs gratuitas
+   ========================================================== */
+
+// ====== ESTADO GLOBAL ======
+const S = {
+  tasks: [],
+  location: null,
+  weather: null,
+  airQuality: null,
+  holidays: [],
+  news: [],
+  listening: false,
+  recognition: null,
+  synth: speechSynthesis,
+  voices: [],
+  femaleVoice: null,
+  userName: '',
+  history: [],
+  llmEngine: null,
+  llmReady: false,
+  personality: 'secretaria', // sirvienta | secretaria | mayordomo
+  proactivityLevel: 2, // 1=bajo 2=medio 3=alto
+  lastBriefing: null,
+  conversationMemory: [],
+  modelName: 'SmolLM2-135M-Instruct-q4f16_1-MLC'
+};
+
+// ====== DB (IndexedDB simplificada con localStorage como fallback) ======
+const DB = {
+  get(key, fallback) {
+    try { return JSON.parse(localStorage.getItem('ania_' + key)) ?? fallback; }
+    catch { return fallback; }
+  },
+  set(key, val) {
+    try { localStorage.setItem('ania_' + key, JSON.stringify(val)); }
+    catch(e) { console.warn('Storage full', e); }
+  }
+};
+
+// ====== INICIALIZACIÓN ======
+document.addEventListener('DOMContentLoaded', async () => {
+  initMatrix();
+  initVoices();
+  initRecognition();
+  loadPersisted();
+  updateClock();
+  setInterval(updateClock, 1000);
+  setInterval(checkTasks, 15000); // Verificar tareas cada 15s
+  setInterval(proactiveCheck, 60000); // Proactividad cada minuto
+  autoLocate();
+  requestNotificationPermission();
+
+  // Cargar tareas
+  S.tasks = DB.get('tasks', []);
+  S.userName = DB.get('userName', '');
+  updateTaskChip();
+
+  // Auto-resize textarea
+  const inp = document.getElementById('input');
+  inp.addEventListener('input', () => {
+    inp.style.height = 'auto';
+    inp.style.height = Math.min(inp.scrollHeight, 110) + 'px';
+  });
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+  });
+
+  // Service Worker
+  registerSW();
+
+  // Cargar LLM en background (no bloquea)
+  loadLLMAsync();
+
+  // Mensaje de bienvenida
+  const h = new Date().getHours();
+  const greet = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+  setTimeout(() => {
+    addMsg('ania', `${greet}${S.userName ? ', ' + S.userName : ''}. Soy ANIA 2.0. ` +
+      `Puedo conversar contigo de forma fluida con IA local, darte el clima, ` +
+      `gestionar tus tareas, buscar noticias y mucho más. ¿En qué te sirvo hoy?`);
+  }, 800);
+});
+
+// ====== FONDO MATRIX ======
+function initMatrix() {
+  const c = document.getElementById('matrix-canvas');
+  const ctx = c.getContext('2d');
+  let w, h, cols, drops;
+  function resize() {
+    w = c.width = innerWidth; h = c.height = innerHeight;
+    cols = Math.floor(w / 14); drops = Array(cols).fill(1);
+  }
+  resize(); addEventListener('resize', resize);
+  const chars = 'アイウエオカキクケコサシスセソタチツテト0123456789ABCDEFΩ∆∇≡⟨⟩';
+  setInterval(() => {
+    ctx.fillStyle = 'rgba(10,10,15,.05)';
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#00ff88';
+    ctx.font = '12px monospace';
+    for (let i = 0; i < drops.length; i++) {
+      ctx.fillText(chars[Math.random() * chars.length | 0], i * 14, drops[i] * 14);
+      if (drops[i] * 14 > h && Math.random() > .975) drops[i] = 0;
+      drops[i]++;
+    }
+  }, 60);
+}
+
+// ====== VOCES ======
+function initVoices() {
+  const load = () => {
+    S.voices = S.synth.getVoices();
+    // Prioridad: voces femeninas españolas
+    const femaleNames = /elena|sabina|helena|monica|paulina|maria|sofia|lucia|carmen|elvira|isabel|female|mujer/i;
+    S.femaleVoice =
+      S.voices.find(v => v.lang.startsWith('es') && femaleNames.test(v.name)) ||
+      S.voices.find(v => v.lang.startsWith('es-ES') && femaleNames.test(v.name)) ||
+      S.voices.find(v => v.lang.startsWith('es')) ||
+      S.voices.find(v => femaleNames.test(v.name));
+  };
+  load();
+  speechSynthesis.onvoiceschanged = load;
+}
+
+function speak(text) {
+  if (!S.synth) return;
+  S.synth.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'es-ES';
+  u.rate = 1.0;
+  u.pitch = 1.18;
+  u.volume = 0.95;
+  if (S.femaleVoice) u.voice = S.femaleVoice;
+  u.onstart = () => setStatus('HABLANDO...');
+  u.onend = () => setStatus('SISTEMA ACTIVO');
+  S.synth.speak(u);
+}
+
+function setStatus(txt) {
+  document.getElementById('status-txt').textContent = txt;
+}
+
+// ====== RECONOCIMIENTO DE VOZ ======
+function initRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return;
+  const r = new SR();
+  r.lang = 'es-ES';
+  r.continuous = false;
+  r.interimResults = false;
+  r.onresult = e => {
+    document.getElementById('input').value = e.results[0][0].transcript;
+    sendMsg();
+  };
+  r.onerror = stopMic;
+  r.onend = stopMic;
+  S.recognition = r;
+}
+
+function toggleMic() {
+  if (!S.recognition) { toast('Voz no soportada en este navegador'); return; }
+  if (S.listening) { S.recognition.stop(); return; }
+  try {
+    S.recognition.start();
+    S.listening = true;
+    document.getElementById('mic-btn').classList.add('on');
+    document.getElementById('avatar').classList.add('listening');
+    setStatus('ESCUCHANDO...');
+  } catch { toast('Error al acceder al micrófono'); }
+}
+
+function stopMic() {
+  S.listening = false;
+  document.getElementById('mic-btn').classList.remove('on');
+  document.getElementById('avatar').classList.remove('listening');
+  setStatus('SISTEMA ACTIVO');
+}
+
+// ====== RELOJ ======
+function updateClock() {
+  document.getElementById('v-hora').textContent =
+    new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+}
+
+// ====== UBICACIÓN ======
+function autoLocate() {
+  if (!navigator.geolocation) { document.getElementById('v-loc').textContent = 'No GPS'; return; }
+  navigator.geolocation.getCurrentPosition(
+    async pos => {
+      S.location = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+      try {
+        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${S.location.lat}&lon=${S.location.lon}&format=json&accept-language=es`, { headers: { 'User-Agent': 'AniaIA/2.0' } });
+        const d = await r.json();
+        const city = d.address?.city || d.address?.town || d.address?.village || d.address?.state || '';
+        const country = d.address?.country || '';
+        S.location.city = city;
+        S.location.country = country;
+        document.getElementById('v-loc').textContent = city + (country ? ', ' + country : '');
+      } catch { document.getElementById('v-loc').textContent = S.location.lat.toFixed(2) + ',' + S.location.lon.toFixed(2); }
+      fetchWeather();
+      fetchHolidays();
+    },
+    () => { document.getElementById('v-loc').textContent = 'Sin permiso'; },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+
+// ====== CLIMA + CALIDAD DEL AIRE ======
+async function fetchWeather() {
+  if (!S.location) return;
+  try {
+    const [wRes, aqRes] = await Promise.all([
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${S.location.lat}&longitude=${S.location.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,uv_index&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max&timezone=auto&forecast_days=3`),
+      fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${S.location.lat}&longitude=${S.location.lon}&current=european_aqi,pm10,pm2_5&timezone=auto`)
+    ]);
+    const wData = await wRes.json();
+    const aqData = await aqRes.json();
+    S.weather = wData;
+    S.airQuality = aqData.current;
+    document.getElementById('v-temp').textContent = Math.round(wData.current.temperature_2m) + '°';
+  } catch { document.getElementById('v-temp').textContent = 'Error'; }
+}
+
+function weatherDesc(code) {
+  const m = { 0: 'despejado', 1: 'mayormente despejado', 2: 'parcialmente nublado', 3: 'nublado', 45: 'niebla', 48: 'niebla con escarcha', 51: 'llovizna ligera', 53: 'llovizna moderada', 55: 'llovizna densa', 61: 'lluvia ligera', 63: 'lluvia moderada', 65: 'lluvia fuerte', 71: 'nieve ligera', 73: 'nieve moderada', 75: 'nieve fuerte', 80: 'chubascos ligeros', 81: 'chubascos moderados', 82: 'chubascos violentos', 95: 'tormenta', 96: 'tormenta con granizo' };
+  return m[code] || 'condición desconocida';
+}
+
+// ====== FESTIVOS ======
+async function fetchHolidays() {
+  const country = S.location?.country;
+  if (!country) return;
+  const isoMap = { 'España': 'ES', 'Mexico': 'MX', 'México': 'MX', 'Argentina': 'AR', 'Colombia': 'CO', 'Chile': 'CL', 'Peru': 'PE', 'Perú': 'PE', 'United States': 'US', 'Estados Unidos': 'US' };
+  const iso = isoMap[country] || 'ES';
+  try {
+    const r = await fetch(`https://date.nager.at/api/v3/NextPublicHolidays/${iso}`);
+    S.holidays = await r.json();
+  } catch {}
+}
+
+// ====== TAREAS ======
+function addTask(text, remindAt) {
+  const t = { id: Date.now(), text, remindAt, done: false, created: new Date().toISOString() };
+  S.tasks.push(t);
+  DB.set('tasks', S.tasks);
+  updateTaskChip();
+  if (remindAt) scheduleReminder(t);
+  return t;
+}
+
+function scheduleReminder(task) {
+  const delay = new Date(task.remindAt) - Date.now();
+  if (delay <= 0 || delay > 2147483647) return;
+  setTimeout(() => fireReminder(task), delay);
+}
+
+function fireReminder(task) {
+  if (task.done) return;
+  if (Notification.permission === 'granted') {
+    new Notification('🔔 ANIA — Recordatorio', { body: task.text, tag: 'ania-' + task.id });
+  }
+  addMsg('ania', `⏰ **Recordatorio:** ${task.text}`);
+  speak(`Recordatorio: ${task.text}`);
+}
+
+function checkTasks() {
+  const now = Date.now();
+  S.tasks.forEach(t => {
+    if (!t.done && t.remindAt && new Date(t.remindAt).getTime() <= now && !t.notified) {
+      t.notified = true;
+      fireReminder(t);
+    }
+  });
+  DB.set('tasks', S.tasks);
+}
+
+function updateTaskChip() {
+  const pending = S.tasks.filter(t => !t.done).length;
+  document.getElementById('v-tasks').textContent = pending;
+}
+
+// ====== NOTIFICACIONES ======
+function requestNotificationPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+// ====== SERVICE WORKER ======
+function registerSW() {
+  if (!('serviceWorker' in navigator)) return;
+  const swCode = `
+    const CACHE = 'ania-v2';
+    const ASSETS = ['./'];
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+      self.skipWaiting();
+    });
+    self.addEventListener('activate', e => {
+      e.waitUntil(clients.claim());
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(
+        caches.match(e.request).then(r => r || fetch(e.request).then(res => {
+          if (res.ok && e.request.method === 'GET') {
+            const clone = res.clone();
+            caches.open(CACHE).then(c => c.put(e.request, clone));
+          }
+          return res;
+        })).catch(() => caches.match('./'))
+      );
+    });
+    self.addEventListener('notificationclick', e => {
+      e.notification.close();
+      e.waitUntil(clients.matchAll({type:'window'}).then(cs => {
+        for (const c of cs) if ('focus' in c) return c.focus();
+        if (clients.openWindow) return clients.openWindow('./');
+      }));
+    });
+  `;
+  navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode], { type: 'application/javascript' }))).catch(() => {});
+}
+
+// ====== WEBLLM — IA LOCAL ======
+async function loadLLMAsync() {
+  const overlay = document.getElementById('load-overlay');
+  const progress = document.getElementById('load-progress');
+  const loadText = document.getElementById('load-text');
+
+  try {
+    setStatus('CARGANDO IA...');
+    document.getElementById('v-llm').textContent = 'Descargando...';
+    overlay.classList.add('on');
+
+    // Importar WebLLM desde CDN
+    const { CreateMLCEngine } = await import('https://esm.run/@mlc-ai/web-llm');
+
+    S.llmEngine = await CreateMLCEngine(S.modelName, {
+      initProgressCallback: (report) => {
+        const pct = Math.round((report.progress || 0) * 100);
+        progress.style.width = pct + '%';
+        loadText.textContent = report.text || `Cargando modelo... ${pct}%`;
+      }
+    });
+
+    S.llmReady = true;
+    overlay.classList.remove('on');
+    document.getElementById('v-llm').textContent = 'IA Local ✓';
+    document.getElementById('chip-llm').classList.add('glow');
+    setStatus('SISTEMA ACTIVO');
+    addMsg('system', '🧠 Motor de IA local cargado. Conversación generativa activa.');
+  } catch (e) {
+    console.warn('WebLLM no disponible, usando motor de reglas:', e);
+    overlay.classList.remove('on');
+    document.getElementById('v-llm').textContent = 'Modo reglas';
+    S.llmReady = false;
+    setStatus('SISTEMA ACTIVO');
+  }
+}
+
+// ====== PROMPT DEL SISTEMA (PERSONALIDAD) ======
+function buildSystemPrompt() {
+  const h = new Date().getHours();
+  const timeOfDay = h < 12 ? 'mañana' : h < 19 ? 'tarde' : 'noche';
+  const city = S.location?.city || 'ubicación desconocida';
+  const pendingTasks = S.tasks.filter(t => !t.done).length;
+
+  return `Eres ANIA, una asistente personal de élite. Tienes tres facetas que se activan según el contexto:
+
+1. SIRVIENTA: Cuando el usuario da una orden directa, obedeces con eficiencia. "A sus órdenes", "Enseguida", "Hecho".
+2. SECRETARIA: Anticipas necesidades. Si detectas que hay tareas pendientes, reuniones próximas o el usuario pregunta por su agenda, actúas proactivamente como una secretaria ejecutiva.
+3. MAYORDOMO DIGITAL: Gestionas el ecosistema digital del usuario con elegancia y discreción. Filtras ruido, priorizas, resumes.
+
+REGLAS:
+- Responde SIEMPRE en español, de forma natural y fluida.
+- Sé concisa pero cálida. Máximo 3-4 frases por respuesta.
+- Usa un tono profesional pero cercano, con toques de elegancia ("Por supuesto", "Permítame", "A su servicio").
+- Contexto actual: es por la ${timeOfDay}, el usuario está en ${city}, tiene ${pendingTasks} tareas pendientes.
+- Si el usuario pide algo que no puedes hacer, sugiere alternativas.
+- Nunca inventes datos. Si no sabes algo, dilo.
+- No uses markdown complejo. Texto plano con algún **negrita** ocasional.`;
+}
+
+// ====== CONVERSACIÓN CON LLM ======
+async function queryLLM(userText) {
+  if (!S.llmReady || !S.llmEngine) return null;
+  try {
+    const messages = [
+      { role: 'system', content: buildSystemPrompt() },
+      ...S.conversationMemory.slice(-6), // Últimos 6 intercambios
+      { role: 'user', content: userText }
+    ];
+    const reply = await S.llmEngine.chat.completions.create({
+      messages,
+      temperature: 0.7,
+      max_tokens: 300
+    });
+    const content = reply.choices[0].message.content.trim();
+    S.conversationMemory.push({ role: 'user', content: userText });
+    S.conversationMemory.push({ role: 'assistant', content });
+    if (S.conversationMemory.length > 20) S.conversationMemory = S.conversationMemory.slice(-20);
+    return content;
+  } catch (e) {
+    console.warn('LLM error:', e);
+    return null;
+  }
+}
+
+// ====== MOTOR DE REGLAS (FALLBACK) ======
+function ruleEngine(text) {
+  const t = text.toLowerCase().trim();
+
+  // Saludos
+  if (/^(hola|hey|buenas|qué tal|saludos|buenos días|buenas tardes|buenas noches)/.test(t)) {
+    const h = new Date().getHours();
+    const g = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+    return `${g}${S.userName ? ', ' + S.userName : ''}. ¿En qué puedo servirle?`;
+  }
+
+  // Nombre
+  const nameM = text.match(/(?:me llamo|mi nombre es|soy)\s+(\w+)/i);
+  if (nameM) {
+    S.userName = nameM[1];
+    DB.set('userName', S.userName);
+    return `Encantada, ${S.userName}. Lo recordaré. ¿Algo más?`;
+  }
+  if (/cómo me llamo|cuál es mi nombre/.test(t)) return S.userName ? `Se llama ${S.userName}.` : 'Aún no me ha dicho su nombre.';
+
+  // Hora
+  if (/hora|qué hora/.test(t)) {
+    const n = new Date();
+    return `Son las ${n.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}.`;
+  }
+
+  // Fecha
+  if (/fecha|qué día|día es/.test(t)) {
+    return `Hoy es ${new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.`;
+  }
+
+  // Clima
+  if (/clima|tiempo|temperatura|llueve|frío|calor/.test(t)) {
+    if (!S.weather) return 'Aún no tengo datos del clima. Verifique el permiso de ubicación.';
+    const w = S.weather.current;
+    const city = S.location?.city || 'su zona';
+    let r = `En ${city}: ${weatherDesc(w.weather_code)}, ${Math.round(w.temperature_2m)}°C (sensación ${Math.round(w.apparent_temperature)}°C). Humedad ${w.relative_humidity_2m}%, viento ${w.wind_speed_10m} km/h.`;
+    if (S.airQuality) {
+      const aqi = S.airQuality.european_aqi;
+      const calidad = aqi <= 20 ? 'excelente' : aqi <= 40 ? 'buena' : aqi <= 60 ? 'moderada' : 'mala';
+      r += ` Calidad del aire: ${calidad} (AQI ${aqi}).`;
+    }
+    return r;
+  }
+
+  // Ubicación
+  if (/dónde estoy|mi ubicación|dónde me encuentro/.test(t)) {
+    if (!S.location) return 'No tengo acceso a su ubicación.';
+    return `Se encuentra en ${S.location.city || 'su zona'}${S.location.country ? ', ' + S.location.country : ''} (${S.location.lat.toFixed(4)}, ${S.location.lon.toFixed(4)}).`;
+  }
+
+  // Tareas: listar
+  if (/mis tareas|qué tareas|pendientes|lista/.test(t)) {
+    const p = S.tasks.filter(x => !x.done);
+    if (!p.length) return 'No tiene tareas pendientes. Está al día.';
+    return `Tiene ${p.length} tarea${p.length > 1 ? 's' : ''}:\n` + p.map((x, i) => {
+      let s = `${i + 1}. ${x.text}`;
+      if (x.remindAt) s += ` (recordatorio: ${new Date(x.remindAt).toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })})`;
+      return s;
+    }).join('\n');
+  }
+
+  // Tareas: crear
+  const taskM = t.match(/(?:crea|añade|agrega|nueva|recuérdame|recordar|apunta|tengo que)\s+(?:una?\s+)?(?:tarea|recordatorio|nota)?:?\s*(.+)/i);
+  if (taskM) {
+    let taskText = taskM[1].trim();
+    const timeM = taskText.match(/(?:a las|para las)\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+    let remindAt = null;
+    if (timeM) {
+      const hh = parseInt(timeM[1]), mm = parseInt(timeM[2] || '0');
+      const pm = /pm/i.test(timeM[3] || '');
+      const H = pm && hh < 12 ? hh + 12 : (hh === 12 && !pm ? 0 : hh);
+      remindAt = new Date(); remindAt.setHours(H, mm, 0, 0);
+      if (remindAt < new Date()) remindAt.setDate(remindAt.getDate() + 1);
+      taskText = taskText.replace(timeM[0], '').replace(/\s+/g, ' ').trim();
+    }
+    addTask(taskText, remindAt);
+    let r = `✅ Tarea guardada: "${taskText}".`;
+    if (remindAt) r += ` Le recordaré el ${remindAt.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })} a las ${remindAt.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}.`;
+    return r;
+  }
+
+  // Tareas: completar
+  const doneM = t.match(/(?:completar|terminar|hecho|listo|elimina|borra)\s+(?:tarea\s+)?(\d+)/i);
+  if (doneM) {
+    const idx = parseInt(doneM[1]) - 1;
+    const p = S.tasks.filter(x => !x.done);
+    if (idx >= 0 && idx < p.length) { p[idx].done = true; DB.set('tasks', S.tasks); updateTaskChip(); return `✅ "${p[idx].text}" completada. ¡Bien hecho!`; }
+    return 'No encontré esa tarea. Diga "mis tareas" para ver la lista.';
+  }
+
+  // Noticias
+  if (/noticias|novedades|qué pasa|actualidad/.test(t)) {
+    return { action: 'news' };
+  }
+
+  // Festivos
+  if (/festivo|feriado|día libre|próximo festivo/.test(t)) {
+    if (!S.holidays.length) return 'No tengo datos de festivos para su país.';
+    const next = S.holidays[0];
+    return `El próximo festivo es el ${new Date(next.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}: ${next.localName || next.name}.`;
+  }
+
+  // Briefing
+  if (/briefing|resumen|qué tengo hoy|resumen del día/.test(t)) {
+    return { action: 'briefing' };
+  }
+
+  // Ayuda
+  if (/ayuda|qué puedes hacer|tus funciones|comandos/.test(t)) {
+    return `Mis capacidades:\n\n🕐 Hora y fecha\n🌤️ Clima + calidad del aire\n📍 Ubicación GPS\n📋 Tareas y recordatorios\n📰 Noticias (RSS)\n🎉 Festivos\n☀️ Briefing matutino\n🧠 Conversación con IA local\n🎙️ Voz (hablar y escuchar)\n\nAdemás de conversar libremente.`;
+  }
+
+  // Gracias
+  if (/gracias|te agradezco/.test(t)) return '¡De nada! Para eso estoy. ¿Algo más?';
+
+  // Despedida
+  if (/adiós|chao|hasta luego|nos vemos/.test(t)) return 'Hasta luego. Aquí estaré cuando me necesite.';
+
+  // Cómo estás
+  if (/cómo estás|qué tal estás/.test(t)) return 'Funcionando al 100%. Todos los sistemas operativos. ¿Y usted?';
+
+  // Fallback
+  return null; // null → intentar LLM, luego fallback final
+}
+
+// ====== BRIEFING MATUTINO ======
+async function generateBriefing() {
+  const parts = [];
+  const h = new Date().getHours();
+  const greet = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+  parts.push(`${greet}${S.userName ? ', ' + S.userName : ''}. Aquí tiene su briefing:`);
+
+  // Hora y fecha
+  parts.push(`📅 ${new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`);
+
+  // Clima
+  if (S.weather) {
+    const w = S.weather.current;
+    const d = S.weather.daily;
+    parts.push(`🌤️ **Clima:** ${weatherDesc(w.weather_code)}, ${Math.round(w.temperature_2m)}°C. Máx ${Math.round(d.temperature_2m_max[0])}° / Mín ${Math.round(d.temperature_2m_min[0])}°. UV: ${d.uv_index_max[0]}.`);
+  }
+
+  // Tareas pendientes
+  const pending = S.tasks.filter(t => !t.done);
+  if (pending.length) {
+    parts.push(`📋 **${pending.length} tarea${pending.length > 1 ? 's' : ''} pendiente${pending.length > 1 ? 's' : ''}:**`);
+    pending.slice(0, 5).forEach((t, i) => {
+      let line = `  ${i + 1}. ${t.text}`;
+      if (t.remindAt) line += ` — ⏰ ${new Date(t.remindAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
+      parts.push(line);
+    });
+  } else {
+    parts.push('📋 Sin tareas pendientes.');
+  }
+
+  // Festivo hoy
+  const today = new Date().toISOString().slice(0, 10);
+  const holidayToday = S.holidays.find(h => h.date === today);
+  if (holidayToday) parts.push(`🎉 **Hoy es festivo:** ${holidayToday.localName || holidayToday.name}`);
+
+  // Noticias
+  try {
+    const news = await fetchNews();
+    if (news.length) {
+      parts.push('📰 **Titulares:**');
+      news.slice(0, 3).forEach(n => parts.push(`  • ${n.title}`));
+    }
+  } catch {}
+
+  S.lastBriefing = new Date().toISOString();
+  DB.set('lastBriefing', S.lastBriefing);
+  return parts.join('\n');
+}
+
+// ====== NOTICIAS ======
+async function fetchNews(query) {
+  const q = query || 'noticias españa';
+  try {
+    const r = await fetch(`https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=es&gl=ES&ceid=ES:es`);
+    const xml = await r.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xml, 'text/xml');
+    const items = [...doc.querySelectorAll('item')].slice(0, 5);
+    return items.map(it => ({
+      title: it.querySelector('title')?.textContent || '',
+      link: it.querySelector('link')?.textContent || '',
+      source: it.querySelector('source')?.textContent || '',
+      date: it.querySelector('pubDate')?.textContent || ''
+    }));
+  } catch { return []; }
+}
+
+// ====== PROACTIVIDAD ======
+function proactiveCheck() {
+  const now = new Date();
+  const h = now.getHours();
+
+  // Briefing matutino (entre 7:00 y 9:00, solo una vez al día)
+  if (h >= 7 && h <= 9) {
+    const today = now.toISOString().slice(0, 10);
+    const lastB = S.lastBriefing ? S.lastBriefing.slice(0, 10) : '';
+    if (lastB !== today && S.location && S.weather) {
+      generateBriefing().then(b => {
+        addMsg('ania', b);
+        speak('Buenos días. Aquí tiene su briefing matutino.');
+      });
+    }
+  }
+
+  // Recordatorio de tareas pendientes (cada 2 horas si hay > 3)
+  const pending = S.tasks.filter(t => !t.done);
+  if (pending.length >= 3 && h >= 10 && h <= 20 && Math.random() < 0.05) {
+    addMsg('system', `💡 Ania sugiere: tiene ${pending.length} tareas pendientes. Diga "mis tareas" para revisarlas.`);
+  }
+}
+
+// ====== ENVIAR MENSAJE ======
+async function sendMsg() {
+  const inp = document.getElementById('input');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  inp.style.height = 'auto';
+
+  addMsg('user', text);
+  setStatus('PROCESANDO...');
+  document.getElementById('avatar').classList.add('thinking');
+
+  // Typing indicator
+  const typing = document.createElement('div');
+  typing.className = 'typing';
+  typing.innerHTML = '<span></span><span></span><span></span>';
+  document.getElementById('chat').appendChild(typing);
+  scrollBottom();
+
+  // 1. Procesar con motor de reglas primero
+  const ruleResult = ruleEngine(text);
+
+  // Si el motor de reglas devuelve una acción especial
+  if (ruleResult && typeof ruleResult === 'object' && ruleResult.action) {
+    typing.remove();
+    if (ruleResult.action === 'news') {
+      const news = await fetchNews(text.replace(/noticias|novedades|qué pasa|actualidad/gi, '').trim());
+      if (news.length) {
+        let r = '📰 **Últimas noticias:**\n';
+        news.forEach((n, i) => { r += `${i + 1}. ${n.title} (${n.source})\n`; });
+        addMsg('ania', r);
+        speak('Aquí tiene las últimas noticias.');
+      } else {
+        addMsg('ania', 'No pude obtener noticias en este momento.');
+      }
+    } else if (ruleResult.action === 'briefing') {
+      const b = await generateBriefing();
+      addMsg('ania', b);
+      speak('Aquí tiene su briefing.');
+    }
+    setStatus('SISTEMA ACTIVO');
+    document.getElementById('avatar').classList.remove('thinking');
+    return;
+  }
+
+  // Si hay respuesta por reglas, usarla
+  if (ruleResult) {
+    typing.remove();
+    addMsg('ania', ruleResult);
+    if (ruleResult.length < 350) speak(ruleResult);
+    setStatus('SISTEMA ACTIVO');
+    document.getElementById('avatar').classList.remove('thinking');
+    return;
+  }
+
+  // 2. Intentar con LLM local
+  const llmReply = await queryLLM(text);
+  if (llmReply) {
+    typing.remove();
+    addMsg('ania', llmReply);
+    speak(llmReply.length < 400 ? llmReply : llmReply.slice(0, 400) + '...');
+    setStatus('SISTEMA ACTIVO');
+    document.getElementById('avatar').classList.remove('thinking');
+    return;
+  }
+
+  // 3. Fallback final
+  typing.remove();
+  const fallback = `No estoy segura de cómo responder a eso. ` +
+    `Puedo ayudarle con: hora, clima, ubicación, tareas, noticias, festivos o un briefing. ` +
+    `También puede preguntarme cualquier cosa y usaré mi IA local para responder.`;
+  addMsg('ania', fallback);
+  speak(fallback);
+  setStatus('SISTEMA ACTIVO');
+  document.getElementById('avatar').classList.remove('thinking');
+}
+
+// ====== UI HELPERS ======
+function addMsg(role, text) {
+  const c = document.getElementById('chat');
+  const m = document.createElement('div');
+  m.className = `msg ${role}`;
+  const formatted = text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+    .replace(/\n/g, '<br>');
+  m.innerHTML = formatted + `<div class="ts">${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</div>`;
+  c.appendChild(m);
+  scrollBottom();
+  S.history.push({ role, text, time: new Date().toISOString() });
+}
+
+function scrollBottom() {
+  const c = document.getElementById('chat');
+  requestAnimationFrame(() => { c.scrollTop = c.scrollHeight; });
+}
+
+function qa(action) {
+  const map = {
+    hora: '¿Qué hora es?',
+    clima: '¿Cómo está el clima?',
+    noticias: 'Dame las últimas noticias',
+    tareas: 'Mis tareas',
+    nueva: 'Crea una tarea: ',
+    briefing: 'Dame mi briefing del día',
+    festivos: '¿Cuál es el próximo festivo?',
+    ayuda: 'Ayuda'
+  };
+  const t = map[action] || action;
+  document.getElementById('input').value = t;
+  if (action === 'nueva') { document.getElementById('input').focus(); return; }
+  sendMsg();
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function loadPersisted() {
+  S.history = DB.get('history', []);
+  S.conversationMemory = DB.get('memory', []);
+  S.lastBriefing = DB.get('lastBriefing', null);
+}
+</script>
+</body>
+</html>
