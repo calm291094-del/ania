@@ -1169,69 +1169,6 @@ const Sync = {
     }
   }
 };
-  
-async pullTasks(){
-  if(!this.online) return 0;
-  try{
-    const r = await fetch(`${CONFIG.BACKEND_URL}/ania/tasks?user=${CONFIG.ANIA_USER}`);
-    if(!r.ok) throw new Error();
-    const remote = await r.json();
-    if(!Array.isArray(remote)) return 0;
-    const localIds = new Set(tasks.flatMap(t=>[t.id, t.serverId].filter(Boolean)));
-    const nuevas = remote.filter(t=>!localIds.has(t.id));
-    let added = 0;
-    for(const r of nuevas){
-      const when = r.remindAt ? new Date(r.remindAt).getTime() : null;
-      const via = r.notifyVia || (r.source === 'telegram' ? 'telegram' : 'local');
-      const tk = {
-        id:'srv-'+r.id, serverId:r.id, text:r.texto, when,
-        done:!!r.done, fired:false,
-        source: r.source || 'telegram',
-        notifyVia: via,
-        pendingSync:false
-      };
-      // ✅ FIX: si la tarea es de Telegram, ya se avisará allá.
-      // No la re-disparamos aquí para no duplicar.
-      const alarmarAqui = (via === 'local' || via === 'both');
-      if(when && when < Date.now()){
-        tk.fired = true;
-        if(Date.now() - when > 2*36e5) tk.done = true;
-      }
-      tasks.push(tk);
-      if(!tk.done && !tk.fired && tk.when && alarmarAqui) scheduleTask(tk);
-      added++;
-    }
-    for(const local of tasks){
-      if(!local.serverId) continue;
-      const rem = remote.find(x=>x.id===local.serverId);
-      if(rem && rem.done && !local.done){ local.done=true; cancelTimer(local.id); }
-    }
-    if(added>0){ saveTasks(); renderTasks(); toast(added+' tarea'+(added===1?'':'s')+' nueva'+(added===1?'':'s')+' desde Telegram'); }
-    return added;
-  }catch(e){ return 0; }
-}
-  async fullSync(){
-    if(this.syncing) return;
-    this.syncing = true;
-    try{
-      await this.check();
-      if(this.online){
-        // PROTECCIÓN 2: solo se envían tareas NUNCA enviadas (sin serverId)
-        for(const tk of tasks){ if(tk.pendingSync && !tk.serverId && !tk.done && !tk.fired) await this.pushTask(tk); }
-        await this.pullTasks();
-      }
-    } finally { this.syncing = false; }
-  }
-};
-Sync.check();
-async function initSyncLoop(){ await Sync.fullSync(); setInterval(()=>Sync.fullSync(), CONFIG.SYNC_INTERVAL); }
- $('btnSync').onclick = async ()=>{
-  toast('Sincronizando...');
-  const ok = await Sync.check();
-  if(!ok){ toast('Servidor no disponible · modo local puro', true); return; }
-  const n = await Sync.pullTasks();
-  if(n===0) toast('Todo sincronizado · agenda al día');
-};
 
 /* =====================================================================
    SERVICIOS DE RED
