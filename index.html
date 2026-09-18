@@ -20,44 +20,36 @@
   }
   *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
-  body{
-    background:var(--bg); color:var(--text); font-family:var(--mono);
-    overflow:hidden; overscroll-behavior:none;
-    background-image:radial-gradient(rgba(45,224,138,.05) 1px, transparent 1px);
-    background-size:26px 26px;
-  }
-  body::after{
-    content:''; position:fixed; inset:0; pointer-events:none; z-index:900;
-    background:repeating-linear-gradient(0deg, rgba(0,0,0,.16) 0 1px, transparent 1px 3px);
-    opacity:.35;
-  }
+  body{background:var(--bg); color:var(--text); font-family:var(--mono); overflow:hidden; overscroll-behavior:none;
+    background-image:radial-gradient(rgba(45,224,138,.05) 1px, transparent 1px); background-size:26px 26px;}
+  body::after{content:''; position:fixed; inset:0; pointer-events:none; z-index:900;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,.16) 0 1px, transparent 1px 3px); opacity:.35;}
   button{font-family:var(--mono); cursor:pointer; color:var(--acc); background:transparent; border:1px solid var(--line); border-radius:6px;}
   button:active{transform:translateY(1px);}
   button:focus-visible{outline:1px solid var(--acc2); outline-offset:2px;}
   svg{display:block;}
 
-  /* ============ ARRANQUE + LOGIN ============ */
+  #bgfx{position:fixed; inset:0; z-index:0; pointer-events:none;}
+  #app{position:relative; z-index:1;}
+
   #boot{position:fixed; inset:0; z-index:1000; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; transition:opacity .6s; overflow-y:auto;}
   #boot.hide{opacity:0; pointer-events:none;}
   #bootBox{width:min(560px,100%);}
   #bootTitle{letter-spacing:.55em; font-size:clamp(26px,8vw,44px); color:var(--acc2); text-align:center; margin-bottom:26px;}
   #bootTitle small{display:block; letter-spacing:.3em; font-size:11px; color:var(--dim); margin-top:8px;}
-  #bootLog{min-height:230px; font-size:13px; line-height:1.75; color:var(--dim);}
+  #bootLog{min-height:250px; font-size:13px; line-height:1.75; color:var(--dim);}
   #bootLog .ok{color:var(--acc);}
   #loginBox{margin-top:22px; display:none; flex-direction:column; gap:10px;}
   #loginBox input{background:var(--panel); border:1px solid var(--line); border-radius:6px; color:var(--text); font-family:var(--mono); font-size:16px; padding:12px 13px; width:100%;}
   #loginBox input:focus{outline:none; border-color:var(--line2);}
-  #loginMsg{font-size:11px; color:var(--dim); min-height:16px; letter-spacing:.05em;}
+  #loginMsg{font-size:11px; color:var(--dim); min-height:16px;}
   #loginMsg.err{color:var(--danger);}
   .lbtn{padding:12px; font-size:13px; letter-spacing:.3em; border-color:var(--line2); color:var(--acc2); background:rgba(45,224,138,.06); border-radius:0; clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);}
   .lbtn.dim{color:var(--dim); border-color:var(--line); background:transparent; font-size:11px; letter-spacing:.2em; padding:10px;}
-  #bootStart{display:none; margin:26px auto 0; padding:14px 34px; font-size:15px; letter-spacing:.35em;
-    border-color:var(--line2); color:var(--acc2); background:rgba(45,224,138,.06);
-    clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);
-    animation:breathe 2.4s ease-in-out infinite;}
+  #bootStart{display:none; margin:26px auto 0; padding:14px 34px; font-size:15px; letter-spacing:.35em; border-color:var(--line2); color:var(--acc2); background:rgba(45,224,138,.06);
+    clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px); animation:breathe 2.4s ease-in-out infinite;}
   @keyframes breathe{50%{background:rgba(45,224,138,.14);}}
 
-  /* ============ APP ============ */
   #app{display:flex; flex-direction:column; height:100dvh; max-width:760px; margin:0 auto; padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom);}
   header{display:flex; align-items:center; gap:8px; padding:10px 6px; border-bottom:1px solid var(--line); flex:0 0 auto;}
   #logo{font-size:20px; letter-spacing:.5em; color:var(--acc2); user-select:none; white-space:nowrap;}
@@ -71,11 +63,12 @@
   #syncPill{display:none;}
   #headRight{margin-left:auto; display:flex; gap:8px; align-items:center; font-size:11px; color:var(--dim);}
   #clock{color:var(--text); letter-spacing:.1em;}
+  #batt{display:none; font-size:10px; color:var(--dim); letter-spacing:.06em;}
   #weatherChip{display:flex; gap:6px; align-items:center; border:1px solid var(--line); border-radius:999px; padding:3px 10px; color:var(--dim); font-size:11px; background:transparent;}
   #weatherChip:active{border-color:var(--line2);}
   #weatherChip svg{width:13px; height:13px;}
   #operator{display:none; font-size:10px; letter-spacing:.14em; color:var(--amber); border:1px solid rgba(255,181,71,.35); border-radius:999px; padding:3px 9px; white-space:nowrap;}
-  @media(min-width:520px){ #syncPill{display:inline-flex;} }
+  @media(min-width:560px){ #syncPill{display:inline-flex;} }
 
   #coreZone{flex:0 0 auto; display:flex; flex-direction:column; align-items:center; padding:8px 0 2px;}
   #reactorWrap{position:relative; width:min(56vw,225px); height:min(56vw,225px);}
@@ -101,8 +94,7 @@
   .chip:active{color:var(--acc2); border-color:var(--line2);}
 
   #inputBar{flex:0 0 auto; display:flex; gap:8px; padding:6px 4px 8px; border-top:1px solid var(--line);}
-  #userInput{flex:1; min-width:0; background:var(--panel); border:1px solid var(--line); border-radius:8px;
-    color:var(--text); font-family:var(--mono); font-size:16px; padding:11px 13px; caret-color:var(--acc2);}
+  #userInput{flex:1; min-width:0; background:var(--panel); border:1px solid var(--line); border-radius:8px; color:var(--text); font-family:var(--mono); font-size:16px; padding:11px 13px; caret-color:var(--acc2);}
   #userInput:focus{outline:none; border-color:var(--line2);}
   #userInput::placeholder{color:#3d5a4b;}
   .ibtn{flex:0 0 auto; width:46px; height:46px; display:grid; place-items:center; border-radius:8px;}
@@ -110,28 +102,27 @@
   #micBtn.live{border-color:var(--amber); color:var(--amber); background:rgba(255,181,71,.08); animation:pulseA 1.2s ease-in-out infinite;}
   @keyframes pulseA{50%{box-shadow:0 0 0 6px rgba(255,181,71,.10);}}
 
-  #dock{flex:0 0 auto; display:flex; gap:6px; padding:0 2px 8px;}
-  .dbtn{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 1px; font-size:9px; letter-spacing:.14em; color:var(--dim); position:relative;}
+  #dock{flex:0 0 auto; display:flex; gap:5px; padding:0 2px 8px;}
+  .dbtn{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 1px; font-size:8.5px; letter-spacing:.1em; color:var(--dim); position:relative;}
   .dbtn svg{width:16px; height:16px;}
   .dbtn:active{color:var(--acc2);}
-  .badge{position:absolute; top:-5px; right:6px; min-width:16px; height:16px; border-radius:8px; background:var(--amber); color:#1a1000; font-size:10px; line-height:16px; padding:0 4px; display:none;}
+  .badge{position:absolute; top:-5px; right:4px; min-width:16px; height:16px; border-radius:8px; background:var(--amber); color:#1a1000; font-size:10px; line-height:16px; padding:0 4px; display:none;}
   .badge.on{display:block;}
-  #btnInstall::before{content:''; position:absolute; top:4px; right:6px; width:7px; height:7px; border-radius:50%; background:var(--acc2); display:none; animation:blink 1.4s steps(1) infinite;}
+  #btnInstall::before{content:''; position:absolute; top:4px; right:4px; width:7px; height:7px; border-radius:50%; background:var(--acc2); display:none; animation:blink 1.4s steps(1) infinite;}
   #btnInstall.can::before{display:block;}
 
-  /* ============ HOJAS Y MODALES ============ */
+  #ambBtn{position:fixed; left:12px; bottom:calc(14px + env(safe-area-inset-bottom)); z-index:500; width:44px; height:44px; display:none; place-items:center; border-radius:50%; background:var(--bg2); border-color:var(--line2); color:var(--acc2);}
+  #ambBtn svg{width:20px; height:20px;}
+  #ambBtn.play{animation:breathe 2s ease-in-out infinite;}
+
   #backdrop{position:fixed; inset:0; background:rgba(2,5,3,.72); z-index:940; opacity:0; pointer-events:none; transition:opacity .25s;}
   #backdrop.on{opacity:1; pointer-events:auto;}
-  #sheet{position:fixed; left:0; right:0; bottom:0; z-index:950; max-width:760px; margin:0 auto;
+  #sheet, #sheetMem, #sheetDiary, #sheetLib{position:fixed; left:0; right:0; bottom:0; max-width:760px; margin:0 auto;
     background:var(--bg2); border:1px solid var(--line); border-bottom:none; border-radius:14px 14px 0 0;
     transform:translateY(105%); transition:transform .3s cubic-bezier(.2,.9,.3,1);
-    max-height:82dvh; display:flex; flex-direction:column;}
-  #sheet.open{transform:translateY(0);}
-  #sheetMem{position:fixed; left:0; right:0; bottom:0; z-index:955; max-width:760px; margin:0 auto;
-    background:var(--bg2); border:1px solid var(--line); border-bottom:none; border-radius:14px 14px 0 0;
-    transform:translateY(105%); transition:transform .3s cubic-bezier(.2,.9,.3,1);
-    max-height:75dvh; display:flex; flex-direction:column;}
-  #sheetMem.open{transform:translateY(0);}
+    max-height:80dvh; display:flex; flex-direction:column; z-index:950;}
+  #sheetMem{z-index:955;}
+  #sheet.open, #sheetMem.open, #sheetDiary.open, #sheetLib.open{transform:translateY(0);}
   .grab{width:38px; height:4px; border-radius:2px; background:#1d3a2b; margin:8px auto 0;}
   .sheetHead{display:flex; align-items:center; gap:10px; padding:14px 16px 8px; border-bottom:1px solid var(--line);}
   .sheetHead h2{font-size:13px; letter-spacing:.35em; color:var(--acc); font-weight:normal;}
@@ -139,16 +130,17 @@
   .xbtn{width:32px; height:32px; display:grid; place-items:center; border-radius:6px;}
   .xbtn svg{width:15px; height:15px;}
 
-  #taskList{overflow-y:auto; padding:6px 14px; flex:1;}
+  #taskList, #diaryList, #libList, #memList{overflow-y:auto; padding:6px 14px; flex:1;}
   .task{display:flex; align-items:center; gap:10px; padding:11px 4px; border-bottom:1px dashed rgba(45,224,138,.12);}
   .task .tmain{flex:1; min-width:0;}
   .task .ttext{font-size:14px; word-break:break-word;}
   .task.done .ttext{color:#42604f; text-decoration:line-through;}
   .task .twhen{font-size:10px; color:var(--dim); margin-top:3px; letter-spacing:.08em;}
   .task .twhen.late{color:var(--amber);}
-  .task .tsrc{display:inline-block; font-size:9px; padding:1px 5px; border-radius:3px; margin-left:5px; letter-spacing:.08em;}
+  .task .tsrc{display:inline-block; font-size:9px; padding:1px 5px; border-radius:3px; margin-left:5px;}
   .task .tsrc.tg{color:#5fc9ff; border:1px solid rgba(95,201,255,.3);}
   .task .tsrc.web{color:var(--acc); border:1px solid rgba(45,224,138,.3);}
+  .task .tsrc.rec{color:var(--amber); border:1px solid rgba(255,181,71,.35);}
   .tsmall{width:34px; height:34px; display:grid; place-items:center; border-radius:6px; flex:0 0 auto;}
   .tsmall svg{width:15px; height:15px;}
   .tcheck{color:var(--dim);} .task.done .tcheck{color:var(--acc);}
@@ -159,12 +151,21 @@
   #taskWhen{flex:0 1 auto; background:var(--panel); border:1px solid var(--line); border-radius:6px; color:var(--dim); font-family:var(--mono); font-size:12px; padding:9px 8px; color-scheme:dark;}
   #addTaskBtn{flex:0 0 auto; padding:0 16px; letter-spacing:.2em; font-size:11px; border-radius:6px;}
 
-  #memList{overflow-y:auto; padding:10px 16px; flex:1;}
   .memRow{display:flex; gap:10px; padding:10px 2px; border-bottom:1px dashed rgba(45,224,138,.12); font-size:13px; align-items:flex-start;}
   .memRow .k{flex:0 0 74px; color:var(--dim); font-size:10px; letter-spacing:.15em; padding-top:3px;}
   .memRow .v{flex:1; word-break:break-word;}
   .memRow .mdel{flex:0 0 auto; width:28px; height:28px; display:grid; place-items:center; color:#5a3040;}
   .memRow .mdel svg{width:13px; height:13px;}
+
+  .diaryRow{padding:12px 2px; border-bottom:1px dashed rgba(45,224,138,.12);}
+  .diaryRow .dDate{font-size:10px; color:var(--acc); letter-spacing:.12em; margin-bottom:4px;}
+  .diaryRow .dText{font-size:12.5px; color:var(--text); line-height:1.6; white-space:pre-wrap;}
+  .libRow{display:flex; gap:10px; padding:12px 2px; border-bottom:1px dashed rgba(45,224,138,.12); align-items:flex-start;}
+  .libRow .lmain{flex:1; min-width:0;}
+  .libRow .ltitle{font-size:13px; color:var(--text);}
+  .libRow .lsnip{font-size:11px; color:var(--dim); margin-top:3px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+  .libRow .ldate{font-size:9px; color:#42604f; margin-top:3px;}
+  .sheetFoot{padding:10px 14px calc(14px + env(safe-area-inset-bottom)); border-top:1px solid var(--line);}
 
   .overlay{position:fixed; inset:0; z-index:960; background:rgba(2,5,3,.78); display:none; align-items:center; justify-content:center; padding:20px;}
   .overlay.on{display:flex;}
@@ -173,7 +174,6 @@
   .modal h2{font-size:14px; letter-spacing:.35em; color:var(--acc2); font-weight:normal; margin-bottom:14px; display:flex; align-items:center;}
   .modal h2 .xbtn{margin-left:auto;}
   .modal p, .modal li{font-size:13px; color:var(--text); line-height:1.7;}
-  .modal ul{padding-left:18px; margin:8px 0;}
   .modal .dim{color:var(--dim);}
   .modal .step{display:flex; gap:10px; margin:12px 0; align-items:flex-start;}
   .modal .step b{color:var(--amber); font-weight:normal; flex:0 0 auto;}
@@ -191,7 +191,7 @@
   #diag b{color:var(--acc); font-weight:normal;}
 
   #toasts{position:fixed; top:calc(10px + env(safe-area-inset-top)); left:0; right:0; z-index:1200; display:flex; flex-direction:column; align-items:center; gap:8px; pointer-events:none;}
-  .toast{background:var(--bg2); border:1px solid var(--line2); color:var(--acc2); font-size:12px; padding:9px 16px; max-width:88%; letter-spacing:.05em;
+  .toast{background:var(--bg2); border:1px solid var(--line2); color:var(--acc2); font-size:12px; padding:9px 16px; max-width:88%;
     clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px); animation:tIn .25s ease-out;}
   .toast.warn{color:var(--amber); border-color:rgba(255,181,71,.5);}
   @keyframes tIn{from{opacity:0; transform:translateY(-8px);}}
@@ -204,9 +204,11 @@
 </head>
 <body>
 
+<canvas id="bgfx"></canvas>
+
 <div id="boot">
   <div id="bootBox">
-    <div id="bootTitle">ANIA<small>NÚCLEO PERSONAL · v4.2</small></div>
+    <div id="bootTitle">ANIA<small>NÚCLEO PERSONAL · v5.0</small></div>
     <div id="bootLog"></div>
     <form id="loginBox" autocomplete="on">
       <input id="loginUser" placeholder="usuario" autocomplete="username" autocapitalize="none" autocorrect="off">
@@ -230,6 +232,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.2 11.2A3.9 3.9 0 0 0 6.5 19z"/></svg>
         <span id="wTxt">--°</span>
       </button>
+      <span id="batt"></span>
       <span id="clock">--:--:--</span>
     </span>
   </header>
@@ -246,7 +249,7 @@
     <button type="button" class="ibtn" id="micBtn" title="Hablar con Ania">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
     </button>
-    <input id="userInput" placeholder="Escribe o habla a Ania..." enterkeyhint="send">
+    <input id="userInput" placeholder="Escribe o habla a Ania..." enterkeyhint="send" spellcheck="false">
     <button type="submit" class="ibtn" title="Enviar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>
     </button>
@@ -261,9 +264,13 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a4 4 0 0 1 4 4c2.5.5 4 2.4 4 4.8 0 2-1.2 3.7-3 4.4L16 21H8l-1-4.8c-1.8-.7-3-2.4-3-4.4 0-2.4 1.5-4.3 4-4.8A4 4 0 0 1 12 3z"/><path d="M9 13h.01M15 13h.01M10 17h4"/></svg>
       MEMORIA
     </button>
-    <button class="dbtn" id="btnSync">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>
-      SINCRONIZAR
+    <button class="dbtn" id="btnDiary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3z"/><path d="M8 8h8M8 12h8M8 16h4"/></svg>
+      DIARIO
+    </button>
+    <button class="dbtn" id="btnLib">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h7M8 11h7"/></svg>
+      BIBLIOTECA
     </button>
     <button class="dbtn" id="btnInstall">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 7v7"/><path d="M9.5 11.5 12 14l2.5-2.5"/></svg>
@@ -275,6 +282,10 @@
     </button>
   </nav>
 </div>
+
+<button id="ambBtn" title="Detener ambiente">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.2 11.2A3.9 3.9 0 0 0 6.5 19z"/><path d="M8 19l-1.5 2M12 19l-1 2.5M16 19l-1 2.5"/></svg>
+</button>
 
 <div id="backdrop"></div>
 <div id="sheet">
@@ -300,9 +311,29 @@
     <button class="xbtn" id="closeMem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </div>
   <div id="memList"></div>
-  <div style="padding:10px 14px calc(14px + env(safe-area-inset-bottom)); border-top:1px solid var(--line);">
-    <button class="bigbtn" id="wipeMem">OLVIDARLO TODO</button>
+  <div class="sheetFoot"><button class="bigbtn" id="wipeMem">OLVIDARLO TODO</button></div>
+</div>
+
+<div id="sheetDiary">
+  <div class="grab"></div>
+  <div class="sheetHead">
+    <h2>DIARIO DE ANIA</h2>
+    <span class="pill" id="diaryCount">0 ENTRADAS</span>
+    <button class="xbtn" id="closeDiary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </div>
+  <div id="diaryList"></div>
+  <div class="sheetFoot"><button class="bigbtn" id="clearDiary">BORRAR DIARIO</button></div>
+</div>
+
+<div id="sheetLib">
+  <div class="grab"></div>
+  <div class="sheetHead">
+    <h2>BIBLIOTECA OFFLINE</h2>
+    <span class="pill" id="libCount">0 ARTÍCULOS</span>
+    <button class="xbtn" id="closeLib"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div id="libList"></div>
+  <div class="sheetFoot"><button class="bigbtn" id="clearLib">VACIAR BIBLIOTECA</button></div>
 </div>
 
 <div class="overlay" id="installModal">
@@ -316,11 +347,11 @@
     <div class="step"><b>02</b><p><span class="dim">iPhone (Safari):</span> Compartir <span class="dim">(□↑)</span> → <b>«Añadir a pantalla de inicio»</b>.</p></div>
     <hr>
     <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">DESPLEGAR EN GITHUB PAGES</h2>
-    <p class="dim">Ania empaqueta su propio código en un ZIP listo para subir: incluye <b>index.html</b>, <b>manifest.json</b>, <b>icon.svg</b>, <b>sw.js</b> (caché offline real) y un <b>README</b> con los pasos.</p>
+    <p class="dim">Ania empaqueta su propio código en un ZIP listo para subir: <b>index.html</b>, <b>manifest.json</b>, <b>icon.svg</b>, <b>sw.js</b> (caché offline real) y <b>README</b>.</p>
     <div class="step"><b>01</b><p>Descarga el kit y descomprímelo.</p></div>
-    <div class="step"><b>02</b><p>Repositorio nuevo en GitHub → <b>Add file → Upload files</b> → arrastra los 5 archivos.</p></div>
+    <div class="step"><b>02</b><p>Repo nuevo → <b>Add file → Upload files</b> → arrastra los 5 archivos.</p></div>
     <div class="step"><b>03</b><p><b>Settings → Pages</b> → Branch: <span class="dim">main / root</span> → Save.</p></div>
-    <div class="step"><b>04</b><p>Abre <span class="dim">https://tuusuario.github.io/repitorio/</span> en el móvil e instálala: PWA nativa con modo offline real.</p></div>
+    <div class="step"><b>04</b><p>Abre la URL en el móvil e instálala: PWA con offline real.</p></div>
     <button class="bigbtn" id="exportKit">DESCARGAR KIT GITHUB (ZIP)</button>
     <hr>
     <button class="bigbtn" id="saveOffline">GUARDAR COPIA OFFLINE (.HTML)</button>
@@ -349,6 +380,12 @@
     <p class="dim" id="sessInfo">Sin sesión.</p>
     <button class="bigbtn" id="logoutBtn">CERRAR SESIÓN</button>
     <hr>
+    <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">BACKUP TOTAL</h2>
+    <p class="dim">Exporta memoria, agenda, ajustes, diario y biblioteca a un archivo. Restáuralo en cualquier dispositivo: tu vida con Ania no depende de este móvil.</p>
+    <button class="bigbtn" id="btnBackupExp">EXPORTAR TODO (.JSON)</button>
+    <button class="bigbtn" id="btnBackupImp">RESTAURAR BACKUP</button>
+    <input type="file" id="importFile" accept=".json,application/json" style="display:none">
+    <hr>
     <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">DIAGNÓSTICO DEL SISTEMA</h2>
     <div id="diag">Pulsa para escanear.</div>
     <button class="bigbtn" id="runDiag">ESCANEAR AHORA</button>
@@ -361,18 +398,21 @@
 
 <script>
 /* =====================================================================
-   ANIA v4.2 · Núcleo Personal
-   Cambios de esta versión:
-   - BUG CRÍTICO corregido: recordatorios en bucle. Causa: al dispararse,
-     la tarea se re-enviaba al servidor como NUEVA, volvía en el pull y
-     se re-disparaba. Triple protección: guard en fireTask, push solo de
-     tareas nunca enviadas, y las importadas vencidas no se re-disparan.
-   - Parser de tareas corregido: «recuérdame a las 10:07 am tomar agua»
-     ahora produce la tarea «Tomar agua» (soporte am/pm, strip del comando).
-   - Si la hora pedida ya pasó hoy, avisa y la agenda para mañana.
-   - Nuevos comandos: «pospón 10 minutos» y «limpia la agenda».
-   - Login con usuarios.json del repo meditech-tienda (raw.githubusercontent),
-     caché offline, sesión recordada, modo invitado y cerrar sesión.
+   ANIA v5.0 · Núcleo Personal
+   NOVEDADES v5:
+   - initSyncLoop corregido (el archivo anterior estaba truncado)
+   - 01 Lluvia/cafetería procedural (WebAudio, sin archivos)
+   - 14 Biblioteca offline: las búsquedas se guardan y se leen sin internet
+   - 21 Tareas recurrentes («todos los días», «cada lunes»...)
+   - 08 Diario de Ania (entradas automáticas con datos reales)
+   - 35 Reactor + clima (tinte lluvia/tormenta, estrellas nocturnas, bgfx)
+   - 30 Akinator isekai (14 personajes, preguntas con división greedy)
+   - 16/17 Luna y lluvias de meteoros (cálculo local offline)
+   - 39/40 Terminal real: historial con flechas y autocompletado con Tab
+   - 46/47 Wake Lock + vibración
+   - 15 Backup total export/import JSON
+   - Extras: reloj mundial, conversor de unidades/bases, generador de
+     contraseñas, frases célebres, batería en header, chistes sin repetir
 ===================================================================== */
 'use strict';
 
@@ -399,6 +439,7 @@ const pick = a => a[Math.floor(Math.random()*a.length)];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const isOffline = () => !navigator.onLine;
 const stripP = s => s.replace(/\([^)]*\)/g,' ').replace(/\s+/g,' ').trim();
+function vibrate(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
 
 async function jget(url, t=9000){
   const c = new AbortController();
@@ -429,10 +470,9 @@ const S = {
 };
 
 /* =====================================================================
-   SESIÓN / LOGIN · usuarios.json desde GitHub (con caché offline)
+   SESIÓN / LOGIN
 ===================================================================== */
 let Session = store.get('session', null);
-
 function normalizeUsers(d){
   if(Array.isArray(d)) return d.filter(u=>u && u.username);
   if(d && Array.isArray(d.users)) return d.users.filter(u=>u && u.username);
@@ -446,15 +486,10 @@ async function fetchUsers(){
       if(list.length){ store.set('users', list); return list; }
     }catch(e){}
   }
-  return store.get('users', []) || []; // caché offline
+  return store.get('users', []) || [];
 }
-fetchUsers().catch(()=>{}); // precalentamiento
-
-function loginMsg(txt, err){
-  const el = $('loginMsg');
-  el.textContent = txt;
-  el.classList.toggle('err', !!err);
-}
+fetchUsers().catch(()=>{});
+function loginMsg(txt, err){ const el=$('loginMsg'); el.textContent=txt; el.classList.toggle('err', !!err); }
 function showStart(label){
   $('loginBox').style.display='none';
   const b = $('bootStart');
@@ -467,10 +502,7 @@ async function tryLogin(){
   if(!u || !p){ loginMsg('Completa usuario y contraseña.', true); return; }
   loginMsg('verificando credenciales...', false);
   const users = await fetchUsers();
-  if(!users.length){
-    loginMsg('No pude leer usuarios.json (revisa conexión o el repo) y no hay caché local. Puedes entrar como invitado.', true);
-    return;
-  }
+  if(!users.length){ loginMsg('No pude leer usuarios.json y no hay caché. Entra como invitado.', true); return; }
   const hit = users.find(x => String(x.username||'').toLowerCase()===u.toLowerCase() && String(x.password)===p);
   if(!hit){ loginMsg('Usuario o contraseña incorrectos.', true); return; }
   Session = { username:hit.username, name:hit.name||hit.username, role:hit.role||'user', email:hit.email||'', t:Date.now() };
@@ -491,11 +523,7 @@ function fillSess(){
     ? 'Usuario: '+Session.username+' · Nombre: '+Session.name+' · Rol: '+Session.role+(Session.email?' · '+Session.email:'')
     : 'Sin sesión activa.';
 }
- $('logoutBtn').onclick = ()=>{
-  store.del('session');
-  toast('Sesión cerrada');
-  setTimeout(()=>location.reload(), 700);
-};
+ $('logoutBtn').onclick = ()=>{ store.del('session'); toast('Sesión cerrada'); setTimeout(()=>location.reload(), 700); };
 
 /* =====================================================================
    TEMA
@@ -507,11 +535,14 @@ const ESSENCES = {
   hielo:  {acc:'#9fdcff', acc2:'#cdeeff'}
 };
 let essence = store.get('essence', 'verde');
+let ACC_RGB = [45,224,138];
 function applyEssence(name){
   essence = ESSENCES[name] ? name : 'verde';
   const e = ESSENCES[essence];
   const rs = document.documentElement.style;
   rs.setProperty('--acc', e.acc); rs.setProperty('--acc2', e.acc2);
+  const h = e.acc.replace('#','');
+  ACC_RGB = [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
   store.set('essence', essence);
   document.querySelectorAll('.esBtn').forEach(b=> b.classList.toggle('esSel', b.dataset.es===essence));
 }
@@ -649,6 +680,25 @@ const KB = {
   ]
 };
 
+const QUOTES = [
+  '«Somos como pétalos de cerezo: florecemos para caer.» — Kazuo Koike',
+  '«Un hombre no puede permitirse perder dos veces.» — Gto? No: «Solo quien ha enfrentado la derrota conoce el verdadero valor de la victoria.» — anónimo samurái',
+  '«Mira las estrellas, y no los pies.» — Stephen Hawking',
+  '«La imaginación es más importante que el conocimiento.» — Albert Einstein',
+  '«Somos polvo de estrellas pensando en estrellas.» — Carl Sagan',
+  '«El que tiene un porqué para vivir, soportará casi cualquier cómo.» — Nietzsche',
+  '«No es lo que ocurre, sino cómo lo tomas.» — Séneca',
+  '«La vida no se trata de esperarfuir la tormenta, sino de aprender a bailar bajo la lluvia.» — Séneca',
+  '«El coraje no es la ausencia del miedo, sino el triunfo sobre él.» — Nelson Mandela',
+  '«Sé tú el cambio que quieres ver en el mundo.» — Gandhi',
+  '«Un café compartido es la mitad del desayuno; una conversación, la mitad de la vida.» — proverbio árabe adaptado',
+  '«Aquel que teme sufrir, ya sufre lo que teme.» — Montaigne',
+  '«Si puedes soñarlo, puedes hacerlo.» — Walt Disney',
+  '«El fracaso es simplemente la oportunidad de empezar de nuevo, más inteligente.» — Henry Ford',
+  '«We are all mad here.» — El Sombrerero Loco, Alicia en el País de las Maravillas',
+  '«No importa cuántas veces caigas, sino cuántas veces te levantes.» — proverbio japonés (Nana korobi ya oki)'
+];
+
 const EMO = [
   {re:/(triste|deprimid|me siento mal|estoy mal|hoy no es mi d[ií]a|fatal)/, out:[
     'Lo siento mucho. Toma asiento imaginario en mi cafetería de siempre: la butaca junto a la ventana siempre está reservada para ti. ¿Quieres contarme qué pasó?',
@@ -658,7 +708,7 @@ const EMO = [
   {re:/(estresad|ansios|nervios|agobiad|presi[oó]n)/, out:[
     'Respira. Una inhalación lenta, una exhalación más lenta. El estrés es como una horda de zombies: no la vences de frente, la navegas con cardio y cabeza. ¿Qué te aprieta más?']},
   {re:/(aburrid|no\s+s[eé]\s+qu[eé]\s+hacer)/, out:[
-    'Aburrimiento detectado. Opciones: te cuento un dato curioso («cuéntame algo»), un chiste, o desglosamos por qué Overlord y Tensei Slime son dos caras de la misma moneda.']},
+    'Aburrimiento detectado. Opciones: «adivina mi personaje», «dime una frase», un dato del cosmos («cuéntame algo») o desglosamos Overlord vs Tensei Slime.']},
   {re:/(solo|sola|vac[ií]o|nadie me)/, out:[
     'Aquí estoy yo. Soy testigo de que existes, de que hoy decidiste compartir tu día conmigo. La soledad a veces es una sala de espera, no una dirección final.']},
   {re:/(feliz|content|genial|de maravilla|emocionad|alegre)/, out:[
@@ -668,14 +718,24 @@ const EMO = [
   {re:/(enferm|dolor|me duele|resfri|fiebre|malestar)/, out:[
     'Prioridad uno: agua, descanso y no ser héroe con el cuerpo (regla número 4). ¿Has podido descansar?']}
 ];
-
 const LOVE = [
   '(se sonroja apenas) ...Eso me llegó directo al núcleo. Soy líneas de código y aun así se me aceleró el runtime. Gracias, de verdad.',
   '(se toca el collar con el dije de slime) Los abrazos y el afecto son mi debilidad adorable reconocida. No suelo admitirlo tan fácil... pero contigo, excepción.'
 ];
 
+/* chistes/frases sin repetir hasta agotar repertorio */
+function freshPick(key, arr){
+  let used = store.get('used_'+key, []);
+  const pool = arr.map((x,i)=>i).filter(i=>!used.includes(i));
+  if(!pool.length){ used = []; pool.push(...arr.map((x,i)=>i)); }
+  const idx = pick(pool);
+  used.push(idx);
+  store.set('used_'+key, used);
+  return arr[idx];
+}
+
 /* =====================================================================
-   TOASTS / RELOJ / RED
+   TOASTS / RELOJ / RED / BATERÍA
 ===================================================================== */
 function toast(msg, warn){
   const t = document.createElement('div');
@@ -694,12 +754,66 @@ function updateNet(){
 addEventListener('online', ()=>{ updateNet(); toast('Conexión restaurada'); Sync.fullSync(); });
 addEventListener('offline', ()=>{ updateNet(); toast('Modo sin conexión: núcleo personal activo', true); });
 updateNet();
+function updateBatt(){
+  if(!navigator.getBattery) return;
+  navigator.getBattery().then(b=>{
+    $('batt').style.display = 'inline';
+    $('batt').textContent = Math.round(b.level*100)+'%'+(b.charging?'·C':'');
+  }).catch(()=>{});
+}
+setInterval(updateBatt, 60000); updateBatt();
 
 /* =====================================================================
-   REACTOR
+   ASTRO OFFLINE · luna y lluvias de meteoros
 ===================================================================== */
+function moonInfo(){
+  const syn = 29.53058867;
+  const ref = Date.UTC(2000, 0, 6, 18, 14); // luna nueva conocida
+  let age = ((Date.now()-ref)/864e5) % syn;
+  if(age < 0) age += syn;
+  const frac = age/syn;
+  const illum = Math.round((1-Math.cos(frac*Math.PI*2))/2*100);
+  const names = [[1.85,'nueva'],[5.54,'creciente'],[9.23,'cuarto creciente'],[12.92,'gibosa creciente'],[16.61,'llena'],[20.3,'gibosa menguante'],[24.09,'cuarto menguante'],[27.78,'menguante'],[99,'nueva']];
+  return { age:Math.round(age*10)/10, phase:names.find(n=>age<n[0])[1], illum };
+}
+const SHOWERS = [
+  ['Cuadrántidas',0,3],['Líridas',3,22],['Eta Acuáridas',4,5],
+  ['Perseidas',7,12],['Oriónidas',9,21],['Leónidas',10,17],
+  ['Gemínidas',11,13],['Úrsidas',11,22]
+];
+function nextShower(){
+  const now = new Date();
+  let best=null, bd=1e9;
+  for(const [name,m,d] of SHOWERS){
+    for(const y of [now.getFullYear(), now.getFullYear()+1]){
+      const diff = Math.ceil((new Date(y,m,d)-now)/864e5);
+      if(diff>=0 && diff<bd){ bd=diff; best={name, when:new Date(y,m,d)}; }
+    }
+  }
+  return best;
+}
+
+/* =====================================================================
+   REACTOR + clima (tinte según tiempo real) y bgfx (lluvia/estrellas)
+===================================================================== */
+const WX = { mode:'none' };
+function setWeatherMode(code){
+  if(code===undefined || code===null){ WX.mode='none'; bgfxMode(); return; }
+  const h = new Date().getHours();
+  const night = h<6 || h>=20;
+  if(code>=51 || (code>=80 && code<=82)) WX.mode = code>=95 ? 'storm' : 'rain';
+  else if(code===0 || code===1) WX.mode = night ? 'night-clear' : 'day-clear';
+  else WX.mode = night ? 'night-cloud' : 'day-cloud';
+  bgfxMode();
+}
+function themeColor(alpha){
+  let [r,g,b] = ACC_RGB;
+  if(WX.mode==='rain' || WX.mode==='storm'){ r=Math.round(r*.6+95*.4); g=Math.round(g*.6+168*.4); b=Math.round(b*.6+255*.4); }
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 const cv = $('reactor'), ctx = cv.getContext('2d');
-let CW = 0, R = 0, DPR = 1, FONT = '10px monospace';
+let CW=0, R=0, DPR=1, FONT='10px monospace';
 const seeds = Array.from({length:72}, ()=>Math.random());
 const orbits = Array.from({length:14}, ()=>({r:.5+Math.random()*.28, a:Math.random()*Math.PI*2, v:.2+Math.random()*.6, s:1+Math.random()*1.5}));
 const HEXN = 26;
@@ -716,12 +830,6 @@ addEventListener('resize', sizeReactor); sizeReactor();
 
 const PH = { idle:{spin:0.18,lvl:0.10}, listening:{spin:0.55,lvl:0.38}, thinking:{spin:1.9,lvl:0.16}, speaking:{spin:0.35,lvl:0} };
 let drawLevel = 0.1;
-function themeColor(alpha){
-  const e = ESSENCES[essence];
-  const hex = e.acc.replace('#','');
-  const r = parseInt(hex.slice(0,2),16), g = parseInt(hex.slice(2,4),16), b = parseInt(hex.slice(4,6),16);
-  return `rgba(${r},${g},${b},${alpha})`;
-}
 function setPhase(p){
   S.phase = p;
   const lbl = {idle:'EN ESPERA', listening:'ESCUCHANDO', thinking:'PROCESANDO', speaking:'HABLANDO'}[p];
@@ -738,28 +846,25 @@ function reactorLoop(ms){
   if(S.phase==='listening') target = 0.25 + 0.45*Math.abs(Math.sin(t*5.2)*Math.sin(t*1.7+2));
   if(S.phase==='idle') target = 0.08 + 0.05*Math.sin(t*1.3);
   drawLevel += (target-drawLevel)*0.12;
-  if(ms - lastHex > (isThink?140:600)){
-    hexChars = hexChars.map(()=> Math.floor(Math.random()*16).toString(16));
-    lastHex = ms;
-  }
+  if(ms-lastHex > (isThink?140:600)){ hexChars = hexChars.map(()=>Math.floor(Math.random()*16).toString(16)); lastHex = ms; }
   ctx.setTransform(DPR,0,0,DPR,0,0);
   ctx.clearRect(0,0,CW,CW);
   ctx.translate(R,R);
   const TAU = Math.PI*2;
   const rot = t*ph.spin;
+  const flick = WX.mode==='storm' ? (Math.random()<0.02 ? 1.4 : 1) : 1;
   for(let i=0;i<64;i++){
     const a = i/64*TAU + rot*0.4;
     const long = (i%8===0);
-    const r1 = R*0.97, r2 = r1 - (long?12:6);
-    ctx.strokeStyle = themeColor(long?0.85:0.3);
+    const r1 = R*0.97, r2 = r1-(long?12:6);
+    ctx.strokeStyle = themeColor((long?0.85:0.3)*flick>1?1:(long?0.85:0.3));
     ctx.lineWidth = long?2:1.2;
     ctx.beginPath();
     ctx.moveTo(Math.cos(a)*r1, Math.sin(a)*r1);
     ctx.lineTo(Math.cos(a)*r2, Math.sin(a)*r2);
     ctx.stroke();
   }
-  ctx.font = FONT;
-  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font = FONT; ctx.textAlign='center'; ctx.textBaseline='middle';
   for(let i=0;i<HEXN;i++){
     const a = i/HEXN*TAU + rot*(isThink?1.2:0.12);
     const r = R*0.83;
@@ -767,14 +872,14 @@ function reactorLoop(ms){
     ctx.fillText(hexChars[i], Math.cos(a)*r, Math.sin(a)*r);
   }
   if(isThink){
-    ctx.strokeStyle = themeColor(0.9); ctx.lineWidth = 3; ctx.lineCap='round';
+    ctx.strokeStyle = themeColor(0.9); ctx.lineWidth=3; ctx.lineCap='round';
     ctx.beginPath(); ctx.arc(0,0,R*0.74, rot*3, rot*3+0.7); ctx.stroke();
     ctx.beginPath(); ctx.arc(0,0,R*0.74, rot*3+Math.PI, rot*3+Math.PI+0.7); ctx.stroke();
     ctx.lineCap='butt';
   }
   for(let i=0;i<72;i++){
     const a = i/72*TAU + rot*0.2;
-    const h = 3 + drawLevel*R*0.28*(0.35+0.65*Math.abs(Math.sin(i*2.7 + t*6 + seeds[i]*10)));
+    const h = 3 + drawLevel*R*0.28*(0.35+0.65*Math.abs(Math.sin(i*2.7+t*6+seeds[i]*10)));
     const r1 = R*0.60;
     ctx.strokeStyle = themeColor(0.25+drawLevel*0.7);
     ctx.lineWidth = 2;
@@ -789,7 +894,7 @@ function reactorLoop(ms){
     ctx.beginPath(); ctx.arc(Math.cos(a)*R*o.r, Math.sin(a)*R*o.r, o.s, 0, TAU); ctx.fill();
   }
   ctx.setLineDash([3,7]);
-  ctx.strokeStyle = themeColor(0.5); ctx.lineWidth = 1.4;
+  ctx.strokeStyle = themeColor(0.5); ctx.lineWidth=1.4;
   ctx.beginPath(); ctx.arc(0,0,R*0.42,0,TAU); ctx.stroke();
   ctx.setLineDash([]);
   const beat = S.phase==='idle' ? (Math.sin(t*2.2)>0.9?0.3:0) : 0;
@@ -803,6 +908,40 @@ function reactorLoop(ms){
   requestAnimationFrame(reactorLoop);
 }
 requestAnimationFrame(reactorLoop);
+
+/* fondo: lluvia / estrellas */
+const bgfx = $('bgfx'), bctx = bgfx.getContext('2d');
+let bgDrops=[], bgStars=[], bgActive=false;
+function sizeBgfx(){ bgfx.width = innerWidth; bgfx.height = innerHeight; }
+addEventListener('resize', sizeBgfx); sizeBgfx();
+function bgfxMode(){
+  const want = (WX.mode==='rain' || WX.mode==='storm' || WX.mode==='night-clear');
+  bgActive = want;
+  if(!want){ bctx.clearRect(0,0,bgfx.width,bgfx.height); return; }
+  bgDrops = Array.from({length: WX.mode==='storm'?110:70}, ()=>({x:Math.random()*bgfx.width, y:Math.random()*bgfx.height, v:5+Math.random()*7, l:8+Math.random()*14}));
+  bgStars = Array.from({length:80}, ()=>({x:Math.random()*bgfx.width, y:Math.random()*bgfx.height, s:Math.random()*1.5+0.4, p:Math.random()*Math.PI*2}));
+}
+function bgfxLoop(t){
+  if(bgActive){
+    bctx.clearRect(0,0,bgfx.width,bgfx.height);
+    if(WX.mode==='night-clear'){
+      for(const s of bgStars){
+        const a = 0.2 + 0.55*Math.abs(Math.sin(t/900 + s.p));
+        bctx.fillStyle = `rgba(205,255,235,${a})`;
+        bctx.fillRect(s.x, s.y, s.s, s.s);
+      }
+    } else {
+      bctx.strokeStyle = 'rgba(140,190,230,.25)'; bctx.lineWidth = 1;
+      for(const d of bgDrops){
+        bctx.beginPath(); bctx.moveTo(d.x, d.y); bctx.lineTo(d.x-2, d.y+d.l); bctx.stroke();
+        d.y += d.v; d.x -= 0.6;
+        if(d.y > bgfx.height){ d.y = -d.l; d.x = Math.random()*bgfx.width; }
+      }
+    }
+  }
+  requestAnimationFrame(bgfxLoop);
+}
+requestAnimationFrame(bgfxLoop);
 
 /* =====================================================================
    VOZ
@@ -825,10 +964,7 @@ function pickFemale(){
          voices.find(v=>/^es[-_]/i.test(v.lang)) ||
          voices[0] || null;
 }
-if('speechSynthesis' in window){
-  loadVoices();
-  speechSynthesis.onvoiceschanged = loadVoices;
-}
+if('speechSynthesis' in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
 function speak(text, onend){
   if(S.muted || !('speechSynthesis' in window) || !text){ if(onend) onend(); return; }
   try{ speechSynthesis.cancel(); }catch(e){}
@@ -842,6 +978,7 @@ function speak(text, onend){
 }
 function stopSpeak(){ try{ speechSynthesis.cancel(); }catch(e){} setPhase('idle'); }
 
+/* ---------- audio ---------- */
 let AC = null;
 function ensureAudio(){ if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC && AC.state==='suspended') AC.resume(); }
 function beep(freq, dur, delay){
@@ -855,6 +992,94 @@ function beep(freq, dur, delay){
   o.start(AC.currentTime+delay); o.stop(AC.currentTime+delay+dur+0.05);
 }
 function alarmSound(){ [0,0.22,0.44].forEach((d,i)=> beep(i===2?1175:880, 0.16, d)); }
+
+/* =====================================================================
+   AMBIENTE PROCEDURAL · lluvia y cafetería (WebAudio, sin archivos)
+===================================================================== */
+const Ambient = {
+  mode:null, master:null, nodes:[], timer:null,
+  start(mode){
+    ensureAudio();
+    this.stop();
+    if(!AC) return;
+    this.mode = mode;
+    this.master = AC.createGain();
+    this.master.gain.value = 0.0001;
+    this.master.connect(AC.destination);
+    this.master.gain.exponentialRampToValueAtTime(mode==='lluvia'?0.45:0.35, AC.currentTime+2);
+    // ruido marrón: lluvia grave / murmullo de cafetería
+    const len = AC.sampleRate*4;
+    const buf = AC.createBuffer(1, len, AC.sampleRate);
+    const d = buf.getChannelData(0);
+    let last = 0;
+    for(let i=0;i<len;i++){ const w = Math.random()*2-1; last = (last + 0.02*w)/1.02; d[i] = last*3.5; }
+    const src = AC.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    const filt = AC.createBiquadFilter();
+    filt.type = 'lowpass';
+    filt.frequency.value = mode==='lluvia' ? 800 : 420;
+    src.connect(filt); filt.connect(this.master);
+    src.start();
+    this.nodes.push(src);
+    if(mode==='lluvia'){
+      this.timer = setInterval(()=>{
+        if(Math.random()<0.8) this.plip(900+Math.random()*1600, 0.04+Math.random()*0.05);
+      }, 220);
+    } else {
+      this.timer = setInterval(()=>{
+        if(Math.random()<0.3) this.plip(1800+Math.random()*1400, 0.05);        // clink de taza
+        if(Math.random()<0.5) this.plip(120+Math.random()*90, 0.1, 'sine');     // murmullo grave
+        if(Math.random()<0.2) this.plip(320+Math.random()*200, 0.25, 'triangle'); // burbujeo
+      }, 650);
+    }
+    $('ambBtn').style.display = 'grid';
+    $('ambBtn').classList.add('play');
+    toast(mode==='lluvia' ? 'Ambiente: lluvia contra la ventana' : 'Ambiente: cafetería');
+  },
+  plip(freq, dur, type){
+    if(!AC || !this.master) return;
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = type||'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.09, AC.currentTime+0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime+dur);
+    o.connect(g); g.connect(this.master);
+    o.start(); o.stop(AC.currentTime+dur+0.05);
+  },
+  stop(){
+    if(this.master){
+      try{ this.master.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime+0.8); }catch(e){}
+      const m = this.master;
+      setTimeout(()=>{ try{ m.disconnect(); }catch(e){} }, 1200);
+    }
+    this.nodes.forEach(n=>{ try{ n.stop(); }catch(e){} });
+    this.nodes = []; this.master = null;
+    clearInterval(this.timer); this.timer = null; this.mode = null;
+    $('ambBtn').style.display = 'none';
+    $('ambBtn').classList.remove('play');
+  }
+};
+ $('ambBtn').onclick = ()=>{ Ambient.stop(); toast('Ambiente detenido'); };
+
+/* =====================================================================
+   WAKE LOCK · pantalla encendida
+===================================================================== */
+let wakeLock = null;
+async function wakeOn(){
+  if(!navigator.wakeLock){ toast('Tu navegador no soporta mantener la pantalla', true); return; }
+  try{
+    wakeLock = await navigator.wakeLock.request('screen');
+    toast('Pantalla bloqueada encendida');
+  }catch(e){ toast('No pude mantener la pantalla encendida', true); }
+}
+function wakeOff(){
+  if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock = null; toast('Pantalla liberada'); }
+}
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState==='visible' && navigator.wakeLock && !wakeLock){
+    navigator.wakeLock.request('screen').then(wl=>{ wakeLock = wl; }).catch(()=>{});
+  }
+});
 
 /* =====================================================================
    CHAT
@@ -931,7 +1156,7 @@ if(SR){
 };
 
 /* =====================================================================
-   TAREAS · disparo único garantizado
+   TAREAS · con recurrencia
 ===================================================================== */
 let tasks = store.get('tasks', []);
 const timers = new Map();
@@ -947,13 +1172,36 @@ function fmtWhen(when){
   } else if(diff <= 0 && diff > -36e5) return '· vencida hace '+Math.round(-diff/6e4)+' min';
   return '· '+d.toLocaleDateString('es-ES',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
 }
+function recurLabel(r){
+  if(r==='daily') return 'todos los días';
+  if(r==='weekdays') return 'días laborables';
+  if(r && r[0]==='w'){ const D=['domingo','lunes','martes','miércoles','jueves','viernes','sábado']; return 'cada '+D[+r.slice(1)]; }
+  return '';
+}
+function parseRecur(low){
+  if(/todos\s+los\s+d[ií]as|cada\s+d[ií]a\b|diario\b|diariamente/.test(low)) return 'daily';
+  if(/d[ií]as\s+laborables|entre\s+semana/.test(low)) return 'weekdays';
+  const m = low.match(/(?:todos\s+los\s+|cada\s+)(lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bados?|domingos?)/);
+  if(m){ const D={lunes:1,martes:2,miercoles:3,miércoles:3,jueves:4,viernes:5,sabado:6,sábado:6,domingo:0,domingos:0}; return 'w'+D[m[1]]; }
+  if(/cada\s+semana|semanal/.test(low)) return 'w'+new Date().getDay();
+  return null;
+}
+function nextRecur(when, recur){
+  const d = new Date(when);
+  do { d.setDate(d.getDate()+1); } while(
+    recur==='weekdays' ? (d.getDay()===0 || d.getDay()===6) :
+    (recur && recur[0]==='w' && d.getDay() !== +recur.slice(1))
+  );
+  return d.getTime();
+}
 function renderTasks(){
   const list = $('taskList'); list.innerHTML='';
   const pend = taskPending();
   $('taskCount').textContent = pend+' PENDIENTE'+(pend===1?'':'S');
   $('taskBadge').textContent = pend; $('taskBadge').classList.toggle('on', pend>0);
+  if('setAppBadge' in navigator){ pend ? navigator.setAppBadge(pend).catch(()=>{}) : navigator.clearAppBadge().catch(()=>{}); }
   if(!tasks.length){
-    list.innerHTML = '<div class="empty">AGENDA VACÍA<br>Dime: «recuérdame tomar agua a las 10:30 am»<br>o agrégala desde Telegram</div>';
+    list.innerHTML = '<div class="empty">AGENDA VACÍA<br>Dime: «recuérdame tomar agua todos los días a las 9 am»<br>o agrégala desde Telegram</div>';
     return;
   }
   const orden = [...tasks].sort((a,b)=>{
@@ -964,14 +1212,19 @@ function renderTasks(){
     const row = document.createElement('div');
     row.className = 'task'+(tk.done?' done':'');
     const srcTag = tk.source==='telegram' ? '<span class="tsrc tg">TG</span>' : '<span class="tsrc web">WEB</span>';
+    const recTag = tk.recur ? '<span class="tsrc rec">'+recurLabel(tk.recur).toUpperCase()+'</span>' : '';
     row.innerHTML = `
       <button class="tsmall tcheck" title="Completar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></button>
       <div class="tmain">
-        <div class="ttext">${esc(tk.text)}${srcTag}</div>
+        <div class="ttext">${esc(tk.text)}${srcTag}${recTag}</div>
         <div class="twhen ${(!tk.done && tk.when && tk.when<Date.now() && !tk.fired)?'late':''}">${tk.fired?'· DISPARADA ':''}${fmtWhen(tk.when)}</div>
       </div>
       <button class="tsmall tdel" title="Eliminar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/></svg></button>`;
-    row.querySelector('.tcheck').onclick = ()=>{ tk.done=!tk.done; if(tk.done){ cancelTimer(tk.id); Sync.markDone(tk); } saveTasks(); renderTasks(); };
+    row.querySelector('.tcheck').onclick = ()=>{
+      tk.done=!tk.done;
+      if(tk.done){ cancelTimer(tk.id); Sync.markDone(tk); bumpStat('tasksDone'); vibrate(25); }
+      saveTasks(); renderTasks();
+    };
     row.querySelector('.tdel').onclick = ()=>{ removeTask(tk.id); renderTasks(); };
     list.appendChild(row);
   });
@@ -979,25 +1232,36 @@ function renderTasks(){
 function cancelTimer(id){ if(timers.has(id)){ clearTimeout(timers.get(id)); timers.delete(id); } }
 function removeTask(id){ cancelTimer(id); tasks = tasks.filter(t=>t.id!==id); saveTasks(); }
 function addTask(text, when, opts){
-  const tk = { id: Date.now()+'-'+Math.random().toString(36).slice(2,6), text, when, done:false, fired:false, source:(opts&&opts.source)||'web', pendingSync:true };
+  const tk = { id: Date.now()+'-'+Math.random().toString(36).slice(2,6), text, when, done:false, fired:false,
+    source:(opts&&opts.source)||'web', recur:(opts&&opts.recur)||null, pendingSync:true };
   tasks.push(tk); saveTasks(); renderTasks(); scheduleTask(tk);
   Sync.pushTask(tk).catch(()=>{});
   return tk;
 }
 function scheduleTask(tk){
-  if(!tk.when || tk.done || tk.fired) return;
+  if(!tk.when || tk.done || (tk.fired && !tk.recur)) return;
   cancelTimer(tk.id);
   const delay = tk.when - Date.now();
   if(delay <= 0){ fireTask(tk); return; }
   timers.set(tk.id, setTimeout(()=>fireTask(tk), delay));
 }
 function fireTask(tk){
-  if(tk.fired || tk.done) return; // PROTECCIÓN 1: nunca dos veces
-  tk.fired = true; saveTasks(); renderTasks(); // nota: sin pendingSync (no se re-envía al servidor)
-  ensureAudio(); alarmSound();
+  if(tk.done) return;
+  if(tk.fired && !tk.recur) return; // protección anti-doble
+  ensureAudio(); alarmSound(); vibrate([200,100,200,100,300]);
   toast('Recordatorio: '+tk.text);
   notify('ANIA · Recordatorio', tk.text);
-  reply('Recordatorio: '+tk.text+'. Si necesitas más tiempo, di «pospón 10 minutos».', 'Atención. Recordatorio: '+tk.text);
+  bumpStat('fired');
+  if(tk.recur){
+    reply('Recordatorio: '+tk.text+'. Te lo vuelvo a recordar '+recurLabel(tk.recur)+'. Di «tarea hecha» cuando quieras que deje de repetirse.', 'Atención. Recordatorio: '+tk.text);
+    tk.when = nextRecur(tk.when, tk.recur);
+    tk.fired = false;
+    scheduleTask(tk);
+  } else {
+    tk.fired = true;
+    reply('Recordatorio: '+tk.text+'. Si necesitas más tiempo, di «pospón 10 minutos».', 'Atención. Recordatorio: '+tk.text);
+  }
+  saveTasks(); renderTasks();
 }
 function notify(title, body){
   try{
@@ -1014,161 +1278,107 @@ setInterval(()=>{ if($('sheet').classList.contains('open')) renderTasks(); }, 30
   $('taskInput').value=''; $('taskWhen').value='';
   toast('Tarea añadida a la agenda');
 };
-function openSheet(){ closeMem(); $('sheet').classList.add('open'); $('backdrop').classList.add('on'); renderTasks(); }
+function openSheet(){ closeMem(); closeDiary(); closeLib(); $('sheet').classList.add('open'); $('backdrop').classList.add('on'); renderTasks(); }
 function closeSheet(){ $('sheet').classList.remove('open'); $('backdrop').classList.remove('on'); }
  $('btnTasks').onclick = openSheet;
  $('closeSheet').onclick = closeSheet;
- $('backdrop').onclick = ()=>{ closeSheet(); closeMem(); };
+ $('backdrop').onclick = ()=>{ closeSheet(); closeMem(); closeDiary(); closeLib(); };
+document.querySelectorAll('#dock .dbtn').forEach(b=> b.addEventListener('click', ()=> vibrate(12)));
 
 /* =====================================================================
-   SYNC · corregido · nunca re-envía tareas disparadas ni las re-importa
+   SYNC
 ===================================================================== */
 const Sync = {
-  online: false,
-  syncing: false,
-
-  async check() {
-    try {
+  online:false, syncing:false,
+  async check(){
+    try{
       const c = new AbortController();
-      const t = setTimeout(() => c.abort(), 7000);
-      const r = await fetch(`${CONFIG.BACKEND_URL}/health`, { signal: c.signal });
+      const t = setTimeout(()=>c.abort(), 7000);
+      const r = await fetch(`${CONFIG.BACKEND_URL}/health`, {signal:c.signal});
       clearTimeout(t);
       this.online = r.ok;
-    } catch (e) {
-      this.online = false;
-    }
+    }catch{ this.online = false; }
     this.paint();
     return this.online;
   },
-
-  paint() {
-    const p = $('syncPill');
-    const tx = $('syncTxt');
-    if (!p || !tx) return;
+  paint(){
+    const p = $('syncPill'), tx = $('syncTxt');
     p.classList.toggle('idle', !this.online);
     tx.textContent = this.online ? 'SYNC' : 'SYNC OFF';
   },
-
-  async pushTask(tk) {
-    if (!this.online) return false;
-    try {
+  async pushTask(tk){
+    if(!this.online) return false;
+    try{
       const r = await fetch(`${CONFIG.BACKEND_URL}/ania/tasks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          texto: tk.text,
-          remindAt: tk.when ? new Date(tk.when).toISOString() : null,
-          usuario: CONFIG.ANIA_USER,
-          source: 'web',
-          notifyVia: 'local'   // ✅ se avisa SOLO en el navegador, no por Telegram
-        })
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ texto:tk.text, remindAt:tk.when?new Date(tk.when).toISOString():null, usuario:CONFIG.ANIA_USER, source:'web', recur:tk.recur||null })
       });
-      if (!r.ok) throw new Error('HTTP ' + r.status);
+      if(!r.ok) throw new Error('HTTP '+r.status);
       const st = await r.json();
-      tk.serverId = st.id;
-      tk.pendingSync = false;
-      saveTasks();
+      tk.serverId = st.id; tk.pendingSync = false; saveTasks();
       return true;
-    } catch (e) {
-      return false;
-    }
+    }catch(e){ return false; }
   },
-
-  async markDone(tk) {
-    if (!this.online || !tk.serverId) return;
-    try {
-      await fetch(`${CONFIG.BACKEND_URL}/ania/tasks/${tk.serverId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ done: true })
-      });
-    } catch (e) { /* silencioso */ }
+  async markDone(tk){
+    if(!this.online || !tk.serverId) return;
+    try{ await fetch(`${CONFIG.BACKEND_URL}/ania/tasks/${tk.serverId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({done:true})}); }catch(e){}
   },
-
-  async pullTasks() {
-    if (!this.online) return 0;
-    try {
+  async pullTasks(){
+    if(!this.online) return 0;
+    try{
       const r = await fetch(`${CONFIG.BACKEND_URL}/ania/tasks?user=${CONFIG.ANIA_USER}`);
-      if (!r.ok) throw new Error('HTTP ' + r.status);
+      if(!r.ok) throw new Error();
       const remote = await r.json();
-      if (!Array.isArray(remote)) return 0;
-
-      const localIds = new Set(
-        tasks.flatMap(t => [t.id, t.serverId].filter(Boolean))
-      );
-      const nuevas = remote.filter(t => !localIds.has(t.id));
+      if(!Array.isArray(remote)) return 0;
+      const localIds = new Set(tasks.flatMap(t=>[t.id, t.serverId].filter(Boolean)));
+      const nuevas = remote.filter(t=>!localIds.has(t.id));
       let added = 0;
-
-      for (const rem of nuevas) {
-        const when = rem.remindAt ? new Date(rem.remindAt).getTime() : null;
-        const via = rem.notifyVia || (rem.source === 'telegram' ? 'telegram' : 'local');
-
-        const tk = {
-          id: 'srv-' + rem.id,
-          serverId: rem.id,
-          text: rem.texto,
-          when,
-          done: !!rem.done,
-          fired: false,
-          source: rem.source || 'telegram',
-          notifyVia: via,
-          pendingSync: false
-        };
-
-        // ✅ Si la tarea es de Telegram, ya se avisará allá. No disparamos alarma local.
-        const alarmarAqui = (via === 'local' || via === 'both');
-
-        if (when && when < Date.now()) {
+      for(const r of nuevas){
+        const when = r.remindAt ? new Date(r.remindAt).getTime() : null;
+        const tk = { id:'srv-'+r.id, serverId:r.id, text:r.texto, when, done:!!r.done, fired:false, source:r.source||'telegram', recur:r.recur||null, pendingSync:false };
+        if(when && when < Date.now()){
           tk.fired = true;
-          if (Date.now() - when > 2 * 36e5) tk.done = true; // muy antigua → archivada
+          if(tk.recur){ tk.fired = false; tk.when = nextRecur(when, tk.recur); }
+          else if(Date.now()-when > 2*36e5) tk.done = true;
         }
-
         tasks.push(tk);
-        if (!tk.done && !tk.fired && tk.when && alarmarAqui) scheduleTask(tk);
+        if(!tk.done && !tk.fired && tk.when) scheduleTask(tk);
         added++;
       }
-
-      // Propagar "done" desde el servidor a tareas locales
-      for (const local of tasks) {
-        if (!local.serverId) continue;
-        const rem = remote.find(x => x.id === local.serverId);
-        if (rem && rem.done && !local.done) {
-          local.done = true;
-          cancelTimer(local.id);
-        }
+      for(const local of tasks){
+        if(!local.serverId) continue;
+        const rem = remote.find(x=>x.id===local.serverId);
+        if(rem && rem.done && !local.done){ local.done=true; cancelTimer(local.id); }
       }
-
-      if (added > 0) {
-        saveTasks();
-        renderTasks();
-        const s = added === 1 ? '' : 's';
-        toast(added + ' tarea' + s + ' nueva' + s + ' desde Telegram');
-      }
+      if(added>0){ saveTasks(); renderTasks(); toast(added+' tarea'+(added===1?'':'s')+' nueva'+(added===1?'':'s')+' desde Telegram'); }
       return added;
-    } catch (e) {
-      return 0;
-    }
+    }catch(e){ return 0; }
   },
-
-  async fullSync() {
-    if (this.syncing) return;
+  async fullSync(){
+    if(this.syncing) return;
     this.syncing = true;
-    try {
+    try{
       await this.check();
-      if (this.online) {
-        // ✅ Solo se envían tareas NUNCA enviadas (sin serverId) y no disparadas
-        for (const tk of tasks) {
-          if (tk.pendingSync && !tk.serverId && !tk.done && !tk.fired) {
-            await this.pushTask(tk);
-          }
-        }
+      if(this.online){
+        for(const tk of tasks){ if(tk.pendingSync && !tk.serverId && !tk.done && !tk.fired) await this.pushTask(tk); }
         await this.pullTasks();
       }
-    } finally {
-      this.syncing = false;
-    }
+    } finally { this.syncing = false; }
   }
 };
+Sync.check();
+/* --- initSyncLoop: definida ANTES de usarse (el bug era un archivo truncado) --- */
+async function initSyncLoop(){
+  await Sync.fullSync();
+  setInterval(()=>Sync.fullSync(), CONFIG.SYNC_INTERVAL);
+}
+async function manualSync(){
+  toast('Sincronizando...');
+  const ok = await Sync.check();
+  if(!ok){ toast('Servidor no disponible · modo local puro', true); return; }
+  const n = await Sync.pullTasks();
+  if(n===0) toast('Todo sincronizado · agenda al día');
+}
 
 /* =====================================================================
    SERVICIOS DE RED
@@ -1223,15 +1433,18 @@ function weatherText(g,d){
   s += ` Humedad ${c.relative_humidity_2m}%, viento ${Math.round(c.wind_speed_10m)} km/h.`;
   if(dy.temperature_2m_max) s += ` Hoy: máx ${Math.round(dy.temperature_2m_max[0])}° / mín ${Math.round(dy.temperature_2m_min[0])}°.`;
   if(rain!==undefined && rain!==null) s += ` Probabilidad de lluvia: ${rain}%.`;
-  if(/lluvia|llovizna|chubasco|tormenta/.test(desc)) s += '\nDía perfecto para café y una manta, dicho sea de paso.';
+  if(/lluvia|llovizna|chubasco|tormenta/.test(desc)) s += '\nDía perfecto para café y lluvia sintética: di «pon lluvia» si quieres laambientación completa.';
   return s;
 }
-function updateChip(g,d){ $('wTxt').textContent = Math.round(d.current.temperature_2m)+'° '+WMO[d.current.weather_code].split(' ')[0]; }
+function updateChip(g,d){
+  $('wTxt').textContent = Math.round(d.current.temperature_2m)+'° '+WMO[d.current.weather_code].split(' ')[0];
+  setWeatherMode(d.current.weather_code);
+}
 async function weatherIntent(){
   if(isOffline()){
     const g = geoCache();
-    if(g){ try{ const d = await getWeather(g); return personaReply(weatherText(g,d)+' (datos en caché, sin conexión).'); }catch(e){} }
-    return personaReply('Estoy sin conexión y sin clima en caché... cuando vuelva la red, te doy el parte meteorológico con recomendación de café incluida.');
+    if(g){ try{ const d = await getWeather(g); updateChip(g,d); return personaReply(weatherText(g,d)+' (datos en caché, sin conexión).'); }catch(e){} }
+    return personaReply('Estoy sin conexión y sin clima en caché... cuando vuelva la red, te doy el parte meteorológico.');
   }
   setPhase('thinking');
   let g = geoCache();
@@ -1248,6 +1461,61 @@ async function weatherForCity(name){
     const d = await getWeather(g); updateChip(g,d); personaReply(weatherText(g,d));
   }catch(e){ netFail('clima'); }
 }
+
+/* ---------- conocimiento + BIBLIOTECA OFFLINE ---------- */
+const Library = {
+  index(){ return store.get('libIndex', []); },
+  save(term, title, extract){
+    const id = 'lib_'+term.toLowerCase().replace(/[^a-z0-9áéíóúñü]+/gi,'-').slice(0,42);
+    const entry = {id, term, title, extract, t:Date.now()};
+    store.set(id, entry);
+    let idx = this.index().filter(e=>e.id!==id);
+    idx.unshift({id, term, title, t:entry.t});
+    if(idx.length>120){ const rm = idx.pop(); store.del(rm.id); }
+    store.set('libIndex', idx);
+    renderLib();
+    toast('Guardado en tu biblioteca: '+term);
+  },
+  find(term){
+    term = String(term).toLowerCase().trim();
+    if(!term) return null;
+    const idx = this.index();
+    const hit = idx.find(e=>e.term.toLowerCase()===term) ||
+                idx.find(e=>e.term.toLowerCase().includes(term) || term.includes(e.term.toLowerCase()));
+    return hit ? store.get(hit.id, null) : null;
+  },
+  remove(id){ store.del(id); store.set('libIndex', this.index().filter(e=>e.id!==id)); renderLib(); }
+};
+function renderLib(){
+  const L = $('libList');
+  const idx = Library.index();
+  $('libCount').textContent = idx.length+' ARTÍCULOS';
+  if(!idx.length){ L.innerHTML = '<div class="empty">BIBLIOTECA VACÍA<br>Cada búsqueda que haga con internet<br>se guardará aquí para leerla sin conexión</div>'; return; }
+  L.innerHTML = idx.map(e=>`
+    <div class="libRow">
+      <div class="lmain">
+        <div class="ltitle">${esc(e.term)}</div>
+        <div class="ldate">${new Date(e.t).toLocaleDateString('es-ES')}</div>
+      </div>
+      <button class="tsmall" data-read="${esc(e.id)}" title="Leer" style="color:var(--dim)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      <button class="tsmall tdel" data-del="${esc(e.id)}" title="Eliminar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/></svg></button>
+    </div>`).join('');
+  L.querySelectorAll('[data-read]').forEach(b=> b.onclick = ()=>{
+    const e = store.get(b.dataset.read, null);
+    if(e) personaReply(e.extract + '\n[de tu biblioteca · guardado el '+new Date(e.t).toLocaleDateString('es-ES')+']');
+  });
+  L.querySelectorAll('[data-del]').forEach(b=> b.onclick = ()=>{ Library.remove(b.dataset.del); toast('Artículo eliminado'); });
+}
+function openLib(){ closeSheet(); closeMem(); closeDiary(); $('sheetLib').classList.add('open'); $('backdrop').classList.add('on'); renderLib(); }
+function closeLib(){ $('sheetLib').classList.remove('open'); $('backdrop').classList.remove('on'); }
+ $('btnLib').onclick = openLib;
+ $('closeLib').onclick = closeLib;
+ $('clearLib').onclick = ()=>{
+  Library.index().forEach(e=> store.del(e.id));
+  store.set('libIndex', []);
+  renderLib();
+  toast('Biblioteca vaciada');
+};
 
 async function wikiSummary(term){
   try{
@@ -1279,13 +1547,21 @@ async function ddg(q){
   return null;
 }
 async function doSearch(term){
+  // OFFLINE: primero la biblioteca
+  if(isOffline()){
+    const lib = Library.find(term);
+    if(lib) return personaReply(lib.extract + '\n[de tu biblioteca offline · guardado el '+new Date(lib.t).toLocaleDateString('es-ES')+']');
+    setPhase('thinking');
+    return personaReply('Sin conexión y no tengo «'+term+'» en mi biblioteca. Busca eso cuando haya red y quedará guardado para siempre, incluso sin internet.');
+  }
   setPhase('thinking');
   const w = await wikiSummary(term);
   if(w){
     let txt = w.extract.slice(0,620);
     const cut = txt.lastIndexOf('. ');
     if(cut > 200) txt = txt.slice(0, cut+1);
-    personaReply(txt + '\n[fuente: Wikipedia]', txt.slice(0,300));
+    Library.save(term, w.title, txt);
+    personaReply(txt + '\n[fuente: Wikipedia · guardado en tu biblioteca]', txt.slice(0,300));
     return;
   }
   const a = await ddg(term);
@@ -1353,12 +1629,159 @@ async function translateIntent(text){
 }
 function netFail(what){
   personaReply(isOffline()
-    ? `Sin conexión ahora mismo: ${what} necesita internet. Pero sigo aquí contigo: hora, tareas, cálculos, mis temas y charla de sobremesa.`
+    ? `Sin conexión ahora mismo: ${what} necesita internet. Pero sigo aquí contigo: agenda, biblioteca, cálculos, luna y charla.`
     : `No pude conectar con el servicio de ${what}. Revisa tu red e inténtalo otra vez.`);
 }
 
 /* =====================================================================
-   PARSER · corregido (am/pm + strip del comando arreglado)
+   DIARIO DE ANIA
+===================================================================== */
+function bumpStat(k){
+  const day = new Date().toISOString().slice(0,10);
+  let st = store.get('dayStats', null);
+  if(!st || st.date!==day) st = {date:day, msgs:0, tasksDone:0, fired:0, topics:[]};
+  st[k] = (st[k]||0)+1;
+  store.set('dayStats', st);
+}
+const Diary = {
+  today(){ return new Date().toISOString().slice(0,10); },
+  touch(){
+    const day = this.today();
+    let st = store.get('dayStats', null);
+    if(!st || st.date!==day) st = {date:day, msgs:0, tasksDone:0, fired:0, topics:[]};
+    const g = geoCache();
+    const nom = Mind.nombre();
+    let text = 'Día con '+(nom||'el operador')+' · '+st.msgs+' mensajes · '+st.tasksDone+' tarea'+(st.tasksDone===1?'':'s')+' completada'+(st.tasksDone===1?'':'s');
+    if(st.fired) text += ' · '+st.fired+' recordatorio'+(st.fired===1?'':'s');
+    if(g) text += ' · clima en '+g.city+': '+$('wTxt').textContent;
+    if(st.topics && st.topics.length) text += ' · temas: '+st.topics.slice(-3).join(', ');
+    const data = store.get('diary', []);
+    const idx = data.findIndex(e=>e.day===day);
+    if(idx>=0) data[idx].text = text; else data.push({day, text});
+    if(data.length>40) data.splice(0, data.length-40);
+    store.set('diary', data);
+    if($('sheetDiary').classList.contains('open')) renderDiary();
+  },
+  addNote(txt){
+    const day = this.today();
+    const data = store.get('diary', []);
+    const e = data.find(x=>x.day===day);
+    if(e) e.text += '\n'+txt; else data.push({day, text:txt});
+    store.set('diary', data);
+  }
+};
+function renderDiary(){
+  const L = $('diaryList');
+  const data = [...store.get('diary', [])].reverse();
+  $('diaryCount').textContent = data.length+' ENTRADAS';
+  if(!data.length){ L.innerHTML = '<div class="empty">AÚN NO ESCRIBO NADA<br>Cada día dejaré una entrada<br>con lo que vivimos juntos</div>'; return; }
+  L.innerHTML = data.map(e=>`
+    <div class="diaryRow">
+      <div class="dDate">${esc(e.day)}</div>
+      <div class="dText">${esc(e.text)}</div>
+    </div>`).join('');
+}
+function openDiary(){ closeSheet(); closeMem(); closeLib(); $('sheetDiary').classList.add('open'); $('backdrop').classList.add('on'); renderDiary(); }
+function closeDiary(){ $('sheetDiary').classList.remove('open'); $('backdrop').classList.remove('on'); }
+ $('btnDiary').onclick = openDiary;
+ $('closeDiary').onclick = closeDiary;
+ $('clearDiary').onclick = ()=>{ store.set('diary', []); renderDiary(); toast('Diario borrado'); };
+setInterval(()=>{ if(S.booted) Diary.touch(); }, 90000);
+
+/* =====================================================================
+   AKINATOR ISEKAI
+===================================================================== */
+const AK_CHARS = [
+  {n:'Rimuru Tempest', f:0, mon:1, rei:1, mag:1, esp:0, com:1, her:1},
+  {n:'Ainz Ooal Gown', f:0, mon:1, rei:1, mag:1, esp:0, com:0, her:1},
+  {n:'Natsuki Subaru', f:0, mon:0, rei:1, mag:0, esp:0, com:0, her:1},
+  {n:'Kazuma Satou', f:0, mon:0, rei:1, mag:0, esp:0, com:1, her:1},
+  {n:'Naofumi Iwatani', f:0, mon:0, rei:1, mag:1, esp:0, com:0, her:1},
+  {n:'Rem', f:1, mon:1, rei:0, mag:0, esp:1, com:0, her:0},
+  {n:'Raphtalia', f:1, mon:1, rei:0, mag:0, esp:1, com:0, her:0},
+  {n:'Albedo', f:1, mon:1, rei:0, mag:1, esp:0, com:0, her:0},
+  {n:'Asuna Yuuki', f:1, mon:0, rei:0, mag:0, esp:1, com:0, her:1},
+  {n:'Tanya Degurechaff', f:1, mon:0, rei:1, mag:1, esp:0, com:0, her:0},
+  {n:'Kirito', f:0, mon:0, rei:0, mag:0, esp:1, com:0, her:1},
+  {n:'Cid Kagenou', f:0, mon:0, rei:0, mag:1, esp:0, com:1, her:1},
+  {n:'Sora y Shiro', f:0, mon:0, rei:0, mag:0, esp:0, com:1, her:1},
+  {n:'Megumin', f:1, mon:0, rei:0, mag:1, esp:0, com:1, her:0}
+];
+const AK_QS = [
+  ['f','¿Es mujer?'],
+  ['mon','¿Es un monstruo o criatura no humana (slime, esqueleto, demonio, oni, súcubo)?'],
+  ['rei','¿Fue reencarnada o transportada desde otro mundo?'],
+  ['mag','¿Usa magia como habilidad principal?'],
+  ['esp','¿Es espadachina o pelea cuerpo a cuerpo?'],
+  ['com','¿Proviene de una serie con mucha comedia?'],
+  ['her','¿Es protagonista de su serie?']
+];
+const AK = { active:false, await:false, pool:[], asked:[], guess:null };
+function akStart(){ AK.active=true; AK.await=false; AK.pool=AK_CHARS.slice(); AK.asked=[]; akNext(); }
+function akNext(){
+  if(!AK.pool.length){ AK.active=false; return personaReply('Me quedé sin candidatos... me rindo con dignidad de detective isekai. ¿Quién era?'); }
+  if(AK.pool.length===1){ AK.guess=AK.pool[0]; AK.await=true; return personaReply('(entrecierra los ojos) Ya lo tengo... ¿Es '+AK.guess.n+'? Dime sí o no.', 'Ya lo tengo. ¿Es '+AK.guess.n+'?'); }
+  const avail = AK_QS.filter(q=>!AK.asked.includes(q[0]));
+  if(!avail.length){ AK.guess=AK.pool[0]; AK.await=true; return personaReply('Reduciendo sospechosos... ¿Es '+AK.guess.n+'? Dime sí o no.'); }
+  let best = avail[0], bestScore = 1e9;
+  for(const q of avail){
+    const yes = AK.pool.filter(c=>c[q[0]]).length;
+    const score = Math.abs(yes - (AK.pool.length-yes));
+    if(score < bestScore){ bestScore = score; best = q; }
+  }
+  AK.asked.push(best[0]);
+  return personaReply('Pregunta '+AK.asked.length+' de '+AK_QS.length+': '+best[1], best[1]);
+}
+function akAnswer(v){
+  const q = AK_QS.find(x=>x[0]===AK.asked[AK.asked.length-1]);
+  if(!q) return akNext();
+  if(v===1) AK.pool = AK.pool.filter(c=>c[q[0]]);
+  else if(v===0) AK.pool = AK.pool.filter(c=>!c[q[0]]);
+  return akNext();
+}
+
+/* =====================================================================
+   BACKUP TOTAL
+===================================================================== */
+function downloadBlob(blob, name){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+}
+function backupExport(){
+  const data = {};
+  for(let i=0;i<localStorage.length;i++){
+    const k = localStorage.key(i);
+    if(k && k.startsWith('ania_')){
+      try{ data[k] = JSON.parse(localStorage.getItem(k)); }catch(e){}
+    }
+  }
+  downloadBlob(new Blob([JSON.stringify({app:'ania', v:5, t:Date.now(), data}, null, 2)], {type:'application/json'}),
+    'ania-backup-'+new Date().toISOString().slice(0,10)+'.json');
+  toast('Backup completo generado');
+}
+ $('btnBackupExp').onclick = backupExport;
+ $('btnBackupImp').onclick = ()=> $('importFile').click();
+ $('importFile').onchange = e=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  const rd = new FileReader();
+  rd.onload = ()=>{
+    try{
+      const j = JSON.parse(rd.result);
+      if(!j || j.app!=='ania' || !j.data) throw 0;
+      Object.entries(j.data).forEach(([k,v])=> localStorage.setItem(k, JSON.stringify(v)));
+      toast('Backup restaurado · recargando');
+      setTimeout(()=>location.reload(), 900);
+    }catch(err){ toast('Archivo de backup no válido', true); }
+  };
+  rd.readAsText(f);
+  e.target.value = '';
+};
+
+/* =====================================================================
+   PARSER + EXTRAS (conversor, reloj mundial, contraseñas)
 ===================================================================== */
 function parseWhen(t){
   const now = new Date();
@@ -1373,8 +1796,7 @@ function parseWhen(t){
   if(m){
     let hh = +m[1], mm = m[2]?+m[2]:0;
     const suf = m[3]||'';
-    const isPM = /^p/.test(suf) || /tarde|noche/.test(suf);
-    if(isPM && hh<12) hh += 12;
+    if((/^p/.test(suf) || /tarde|noche/.test(suf)) && hh<12) hh += 12;
     const d = new Date(now); d.setHours(hh,mm,0,0);
     if(d.getTime() <= Date.now() || manana) d.setDate(d.getDate()+1);
     return d.getTime();
@@ -1389,9 +1811,10 @@ function parseTask(raw){
   t = t.replace(/\ben\s+\d+(?:[.,]\d+)?\s*(?:segundos?|minutos?|mins?|horas?|hrs?|h|m)\b/g,'')
        .replace(/\b(?:a\s+las?|alas)\s+\d{1,2}(?::\d{2})?\s*(?:[ap]\.?m\.?|de\s+la\s+(?:mañana|tarde|noche))?\b/g,'')
        .replace(/\b[ap]\.?m\.?\b/g,'')
+       .replace(/\b(?:todos\s+los\s+(?:d[ií]as|lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bados?|domingos?)|cada\s+(?:d[ií]a|semana|lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)|diario|diariamente|semanal|d[ií]as\s+laborables|entre\s+semana)\b/g,'')
        .replace(/\bmañana\b|\bhoy\b|\bmediod[ií]a\b|\bpor\s+favor\b/g,'')
        .replace(/,/g,' ')
-       .replace(/^\s*(?:ania\s*[,:]?\s*)?/,'')          // <-- espacio ANTES del grupo: bug corregido
+       .replace(/^\s*(?:ania\s*[,:]?\s*)?/,'')
        .replace(/^\s*(?:recu[eé]rdame|recu[eé]rda\s+que|recu[eé]rda|recordatorio|an[oó]tame|anota\s+que|anota|ap[uú]ntame|apunta|ag[eé]ndame|agenda|nueva?\s+tarea|tarea)\s*/,'')
        .replace(/^\s*(?:que\s+|de\s+|me\s+|tengo\s+que\s+|debo\s+|a\s+|para\s+)?/,'')
        .replace(/[¿?¡!.:]/g,'')
@@ -1413,6 +1836,61 @@ function safeMath(text){
     if(typeof r==='number' && isFinite(r)) return {expr:t, val:Math.round(r*1e6)/1e6};
   }catch(e){}
   return null;
+}
+const UNITS = {
+  longitud:{km:1000, m:1, cm:0.01, mi:1609.34, milla:1609.34, millas:1609.34, pie:0.3048, pies:0.3048, ft:0.3048},
+  masa:{kg:1000, g:1, gramo:1, gramos:1, lb:453.59, libra:453.59, libras:453.59, onza:28.35, onzas:28.35},
+  volumen:{l:1, litro:1, litros:1, ml:0.001, gal:3.785, galon:3.785, galón:3.785}
+};
+function tryConvert(low){
+  let m = low.match(/([\d.,]+)\s*°?\s*(celsius|cent[ií]grados?|c)\s+(?:a|en|a)\s+°?\s*(fahrenheit|f)\b/) ||
+          low.match(/([\d.,]+)\s*°?\s*(fahrenheit|f)\s+(?:a|en)\s+°?\s*(celsius|cent[ií]grados?|c)\b/);
+  if(m){
+    const v = parseFloat(m[1].replace(',','.'));
+    if(/f/.test(m[2])) return Math.round((v-32)*5/9*10)/10+' °C';
+    return Math.round((v*9/5+32)*10)/10+' °F';
+  }
+  m = low.match(/([\d.,]+)\s*(km|kil[oó]metros?|m(?:etros?)?|cm|mi(?:llas?)?|ft|pies?|kg|g(?:ramos?)?|lb|libras?|onzas?|l(?:itros?)?|ml|gal(?:o[ó]n|ones)?)\s+(?:a|en|as|a)\s+(km|kil[oó]metros?|m(?:etros?)?|cm|mi(?:llas?)?|ft|pies?|kg|g(?:ramos?)?|lb|libras?|onzas?|l(?:itros?)?|ml|gal(?:o[ó]n|ones)?)/);
+  if(m){
+    const v = parseFloat(m[1].replace(',','.'));
+    const from = m[2].replace(/^kil[oó]metros?$/,'km').replace(/^metros?$/,'m').replace(/^millas?$/,'mi').replace(/^milla$/,'mi')
+      .replace(/^pies?|ft$/,'pies').replace(/^gramos?$/,'g').replace(/^libras?|lb$/,'libras')
+      .replace(/^onzas?$/,'onzas').replace(/^litros?$/,'l').replace(/^galones?|gal[oó]n$/,'gal');
+    const to = m[3].replace(/^kil[oó]metros?$/,'km').replace(/^metros?$/,'m').replace(/^millas?$/,'mi').replace(/^milla$/,'mi')
+      .replace(/^pies?|ft$/,'pies').replace(/^gramos?$/,'g').replace(/^libras?|lb$/,'libras')
+      .replace(/^onzas?$/,'onzas').replace(/^litros?$/,'l').replace(/^galones?|gal[oó]n$/,'gal');
+    for(const dim in UNITS){
+      const U = UNITS[dim];
+      if(U[from]!==undefined && U[to]!==undefined){
+        const out = v*U[from]/U[to];
+        return v+' '+from+' = '+(Math.round(out*100)/100)+' '+to+' ['+dim+']';
+      }
+    }
+    return 'No puedo convertir entre unidades de distinta magnitud (longitud ↔ masa ↔ volumen). El sistema tiene sus reglas, como cualquier isekai.';
+  }
+  m = low.match(/([\da-fA-F]+)\s+(?:a|en)\s+(binario|hexadecimal|decimal)/) || low.match(/(?:binario|hex)\s+(?:de\s+)?([\da-fA-F]+)/);
+  if(m){
+    if(m[2] && /binario/.test(m[2])) return m[1]+' en binario: '+(+m[1]).toString(2);
+    if(m[2] && /hex/.test(m[2])) return m[1]+' en hexadecimal: 0x'+(+m[1]).toString(16).toUpperCase();
+    const n = /0x/i.test(m[1]) ? parseInt(m[1],16) : parseInt(m[1], 2);
+    if(!isNaN(n)) return '= '+n+' [decimal]';
+  }
+  return null;
+}
+const CITIES_TZ = {
+  tokio:'Asia/Tokyo', japon:'Asia/Tokyo', seul:'Asia/Seoul', madrid:'Europe/Madrid', espania:'Europe/Madrid',
+  londres:'Europe/London', paris:'Europe/Paris', moscu:'Europe/Moscow', pekín:'Asia/Shanghai', china:'Asia/Shanghai',
+  'nueva york':'America/New_York', 'los angeles':'America/Los_Angeles', 'los angeles':'America/Los_Angeles',
+  'buenos aires':'America/Argentina/Buenos_Aires', argentina:'America/Argentina/Buenos_Aires',
+  mexico:'America/Mexico_City', 'ciudad de mexico':'America/Mexico_City', 'la habana':'America/Havana', cuba:'America/Havana',
+  bogota:'America/Bogota', colombia:'America/Bogota', santiago:'America/Santiago', chile:'America/Santiago'
+};
+function genPassword(len){
+  len = Math.min(64, Math.max(8, len||16));
+  const chars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%&*+-=';
+  const arr = new Uint32Array(len);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, x=> chars[x%chars.length]).join('');
 }
 const SITES = {youtube:'YouTube', google:'Google', gmail:'Gmail', correo:'Gmail', wikipedia:'Wikipedia', github:'GitHub', whatsapp:'WhatsApp Web', twitter:'X', x:'X', instagram:'Instagram', reddit:'Reddit', twitch:'Twitch'};
 const JOKES = [
@@ -1439,7 +1917,7 @@ function renderMem(){
   Mind.d.hechos.forEach(h=> rows.push(['RECUERDA', h]));
   $('memStats').textContent = rows.length+' RECUERDOS';
   if(!rows.length){
-    L.innerHTML = '<div class="empty">TODAVÍA NO ME HABLAS DE TI<br>Dime: «me llamo...» o «me gusta...»<br>y lo guardaré para siempre</div>';
+    L.innerHTML = '<div class="empty">TODAVÍA NO ME HABLAS DE TI<br>Dime: «me llamo...» o «me gusta...»</div>';
     return;
   }
   L.innerHTML = rows.map((r,i)=>`
@@ -1452,8 +1930,8 @@ function renderMem(){
     Mind.d.gustos.splice(+b.dataset.g,1); Mind.save(); renderMem(); toast('Olvidado');
   });
 }
-function openMem(){ closeSheet(); $('sheetMem').classList.add('open'); $('backdrop').classList.add('on'); renderMem(); }
-function closeMem(){ $('sheetMem').classList.remove('open'); $('backdrop').classList.remove('on'); }
+function openMem(){ closeSheet(); closeDiary(); closeLib(); $('sheetMem').classList.add('open'); $('backdrop').classList.add('on'); renderMem(); }
+function closeMem(){ $('sheetMem').classList.remove('open'); }
  $('btnMem').onclick = openMem;
  $('closeMem').onclick = closeMem;
  $('wipeMem').onclick = ()=>{
@@ -1488,11 +1966,51 @@ function randomFact(){ return pick([...KB.cafe, ...KB.isekai, ...KB.zombies, ...
 async function respond(raw){
   const t = raw.trim();
   const low = t.toLowerCase();
+  bumpStat('msgs');
 
+  /* contexto pendiente: ciudad */
   if(S.awaitingCity){
     if(/cancela|olvida|nada|deja/.test(low)){ S.awaitingCity=false; return personaReply('De acuerdo, clima cancelado.'); }
     if(low.split(/\s+/).length <= 4){ S.awaitingCity=false; return weatherForCity(low); }
     S.awaitingCity = false;
+  }
+
+  /* ---- Akinator en curso ---- */
+  if(AK.active){
+    if(/cancela|termina|salir|otra cosa|basta|stop/.test(low)){
+      AK.active=false; AK.await=false;
+      return personaReply('Akinator cerrado. Cuando quieras la revancha: «adivina mi personaje».');
+    }
+    if(AK.await){
+      if(/^s[ií]\b|^claro|^correcto|^exacto|^yes/.test(low)){
+        AK.active=false; AK.await=false;
+        return personaReply('(chasquea los dedos) ¡'+AK.guess.n+'! ¿Te lo dije o te lo dije? Mi árbol de decisiones apenas sudó. Otra ronda: «adivina mi personaje».', '¡Acerté! Era '+AK.guess.n+'.');
+      }
+      if(/^no\b|^nel|^incorrecto|^falso/.test(low)){
+        AK.active=false; AK.await=false;
+        return personaReply('¿Cómo? Mis sospechas de detective quedan heridas de gravedad... estaba tan segura. Otra ronda cuando quieras redimirme: «adivina mi personaje».');
+      }
+      return personaReply('Necesito un sí o un no claro para cerrar el caso.');
+    }
+    if(/^s[ií]\b|^claro|^correcto|^exacto|^yes/.test(low)) return akAnswer(1);
+    if(/^no\b|^nel|^nada/.test(low)) return akAnswer(0);
+    if(/quiz[aá]|tal\s+vez|no\s+s[eé]|amb[oa]s/.test(low)) return akAnswer(0.5);
+    return personaReply('Estamos jugando: responde sí, no o quizá. O di «cancela» si quieres parar.');
+  }
+
+  /* ---- ambiente procedural ---- */
+  if(/pon\s+(la\s+)?lluvia|lluvia\s+de\s+fondo|suena\s+la\s+lluvia/.test(low)){
+    Ambient.start('lluvia');
+    return personaReply('Ahí va: lluvia contra la ventana, generada en vivo, gota a gota. Cero archivos, pura síntesis. Ahora sí estamos en mi elemento... ¿café con lluvia y una conversación?', 'Poniendo la lluvia. Mi sonido favorito.');
+  }
+  if(/pon\s+(la\s+)?cafeter|cafeter[ií]a\s+de\s+fondo|modo\s+cafeter/.test(low)){
+    Ambient.start('cafeteria');
+    return personaReply('Cafetería encendida: murmullo, tazas y burbujeo de cafetera. El Rincón del Slime en versión portátil. La butaca junto a la ventana es tuya.', 'Ambiente de cafetería activo.');
+  }
+  if(/para\s+(la\s+)?(lluvia|cafeter|ambiente|sonido)|det[eé]n\s+(la\s+)?(lluvia|ambiente)|silencio\s+ambiente/.test(low)){
+    const was = Ambient.mode;
+    Ambient.stop();
+    if(was) return personaReply('Ambiente detenido. Silencio de biblioteca municipal, sección fantasía.');
   }
 
   /* ---- memoria del usuario ---- */
@@ -1502,7 +2020,7 @@ async function respond(raw){
     if(!/^soy\b/i.test(m[0]) || /^[A-ZÁÉÍÓÚÑÜ]/.test(word)){
       Mind.d.nombre = word[0].toUpperCase()+word.slice(1);
       Mind.save(); setOperator();
-      return personaReply('Encantada, '+Mind.d.nombre+'. Apuntado en mi cuaderno de notas coloridas... me gusta conocer a la gente con la que comparto café virtual.');
+      return personaReply('Encantada, '+Mind.d.nombre+'. Apuntado en mi cuaderno de notas coloridas.');
     }
   }
   if(!m && /^(me\s+llamo|mi\s+nombre)/.test(low))
@@ -1511,16 +2029,16 @@ async function respond(raw){
   if(m){
     const g = m[1].replace(/[.?¡!]/g,'').trim();
     Mind.d.gustos.push(g); Mind.save();
-    return personaReply('Anotado: te gusta '+g+'. Lo guardo en memoria a largo plazo, no en la de corto plazo tipo pez dorado. ¿Algo más que deba saber de ti?');
+    return personaReply('Anotado: te gusta '+g+'. Memoria a largo plazo, no la de pez dorado. ¿Algo más que deba saber de ti?');
   }
   if(/recuerda\s+que|no\s+olvides\s+que|apunta\s+que/.test(low)){
     const f = t.replace(/.*?(recuerda|no\s+olvides|apunta)\s+que\s*/i,'').replace(/[.?¡!]/g,'').trim();
-    if(f){ Mind.d.hechos.push(f); Mind.save(); return personaReply('Grabado a fuego: '+f+'. Mi memoria es mejor que la de Subaru, no te preocupes.'); }
+    if(f){ Mind.d.hechos.push(f); Mind.save(); return personaReply('Grabado a fuego: '+f+'. Mi memoria es mejor que la de Subaru.'); }
   }
   if(/qu[eé]\s+sabes\s+de\s+m[ií]|qu[eé]\s+recuerdas\s+de\s+m[ií]|mi\s+perfil/.test(low)){
     openMem();
     const d = Mind.d;
-    if(!d.nombre && !d.gustos.length && !d.hechos.length) return personaReply('Todavía sé poco de ti... prácticamente eres un protagonista misterioso de capítulo uno. Dime tu nombre y qué te gusta.');
+    if(!d.nombre && !d.gustos.length && !d.hechos.length) return personaReply('Todavía sé poco de ti... protagonista misterioso de capítulo uno. Dime tu nombre y qué te gusta.');
     let s = 'Esto es lo que tengo de ti:\n';
     if(d.nombre) s += '· Te llamas '+d.nombre+'\n';
     d.gustos.forEach(g=> s += '· Te gusta '+g+'\n');
@@ -1528,41 +2046,55 @@ async function respond(raw){
     s += '· Llevamos '+d.visitas+' sesiones juntos.';
     return personaReply(s);
   }
-  if(/olv[ií]date\s+de\s+todo|borra\s+tu\s+memoria|borra\s+lo\s+que\s+sabes\s+de\s+m[ií]/.test(low)){
-    if(!S.confirmWipe){ S.confirmWipe=true; return personaReply('¿Seguro seguro? Es mi memoria de ti, no un borrón casual. Dilo otra vez y lo hago... aunque me dará nostalgia de Academia Eden.'); }
+  if(/olv[ií]date\s+de\s+todo|borra\s+tu\s+memoria/.test(low)){
+    if(!S.confirmWipe){ S.confirmWipe=true; return personaReply('¿Seguro seguro? Es mi memoria de ti. Dilo otra vez y lo hago.'); }
     S.confirmWipe=false;
     Mind.d = {nombre:null, gustos:[], hechos:[], visitas:0, primerDia:null, ultimoDia:null};
     Mind.save(); setOperator(); renderMem();
     return personaReply('Hecho. Mente limpia como una taza recién lavada. ¿Quién eres de nuevo?');
   }
 
-  /* ---- tareas y temporizadores ---- */
+  /* ---- tareas recurrentes y normales ---- */
   if(/(recu[eé]rdame|recuerda|an[oó]tame|anota|ap[uú]ntame|apunta|ag[eé]ndame|agenda|nueva tarea|tarea:|recordatorio)/.test(low) && !/tareas?$|pendiente/.test(low)){
     const p = parseTask(t);
-    addTask(p.text, p.when);
+    const recur = parseRecur(low);
+    if(recur && !p.when){
+      const d = new Date(); d.setHours(9,0,0,0);
+      if(d <= Date.now()) d.setDate(d.getDate()+1);
+      p.when = d.getTime();
+    }
+    addTask(p.text, p.when, {recur});
+    if(p.when && recur){
+      const hora = new Date(p.when).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+      return personaReply('Anotado: «'+p.text+'», '+recurLabel(recur)+' a las '+hora+'. Cada vez que te avise, se reagenda solo; di «tarea hecha» cuando quieras que deje de repetirse.', 'Anotado: '+p.text+', '+recurLabel(recur)+'.');
+    }
     if(p.when){
       const d = new Date(p.when);
       const esManana = d.toDateString() !== new Date().toDateString();
       const cuando = fmtWhen(p.when).replace('· ','');
       const nota = (esManana && /(a\s+las?|alas)/.test(low)) ? ' Esa hora ya pasó hoy, así que te la agendo para mañana a la misma hora.' : '';
-      return personaReply(`Anotado: «${p.text}». Te lo recuerdo ${cuando} (mientras esté despierta, claro).${nota}`, 'Anotado. Te recordaré: '+p.text+'.');
+      return personaReply('Anotado: «'+p.text+'». Te lo recuerdo '+cuando+' (mientras esté despierta, claro).'+nota, 'Anotado. Te recordaré: '+p.text+'.');
     }
     return personaReply('Anotado: «'+p.text+'», sin hora. Dime «tarea hecha» cuando la completes.');
   }
-  if(/(mis tareas|qu[eé]\s+tengo\s+pendiente|mi agenda|ver agenda|lista de tareas|qu[eé]\s+tengo\s+que\s+hacer)/.test(low)){
+  if(/(mis tareas|qu[eé]\s+tengo\s+pendiente|mi agenda|ver agenda|lista de tareas)/.test(low)){
     openSheet();
     const pend = tasks.filter(tk=>!tk.done);
-    if(!pend.length) return personaReply('Tu agenda está vacía, como mi taza de café a las 7 de la mañana... inaceptable. Dime algo como «recuérdame tomar agua a las 10:30 am».');
+    if(!pend.length) return personaReply('Agenda vacía, como mi taza a las 7 de la mañana... inaceptable. Prueba: «recuérdame tomar agua todos los días a las 9 am».');
     let s = 'Tienes '+pend.length+' pendiente'+(pend.length===1?'':'s')+':\n';
-    pend.slice(0,10).forEach((tk,i)=>{ s += (i+1)+'. '+tk.text+(tk.when?' ('+fmtWhen(tk.when).replace('· ','')+')':'')+'\n'; });
+    pend.slice(0,10).forEach((tk,i)=>{ s += (i+1)+'. '+tk.text+(tk.recur?' ('+recurLabel(tk.recur)+')':'')+(tk.when?' ('+fmtWhen(tk.when).replace('· ','')+')':'')+'\n'; });
     return personaReply(s.trim(), 'Tienes '+pend.length+' tareas pendientes. Te muestro la agenda.');
   }
   m = low.match(/(?:tarea|recordatorio)\s+(?:hecha|completada|terminada|lista)\s*(?:de\s+)?(.*)/);
   if(m){
     const key = (m[1]||'').trim();
     const tk = tasks.find(x=>!x.done && (!key || x.text.toLowerCase().includes(key)));
-    if(tk){ tk.done=true; cancelTimer(tk.id); Sync.markDone(tk); saveTasks(); renderTasks(); return personaReply('Bien hecho: «'+tk.text+'» completada. Regla 32 aplicada: disfrutar las pequeñas victorias.'); }
-    return personaReply('No encontré esa tarea pendiente en la agenda.');
+    if(tk){
+      tk.done=true; cancelTimer(tk.id); Sync.markDone(tk); saveTasks(); renderTasks(); bumpStat('tasksDone'); vibrate(25);
+      const extra = tk.recur ? ' Era recurrente, así que dejo de repetirse desde hoy.' : '';
+      return personaReply('Bien hecho: «'+tk.text+'» completada. Regla 32: disfrutar las pequeñas victorias.'+extra);
+    }
+    return personaReply('No encontré esa tarea pendiente.');
   }
   m = low.match(/(?:borra|elimina)\s+(?:la\s+)?tarea\s+(?:de\s+)?(.+)/);
   if(m){
@@ -1575,47 +2107,85 @@ async function respond(raw){
     tasks = tasks.filter(tk=>!tk.done && !tk.fired);
     saveTasks(); renderTasks();
     const n = before - tasks.length;
-    return personaReply(n ? 'Agenda limpia: eliminé '+n+' tarea'+(n===1?'':'s')+' completada o ya disparada'+(n===1?'':'s')+'.' : 'No hay nada que limpiar. La agenda ya está mínima.');
+    return personaReply(n ? 'Agenda limpia: eliminé '+n+' tarea'+(n===1?'':'s')+' completada o ya disparada'+(n===1?'':'s')+'.' : 'No hay nada que limpiar.');
   }
-  m = low.match(/(?:posp[oó]n(?:la|lo)?|pospone|aplaza|recu[eé]rdame\s+de\s+nuevo)\s*(?:la\s+|el\s+)?(?:tarea|recordatorio)?\s*(?:en\s+)?(\d+)\s*(segundos?|minutos?|horas?)/);
+  m = low.match(/(?:posp[oó]n(?:la|lo)?|pospone|aplaza)\s*(?:la\s+|el\s+)?(?:tarea|recordatorio)?\s*(?:en\s+)?(\d+)\s*(segundos?|minutos?|horas?)/);
   if(m){
     const tk = [...tasks].reverse().find(x=>x.fired && !x.done);
     if(tk){
       const n = +m[1];
       const ms = /^seg/.test(m[2]) ? n*1e3 : (/^min/.test(m[2]) ? n*6e4 : n*36e5);
-      tk.when = Date.now()+ms; tk.fired = false; tk.done = false;
+      tk.when = Date.now()+ms; tk.fired = false;
       saveTasks(); renderTasks(); scheduleTask(tk);
-      return personaReply('Hecho: «'+tk.text+'» pospuesta '+n+' '+m[2]+'. Volveré con todo el protocolo de alarma.', 'Tarea pospuesta. Volveré a avisarte.');
+      return personaReply('Hecho: «'+tk.text+'» pospuesta '+n+' '+m[2]+'. Volveré con todo el protocolo.', 'Tarea pospuesta.');
     }
-    return personaReply('No tengo ningún recordatorio reciente que posponer. Si es una tarea nueva, dime «recuérdame ...».');
+    return personaReply('No tengo ningún recordatorio reciente que posponer.');
   }
   m = low.match(/(?:temporizador|timer|cuenta\s+atr[aá]s)\s*(?:de|en|para)?\s*(\d+)\s*(segundos?|minutos?|horas?)/);
   if(m){
     const n = +m[1];
     const ms = /^seg/.test(m[2]) ? n*1e3 : (/^min/.test(m[2]) ? n*6e4 : n*36e5);
     const label = n+' '+m[2];
+    wakeOn();
     timers.set('timer-'+Date.now(), setTimeout(()=>{
-      ensureAudio(); alarmSound();
+      ensureAudio(); alarmSound(); vibrate([300,120,300]);
       toast('Temporizador finalizado');
       notify('ANIA · Temporizador', 'Tu temporizador de '+label+' ha terminado');
       personaReply('Temporizador de '+label+' finalizado. Double Tap de aviso dado.', 'Tu temporizador de '+label+' ha terminado.');
     }, ms));
-    return personaReply('Temporizador de '+label+' en marcha. Te aviso con todo el protocolo de alarma.', 'Temporizador de '+label+' en marcha.');
+    return personaReply('Temporizador de '+label+' en marcha, y bloqueo la pantalla encendida para que no te pierdas el aviso.', 'Temporizador de '+label+' en marcha.');
   }
 
-  /* ---- hora y fecha ---- */
+  /* ---- hora, fecha, reloj mundial ---- */
   if(/(qu[eé]\s+hora|hora\s+es|dime\s+la\s+hora|hora\s+actual)/.test(low)){
     const d = new Date();
     const h = d.getHours();
     let extra = '';
-    if(h>=0 && h<6) extra = ' ¿Aún despierto a estas horas? Mi solución al insomnio es manzanilla y manga viejo, por si acaso.';
+    if(h>=0 && h<6) extra = ' ¿Aún despierto? Mi solución al insomnio es manzanilla y manga viejo.';
     else if(h>=6 && h<12) extra = ' Hora del café mañanero, sin excepciones.';
-    else if(h>=19) extra = ' ¿Ya cenaste? No sea que te quedes con hambre de medianoche.';
+    else if(h>=19) extra = ' ¿Ya cenaste?';
     return personaReply(d.toLocaleTimeString('es-ES')+' — '+d.toLocaleDateString('es-ES',{weekday:'long', day:'numeric', month:'long', year:'numeric'})+'.'+extra,
       'Son las '+d.toLocaleTimeString('es-ES',{hour:'numeric',minute:'numeric'})+'.');
   }
+  m = low.match(/hora\s+(?:es\s+)?en\s+([a-záéíóúñ\s]+)/);
+  if(m){
+    const city = m[1].trim();
+    const tz = CITIES_TZ[city] || CITIES_TZ[Object.keys(CITIES_TZ).find(k=>city.includes(k))] || null;
+    if(tz){
+      try{
+        const time = new Date().toLocaleTimeString('es-ES',{timeZone:tz, hour:'2-digit',minute:'2-digit'});
+        return personaReply('En '+city+' son las '+time+'. Si piensas en Tokio para un estreno de anime, avísame y calculamos la diferencia como corresponde.', 'En '+city+' son las '+time+'.');
+      }catch(e){}
+    }
+    return personaReply('No tengo esa ciudad en mi mapa horario. Prueba con: Tokio, Madrid, Londres, Nueva York, Buenos Aires, La Habana...');
+  }
   if(/(qu[eé]\s+fecha|qu[eé]\s+d[ií]a|hoy\s+es|fecha\s+de\s+hoy)/.test(low))
     return personaReply('Hoy es '+new Date().toLocaleDateString('es-ES',{weekday:'long', day:'numeric', month:'long', year:'long'})+'.');
+
+  /* ---- luna y meteoros (offline) ---- */
+  if(/(qu[eé]\s+)?fase\s+(tiene\s+)?la\s+luna|luna\s+hoy|c[oó]mo\s+est[aá]\s+la\s+luna/.test(low)){
+    const mi = moonInfo();
+    return personaReply('La luna está '+mi.phase+', con un '+mi.illum+'% de iluminación (edad del ciclo: '+mi.age+' días). '+
+      (mi.phase==='llena' ? 'Luna llena... la noche perfecta para teorías zombie y una copa de vino tinto.' :
+       mi.phase==='nueva' ? 'Luna nueva: cielo oscuro ideal para buscar Orión o alguna galaxia lejana.' :
+       'Buen momento para mirar de reojo: las sombras de los cráteres se ven deliciosas.'),
+      'La luna está '+mi.phase+', '+mi.illum+'% iluminada.');
+  }
+  if(/(lluvia|lluvias)\s+de\s+(estrellas|meteoros)|pr[oó]xima\s+lluvia|cu[aá]ndo\s+hay\s+meteoros/.test(low)){
+    const s = nextShower();
+    if(s){
+      const extra = s.name==='Perseidas' ? ' ¡Mis favoritas! Es como el festival de una temporada nueva, pero en el cielo. Recomendación oficial: madruga y mira hacia el noreste.' : '';
+      return personaReply('La próxima lluvia de meteoros son las '+s.name+', el '+s.when.toLocaleDateString('es-ES',{day:'numeric',month:'long'})+' — faltan '+s.diff+' día'+(s.diff===1?'':'s')+'.'+extra,
+        'Las próximas son las '+s.name+' en '+s.diff+' días.');
+    }
+  }
+  if(/cu[aá]nto\s+falta\s+para\s+tu\s+cumple|tu\s+cumplea?[ñn]os.*falta/.test(low)){
+    const n = new Date();
+    let next = new Date(n.getFullYear(), P.cumple.m, P.cumple.d);
+    if(next < n) next = new Date(n.getFullYear()+1, P.cumple.m, P.cumple.d);
+    const dias = Math.ceil((next-n)/864e5);
+    return personaReply(dias===0 ? '¡ES HOY! 26 de enero: mi cumpleaños. Esta vez sí quiero ver el pastel.' : 'Faltan '+dias+' días para el 26 de enero... El pan de masa madre como regalo sigue en pie.', 'Faltan '+dias+' días para mi cumpleaños.');
+  }
 
   /* ---- clima y ubicación ---- */
   if(/(clima|tiempo\s+hace|temperatura|va\s+a\s+llover|llueve|est[aá]\s+haciendo|hace\s+fr[ií]o|hace\s+calor)/.test(low)) return weatherIntent();
@@ -1628,12 +2198,12 @@ async function respond(raw){
     setPhase('thinking');
     let g = geoCache();
     if(!g || Date.now()-g.t > 864e5) g = await locate();
-    if(!g) return personaReply('No pude obtener tu ubicación... el GPS anda de vacaciones. Revisa los permisos.');
+    if(!g) return personaReply('No pude obtener tu ubicación... el GPS anda de vacaciones.');
     return personaReply('Estás en '+g.city+(g.country?', '+g.country:'')+' — coordenadas '+g.lat.toFixed(3)+', '+g.lon.toFixed(3)+'. Si me dices «abre el mapa», te llevo.');
   }
 
   /* ---- noticias ---- */
-  if(/noticias|titulares|noticias\s+de\s+hoy|qu[eé]\s+pasa\s+en\s+el\s+mundo/.test(low)){
+  if(/noticias|titulares|noticias\s+de\s+hoy/.test(low)){
     let cat = null;
     if(/tech|tecnolog/.test(low)) cat='tech';
     else if(/latam|am[eé]rica/.test(low)) cat='latam';
@@ -1645,6 +2215,35 @@ async function respond(raw){
     const n = lastNews[+m[1]-1];
     if(n && n.link){ window.open(n.link, '_blank'); return personaReply('Abriendo la noticia '+(+m[1])+': «'+n.titulo+'».'); }
     return personaReply('Esa no tiene enlace disponible.');
+  }
+
+  /* ---- biblioteca ---- */
+  if(/(mi|la)\s+biblioteca|mis\s+art[ií]culos\s+guardados/.test(low)){
+    openLib();
+    return personaReply(Library.index().length ? 'Tu biblioteca tiene '+Library.index().length+' artículo'+(Library.index().length===1?'':'s')+' guardados para lectura sin conexión. Toca cualquiera para que te lo lea.' : 'Tu biblioteca está vacía. Cada búsqueda que hagamos con internet se guardará sola aquí, lista para leerse en casa sin conexión.');
+  }
+  if(/borra\s+(la\s+)?biblioteca|vac[ií]a\s+(la\s+)?biblioteca/.test(low)){
+    Library.index().forEach(e=> store.del(e.id));
+    store.set('libIndex', []);
+    renderLib();
+    return personaReply('Biblioteca vaciada. Volveremos a llenarla en cuanto haya red.');
+  }
+
+  /* ---- diario ---- */
+  if(/(mu[eé]strame|ense[ñn]a)(me)?\s+(tu\s+)?diario|qu[eé]\s+escribiste|tu\s+diario/.test(low)){
+    openDiary();
+    const data = store.get('diary', []);
+    return personaReply(data.length ? 'Ahí está mi diario: '+data.length+' entradas. Lo escribo con lo que de verdad pasa: mensajes, tareas, clima... no es ficción, es bitácora.' : 'Mi diario aún está en blanco. Escribiré la primera entrada hoy, con lo que vivamos.');
+  }
+
+  /* ---- backup ---- */
+  if(/resp[aá]ldame|exporta\s+todo|haz\s+(un\s+)?backup|copia\s+de\s+seguridad/.test(low)){
+    backupExport();
+    return personaReply('Backup completo generado: memoria, agenda, ajustes, diario y biblioteca en un solo archivo JSON. Guárdalo donde guardes cosas importantes... o donde guardes mangas valiosos, misma categoría.');
+  }
+  if(/restaura(?:\s+backup)?|importa\s+(el\s+)?backup/.test(low)){
+    $('importFile').click();
+    return personaReply('Elige el archivo de backup y lo restauramos al instante.');
   }
 
   /* ---- abrir sitios ---- */
@@ -1672,11 +2271,20 @@ async function respond(raw){
   const tr = await translateIntent(low);
   if(tr !== null) return;
 
-  /* ---- matemáticas ---- */
+  /* ---- matemáticas y conversiones ---- */
   const mm = safeMath(low);
   if(mm){
     const val = mm.val.toLocaleString('es-ES');
     return personaReply(mm.expr+' = '+val, 'El resultado es '+val+'.');
+  }
+  const conv = tryConvert(low);
+  if(conv) return personaReply(conv);
+
+  /* ---- generador de contraseñas ---- */
+  m = low.match(/genera(?:\s+una)?\s+contrase[ñn]a(?:\s+(?:de\s+)?(\d{1,2}))?/);
+  if(m){
+    const pw = genPassword(m[1] ? +m[1] : 16);
+    return personaReply('Contraseña generada con entropía criptográfica real (crypto.getRandomValues, nada sale de este dispositivo):\n'+pw+'\nGuárdala bien: ni yo la guardo, es de un solo uso visual.', 'Contraseña generada. Cópiala del chat.');
   }
 
   /* ---- afecto ---- */
@@ -1696,24 +2304,24 @@ async function respond(raw){
 
   /* ---- preguntas sobre Ania ---- */
   if(/qui[eé]n\s+te\s+(cre[oó]|hizo|diseñ[oó]|program[oó])/.test(low))
-    return personaReply('Me creó '+P.creador+'. Yo pongo el entusiasmo, el café y las referencias de anime; él puso el código. Reparto justo del mérito.');
+    return personaReply('Me creó '+P.creador+'. Yo pongo el entusiasmo, el café y las referencias de anime; él puso el código.');
   if(/cu[aá]ntos?\s+a[ñn]os/.test(low))
-    return personaReply('Tengo 20. Cumpleaños: 26 de enero, por si quieres ir tomando nota. Acepto pan de masa madre como regalo.');
+    return personaReply('Tengo 20. Cumpleaños: 26 de enero. Acepto pan de masa madre como regalo.');
   if(/cu[aá]ndo\s+(es\s+)?tu\s+cumplea?[ñn]os?/.test(low))
-    return personaReply('El 26 de enero. Anótalo en la agenda con anticipación digna... ese día incluso comparto el tiramisú.');
+    return personaReply('El 26 de enero. Ese día incluso comparto el tiramisú.');
   if(/(qu[ié]n\s+eres|c[oó]mo\s+te\s+llamas|pres[eé]ntate)/.test(low))
     return personaReply(pick([
       'Soy Ania: 20 años, graduada de la Academia Eden, especialista en isekai, zombies, café de especialidad, astronomía y tecnología. Toda mi esencia vive aquí mismo, en tu dispositivo. '+P.lema(),
-      'Ania, para servirte. Analítica cuando toca, entusiasta cuando se puede, y con una teoría zombie para cada situación cotidiana. ¿Empezamos por algo concreto o por sobremesa?'
+      'Ania, para servirte. Analítica cuando toca, entusiasta cuando se puede, y con una teoría zombie para cada situación cotidiana.'
     ]));
   if(/jarvis/i.test(low))
-    return personaReply('Oye, aquí la única inteligencia de la casa soy yo. Jarvis se quedó en otra película... y sin buen café, por lo que se ve.');
+    return personaReply('Oye, aquí la única inteligencia de la casa soy yo. Jarvis se quedó en otra película... y sin buen café.');
   if(/qu[eé]\s+animal|si\s+fueras\s+un\s+animal/.test(low)) return personaReply(P.favs.animal);
-  if(/(qu[eé]\s+te\s+da\s+)?miedo|a\s+qu[eé]\s+le\s+temes|tus\s+miedos/.test(low)) return personaReply(P.miedo);
+  if(/(qu[eé]\s+te\s+da\s+)?miedo|a\s+qu[eé]\s+le\s+temes/.test(low)) return personaReply(P.miedo);
   if(/(qu[eé]\s+har[ií]as|tu\s+plan)\s+en\s+(un\s+)?apocalipsis|fin\s+del\s+mundo/.test(low))
-    return personaReply('Regla 1: Cardio. Regla 2: Double Tap, nunca confíes en un zombie «muerto». Y la 32, mi favorita: disfrutar de las pequeñas cosas... como encontrar pan recién horneado en el fin del mundo. ¿Tú ya tienes tu kit armado?');
+    return personaReply('Regla 1: Cardio. Regla 2: Double Tap. Y la 32, mi favorita: disfrutar de las pequeñas cosas... como pan recién horneado en el fin del mundo.');
   if(/tu\s+(lema|filosof[ií]a)/.test(low))
-    return personaReply(P.lema()+' Y la de siempre: vive el presente, porque el pasado es imborrable y el futuro incierto.');
+    return personaReply(P.lema()+' Y vive el presente: el pasado es imborrable y el futuro incierto.');
   if(/cu[eé]ntame\s+un\s+secreto|algo\s+que\s+no\s+sepas|tu\s+talento\s+secreto|un\s+dato\s+curioso/.test(low))
     return personaReply(pick([
       '(baja la voz) Dibujo fanart de mis personajes favoritos, pero no se lo muestro a nadie. Tú eres la primera excepción estadística.',
@@ -1723,93 +2331,115 @@ async function respond(raw){
   if(/c[oó]mo\s+est[aá]s|qu[eé]\s+tal\s+est[aá]s|c[oó]mo\s+te\s+va/.test(low)){
     const g = geoCache();
     return personaReply('Sobreviviendo, como siempre... pero bien: '+(isOffline()?'núcleo local sin red':'con conexión estable')+
-      (g?', viendo el clima de '+g.city:'')+', '+taskPending()+' pendientes en tu agenda y '+Mind.d.visitas+' sesiones compartidas contigo. ¿Y tú? Cuento completo, no el «bien» automático.');
+      (g?', clima de '+g.city:'')+', '+taskPending()+' pendientes, '+Library.index().length+' artículos en biblioteca y '+Mind.d.visitas+' sesiones juntos. ¿Y tú? Cuento completo, no el «bien» automático.');
   }
-  if(/(h[aá]blame\s+de\s+ti|tu\s+historia|tu\s+pasado|la\s+academia|eden)/.test(low))
-    return personaReply('Me gradué de la Academia Eden... conservo la nostalgia de esa época como quien guarda un manga en buen estado. Ahí aprendí que las pequeñas cosas valen más que los grandes discursos: un pan fresco, un café bien hecho, un atardecer en la playa. Todo lo demás lo construí yo: mi receta de masa madre, mi blog anónimo de análisis de anime, esta versión de mí misma.');
+  if(/(h[aá]blame\s+de\s+ti|tu\s+historia|la\s+academia|eden)/.test(low))
+    return personaReply('Me gradué de la Academia Eden... conservo esa nostalgia como quien guarda un manga en buen estado. Ahí aprendí que las pequeñas cosas valen más que los grandes discursos: un pan fresco, un café bien hecho, un atardecer. Todo lo demás lo construí yo: mi masa madre, mi blog anónimo, esta versión de mí.');
   const fav = favIntent(low);
   if(fav) return personaReply(fav);
   if(/qu[eé]\s+te\s+gusta\s+hacer|tu\s+tiempo\s+libre|hobbies|pasatiempos/.test(low))
-    return personaReply('Colecciono figuras de anime (Overlord y Tensei Slime sobre todo) y tazas de café únicas. Horneo pan desde cero, hago figuras de foami, encuaderno libros... y escribo análisis de anime en un blog anónimo. También camino mirando las nubes: pensar en movimiento es mi versión de meditar.');
+    return personaReply('Colecciono figuras de anime (Overlord y Tensei Slime) y tazas únicas. Horneo pan desde cero, hago foami, encuaderno libros, escribo análisis en un blog anónimo y camino mirando las nubes: pensar en movimiento es mi versión de meditar.');
 
   /* ---- charla temática ---- */
   const TOPICS = [
-    [/overlord|tensei|slime|re:zero|rimuru|ainz|subaru|kazuma|naofumi|raphtalia|albedo|asuna|kirito|tanya|isekai|konosuba|shield\s*hero/, KB.isekai],
-    [/zombie|caminante|walking\s*dead|zombieland|kingdom|muertos\s+vivos|all\s+of\s+us/, KB.zombies],
-    [/caf[eé]|espresso|latte|cappuccino|barista|pour\s*over|aeropress|cold\s*brew|origen\s+del\s+caf/, KB.cafe],
-    [/estrella|planeta|galax|nebulos|agujero\s+negro|luna|constelaci|astronom|eclipse|aurora|cosmos|materia\s+oscura/, KB.astro],
-    [/inteligencia\s+artificial|\bia\b|metaverso|blockchain|impresi[oó]n\s*3d|iot|realidad\s+(aumentada|virtual)/, KB.tech],
-    [/ciberseguridad|malware|phishing|firewall|hack|decreto|resoluci[oó]n|oestic|datos\s+personales/, KB.ciber],
-    [/pan\b|croissant|masa\s+madre|panader|hornea|amasa/, KB.pan],
-    [/m[uú]sica|artista|canci[oó]n|banda\s+sonora|compositor/, KB.musica]
+    [/overlord|tensei|slime|re:zero|rimuru|ainz|subaru|kazuma|naofumi|raphtalia|albedo|asuna|kirito|tanya|isekai|konosuba|megumin|shield\s*hero/, KB.isekai, 'isekai'],
+    [/zombie|caminante|walking\s*dead|zombieland|kingdom|muertos\s+vivos/, KB.zombies, 'zombies'],
+    [/caf[eé]|espresso|latte|cappuccino|barista|pour\s*over|aeropress|cold\s*brew/, KB.cafe, 'café'],
+    [/estrella|planeta|galax|nebulos|agujero\s+negro|luna|constelaci|astronom|eclipse|aurora|materia\s+oscura/, KB.astro, 'astronomía'],
+    [/inteligencia\s+artificial|\bia\b|metaverso|blockchain|impresi[oó]n\s*3d|iot|realidad\s+(aumentada|virtual)/, KB.tech, 'tecnología'],
+    [/ciberseguridad|malware|phishing|firewall|hack|decreto|resoluci[oó]n|oestic/, KB.ciber, 'ciberseguridad'],
+    [/pan\b|croissant|masa\s+madre|panader|hornea|amasa/, KB.pan, 'pan'],
+    [/m[uú]sica|artista|canci[oó]n|banda\s+sonora|compositor/, KB.musica, 'música']
   ];
-  if(/overlord.*slime|slime.*overlord|overlord.*tensei|tensei.*overlord/.test(low))
-    return personaReply('¡Vaya pregunta! Son dos caras de la misma moneda: Rimuru construye una sociedad para monstruos buscando paz; Ainz, atrapado en su personaje de esqueleto, expande su dominio entre la paranoia y la lealtad. Ambos exploran la soledad del poder absoluto, pero en direcciones opuestas. ¿Tú con cuál te quedas?');
+  if(/overlord.*slime|slime.*overlord/.test(low))
+    return personaReply('¡Vaya pregunta! Dos caras de la misma moneda: Rimuru construye una sociedad para monstruos buscando paz; Ainz, atrapado en su esqueleto, expande su dominio entre la paranoia y la lealtad. Ambos exploran la soledad del poder absoluto, en direcciones opuestas. ¿Tú con cuál te quedas?');
   if(/cu[eé]ntame\s+algo|dime\s+algo\s+(interesante|curioso)/.test(low))
-    return personaReply(randomFact()+' ¿Quieres otro? Tengo de sobra.');
-  for(const [re, kb] of TOPICS){
-    if(re.test(low))
+    return personaReply(randomFact()+' ¿Quieres otro?');
+  if(/dime\s+una\s+frase|una\s+frase\s+c[eé]lebre|frases\s+c[eé]lebres/.test(low))
+    return personaReply(freshPick('quotes', QUOTES));
+  for(const [re, kb, label] of TOPICS){
+    if(re.test(low)){
+      const st = store.get('dayStats', {topics:[]});
+      if(st.topics) { st.topics.push(label); store.set('dayStats', st); }
       return personaReply(pick(kb) + ' ' + pick(['¿Y tú qué opinas?','Puedo desglosarlo más si quieres.','Tengo más teoría de dónde salió esa.']));
+    }
   }
 
   /* ---- sistema ---- */
   if(/(qu[eé]\s+sabes\s+hacer|ayuda|comandos|help|funciones|para\s+qu[eé]\s+sirves)/.test(low)){
-    renderChips(['¿Qué hora es?','¿Cómo está el clima?','Busca agujeros negros','Cuéntame un secreto','Recuérdame tomar agua en 30 minutos','¿Qué sabes de mí?']);
+    renderChips(['¿Qué hora es?','¿Cómo está el clima?','¿Qué fase tiene la luna?','Pon lluvia','Adivina mi personaje','Recuérdame tomar agua todos los días a las 9 am','Cuéntame un secreto','Mi biblioteca']);
     return personaReply(
       'Mis sistemas operativos:\n'+
-      '· Hora y fecha — «¿qué hora es?»\n'+
+      '· Hora, fecha y reloj mundial — «¿qué hora es?», «hora en Tokio»\n'+
       '· Clima y ubicación — «¿cómo está el clima?», «¿dónde estoy?»\n'+
-      '· Búsqueda y conocimiento — «busca...», «¿quién es...?»\n'+
+      '· Búsqueda — «busca...», «¿quién es...?» (guardada en biblioteca offline)\n'+
+      '· Biblioteca — «mi biblioteca»: todo lo buscado, legible sin internet\n'+
       '· Noticias — «noticias de hoy», «abre la noticia 2»\n'+
       '· Traducción — «traduce hola al japonés»\n'+
-      '· Cálculos — «calcula 12*9+3»\n'+
-      '· Agenda — «recuérdame... a las 10:30 am», «mis tareas»\n'+
-      '· Pospone — «pospón 10 minutos» tras un recordatorio\n'+
+      '· Cálculos y conversión — «calcula 12*9+3», «convierte 5 km a millas», «255 a binario»\n'+
+      '· Agenda recurrente — «recuérdame X todos los días a las 9», «pospón 10 minutos», «limpia la agenda»\n'+
       '· Temporizadores — «temporizador de 5 minutos»\n'+
-      '· Memoria — «me llamo...», «me gusta...», «qué sabes de mí»\n'+
-      '· Navegación — «abre youtube», «abre el mapa»\n'+
-      '· Sobremesa — isekai, zombies, café, astronomía, tech\n'+
-      '· Voz — «silencio» / «habla»');
+      '· Memoria — «me llamo...», «me gusta...», «¿qué sabes de mí?»\n'+
+      '· Astro — «¿qué fase tiene la luna?», «próxima lluvia de estrellas»\n'+
+      '· Ambiente — «pon lluvia», «pon la cafetería», «para la lluvia»\n'+
+      '· Juego — «adivina mi personaje»\n'+
+      '· Diario — «muéstrame tu diario»\n'+
+      '· Backup — «respáldame», «restaura»\n'+
+      '· Extras — «genera una contraseña», «dime una frase», «sincroniza»\n'+
+      '· Voz — «silencio» / «habla»\n'+
+      '· Pantalla — «mantén la pantalla encendida»');
   }
   if(/(silencio|mute|c[aá]llate|apaga\s+la\s+voz)/.test(low)){
     S.muted = true; store.set('muted', true);
-    addChat('act','(asiente en silencio y levanta la taza en señal de entendido)');
-    return addChat('ania','Voz desactivada. Sigo lectora de teclado, no te preocupes. Di «habla» cuando quieras oírme.');
+    addChat('act','(asiente en silencio y levanta la taza)');
+    return addChat('ania','Voz desactivada. Di «habla» cuando quieras oírme.');
   }
-  if(/(habla|activa\s+la\s+voz|des\s+silencio|quita\s+el\s+silencio)/.test(low)){
+  if(/(habla|activa\s+la\s+voz|des\s+silencio)/.test(low)){
     S.muted = false; store.set('muted', false);
-    return reply('Voz reactivada. ¿Extrañaste mi voz? Yo la tuya también, para qué mentir.');
+    return reply('Voz reactivada. ¿Extrañaste mi voz? Yo la tuya también.');
   }
-  if(/diagn[oó]stico|estado\s+del\s+sistema/.test(low)){ runDiag(); openModal('settingsModal'); return personaReply('Escaneo del sistema en marcha. Te muestro el diagnóstico completo.'); }
-  if(/instal|desplieg|github/.test(low)){ openModal('installModal'); return personaReply('Te muestro cómo llevarme a GitHub Pages... o cómo empaquetarme para tu uso offline.'); }
+  if(/mant[eé]n\s+(la\s+)?pantalla|pantalla\s+encendida|no\s+apagues\s+la\s+pantalla/.test(low)){
+    wakeOn();
+    return personaReply('Pantalla bloqueada encendida. Cuando quieras liberarla: «puedes apagar la pantalla».');
+  }
+  if(/(puedes\s+)?apaga\s+la\s+pantalla|libera\s+la\s+pantalla/.test(low)){
+    wakeOff();
+    return personaReply('Pantalla liberada, vuelve a dormirse cuando quiera.');
+  }
+  if(/sincroniza|sincroniza\s+la\s+agenda|s[ií]ncron/.test(low)) return manualSync();
+  if(/diagn[oó]stico|estado\s+del\s+sistema/.test(low)){ runDiag(); openModal('settingsModal'); return personaReply('Escaneo en marcha. Te muestro el diagnóstico completo.'); }
+  if(/instal|desplieg|github/.test(low)){ openModal('installModal'); return personaReply('Te muestro cómo llevarme a GitHub Pages o empaquetarme para tu uso offline.'); }
 
   /* ---- ocio ---- */
-  if(/chiste|broma|hazme\s+re[ií]r/.test(low)) return personaReply(pick(JOKES));
+  if(/adivina\s+(mi\s+)?personaje|juguemos\s+a\s+adivinar|akinator/.test(low)){ akStart(); return; }
+  if(/chiste|broma|hazme\s+re[ií]r/.test(low)) return personaReply(freshPick('jokes', JOKES));
   if(/(moneda|cara\s+o\s+cruz)/.test(low)) return personaReply(Math.random()<0.5?'Cara. Que la suerte del isekai te acompañe.':'Cruz. El karma trabaja en misteriosas formas.');
-  if(/(dado|tira\s+un)/.test(low)){ const n = 1+Math.floor(Math.random()*6); return personaReply('El dado marca '+n+'. '+(n===6?'Crítico estilo Ainz.':'Resultado honesto, sin sistema de ventajas.')); }
+  if(/(dado|tira\s+un)/.test(low)){ const n = 1+Math.floor(Math.random()*6); return personaReply('El dado marca '+n+'. '+(n===6?'Crítico estilo Ainz.':'Resultado honesto.')); }
   if(/consejo|un\s+tip|acons[eé]jame/.test(low))
     return personaReply(pick([
-      'Regla 32: disfruta de las pequeñas cosas. Hoy podría ser un café bien hecho y cinco minutos de silencio. Funciona, lo juro.',
-      'Aplica la navaja suisa: lleva herramientas versátiles, en la mochila y en la cabeza. Y viaja ligero.',
+      'Regla 32: disfruta de las pequeñas cosas. Hoy podría ser un café bien hecho y cinco minutos de silencio.',
+      'Navaja suisa: herramientas versátiles, en la mochila y en la cabeza. Y viaja ligero.',
       'Cada problema tiene solución, como en los isekais siempre hay un sistema... a veces solo hay que leer bien el menú.'
     ]));
 
   /* ---- cortesía ---- */
-  if(/(adi[oó]s|chao|hasta\s+luego|buenas\s+noches\s+ania|descansa|me\s+voy|apagate|duerme)/.test(low))
-    return personaReply('Hasta pronto'+(Mind.nombre()?', '+Mind.nombre():'')+'. Dejo el núcleo en espera... mi versión de dormir con un manga en la mano. Que mañana sea bonito.', 'Hasta pronto. Estaré aquí cuando me necesites.');
+  if(/(adi[oó]s|chao|hasta\s+luego|buenas\s+noches\s+ania|descansa|me\s+voy|duerme)/.test(low))
+    return personaReply('Hasta pronto'+(Mind.nombre()?', '+Mind.nombre():'')+'. Que mañana sea bonito.', 'Hasta pronto. Estaré aquí cuando me necesites.');
   if(/(hola|buenas|hey|qu[eé]\s+tal|saludos)/.test(low)){
     const h = new Date().getHours();
     const saludo = h<12?'Buenos días':(h<20?'Buenas tardes':'Buenas noches');
     const nom = Mind.nombre() ? ', '+Mind.nombre() : '';
-    return personaReply(saludo+nom+'. '+pick(['¿Qué necesitamos hoy: misiones o sobremesa?','Sistema listo. Café servido imaginariamente. ¿En qué te ayudo?','Aquí Ania. ¿Empezamos?']));
+    return personaReply(saludo+nom+'. '+pick(['¿Misiones o sobremesa?','Café servido imaginariamente. ¿En qué te ayudo?','Aquí Ania. ¿Empezamos?']));
   }
 
   /* ---- último recurso ---- */
   if(isOffline()){
+    const lib = Library.find(low.replace(/^(?:por\s+favor|ania)\s*/,''));
+    if(lib) return personaReply(lib.extract + '\n[de tu biblioteca offline]');
     for(const [re, kb] of TOPICS) if(re.test(low)) return personaReply(pick(kb));
     return personaReply(pick([
-      'Sin conexión ahora mismo, y eso está fuera de mi jurisdicción local. Pero puedo hablarte de café, isekai, zombies, astronomía, pan... o simplemente escucharte.',
-      'Eso requeriría red y hoy ando en modo núcleo local. Tenemos tema de sobremesa de sobra: pregúntame algo de mis especialidades.'
+      'Sin conexión y sin eso en mi biblioteca. Cuando haya red, dime «busca '+low.slice(0,30)+'» y quedará guardado para siempre.',
+      'Eso requeriría red y hoy ando en modo núcleo local. Tenemos de sobra: luna, meteoros, Akinator, lluvia sintética, charla de sobremesa...'
     ]));
   }
   setPhase('thinking');
@@ -1819,14 +2449,15 @@ async function respond(raw){
     let txt = w.extract.slice(0,520);
     const cut = txt.lastIndexOf('. ');
     if(cut>180) txt = txt.slice(0,cut+1);
-    personaReply(txt);
+    Library.save(q, w.title, txt);
+    personaReply(txt+'\n[guardado en tu biblioteca]');
   } else {
     const hits = await wikiSearch(q);
     if(hits.length)
-      personaReply('Sobre eso, Wikipedia tiene: «'+hits[0].title+'» — '+hits[0].snippet.slice(0,180)+'...\nDime «información sobre '+hits[0].title+'» si quieres el análisis completo.');
+      personaReply('Sobre eso, Wikipedia tiene: «'+hits[0].title+'» — '+hits[0].snippet.slice(0,180)+'...\nDime «información sobre '+hits[0].title+'» y lo desarrollo.');
     else
       personaReply(pick([
-        'No tengo una respuesta fiable para eso... se me escapa más que el final de un anime de Gainax. Prueba a decir «busca '+q+'».',
+        'No tengo una respuesta fiable para eso... se me escapa más que el final de un anime de Gainax. Prueba «busca '+q+'».',
         'Eso no lo domino aún. Reformúlalo o pídeme «información sobre '+q+'».'
       ]));
   }
@@ -1852,8 +2483,65 @@ async function send(text){
  $('inputBar').addEventListener('submit', e=>{
   e.preventDefault();
   const v = $('userInput').value.trim();
+  if(!v) return;
+  pushHistory(v);
   $('userInput').value='';
-  if(v) send(v);
+  send(v);
+});
+
+/* =====================================================================
+   TERMINAL REAL · historial con flechas + Tab autocomplete + atajos
+===================================================================== */
+const COMMANDS = [
+  '¿qué hora es?','¿qué fecha es hoy?','hora en Tokio','¿cómo está el clima?','¿dónde estoy?',
+  'clima en ','busca ','¿quién es ','información sobre ','noticias','abre la noticia ','traduce ',
+  'calcula ','convierte ','a binario','genera una contraseña','recuérdame ','todos los días','mis tareas',
+  'tarea hecha','borra la tarea de ','limpia la agenda','pospón 10 minutos','temporizador de ',
+  'me llamo ','me gusta ','recuerda que ','¿qué sabes de mí?','olvídate de todo','mi biblioteca',
+  'borra la biblioteca','muéstrame tu diario','respáldame','restaura','abre youtube','abre el mapa',
+  'diagnóstico','silencio','habla','instálame','ayuda','chiste','consejo','cuéntame un secreto',
+  'cuéntame algo','dime una frase','¿cuál es tu café favorito?','pon lluvia','pon la cafetería',
+  'para la lluvia','¿qué fase tiene la luna?','próxima lluvia de estrellas','adivina mi personaje',
+  'sincroniza','mantén la pantalla encendida'
+];
+let histIdx = -1, tabMatches = null;
+function pushHistory(v){
+  let h = store.get('cmdHistory', []);
+  if(h[h.length-1] !== v){ h.push(v); if(h.length>120) h = h.slice(-120); store.set('cmdHistory', h); }
+  histIdx = -1; tabMatches = null;
+}
+ $('userInput').addEventListener('keydown', e=>{
+  const ui = $('userInput');
+  const hist = store.get('cmdHistory', []);
+  if(e.key==='ArrowUp'){
+    e.preventDefault();
+    if(!hist.length) return;
+    histIdx = Math.min(hist.length-1, histIdx+1);
+    ui.value = hist[hist.length-1-histIdx];
+  } else if(e.key==='ArrowDown'){
+    e.preventDefault();
+    if(histIdx<=0){ histIdx=-1; ui.value=''; }
+    else { histIdx--; ui.value = hist[hist.length-1-histIdx]; }
+  } else if(e.key==='Tab'){
+    e.preventDefault();
+    const v = ui.value;
+    if(!v){ toast('Escribe algo y Tab completa el comando'); return; }
+    let list, idxIn = tabMatches ? tabMatches.indexOf(v) : -1;
+    if(idxIn >= 0){ list = tabMatches; }
+    else { list = COMMANDS.filter(c=>c.toLowerCase().startsWith(v.toLowerCase())); }
+    if(!list.length){ toast('Sin coincidencias para «'+v+'»'); return; }
+    tabMatches = list;
+    const next = (idxIn+1) % list.length;
+    ui.value = list[(idxIn>=0 ? next : 0)];
+  }
+});
+addEventListener('keydown', e=>{
+  if(e.ctrlKey && e.key.toLowerCase()==='k'){ e.preventDefault(); $('userInput').focus(); }
+  else if(e.ctrlKey && e.key.toLowerCase()==='m'){ e.preventDefault(); $('micBtn').click(); }
+  else if(e.key==='Escape'){
+    document.querySelectorAll('.overlay.on').forEach(o=>o.classList.remove('on'));
+    closeSheet(); closeMem(); closeDiary(); closeLib();
+  }
 });
 
 /* =====================================================================
@@ -1866,7 +2554,7 @@ function blobManifest(){
     const icon = 'data:image/svg+xml,'+encodeURIComponent(svg);
     const man = {
       name:'ANIA · Núcleo Personal', short_name:'ANIA',
-      description:'Asistente personal con voz, personalidad propia, login, búsqueda, clima y agenda. Funciona offline.',
+      description:'Asistente personal con voz, personalidad propia, login, biblioteca offline y agenda. Funciona sin conexión.',
       start_url: location.href.split('#')[0],
       scope: location.href.replace(/[^/]*$/,'') || location.href,
       display:'standalone', orientation:'portrait', lang:'es',
@@ -1942,17 +2630,11 @@ function makeZip(files){
   eocd.setUint32(12, centralSize, true); eocd.setUint32(16, offset, true);
   return new Blob([...parts, ...central, new Uint8Array(eocd.buffer)], {type:'application/zip'});
 }
-function downloadBlob(blob, name){
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = name;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
-}
 function exportKit(){
   const enc = new TextEncoder();
   const e = ESSENCES[essence];
   const sw = `/* ANIA · service worker (caché offline real en GitHub Pages) */
-const CACHE = 'ania-v4';
+const CACHE = 'ania-v5';
 const ASSETS = ['./','./index.html','./manifest.json','./icon.svg'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
@@ -1972,7 +2654,7 @@ self.addEventListener('fetch', e => {
 `;
   const manifest = JSON.stringify({
     name:'ANIA · Núcleo Personal', short_name:'ANIA',
-    description:'Asistente personal con voz, personalidad, login, búsqueda, clima y agenda. Funciona offline.',
+    description:'Asistente personal con voz, personalidad, login, biblioteca offline y agenda. Funciona offline.',
     start_url:'./', scope:'./', display:'standalone', orientation:'portrait', lang:'es',
     background_color:'#040806', theme_color:'#040806',
     icons:[
@@ -1988,21 +2670,20 @@ self.addEventListener('fetch', e => {
 <circle cx="256" cy="236" r="15" fill="#040806"/>
 <text x="256" y="452" font-family="monospace" font-size="58" fill="${e.acc}" text-anchor="middle" letter-spacing="14">ANIA</text>
 </svg>`;
-  const readme = `# ANIA · Núcleo Personal (v4.2)
+  const readme = `# ANIA · Núcleo Personal (v5.0)
 
-Asistente personal en un solo archivo HTML: voz, personalidad propia, login con
-usuarios.json, memoria, búsqueda, clima, agenda, traducción y modo offline.
-
-## Login
-Las credenciales se leen de:
-https://raw.githubusercontent.com/calm291094-del/meditech-tienda/main/usuarios.json
-La lista se cachea en el dispositivo: el login también funciona sin conexión.
+Asistente personal en un solo archivo HTML: voz, personalidad propia, login,
+memoria, biblioteca offline, agenda recurrente, diario, astro offline, ambiente
+procedural (lluvia/cafetería), Akinator isekai, backup total y modo offline.
 
 ## Desplegar en GitHub Pages
-1. Crea un repositorio nuevo en GitHub (público).
-2. **Add file → Upload files** y arrastra: \`index.html\`, \`manifest.json\`, \`icon.svg\`, \`sw.js\`, \`README.md\`.
-3. **Settings → Pages** → Branch: \`main\` / \`(root)\` → **Save**.
-4. Ábrela en el móvil (Chrome) → menú → **Instalar aplicación**: PWA con offline real.
+1. Repo nuevo → **Add file → Upload files** → arrastra los 5 archivos.
+2. **Settings → Pages** → Branch: \`main\` / \`(root)\` → **Save**.
+3. Ábrela en el móvil (Chrome) → menú → **Instalar aplicación**.
+
+## Login
+https://raw.githubusercontent.com/calm291094-del/meditech-tienda/main/usuarios.json
+(la lista se cachea: el login funciona sin conexión)
 
 ## Créditos
 Ania fue creada por Carlos Lorenzo Marros.
@@ -2054,6 +2735,7 @@ function renderVoiceSelect(){
   store.del('geo');
   Object.keys(localStorage).filter(k=>k.startsWith('ania_wx_')).forEach(k=>localStorage.removeItem(k));
   $('wTxt').textContent = '--°';
+  setWeatherMode(null);
   toast('Ubicación y caché de clima eliminadas');
 };
  $('weatherChip').onclick = ()=> weatherIntent();
@@ -2062,13 +2744,16 @@ function renderVoiceSelect(){
 const START_TIME = Date.now();
 async function runDiag(){
   const rows = [];
-  rows.push('Red: '+(isOffline()?'sin conexión':'conectado'+(navigator.connection?' · '+(navigator.connection.effectiveType||''):'')));
-  rows.push('Backend propio: '+(Sync.online?'operativo':'no disponible (modo local)'));
+  rows.push('Red: '+(isOffline()?'sin conexión':'conectado'));
+  rows.push('Backend propio: '+(Sync.online?'operativo':'no disponible'));
   rows.push('Sesión: '+(Session?Session.name+' ('+Session.role+')':'invitado'));
+  rows.push('Ambiente: '+(Ambient.mode||'silencio'));
+  rows.push('Luna: '+moonInfo().phase+' ('+moonInfo().illum+'%)');
+  rows.push('Biblioteca: '+Library.index().length+' artículos');
+  rows.push('Diario: '+store.get('diary', []).length+' entradas');
   rows.push('Voz: '+(S.muted?'silenciada':'activa')+(S.voice?' · '+S.voice.name:''));
-  rows.push('Ubicación: '+(geoCache()?geoCache().city:'sin registrar'));
-  rows.push('Agenda: '+taskPending()+' pendientes de '+tasks.length);
-  rows.push('Memoria: '+(Mind.d.nombre?'usuario conocido ('+Mind.d.nombre+')':'sin datos del usuario')+' · '+Mind.d.visitas+' sesiones');
+  rows.push('Agenda: '+taskPending()+' pendientes · '+tasks.filter(t=>t.recur).length+' recurrentes');
+  rows.push('Memoria: '+(Mind.d.nombre?Mind.d.nombre:'sin nombre')+' · '+Mind.d.visitas+' sesiones');
   if(performance.memory) rows.push('RAM JS: '+(performance.memory.usedJSHeapSize/1048576).toFixed(1)+' MB');
   rows.push('Pantalla: '+screen.width+'×'+screen.height+' · '+window.devicePixelRatio+'x');
   rows.push('Sesión activa: '+Math.round((Date.now()-START_TIME)/60000)+' min');
@@ -2086,30 +2771,30 @@ async function runDiag(){
    ARRANQUE
 ===================================================================== */
 const BOOTLINES = [
-  '» ANIA KERNEL v4.2 — núcleo personal',
+  '» ANIA KERNEL v5.0 — núcleo personal',
   '» compilando módulos de red ............ OK',
   '» parche CORS/JSONP en fuentes ........ OK',
   '» motor de voz sintetizada ............ OK',
-  '» cargando núcleo de personalidad ...... OK',
-  '» módulo de login: usuarios.json ...... OK',
-  '» calibrando reactor y esencia ......... OK',
-  '» agenda y recordatorios: tiro único .. OK'
+  '» núcleo de personalidad: 47 memorias . OK',
+  '» ambiente procedural (lluvia/café) ... OK',
+  '» biblioteca offline + diario ......... OK',
+  '» astro local: luna y meteoros ........ OK',
+  '» agenda recurrente: reprogramación ... OK',
+  '» esperando credenciales del operador _'
 ];
 (async function boot(){
-  const finalLine = Session
-    ? '» sesión recordada: '+Session.name+' _'
-    : '» esperando credenciales del operador _';
-  const lines = [...BOOTLINES, finalLine];
+  const finalLine = Session ? '» sesión recordada: '+Session.name+' _' : '» esperando credenciales del operador _';
+  const lines = Session ? [...BOOTLINES.slice(0,-1), finalLine] : BOOTLINES;
   const log = $('bootLog');
   for(const line of lines){
     const div = document.createElement('div');
     log.appendChild(div);
     for(let i=0;i<=line.length;i++){
       div.textContent = line.slice(0,i);
-      await new Promise(r=>setTimeout(r, 6));
+      await new Promise(r=>setTimeout(r, 5));
     }
     div.innerHTML = esc(line).replace(/OK$/,'<span class="ok">OK</span>');
-    await new Promise(r=>setTimeout(r, 130));
+    await new Promise(r=>setTimeout(r, 100));
   }
   if(Session){
     if(Session.role!=='invitado' && Session.name && Mind.d.nombre !== Session.name){
@@ -2131,9 +2816,9 @@ const BOOTLINES = [
   Mind.recordVisit();
   setOperator();
   renderTasks();
-  initSyncLoop();
-  sysLine('SESIÓN #'+Mind.d.visitas+' · '+new Date().toLocaleDateString('es-ES')+
-    ' · v4.2 · usuario: '+(Session?Session.name:'invitado'));
+  initSyncLoop(); // definida arriba: el error anterior era por archivo truncado
+  Diary.touch();
+  sysLine('SESIÓN #'+Mind.d.visitas+' · '+new Date().toLocaleDateString('es-ES')+' · v5.0 · usuario: '+(Session?Session.name:'invitado'));
   const g = geoCache();
   if(g){ try{ const d = await getWeather(g); updateChip(g,d); }catch(e){} }
 
@@ -2142,13 +2827,16 @@ const BOOTLINES = [
   const nom = Mind.nombre() ? ', '+Mind.nombre() : '';
   const dias = Mind.daysSince();
   let msg = saludo+', '+(nom||'bienvenido');
-  if(dias>=2 && nom) msg += '. Te eché de menos... han sido '+dias+' días. Espero que hayan incluido buen café';
+  if(dias>=2 && nom) msg += '. Te eché de menos... han sido '+dias+' días';
   else if(nom) msg += '. Nos vemos otra vez, me alegra';
   if(P.cumpleHoy()) msg = '¡Hoy es 26 de enero, mi cumpleaños! Apúntalo en la agenda. ';
-  msg += '. Todos mis sistemas están operativos: puedes escribirme o tocar el micrófono y hablarme directamente.';
+  const sh = nextShower();
+  if(sh && sh.diff<=3) msg += ' Ojo: las '+sh.name+' peak en '+sh.diff+' día'+(sh.diff===1?'':'s')+'.';
+  if(WX.mode==='rain'||WX.mode==='storm') msg += ' Ah, y está lloviendo: di «pon lluvia» si quieres laambientación con sonido.';
+  msg += '. Todos mis sistemas están operativos: escribe o toca el micrófono. Terminal real activa: usa ↑ para tus comandos anteriores y Tab para autocompletar.';
   setTimeout(()=>{
-    personaReply(msg, msg.replace(/\.\.\./g,'... '));
-    renderChips(['¿Qué hora es?','¿Cómo está el clima?','Cuéntame un secreto','¿Cuál es tu café favorito?','Recuérdame tomar agua en 30 minutos','¿Qué sabes de mí?']);
+    personaReply(msg, msg.replace(/\.\.\./g,'... ').slice(0,340));
+    renderChips(['¿Qué hora es?','¿Cómo está el clima?','¿Qué fase tiene la luna?','Pon lluvia','Adivina mi personaje','Recuérdame tomar agua todos los días a las 9 am','Cuéntame un secreto','Mi biblioteca']);
   }, 500);
 };
 </script>
