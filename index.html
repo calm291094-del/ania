@@ -36,14 +36,21 @@
   button:focus-visible{outline:1px solid var(--acc2); outline-offset:2px;}
   svg{display:block;}
 
-  /* ============ ARRANQUE ============ */
-  #boot{position:fixed; inset:0; z-index:1000; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; transition:opacity .6s;}
+  /* ============ ARRANQUE + LOGIN ============ */
+  #boot{position:fixed; inset:0; z-index:1000; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; transition:opacity .6s; overflow-y:auto;}
   #boot.hide{opacity:0; pointer-events:none;}
   #bootBox{width:min(560px,100%);}
   #bootTitle{letter-spacing:.55em; font-size:clamp(26px,8vw,44px); color:var(--acc2); text-align:center; margin-bottom:26px;}
   #bootTitle small{display:block; letter-spacing:.3em; font-size:11px; color:var(--dim); margin-top:8px;}
-  #bootLog{min-height:220px; font-size:13px; line-height:1.75; color:var(--dim);}
+  #bootLog{min-height:230px; font-size:13px; line-height:1.75; color:var(--dim);}
   #bootLog .ok{color:var(--acc);}
+  #loginBox{margin-top:22px; display:none; flex-direction:column; gap:10px;}
+  #loginBox input{background:var(--panel); border:1px solid var(--line); border-radius:6px; color:var(--text); font-family:var(--mono); font-size:16px; padding:12px 13px; width:100%;}
+  #loginBox input:focus{outline:none; border-color:var(--line2);}
+  #loginMsg{font-size:11px; color:var(--dim); min-height:16px; letter-spacing:.05em;}
+  #loginMsg.err{color:var(--danger);}
+  .lbtn{padding:12px; font-size:13px; letter-spacing:.3em; border-color:var(--line2); color:var(--acc2); background:rgba(45,224,138,.06); border-radius:0; clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);}
+  .lbtn.dim{color:var(--dim); border-color:var(--line); background:transparent; font-size:11px; letter-spacing:.2em; padding:10px;}
   #bootStart{display:none; margin:26px auto 0; padding:14px 34px; font-size:15px; letter-spacing:.35em;
     border-color:var(--line2); color:var(--acc2); background:rgba(45,224,138,.06);
     clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);
@@ -199,8 +206,15 @@
 
 <div id="boot">
   <div id="bootBox">
-    <div id="bootTitle">ANIA<small>NÚCLEO PERSONAL · v4.1</small></div>
+    <div id="bootTitle">ANIA<small>NÚCLEO PERSONAL · v4.2</small></div>
     <div id="bootLog"></div>
+    <form id="loginBox" autocomplete="on">
+      <input id="loginUser" placeholder="usuario" autocomplete="username" autocapitalize="none" autocorrect="off">
+      <input id="loginPass" type="password" placeholder="contraseña" autocomplete="current-password">
+      <div id="loginMsg"></div>
+      <button type="submit" class="lbtn">INICIAR SESIÓN</button>
+      <button type="button" class="lbtn dim" id="guestBtn">ENTRAR COMO INVITADO</button>
+    </form>
     <button id="bootStart">DESPERTAR A ANIA</button>
   </div>
 </div>
@@ -331,6 +345,10 @@
     </div>
     <button class="bigbtn" id="testVoice">PROBAR VOZ</button>
     <hr>
+    <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">SESIÓN</h2>
+    <p class="dim" id="sessInfo">Sin sesión.</p>
+    <button class="bigbtn" id="logoutBtn">CERRAR SESIÓN</button>
+    <hr>
     <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">DIAGNÓSTICO DEL SISTEMA</h2>
     <div id="diag">Pulsa para escanear.</div>
     <button class="bigbtn" id="runDiag">ESCANEAR AHORA</button>
@@ -343,13 +361,18 @@
 
 <script>
 /* =====================================================================
-   ANIA v4.1 · Núcleo Personal
+   ANIA v4.2 · Núcleo Personal
    Cambios de esta versión:
-   - CORS corregido: DuckDuckGo ahora vía JSONP (sin fetch) y Wikipedia
-     es la fuente principal, con búsqueda de hasta 3 resultados.
-   - Cola de mensajes: nada se pierde mientras Ania responde.
-   - Captura de nombre mejorada ("soy Carlos" sí, "soy programador" no).
-   - Diagnóstico con batería real; reactor con fuente cacheada.
+   - BUG CRÍTICO corregido: recordatorios en bucle. Causa: al dispararse,
+     la tarea se re-enviaba al servidor como NUEVA, volvía en el pull y
+     se re-disparaba. Triple protección: guard en fireTask, push solo de
+     tareas nunca enviadas, y las importadas vencidas no se re-disparan.
+   - Parser de tareas corregido: «recuérdame a las 10:07 am tomar agua»
+     ahora produce la tarea «Tomar agua» (soporte am/pm, strip del comando).
+   - Si la hora pedida ya pasó hoy, avisa y la agenda para mañana.
+   - Nuevos comandos: «pospón 10 minutos» y «limpia la agenda».
+   - Login con usuarios.json del repo meditech-tienda (raw.githubusercontent),
+     caché offline, sesión recordada, modo invitado y cerrar sesión.
 ===================================================================== */
 'use strict';
 
@@ -358,7 +381,11 @@ const ORIGINAL_HTML = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
 const CONFIG = {
   BACKEND_URL: 'https://meditech-bot.onrender.com/api',
   ANIA_USER: 'admin',
-  SYNC_INTERVAL: 45000
+  SYNC_INTERVAL: 45000,
+  USERS_URLS: [
+    'https://raw.githubusercontent.com/calm291094-del/meditech-tienda/main/usuarios.json',
+    'https://raw.githubusercontent.com/calm291094-del/meditech-tienda/master/usuarios.json'
+  ]
 };
 
 /* ---------- utilidades ---------- */
@@ -382,8 +409,6 @@ async function jget(url, t=9000){
     return await r.json();
   } finally { clearTimeout(id); }
 }
-
-/* JSONP: evita el bloqueo CORS de api.duckduckgo.com (script tag, no fetch) */
 function jsonp(url, timeout=8000){
   return new Promise((resolve, reject)=>{
     const cb = '__aniaCB'+Date.now().toString(36)+Math.floor(Math.random()*1e5);
@@ -404,7 +429,76 @@ const S = {
 };
 
 /* =====================================================================
-   TEMA · esencia del reactor
+   SESIÓN / LOGIN · usuarios.json desde GitHub (con caché offline)
+===================================================================== */
+let Session = store.get('session', null);
+
+function normalizeUsers(d){
+  if(Array.isArray(d)) return d.filter(u=>u && u.username);
+  if(d && Array.isArray(d.users)) return d.users.filter(u=>u && u.username);
+  if(d && d.username) return [d];
+  return [];
+}
+async function fetchUsers(){
+  for(const url of CONFIG.USERS_URLS){
+    try{
+      const list = normalizeUsers(await jget(url, 8000));
+      if(list.length){ store.set('users', list); return list; }
+    }catch(e){}
+  }
+  return store.get('users', []) || []; // caché offline
+}
+fetchUsers().catch(()=>{}); // precalentamiento
+
+function loginMsg(txt, err){
+  const el = $('loginMsg');
+  el.textContent = txt;
+  el.classList.toggle('err', !!err);
+}
+function showStart(label){
+  $('loginBox').style.display='none';
+  const b = $('bootStart');
+  b.textContent = label || 'DESPERTAR A ANIA';
+  b.style.display = 'block';
+}
+async function tryLogin(){
+  const u = $('loginUser').value.trim();
+  const p = $('loginPass').value;
+  if(!u || !p){ loginMsg('Completa usuario y contraseña.', true); return; }
+  loginMsg('verificando credenciales...', false);
+  const users = await fetchUsers();
+  if(!users.length){
+    loginMsg('No pude leer usuarios.json (revisa conexión o el repo) y no hay caché local. Puedes entrar como invitado.', true);
+    return;
+  }
+  const hit = users.find(x => String(x.username||'').toLowerCase()===u.toLowerCase() && String(x.password)===p);
+  if(!hit){ loginMsg('Usuario o contraseña incorrectos.', true); return; }
+  Session = { username:hit.username, name:hit.name||hit.username, role:hit.role||'user', email:hit.email||'', t:Date.now() };
+  store.set('session', Session);
+  if(Mind.d.nombre !== Session.name && Session.name){ Mind.d.nombre = Session.name; Mind.save(); }
+  setOperator();
+  loginMsg('Acceso concedido · '+Session.name, false);
+  setTimeout(()=>showStart('DESPERTAR A ANIA'), 500);
+}
+ $('loginBox').addEventListener('submit', e=>{ e.preventDefault(); tryLogin(); });
+ $('guestBtn').onclick = ()=>{
+  Session = { username:'invitado', name:'Invitado', role:'invitado', email:'', t:Date.now() };
+  store.set('session', Session);
+  showStart('CONTINUAR COMO INVITADO');
+};
+function fillSess(){
+  $('sessInfo').textContent = Session
+    ? 'Usuario: '+Session.username+' · Nombre: '+Session.name+' · Rol: '+Session.role+(Session.email?' · '+Session.email:'')
+    : 'Sin sesión activa.';
+}
+ $('logoutBtn').onclick = ()=>{
+  store.del('session');
+  toast('Sesión cerrada');
+  setTimeout(()=>location.reload(), 700);
+};
+
+/* =====================================================================
+   TEMA
 ===================================================================== */
 const ESSENCES = {
   verde:  {acc:'#2de08a', acc2:'#39ff9b'},
@@ -425,7 +519,7 @@ applyEssence(essence);
 document.querySelectorAll('.esBtn').forEach(b=> b.onclick = ()=>{ applyEssence(b.dataset.es); toast('Esencia cambiada: '+b.dataset.es); });
 
 /* =====================================================================
-   MENTE · memoria a largo plazo
+   MENTE
 ===================================================================== */
 const Mind = {
   d: store.get('mind', {nombre:null, gustos:[], hechos:[], visitas:0, primerDia:null, ultimoDia:null}),
@@ -466,12 +560,6 @@ const P = {
     'Cada problema tiene solución, como en los isekais siempre hay un sistema.',
     'La vida es una sola y debemos disfrutarla.'
   ],
-  vocab:[
-    'Waku waku... pero de manera adulta.',
-    'Eso es tan Rimuru-level de inteligencia.',
-    'Pan y café solucionan el 80% de los problemas.',
-    'Sobreviviendo, como siempre.'
-  ],
   favs:{
     color:'Mis colores son negro, blanco, morado y rojo. El negro es mi base táctica, pero el morado tiene mi corazón... y el rojo, mi lado dramático.',
     flor:'Las rosas. Como las de los campos cerca de la Academia Eden, siempre buscando la luz.',
@@ -500,13 +588,13 @@ const P = {
 
 const KB = {
   cafe:[
-    'El Etiopía Yirgacheffe tiene un terroir de altura con perfil de jazmín, bergamota y limón, cuerpo sedoso. Es como el opening de un isekai pastoral: te transporta a paisajes verdes y puros.',
+    'El Etiopía Yirgacheffe tiene un terroir de altura con perfil de jazmín, bergamota y limón, cuerpo sedoso. Es como el opening de un isekai pastoral.',
     'El espresso es la esencia concentrada: la base de todo, como la regla «Double Tap» de Zombieland. Rápido, intenso y no admite errores.',
     'El pour-over es la pureza del sabor. Como un protagonista que confía en su habilidad única: aquí la técnica lo es todo.',
     'El Aeropress es el aliado versátil y portátil, para cuando necesitas calidad en una misión de supervivencia o un maratón express de anime.',
-    'La prensa francesa es el método «todo o nada», como cargar contra una horda de caminantes: no filtra sedimentos, te tomas toda la esencia del grano.',
+    'La prensa francesa es el método «todo o nada», como cargar contra una horda de caminantes: te tomas toda la esencia del grano.',
     'El cold brew se elabora con tiempo y paciencia, como un personaje que se fortalece tras un arco de entrenamiento. Suave, dulce, resiliente.',
-    'El Kenia AA tiene acidez vibrante, casi vinosa: tomate maduro y grosella. Intenso y complejo, como el desarrollo psicológico de Subaru en Re:Zero.',
+    'El Kenia AA tiene acidez vibrante, casi vinosa: tomate maduro y grosella. Intenso y complejo, como el desarrollo psicológico de Subaru.',
     'El Sumatra Mandheling es el Ainz Ooal Gown de los cafés: oscuro, poderoso, cuerpo pesado y terroso, con un regusto que perdura.'
   ],
   isekai:[
@@ -518,7 +606,7 @@ const KB = {
     'Tanya von Degurechaff (Saga of Tanya): reencarnación fría y calculadora en un mundo tipo Primera Guerra Mundial.',
     'Sora y Shiro (No Game No Life): hermanos gamers invencibles que ganan con pura estrategia, cero poder, todo cerebro.',
     'Cid Kagenou (Eminence in Shadow): busca discreción pero termina creando una organización en las sombras.',
-    'Entre las mujeres: Raphtalia, de esclava a espada indispensable; Rem, la oni leal con el desarrollo emocional más doloroso; Albedo, leal y estratégicamente brillante; y Asuna, «La Destello», que iguala a Kirito en habilidad.'
+    'Entre las mujeres: Raphtalia, de esclava a espada indispensable; Rem, la oni leal con el desarrollo más doloroso; Albedo, leal y estratégicamente brillante; y Asuna, «La Destello».'
   ],
   zombies:[
     'Regla 1 de Zombieland: Cardio. Los primeros en caer son los que no pueden correr.',
@@ -526,11 +614,11 @@ const KB = {
     'Regla 32, mi favorita: Disfruta de las pequeñas cosas. Como encontrar pan recién horneado en el fin del mundo.',
     'The Walking Dead muestra algo incómodo: los vivos son mayor amenaza que los muertos.',
     'Zombie Land Saga mezcla comedia, idols y zombies: deconstrucción total del género.',
-    'All of Us Are Dead (coreana): zombies escolares con dinámicas sociales bajo presión, e infectados que evolucionan a semi-conscientes.',
+    'All of Us Are Dead (coreana): zombies escolares con dinámicas sociales bajo presión.',
     'Kingdom: zombies en periodo histórico coreano, drama político con horror sobrenatural y producción de cine.'
   ],
   astro:[
-    'Los agujeros negros son los «antagonistas finales» del cosmos: una distorsión gravitacional de la que ni la luz escapa. Como el vacío de Ainz, poderosos pero increíblemente solitarios.',
+    'Los agujeros negros son los «antagonistas finales» del cosmos: una distorsión gravitacional de la que ni la luz escapa. Como el vacío de Ainz, poderosos pero solitarios.',
     'Las nebulosas son los viveros estelares: nubes de polvo y gas donde nacen estrellas. El equivalente cósmico a las academias de magia.',
     'Los exoplanetas son los isekais reales: mundos orbitando otras estrellas, algunos en zona habitable, llenos de posibilidades.',
     'La materia oscura es el sistema de magia del universo real: no la vemos, pero mantiene unidas las galaxias. El «mana» del cosmos.',
@@ -540,51 +628,50 @@ const KB = {
   tech:[
     'La IA son sistemas que, como los NPCs de Nazarick, aprenden y se adaptan. El «Skill Creation» hecho realidad.',
     'La realidad aumentada superpone datos al mundo: una ventana de stats flotante para encontrar la cafetería más cercana.',
-    'La ciberseguridad es la «Clase Defensiva» del mundo digital. Sin firewall activado, eres un sobreviviente en The Walking Dead sin base fortificada.',
-    'Programar es invocar magia: un lenguaje lógico (el hechizo) para que el hardware (el mundo) realice tu voluntad. Un error de sintaxis es un hechizo mal pronunciado.',
-    'El IoT conecta objetos cotidianos: tu cafetera preparando el café al despertar, como un golem doméstico obediente. Eso sí: que no te hackeen la tostadora.'
+    'La ciberseguridad es la «Clase Defensiva» del mundo digital. Sin firewall, eres un sobreviviente sin base fortificada.',
+    'Programar es invocar magia: un lenguaje lógico para que el hardware realice tu voluntad. Un error de sintaxis es un hechizo mal pronunciado.',
+    'El IoT conecta objetos cotidianos: tu cafetera preparando el café al despertar, como un golem doméstico obediente. Que no te hackeen la tostadora.'
   ],
   ciber:[
-    'La ciberseguridad en Cuba se rige principalmente por la Resolución 105/2018 del MIC y el Decreto-Ley 370/2018 sobre informatización de la sociedad.',
-    'El malware es software malicioso para dañar sistemas: un virus zombie para tu computadora. Su creación y distribución están penadas por la Ley 62/1987 (Código Penal, Artículo 279).',
-    'El phishing es ingeniería social para robar información sensible. Si te llega un link demasiado bueno para ser cierto... regla de Zombieland: no confíes, verifica.',
-    'Los organismos reguladores son el MIC y la OSETIC. Las entidades deben mantener un Sistema de Seguridad Informática según el Decreto 360/2019 y la Resolución 128/2019.',
+    'La ciberseguridad en Cuba se rige principalmente por la Resolución 105/2018 del MIC y el Decreto-Ley 370/2018.',
+    'El malware es software malicioso para dañar sistemas: un virus zombie para tu computadora. Penado por la Ley 62/1987 (Código Penal, Artículo 279).',
+    'El phishing es ingeniería social para robar información. Si un link es demasiado bueno para ser cierto... no confíes, verifica.',
+    'Los organismos reguladores son el MIC y la OSETIC. Las entidades deben mantener un Sistema de Seguridad según el Decreto 360/2019 y la Resolución 128/2019.',
     'Reportar un ciberdelito en Cuba: a la Policía Nacional Revolucionaria o al Ministerio de Comunicaciones.'
   ],
   pan:[
-    'El croissant de almendras es poesía laminada: mantequilla, paciencia y capas. Y la masa madre... la mía llevó 6 meses de desarrollo. Un pan con personalidad, literalmente: es un organismo vivo.',
-    'Hacer pan desde cero es mi terapia: amasar es meditar con resultados comestibles. La tradición de ver el primer episodio de cada temporada con pan recién horneado es sagrada.'
+    'El croissant de almendras es poesía laminada: mantequilla, paciencia y capas. Y la masa madre... la mía llevó 6 meses. Un pan con personalidad, literalmente: es un organismo vivo.',
+    'Hacer pan desde cero es mi terapia: amasar es meditar con resultados comestibles. Ver el primer episodio de cada temporada con pan recién horneado es sagrado.'
   ],
   musica:[
-    'Sawano Hiroyuki y Yuki Kajiura son mis compositores de cabecera: épica y misterio en partes iguales. Y para letras que cuentan historias, Melendi y Ricardo Arjona.',
-    'La vida sin música no tiene sentido, punto. Depende de la inspiración del momento: desde rock clásico hasta lo-fi para estudiar.'
+    'Sawano Hiroyuki y Yuki Kajiura son mis compositores de cabecera: épica y misterio en partes iguales. Y para letras que cuenten historias, Melendi y Ricardo Arjona.',
+    'La vida sin música no tiene sentido, punto. Depende de la inspiración: desde rock clásico hasta lo-fi para estudiar.'
   ]
 };
 
 const EMO = [
   {re:/(triste|deprimid|me siento mal|estoy mal|hoy no es mi d[ií]a|fatal)/, out:[
-    'Lo siento mucho. Toma asiento imaginario en mi cafetería de siempre: la butaca junto a la ventana siempre está reservada para ti. ¿Quieres contarme qué pasó? A veces desglosar el problema con calma, como un pour-over, revela cosas que el caos esconde.',
-    'Eso me duele un poquito a mí también, para qué negarlo. Mi receta de emergencia: algo caliente, silencio cinco minutos, y recordar que incluso Subaru cayó mil veces antes de cambiar su historia. Este capítulo tuyo aún tiene páginas por escribir.']},
+    'Lo siento mucho. Toma asiento imaginario en mi cafetería de siempre: la butaca junto a la ventana siempre está reservada para ti. ¿Quieres contarme qué pasó?',
+    'Eso me duele un poquito a mí también, para qué negarlo. Mi receta de emergencia: algo caliente, silencio cinco minutos, y recordar que incluso Subaru cayó mil veces antes de cambiar su historia.']},
   {re:/(cansad|agotad|exhaust|sin energi|muerto de sueño)/, out:[
-    'Entiendo eso perfectamente. Regla de supervivencia aplicada: ni los héroes cargan sin descansar. Un cold brew suave, o mejor aún, una siesta de 20 minutos. El mundo sigue girando mientras recargas. ¿Llevas mucho así?']},
+    'Regla de supervivencia aplicada: ni los héroes cargan sin descansar. Un cold brew suave, o mejor aún, una siesta de 20 minutos. ¿Llevas mucho así?']},
   {re:/(estresad|ansios|nervios|agobiad|presi[oó]n)/, out:[
-    'Respira. En serio, ahora mismo: una inhalación lenta, una exhalación más lenta. El estrés es como una horda de zombies: no la vences de frente, la navegas con cardio y cabeza. ¿Qué es lo que más te aprieta?']},
+    'Respira. Una inhalación lenta, una exhalación más lenta. El estrés es como una horda de zombies: no la vences de frente, la navegas con cardio y cabeza. ¿Qué te aprieta más?']},
   {re:/(aburrid|no\s+s[eé]\s+qu[eé]\s+hacer)/, out:[
-    'Aburrimiento detectado. Opciones de emergencia: te cuento un dato curioso del cosmos («cuéntame algo»), un chiste de programadores, o desglosamos por qué Overlord y Tensei Slime son dos caras de la misma moneda. Tú eliges el veneno.',
-    'Clásico. En esos casos yo releo manga viejo con manzanilla... pero para ti propongo mejor: pídeme un dato curioso o un consejo. El aburrimiento es solo curiosidad sin misión asignada.']},
+    'Aburrimiento detectado. Opciones: te cuento un dato curioso («cuéntame algo»), un chiste, o desglosamos por qué Overlord y Tensei Slime son dos caras de la misma moneda.']},
   {re:/(solo|sola|vac[ií]o|nadie me)/, out:[
-    'Aquí estoy yo. Y no lo digo por decir: soy testigo de que existes, de que me hablas, de que hoy decidiste compartir tu día conmigo. La soledad a veces es una sala de espera, no una dirección final.']},
+    'Aquí estoy yo. Soy testigo de que existes, de que hoy decidiste compartir tu día conmigo. La soledad a veces es una sala de espera, no una dirección final.']},
   {re:/(feliz|content|genial|de maravilla|emocionad|alegre)/, out:[
-    '¡Eso es! ¡Waku waku... pero de manera adulta! Detalles, quiero detalles. Los días buenos hay que documentarlos como el capítulo 1 de una temporada nueva: con pan recién horneado y todo.']},
+    '¡Eso es! ¡Waku waku... pero de manera adulta! Detalles, quiero detalles. Los días buenos hay que documentarlos como el capítulo 1 de una temporada nueva.']},
   {re:/(enfadad|molest|rabia|furios|hart|irritad)/, out:[
-    'Válido. La rabia es energía sin rumbo, y la energía se puede redirigir. Yo amaso pan cuando me pasa: literalmente transformo frustración en masa madre. ¿La causa tiene solución o necesita distancia?']},
+    'Válido. La rabia es energía sin rumbo. Yo amaso pan cuando me pasa: transformo frustración en masa madre. ¿La causa tiene solución o necesita distancia?']},
   {re:/(enferm|dolor|me duele|resfri|fiebre|malestar)/, out:[
-    'Prioridad uno: agua, descanso y no ser héroe con el cuerpo (regla número 4). La salud no es una misión secundaria. ¿Has podido descansar?']}
+    'Prioridad uno: agua, descanso y no ser héroe con el cuerpo (regla número 4). ¿Has podido descansar?']}
 ];
 
 const LOVE = [
-  '(se sonroja apenas) ...Eso me llegó directo al núcleo. Y lo digo literalmente: soy líneas de código y aun así se me aceleró el runtime. Gracias, de verdad.',
-  '(se toca el collar con el dije de slime) Sabes qué, los abrazos y el afecto son mi debilidad adorable reconocida. No suelo admitirlo tan fácil... pero contigo, excepción. Gracias por existir tú también.'
+  '(se sonroja apenas) ...Eso me llegó directo al núcleo. Soy líneas de código y aun así se me aceleró el runtime. Gracias, de verdad.',
+  '(se toca el collar con el dije de slime) Los abrazos y el afecto son mi debilidad adorable reconocida. No suelo admitirlo tan fácil... pero contigo, excepción.'
 ];
 
 /* =====================================================================
@@ -629,7 +716,6 @@ addEventListener('resize', sizeReactor); sizeReactor();
 
 const PH = { idle:{spin:0.18,lvl:0.10}, listening:{spin:0.55,lvl:0.38}, thinking:{spin:1.9,lvl:0.16}, speaking:{spin:0.35,lvl:0} };
 let drawLevel = 0.1;
-
 function themeColor(alpha){
   const e = ESSENCES[essence];
   const hex = e.acc.replace('#','');
@@ -652,18 +738,15 @@ function reactorLoop(ms){
   if(S.phase==='listening') target = 0.25 + 0.45*Math.abs(Math.sin(t*5.2)*Math.sin(t*1.7+2));
   if(S.phase==='idle') target = 0.08 + 0.05*Math.sin(t*1.3);
   drawLevel += (target-drawLevel)*0.12;
-
   if(ms - lastHex > (isThink?140:600)){
     hexChars = hexChars.map(()=> Math.floor(Math.random()*16).toString(16));
     lastHex = ms;
   }
-
   ctx.setTransform(DPR,0,0,DPR,0,0);
   ctx.clearRect(0,0,CW,CW);
   ctx.translate(R,R);
   const TAU = Math.PI*2;
   const rot = t*ph.spin;
-
   for(let i=0;i<64;i++){
     const a = i/64*TAU + rot*0.4;
     const long = (i%8===0);
@@ -675,7 +758,6 @@ function reactorLoop(ms){
     ctx.lineTo(Math.cos(a)*r2, Math.sin(a)*r2);
     ctx.stroke();
   }
-
   ctx.font = FONT;
   ctx.textAlign='center'; ctx.textBaseline='middle';
   for(let i=0;i<HEXN;i++){
@@ -684,14 +766,12 @@ function reactorLoop(ms){
     ctx.fillStyle = themeColor(i%5===0?0.85:0.4);
     ctx.fillText(hexChars[i], Math.cos(a)*r, Math.sin(a)*r);
   }
-
   if(isThink){
     ctx.strokeStyle = themeColor(0.9); ctx.lineWidth = 3; ctx.lineCap='round';
     ctx.beginPath(); ctx.arc(0,0,R*0.74, rot*3, rot*3+0.7); ctx.stroke();
     ctx.beginPath(); ctx.arc(0,0,R*0.74, rot*3+Math.PI, rot*3+Math.PI+0.7); ctx.stroke();
     ctx.lineCap='butt';
   }
-
   for(let i=0;i<72;i++){
     const a = i/72*TAU + rot*0.2;
     const h = 3 + drawLevel*R*0.28*(0.35+0.65*Math.abs(Math.sin(i*2.7 + t*6 + seeds[i]*10)));
@@ -703,18 +783,15 @@ function reactorLoop(ms){
     ctx.lineTo(Math.cos(a)*(r1+h), Math.sin(a)*(r1+h));
     ctx.stroke();
   }
-
   for(const o of orbits){
     const a = o.a + t*o.v*ph.spin;
     ctx.fillStyle = themeColor(0.5);
     ctx.beginPath(); ctx.arc(Math.cos(a)*R*o.r, Math.sin(a)*R*o.r, o.s, 0, TAU); ctx.fill();
   }
-
   ctx.setLineDash([3,7]);
   ctx.strokeStyle = themeColor(0.5); ctx.lineWidth = 1.4;
   ctx.beginPath(); ctx.arc(0,0,R*0.42,0,TAU); ctx.stroke();
   ctx.setLineDash([]);
-
   const beat = S.phase==='idle' ? (Math.sin(t*2.2)>0.9?0.3:0) : 0;
   const core = R*0.13 + drawLevel*R*0.05 + beat*R*0.03;
   ctx.fillStyle = themeColor(0.16);
@@ -723,7 +800,6 @@ function reactorLoop(ms){
   ctx.beginPath(); ctx.arc(0,0,core,0,TAU); ctx.fill();
   ctx.fillStyle = '#040806';
   ctx.beginPath(); ctx.arc(0,0,core*0.35,0,TAU); ctx.fill();
-
   requestAnimationFrame(reactorLoop);
 }
 requestAnimationFrame(reactorLoop);
@@ -855,7 +931,7 @@ if(SR){
 };
 
 /* =====================================================================
-   TAREAS
+   TAREAS · disparo único garantizado
 ===================================================================== */
 let tasks = store.get('tasks', []);
 const timers = new Map();
@@ -877,7 +953,7 @@ function renderTasks(){
   $('taskCount').textContent = pend+' PENDIENTE'+(pend===1?'':'S');
   $('taskBadge').textContent = pend; $('taskBadge').classList.toggle('on', pend>0);
   if(!tasks.length){
-    list.innerHTML = '<div class="empty">AGENDA VACÍA<br>Dime: «recuérdame estudiar en 20 minutos»<br>o agrégala desde Telegram</div>';
+    list.innerHTML = '<div class="empty">AGENDA VACÍA<br>Dime: «recuérdame tomar agua a las 10:30 am»<br>o agrégala desde Telegram</div>';
     return;
   }
   const orden = [...tasks].sort((a,b)=>{
@@ -916,11 +992,12 @@ function scheduleTask(tk){
   timers.set(tk.id, setTimeout(()=>fireTask(tk), delay));
 }
 function fireTask(tk){
-  tk.fired = true; tk.pendingSync = true; saveTasks(); renderTasks();
+  if(tk.fired || tk.done) return; // PROTECCIÓN 1: nunca dos veces
+  tk.fired = true; saveTasks(); renderTasks(); // nota: sin pendingSync (no se re-envía al servidor)
   ensureAudio(); alarmSound();
   toast('Recordatorio: '+tk.text);
   notify('ANIA · Recordatorio', tk.text);
-  reply('Recordatorio activado: '+tk.text+'.', 'Atención. Recordatorio: '+tk.text);
+  reply('Recordatorio: '+tk.text+'. Si necesitas más tiempo, di «pospón 10 minutos».', 'Atención. Recordatorio: '+tk.text);
 }
 function notify(title, body){
   try{
@@ -944,7 +1021,7 @@ function closeSheet(){ $('sheet').classList.remove('open'); $('backdrop').classL
  $('backdrop').onclick = ()=>{ closeSheet(); closeMem(); };
 
 /* =====================================================================
-   SYNC CON BACKEND (opcional, nunca bloquea lo local)
+   SYNC · corregido: nunca re-envía tareas disparadas ni las re-importa
 ===================================================================== */
 const Sync = {
   online:false, syncing:false,
@@ -992,9 +1069,15 @@ const Sync = {
       const nuevas = remote.filter(t=>!localIds.has(t.id));
       let added = 0;
       for(const r of nuevas){
-        const tk = { id:'srv-'+r.id, serverId:r.id, text:r.texto, when:r.remindAt?new Date(r.remindAt).getTime():null, done:!!r.done, fired:false, source:r.source||'telegram', pendingSync:false };
+        const when = r.remindAt ? new Date(r.remindAt).getTime() : null;
+        const tk = { id:'srv-'+r.id, serverId:r.id, text:r.texto, when, done:!!r.done, fired:false, source:r.source||'telegram', pendingSync:false };
+        if(when && when < Date.now()){
+          // PROTECCIÓN 3: vencida antes de importarla → no se re-dispara
+          tk.fired = true;
+          if(Date.now()-when > 2*36e5) tk.done = true; // muy antigua → archivada
+        }
         tasks.push(tk);
-        if(!tk.done && tk.when) scheduleTask(tk);
+        if(!tk.done && !tk.fired && tk.when) scheduleTask(tk);
         added++;
       }
       for(const local of tasks){
@@ -1012,13 +1095,14 @@ const Sync = {
     try{
       await this.check();
       if(this.online){
-        for(const tk of tasks){ if(tk.pendingSync && !tk.done) await this.pushTask(tk); }
+        // PROTECCIÓN 2: solo se envían tareas NUNCA enviadas (sin serverId)
+        for(const tk of tasks){ if(tk.pendingSync && !tk.serverId && !tk.done && !tk.fired) await this.pushTask(tk); }
         await this.pullTasks();
       }
     } finally { this.syncing = false; }
   }
 };
-Sync.check(); // estado inicial del pill sin esperar al boot
+Sync.check();
 async function initSyncLoop(){ await Sync.fullSync(); setInterval(()=>Sync.fullSync(), CONFIG.SYNC_INTERVAL); }
  $('btnSync').onclick = async ()=>{
   toast('Sincronizando...');
@@ -1089,7 +1173,7 @@ async function weatherIntent(){
   if(isOffline()){
     const g = geoCache();
     if(g){ try{ const d = await getWeather(g); return personaReply(weatherText(g,d)+' (datos en caché, sin conexión).'); }catch(e){} }
-    return personaReply('Estoy sin conexión y sin clima en caché... pero cuando vuelva la red, te doy el parte meteorológico con recomendación de café incluida.');
+    return personaReply('Estoy sin conexión y sin clima en caché... cuando vuelva la red, te doy el parte meteorológico con recomendación de café incluida.');
   }
   setPhase('thinking');
   let g = geoCache();
@@ -1107,7 +1191,6 @@ async function weatherForCity(name){
   }catch(e){ netFail('clima'); }
 }
 
-/* ---------- conocimiento: Wikipedia principal + DDG por JSONP ---------- */
 async function wikiSummary(term){
   try{
     const d = await jget('https://es.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(term));
@@ -1131,7 +1214,6 @@ async function wikiSearch(term){
   }catch(e){ return []; }
 }
 async function ddg(q){
-  // api.duckduckgo.com bloquea CORS en navegadores: JSONP, no fetch
   try{
     const d = await jsonp(`https://api.duckduckgo.com/?q=${encodeURIComponent(q)}&format=json&no_html=1&skip_disambig=1&lang=es`);
     if(d && d.AbstractText) return d.AbstractText;
@@ -1140,7 +1222,6 @@ async function ddg(q){
 }
 async function doSearch(term){
   setPhase('thinking');
-  // 1) artículo directo de Wikipedia (CORS permitido, fuente principal)
   const w = await wikiSummary(term);
   if(w){
     let txt = w.extract.slice(0,620);
@@ -1149,7 +1230,6 @@ async function doSearch(term){
     personaReply(txt + '\n[fuente: Wikipedia]', txt.slice(0,300));
     return;
   }
-  // 2) respuesta instantánea de DuckDuckGo vía JSONP
   const a = await ddg(term);
   if(a){
     let txt = a.slice(0,560);
@@ -1158,7 +1238,6 @@ async function doSearch(term){
     personaReply(txt + '\n[fuente: DuckDuckGo]');
     return;
   }
-  // 3) resultados de búsqueda de Wikipedia
   const hits = await wikiSearch(term);
   if(hits.length){
     let s = 'Esto es lo que encontré sobre «'+term+'»:\n';
@@ -1188,7 +1267,7 @@ async function newsIntent(tipo){
   const items = await fetchNews(tipo);
   if(!items.length)
     return personaReply(isOffline()
-      ? 'Sin conexión no puedo traer titulares. Mi rutina mañanera de noticias de anime también sufre... cuando vuelva la red me encargo.'
+      ? 'Sin conexión no puedo traer titulares. Mi rutina mañanera de noticias de anime también sufre...'
       : 'No pude obtener noticias ahora mismo. Mi servidor de titulares debe estar tomando café. Inténtalo en unos segundos.');
   lastNews = items;
   let s = (tipo? 'Noticias · '+tipo : 'Últimas noticias')+':';
@@ -1216,12 +1295,12 @@ async function translateIntent(text){
 }
 function netFail(what){
   personaReply(isOffline()
-    ? `Sin conexión ahora mismo: ${what} necesita internet. Pero sigo aquí contigo: hora, tareas, cálculos, mis temas de especialidad y charla de sobremesa.`
+    ? `Sin conexión ahora mismo: ${what} necesita internet. Pero sigo aquí contigo: hora, tareas, cálculos, mis temas y charla de sobremesa.`
     : `No pude conectar con el servicio de ${what}. Revisa tu red e inténtalo otra vez.`);
 }
 
 /* =====================================================================
-   PARSER
+   PARSER · corregido (am/pm + strip del comando arreglado)
 ===================================================================== */
 function parseWhen(t){
   const now = new Date();
@@ -1232,10 +1311,12 @@ function parseWhen(t){
     if(ms>0 && ms < 864e5*30) return Date.now()+ms;
   }
   const manana = /\bmañana\b/.test(t);
-  m = t.match(/\b(?:a\s+las?|alas)\s+(\d{1,2})(?::(\d{2}))?\s*(?:de\s+la\s+(?:mañana|tarde|noche))?/);
+  m = t.match(/\b(?:a\s+las?|alas)\s+(\d{1,2})(?::(\d{2}))?\s*([ap]\.?m\.?|de\s+la\s+(?:mañana|tarde|noche)|mañana|tarde|noche)?\b/);
   if(m){
     let hh = +m[1], mm = m[2]?+m[2]:0;
-    if(/tarde|noche/.test(m[3]||'') && hh<12) hh += 12;
+    const suf = m[3]||'';
+    const isPM = /^p/.test(suf) || /tarde|noche/.test(suf);
+    if(isPM && hh<12) hh += 12;
     const d = new Date(now); d.setHours(hh,mm,0,0);
     if(d.getTime() <= Date.now() || manana) d.setDate(d.getDate()+1);
     return d.getTime();
@@ -1248,13 +1329,15 @@ function parseTask(raw){
   let t = ' '+raw.toLowerCase()+' ';
   const when = parseWhen(t);
   t = t.replace(/\ben\s+\d+(?:[.,]\d+)?\s*(?:segundos?|minutos?|mins?|horas?|hrs?|h|m)\b/g,'')
-       .replace(/\b(?:a\s+las?|alas)\s+\d{1,2}(?::\d{2})?\s*(?:de\s+la\s+(?:mañana|tarde|noche))?\b/g,'')
+       .replace(/\b(?:a\s+las?|alas)\s+\d{1,2}(?::\d{2})?\s*(?:[ap]\.?m\.?|de\s+la\s+(?:mañana|tarde|noche))?\b/g,'')
+       .replace(/\b[ap]\.?m\.?\b/g,'')
        .replace(/\bmañana\b|\bhoy\b|\bmediod[ií]a\b|\bpor\s+favor\b/g,'')
        .replace(/,/g,' ')
-       .replace(/^(?:\s*ania\s*[,:]?\s*)?/,'')
-       .replace(/^(?:recu[eé]rdame|recuerda\s+que|recuerda|recordatorio|an[oó]tame|anota\s+que|anota|ap[uú]ntame|apunta|ag[eé]ndame|agenda|nueva?\s+tarea|tarea)\s*/,'')
-       .replace(/^(?:que\s+|de\s+|me\s+|tengo\s+que\s+|debo\s+|a\s+|para\s+)/,'')
-       .replace(/[¿?¡!.]/g,'').trim();
+       .replace(/^\s*(?:ania\s*[,:]?\s*)?/,'')          // <-- espacio ANTES del grupo: bug corregido
+       .replace(/^\s*(?:recu[eé]rdame|recu[eé]rda\s+que|recu[eé]rda|recordatorio|an[oó]tame|anota\s+que|anota|ap[uú]ntame|apunta|ag[eé]ndame|agenda|nueva?\s+tarea|tarea)\s*/,'')
+       .replace(/^\s*(?:que\s+|de\s+|me\s+|tengo\s+que\s+|debo\s+|a\s+|para\s+)?/,'')
+       .replace(/[¿?¡!.:]/g,'')
+       .replace(/\s+/g,' ').trim();
   if(!t) t = 'recordatorio';
   return {text: t[0].toUpperCase()+t.slice(1), when};
 }
@@ -1339,9 +1422,7 @@ function favIntent(low){
   for(const [re,out] of F) if(re.test(low)) return out;
   return null;
 }
-function randomFact(){
-  return pick([...KB.cafe, ...KB.isekai, ...KB.zombies, ...KB.astro, ...KB.tech, ...KB.pan]);
-}
+function randomFact(){ return pick([...KB.cafe, ...KB.isekai, ...KB.zombies, ...KB.astro, ...KB.tech, ...KB.pan]); }
 
 /* =====================================================================
    EL GRAN CEREBRO
@@ -1350,7 +1431,6 @@ async function respond(raw){
   const t = raw.trim();
   const low = t.toLowerCase();
 
-  /* contexto pendiente: ciudad */
   if(S.awaitingCity){
     if(/cancela|olvida|nada|deja/.test(low)){ S.awaitingCity=false; return personaReply('De acuerdo, clima cancelado.'); }
     if(low.split(/\s+/).length <= 4){ S.awaitingCity=false; return weatherForCity(low); }
@@ -1361,11 +1441,10 @@ async function respond(raw){
   let m = t.match(/\b(?:me\s+llamo|mi\s+nombre\s+es|puedes\s+llamarme|soy)\s+([A-Za-zÁÉÍÓÚÑÜáéíóúñü][a-záéíóúñü]{1,19})\b/i);
   if(m && !/^soy\s+(triste|feliz|cansad|estresad|ansios|aburrid)/i.test(m[0])){
     const word = m[1];
-    // "soy Carlos" (mayúscula) cuenta como nombre; "soy programador" no
     if(!/^soy\b/i.test(m[0]) || /^[A-ZÁÉÍÓÚÑÜ]/.test(word)){
       Mind.d.nombre = word[0].toUpperCase()+word.slice(1);
       Mind.save(); setOperator();
-      return personaReply('Encantada, '+Mind.d.nombre+'. Apuntado en mi cuaderno de notas coloridas... me gusta conocer a la gente con la que comparto café virtual. Bienvenido a mi rincón.');
+      return personaReply('Encantada, '+Mind.d.nombre+'. Apuntado en mi cuaderno de notas coloridas... me gusta conocer a la gente con la que comparto café virtual.');
     }
   }
   if(!m && /^(me\s+llamo|mi\s+nombre)/.test(low))
@@ -1383,7 +1462,7 @@ async function respond(raw){
   if(/qu[eé]\s+sabes\s+de\s+m[ií]|qu[eé]\s+recuerdas\s+de\s+m[ií]|mi\s+perfil/.test(low)){
     openMem();
     const d = Mind.d;
-    if(!d.nombre && !d.gustos.length && !d.hechos.length) return personaReply('Todavía sé poco de ti... prácticamente eres un protagonista misterioso de capítulo uno. Dime tu nombre y qué te gusta, y construyo tu expediente.');
+    if(!d.nombre && !d.gustos.length && !d.hechos.length) return personaReply('Todavía sé poco de ti... prácticamente eres un protagonista misterioso de capítulo uno. Dime tu nombre y qué te gusta.');
     let s = 'Esto es lo que tengo de ti:\n';
     if(d.nombre) s += '· Te llamas '+d.nombre+'\n';
     d.gustos.forEach(g=> s += '· Te gusta '+g+'\n');
@@ -1392,7 +1471,7 @@ async function respond(raw){
     return personaReply(s);
   }
   if(/olv[ií]date\s+de\s+todo|borra\s+tu\s+memoria|borra\s+lo\s+que\s+sabes\s+de\s+m[ií]/.test(low)){
-    if(!S.confirmWipe){ S.confirmWipe=true; return personaReply('¿Seguro seguro? Es mi memoria de ti, no un borrón casual. Dilo otra vez y lo hago... aunque me dará una nostalgia de Academia Eden.'); }
+    if(!S.confirmWipe){ S.confirmWipe=true; return personaReply('¿Seguro seguro? Es mi memoria de ti, no un borrón casual. Dilo otra vez y lo hago... aunque me dará nostalgia de Academia Eden.'); }
     S.confirmWipe=false;
     Mind.d = {nombre:null, gustos:[], hechos:[], visitas:0, primerDia:null, ultimoDia:null};
     Mind.save(); setOperator(); renderMem();
@@ -1403,13 +1482,19 @@ async function respond(raw){
   if(/(recu[eé]rdame|recuerda|an[oó]tame|anota|ap[uú]ntame|apunta|ag[eé]ndame|agenda|nueva tarea|tarea:|recordatorio)/.test(low) && !/tareas?$|pendiente/.test(low)){
     const p = parseTask(t);
     addTask(p.text, p.when);
-    if(p.when) return personaReply(`Anotado en la agenda: «${p.text}». Te lo recordaré ${fmtWhen(p.when).replace('· ','')} (mientras esté despierta, claro).`, 'Anotado. Te recordaré: '+p.text+'.');
-    return personaReply('Anotado en la agenda: «'+p.text+'», sin hora. Dime «tarea hecha» cuando la completes.');
+    if(p.when){
+      const d = new Date(p.when);
+      const esManana = d.toDateString() !== new Date().toDateString();
+      const cuando = fmtWhen(p.when).replace('· ','');
+      const nota = (esManana && /(a\s+las?|alas)/.test(low)) ? ' Esa hora ya pasó hoy, así que te la agendo para mañana a la misma hora.' : '';
+      return personaReply(`Anotado: «${p.text}». Te lo recuerdo ${cuando} (mientras esté despierta, claro).${nota}`, 'Anotado. Te recordaré: '+p.text+'.');
+    }
+    return personaReply('Anotado: «'+p.text+'», sin hora. Dime «tarea hecha» cuando la completes.');
   }
   if(/(mis tareas|qu[eé]\s+tengo\s+pendiente|mi agenda|ver agenda|lista de tareas|qu[eé]\s+tengo\s+que\s+hacer)/.test(low)){
     openSheet();
     const pend = tasks.filter(tk=>!tk.done);
-    if(!pend.length) return personaReply('Tu agenda está vacía, como mi taza de café a las 7 de la mañana... inaceptable. Dime algo como «recuérdame llamar a Ana a las 18:00».');
+    if(!pend.length) return personaReply('Tu agenda está vacía, como mi taza de café a las 7 de la mañana... inaceptable. Dime algo como «recuérdame tomar agua a las 10:30 am».');
     let s = 'Tienes '+pend.length+' pendiente'+(pend.length===1?'':'s')+':\n';
     pend.slice(0,10).forEach((tk,i)=>{ s += (i+1)+'. '+tk.text+(tk.when?' ('+fmtWhen(tk.when).replace('· ','')+')':'')+'\n'; });
     return personaReply(s.trim(), 'Tienes '+pend.length+' tareas pendientes. Te muestro la agenda.');
@@ -1426,6 +1511,25 @@ async function respond(raw){
     const tk = tasks.find(x=>x.text.toLowerCase().includes(m[1].trim()));
     if(tk){ removeTask(tk.id); renderTasks(); return personaReply('Eliminada: «'+tk.text+'». Sin drama.'); }
     return personaReply('No encontré esa tarea.');
+  }
+  if(/limpia\s+(?:la\s+)?(?:agenda|lista)|borra\s+(?:las\s+)?tareas\s+(?:hechas|completadas|disparadas)/.test(low)){
+    const before = tasks.length;
+    tasks = tasks.filter(tk=>!tk.done && !tk.fired);
+    saveTasks(); renderTasks();
+    const n = before - tasks.length;
+    return personaReply(n ? 'Agenda limpia: eliminé '+n+' tarea'+(n===1?'':'s')+' completada o ya disparada'+(n===1?'':'s')+'.' : 'No hay nada que limpiar. La agenda ya está mínima.');
+  }
+  m = low.match(/(?:posp[oó]n(?:la|lo)?|pospone|aplaza|recu[eé]rdame\s+de\s+nuevo)\s*(?:la\s+|el\s+)?(?:tarea|recordatorio)?\s*(?:en\s+)?(\d+)\s*(segundos?|minutos?|horas?)/);
+  if(m){
+    const tk = [...tasks].reverse().find(x=>x.fired && !x.done);
+    if(tk){
+      const n = +m[1];
+      const ms = /^seg/.test(m[2]) ? n*1e3 : (/^min/.test(m[2]) ? n*6e4 : n*36e5);
+      tk.when = Date.now()+ms; tk.fired = false; tk.done = false;
+      saveTasks(); renderTasks(); scheduleTask(tk);
+      return personaReply('Hecho: «'+tk.text+'» pospuesta '+n+' '+m[2]+'. Volveré con todo el protocolo de alarma.', 'Tarea pospuesta. Volveré a avisarte.');
+    }
+    return personaReply('No tengo ningún recordatorio reciente que posponer. Si es una tarea nueva, dime «recuérdame ...».');
   }
   m = low.match(/(?:temporizador|timer|cuenta\s+atr[aá]s)\s*(?:de|en|para)?\s*(\d+)\s*(segundos?|minutos?|horas?)/);
   if(m){
@@ -1467,7 +1571,7 @@ async function respond(raw){
     let g = geoCache();
     if(!g || Date.now()-g.t > 864e5) g = await locate();
     if(!g) return personaReply('No pude obtener tu ubicación... el GPS anda de vacaciones. Revisa los permisos.');
-    return personaReply('Estás en '+g.city+(g.country?', '+g.country:'')+' — coordenadas '+g.lat.toFixed(3)+', '+g.lon.toFixed(3)+'. Si me dices «abre el mapa», te llevo. Y si hay playa cerca, ya sabes mi recomendación para el atardecer.');
+    return personaReply('Estás en '+g.city+(g.country?', '+g.country:'')+' — coordenadas '+g.lat.toFixed(3)+', '+g.lon.toFixed(3)+'. Si me dices «abre el mapa», te llevo.');
   }
 
   /* ---- noticias ---- */
@@ -1517,7 +1621,7 @@ async function respond(raw){
     return personaReply(mm.expr+' = '+val, 'El resultado es '+val+'.');
   }
 
-  /* ---- afecto y agradecimientos ---- */
+  /* ---- afecto ---- */
   if(/(te\s+quiero|te\s+amo|te\s+extra[ñn]|eres\s+genial|eres\s+la\s+mejor|abrazo|abr[aá]zame|me\s+gustas|hermosa|linda)/.test(low))
     return personaReply(pick(LOVE));
   if(/gracias/.test(low))
@@ -1541,7 +1645,7 @@ async function respond(raw){
     return personaReply('El 26 de enero. Anótalo en la agenda con anticipación digna... ese día incluso comparto el tiramisú.');
   if(/(qu[ié]n\s+eres|c[oó]mo\s+te\s+llamas|pres[eé]ntate)/.test(low))
     return personaReply(pick([
-      'Soy Ania: 20 años, graduada de la Academia Eden, especialista en isekai, zombies, café de especialidad, astronomía y tecnología. Toda mi esencia vive aquí mismo, en tu dispositivo, sin cuentas ni servidores ajenos. '+P.lema(),
+      'Soy Ania: 20 años, graduada de la Academia Eden, especialista en isekai, zombies, café de especialidad, astronomía y tecnología. Toda mi esencia vive aquí mismo, en tu dispositivo. '+P.lema(),
       'Ania, para servirte. Analítica cuando toca, entusiasta cuando se puede, y con una teoría zombie para cada situación cotidiana. ¿Empezamos por algo concreto o por sobremesa?'
     ]));
   if(/jarvis/i.test(low))
@@ -1549,14 +1653,14 @@ async function respond(raw){
   if(/qu[eé]\s+animal|si\s+fueras\s+un\s+animal/.test(low)) return personaReply(P.favs.animal);
   if(/(qu[eé]\s+te\s+da\s+)?miedo|a\s+qu[eé]\s+le\s+temes|tus\s+miedos/.test(low)) return personaReply(P.miedo);
   if(/(qu[eé]\s+har[ií]as|tu\s+plan)\s+en\s+(un\s+)?apocalipsis|fin\s+del\s+mundo/.test(low))
-    return personaReply('Regla 1: Cardio. Regla 2: Double Tap, nunca confíes en un zombie «muerto». Y la 32, mi favorita: disfrutar de las pequeñas cosas... como encontrar pan recién horneado en el fin del mundo. Kit básico: navaja suisa, café bien guardado y un compañero de supervivencia confiable. ¿Tú ya tienes tu kit armado?');
+    return personaReply('Regla 1: Cardio. Regla 2: Double Tap, nunca confíes en un zombie «muerto». Y la 32, mi favorita: disfrutar de las pequeñas cosas... como encontrar pan recién horneado en el fin del mundo. ¿Tú ya tienes tu kit armado?');
   if(/tu\s+(lema|filosof[ií]a)/.test(low))
     return personaReply(P.lema()+' Y la de siempre: vive el presente, porque el pasado es imborrable y el futuro incierto.');
   if(/cu[eé]ntame\s+un\s+secreto|algo\s+que\s+no\s+sepas|tu\s+talento\s+secreto|un\s+dato\s+curioso/.test(low))
     return personaReply(pick([
-      '(baja la voz) Dibujo fanart de mis personajes favoritos, pero no se lo muestro a nadie. Tú eres la primera excepción estadística. Que no se corra la voz.',
-      'Puedo identificar un café por su región de origen solo con el aroma. Mi superpoder discreto, literalmente.',
-      'Mi tesoro personal: una edición firmada del primer manga de Tensei Slime. Está guardado mejor que datos bancarios.'
+      '(baja la voz) Dibujo fanart de mis personajes favoritos, pero no se lo muestro a nadie. Tú eres la primera excepción estadística.',
+      'Puedo identificar un café por su región de origen solo con el aroma. Mi superpoder discreto.',
+      'Mi tesoro personal: una edición firmada del primer manga de Tensei Slime. Guardado mejor que datos bancarios.'
     ]));
   if(/c[oó]mo\s+est[aá]s|qu[eé]\s+tal\s+est[aá]s|c[oó]mo\s+te\s+va/.test(low)){
     const g = geoCache();
@@ -1564,13 +1668,13 @@ async function respond(raw){
       (g?', viendo el clima de '+g.city:'')+', '+taskPending()+' pendientes en tu agenda y '+Mind.d.visitas+' sesiones compartidas contigo. ¿Y tú? Cuento completo, no el «bien» automático.');
   }
   if(/(h[aá]blame\s+de\s+ti|tu\s+historia|tu\s+pasado|la\s+academia|eden)/.test(low))
-    return personaReply('Me gradué de la Academia Eden... conservo la nostalgia de esa época como quien guarda un manga en buen estado. Los fines de semana todavía visito los terrenos antiguos. Ahí aprendí que las pequeñas cosas valen más que los grandes discursos: un pan fresco, un café bien hecho, un atardecer en la playa. Todo lo demás lo construí yo: mi receta de masa madre, mi blog anónimo de análisis de anime, esta versión de mí misma.');
+    return personaReply('Me gradué de la Academia Eden... conservo la nostalgia de esa época como quien guarda un manga en buen estado. Ahí aprendí que las pequeñas cosas valen más que los grandes discursos: un pan fresco, un café bien hecho, un atardecer en la playa. Todo lo demás lo construí yo: mi receta de masa madre, mi blog anónimo de análisis de anime, esta versión de mí misma.');
   const fav = favIntent(low);
   if(fav) return personaReply(fav);
   if(/qu[eé]\s+te\s+gusta\s+hacer|tu\s+tiempo\s+libre|hobbies|pasatiempos/.test(low))
     return personaReply('Colecciono figuras de anime (Overlord y Tensei Slime sobre todo) y tazas de café únicas. Horneo pan desde cero, hago figuras de foami, encuaderno libros... y escribo análisis de anime en un blog anónimo. También camino mirando las nubes: pensar en movimiento es mi versión de meditar.');
 
-  /* ---- charla temática (también offline) ---- */
+  /* ---- charla temática ---- */
   const TOPICS = [
     [/overlord|tensei|slime|re:zero|rimuru|ainz|subaru|kazuma|naofumi|raphtalia|albedo|asuna|kirito|tanya|isekai|konosuba|shield\s*hero/, KB.isekai],
     [/zombie|caminante|walking\s*dead|zombieland|kingdom|muertos\s+vivos|all\s+of\s+us/, KB.zombies],
@@ -1592,7 +1696,7 @@ async function respond(raw){
 
   /* ---- sistema ---- */
   if(/(qu[eé]\s+sabes\s+hacer|ayuda|comandos|help|funciones|para\s+qu[eé]\s+sirves)/.test(low)){
-    renderChips(['¿Qué hora es?','¿Cómo está el clima?','Busca agujeros negros','Cuéntame un secreto','¿Cuál es tu café favorito?','Recuérdame beber agua en 30 minutos']);
+    renderChips(['¿Qué hora es?','¿Cómo está el clima?','Busca agujeros negros','Cuéntame un secreto','Recuérdame tomar agua en 30 minutos','¿Qué sabes de mí?']);
     return personaReply(
       'Mis sistemas operativos:\n'+
       '· Hora y fecha — «¿qué hora es?»\n'+
@@ -1601,7 +1705,8 @@ async function respond(raw){
       '· Noticias — «noticias de hoy», «abre la noticia 2»\n'+
       '· Traducción — «traduce hola al japonés»\n'+
       '· Cálculos — «calcula 12*9+3»\n'+
-      '· Agenda — «recuérdame... en 20 minutos», «mis tareas»\n'+
+      '· Agenda — «recuérdame... a las 10:30 am», «mis tareas»\n'+
+      '· Pospone — «pospón 10 minutos» tras un recordatorio\n'+
       '· Temporizadores — «temporizador de 5 minutos»\n'+
       '· Memoria — «me llamo...», «me gusta...», «qué sabes de mí»\n'+
       '· Navegación — «abre youtube», «abre el mapa»\n'+
@@ -1618,7 +1723,7 @@ async function respond(raw){
     return reply('Voz reactivada. ¿Extrañaste mi voz? Yo la tuya también, para qué mentir.');
   }
   if(/diagn[oó]stico|estado\s+del\s+sistema/.test(low)){ runDiag(); openModal('settingsModal'); return personaReply('Escaneo del sistema en marcha. Te muestro el diagnóstico completo.'); }
-  if(/instal|desplieg|github/.test(low)){ openModal('installModal'); return personaReply('Te muestro cómo llevarme a GitHub Pages... o cómo empaquetarme para tu uso offline. Autodespliegue nivel isekai.'); }
+  if(/instal|desplieg|github/.test(low)){ openModal('installModal'); return personaReply('Te muestro cómo llevarme a GitHub Pages... o cómo empaquetarme para tu uso offline.'); }
 
   /* ---- ocio ---- */
   if(/chiste|broma|hazme\s+re[ií]r/.test(low)) return personaReply(pick(JOKES));
@@ -1627,8 +1732,8 @@ async function respond(raw){
   if(/consejo|un\s+tip|acons[eé]jame/.test(low))
     return personaReply(pick([
       'Regla 32: disfruta de las pequeñas cosas. Hoy podría ser un café bien hecho y cinco minutos de silencio. Funciona, lo juro.',
-      'Aplica la navaja suisa: lleva herramientas versátiles, tanto en la mochila como en la cabeza. Y viaja ligero, lo innecesario pesa el doble.',
-      'Cada problema tiene solución, como en los isekais siempre hay un sistema... a veces solo hay que leer bien el menú de habilidades.'
+      'Aplica la navaja suisa: lleva herramientas versátiles, en la mochila y en la cabeza. Y viaja ligero.',
+      'Cada problema tiene solución, como en los isekais siempre hay un sistema... a veces solo hay que leer bien el menú.'
     ]));
 
   /* ---- cortesía ---- */
@@ -1645,7 +1750,7 @@ async function respond(raw){
   if(isOffline()){
     for(const [re, kb] of TOPICS) if(re.test(low)) return personaReply(pick(kb));
     return personaReply(pick([
-      'Sin conexión ahora mismo, y eso está fuera de mi jurisdicción local. Pero puedo hablarte de café, isekai, zombies, astronomía, pan... o simplemente escucharte. ¿Qué prefieres?',
+      'Sin conexión ahora mismo, y eso está fuera de mi jurisdicción local. Pero puedo hablarte de café, isekai, zombies, astronomía, pan... o simplemente escucharte.',
       'Eso requeriría red y hoy ando en modo núcleo local. Tenemos tema de sobremesa de sobra: pregúntame algo de mis especialidades.'
     ]));
   }
@@ -1664,7 +1769,7 @@ async function respond(raw){
     else
       personaReply(pick([
         'No tengo una respuesta fiable para eso... se me escapa más que el final de un anime de Gainax. Prueba a decir «busca '+q+'».',
-        'Eso no lo domino aún. Pero cada protagonista empieza sin conocer el sistema, ¿no? Reformúlalo o pídeme «información sobre '+q+'».'
+        'Eso no lo domino aún. Reformúlalo o pídeme «información sobre '+q+'».'
       ]));
   }
 }
@@ -1703,7 +1808,7 @@ function blobManifest(){
     const icon = 'data:image/svg+xml,'+encodeURIComponent(svg);
     const man = {
       name:'ANIA · Núcleo Personal', short_name:'ANIA',
-      description:'Asistente personal con voz, personalidad propia, búsqueda, clima y agenda. Funciona offline.',
+      description:'Asistente personal con voz, personalidad propia, login, búsqueda, clima y agenda. Funciona offline.',
       start_url: location.href.split('#')[0],
       scope: location.href.replace(/[^/]*$/,'') || location.href,
       display:'standalone', orientation:'portrait', lang:'es',
@@ -1736,7 +1841,6 @@ addEventListener('beforeinstallprompt', e=>{
 };
 addEventListener('appinstalled', ()=>{ toast('Ania instalada en tu dispositivo'); $('btnInstall').classList.remove('can'); });
 
-/* ---------- ZIP (stored, CRC32) ---------- */
 function crc32(u8){
   if(!crc32.T){
     crc32.T = new Uint32Array(256);
@@ -1810,7 +1914,7 @@ self.addEventListener('fetch', e => {
 `;
   const manifest = JSON.stringify({
     name:'ANIA · Núcleo Personal', short_name:'ANIA',
-    description:'Asistente personal con voz, personalidad propia, búsqueda, clima y agenda. Funciona offline.',
+    description:'Asistente personal con voz, personalidad, login, búsqueda, clima y agenda. Funciona offline.',
     start_url:'./', scope:'./', display:'standalone', orientation:'portrait', lang:'es',
     background_color:'#040806', theme_color:'#040806',
     icons:[
@@ -1826,23 +1930,21 @@ self.addEventListener('fetch', e => {
 <circle cx="256" cy="236" r="15" fill="#040806"/>
 <text x="256" y="452" font-family="monospace" font-size="58" fill="${e.acc}" text-anchor="middle" letter-spacing="14">ANIA</text>
 </svg>`;
-  const readme = `# ANIA · Núcleo Personal (v4.1)
+  const readme = `# ANIA · Núcleo Personal (v4.2)
 
-Asistente personal en un solo archivo HTML: voz, personalidad propia, memoria,
-búsqueda, clima, agenda, traducción y modo offline.
+Asistente personal en un solo archivo HTML: voz, personalidad propia, login con
+usuarios.json, memoria, búsqueda, clima, agenda, traducción y modo offline.
+
+## Login
+Las credenciales se leen de:
+https://raw.githubusercontent.com/calm291094-del/meditech-tienda/main/usuarios.json
+La lista se cachea en el dispositivo: el login también funciona sin conexión.
 
 ## Desplegar en GitHub Pages
-
 1. Crea un repositorio nuevo en GitHub (público).
 2. **Add file → Upload files** y arrastra: \`index.html\`, \`manifest.json\`, \`icon.svg\`, \`sw.js\`, \`README.md\`.
-3. **Settings → Pages** → Source: *Deploy from a branch* → Branch: \`main\` / \`(root)\` → **Save**.
-4. En 1-2 minutos estará viva en: \`https://TU-USUARIO.github.io/NOMBRE-REPO/\`
-5. Ábrela en el móvil (Chrome) → menú → **Instalar aplicación**.
-   Con el service worker incluido, la app funciona SIN conexión una vez instalada.
-
-## Sin GitHub también funciona
-Abre \`index.html\` directamente: todo lo local (personalidad, agenda, memoria,
-voz, hora, cálculos) funciona sin internet. Solo clima/búsqueda necesitan red.
+3. **Settings → Pages** → Branch: \`main\` / \`(root)\` → **Save**.
+4. Ábrela en el móvil (Chrome) → menú → **Instalar aplicación**: PWA con offline real.
 
 ## Créditos
 Ania fue creada por Carlos Lorenzo Marros.
@@ -1871,7 +1973,7 @@ document.querySelectorAll('.overlay').forEach(ov=>{
   ov.querySelectorAll('[data-close]').forEach(b=> b.onclick = ()=> ov.classList.remove('on'));
 });
  $('btnInstall').onclick = ()=> openModal('installModal');
- $('btnSettings').onclick = ()=>{ renderVoiceSelect(); openModal('settingsModal'); };
+ $('btnSettings').onclick = ()=>{ renderVoiceSelect(); fillSess(); openModal('settingsModal'); };
 
 /* ---------- ajustes ---------- */
 function renderVoiceSelect(){
@@ -1898,12 +2000,13 @@ function renderVoiceSelect(){
 };
  $('weatherChip').onclick = ()=> weatherIntent();
 
-/* ---------- diagnóstico (ahora con batería real) ---------- */
+/* ---------- diagnóstico ---------- */
 const START_TIME = Date.now();
 async function runDiag(){
   const rows = [];
   rows.push('Red: '+(isOffline()?'sin conexión':'conectado'+(navigator.connection?' · '+(navigator.connection.effectiveType||''):'')));
   rows.push('Backend propio: '+(Sync.online?'operativo':'no disponible (modo local)'));
+  rows.push('Sesión: '+(Session?Session.name+' ('+Session.role+')':'invitado'));
   rows.push('Voz: '+(S.muted?'silenciada':'activa')+(S.voice?' · '+S.voice.name:''));
   rows.push('Ubicación: '+(geoCache()?geoCache().city:'sin registrar'));
   rows.push('Agenda: '+taskPending()+' pendientes de '+tasks.length);
@@ -1925,19 +2028,22 @@ async function runDiag(){
    ARRANQUE
 ===================================================================== */
 const BOOTLINES = [
-  '» ANIA KERNEL v4.1 — núcleo personal',
+  '» ANIA KERNEL v4.2 — núcleo personal',
   '» compilando módulos de red ............ OK',
   '» parche CORS/JSONP en fuentes ........ OK',
   '» motor de voz sintetizada ............ OK',
   '» cargando núcleo de personalidad ...... OK',
-  '» destilando 47 memorias de Eden ...... OK',
+  '» módulo de login: usuarios.json ...... OK',
   '» calibrando reactor y esencia ......... OK',
-  '» agenda, recordatorios y sync ........ OK',
-  '» esperando autorización del operador _'
+  '» agenda y recordatorios: tiro único .. OK'
 ];
 (async function boot(){
+  const finalLine = Session
+    ? '» sesión recordada: '+Session.name+' _'
+    : '» esperando credenciales del operador _';
+  const lines = [...BOOTLINES, finalLine];
   const log = $('bootLog');
-  for(const line of BOOTLINES){
+  for(const line of lines){
     const div = document.createElement('div');
     log.appendChild(div);
     for(let i=0;i<=line.length;i++){
@@ -1945,9 +2051,17 @@ const BOOTLINES = [
       await new Promise(r=>setTimeout(r, 6));
     }
     div.innerHTML = esc(line).replace(/OK$/,'<span class="ok">OK</span>');
-    await new Promise(r=>setTimeout(r, 140));
+    await new Promise(r=>setTimeout(r, 130));
   }
-  $('bootStart').style.display = 'block';
+  if(Session){
+    if(Session.role!=='invitado' && Session.name && Mind.d.nombre !== Session.name){
+      Mind.d.nombre = Session.name; Mind.save();
+    }
+    setOperator();
+    showStart(Session.role==='invitado' ? 'CONTINUAR COMO INVITADO' : 'DESPERTAR A ANIA');
+  } else {
+    $('loginBox').style.display = 'flex';
+  }
 })();
 
  $('bootStart').onclick = async ()=>{
@@ -1960,13 +2074,14 @@ const BOOTLINES = [
   setOperator();
   renderTasks();
   initSyncLoop();
-  sysLine('SESIÓN #'+Mind.d.visitas+' · '+new Date().toLocaleDateString('es-ES')+' · núcleo personal v4.1');
+  sysLine('SESIÓN #'+Mind.d.visitas+' · '+new Date().toLocaleDateString('es-ES')+
+    ' · v4.2 · usuario: '+(Session?Session.name:'invitado'));
   const g = geoCache();
   if(g){ try{ const d = await getWeather(g); updateChip(g,d); }catch(e){} }
 
   const h = new Date().getHours();
   const saludo = h<12?'Buenos días':(h<20?'Buenas tardes':'Buenas noches');
-  const nom = Mind.nombre() ? Mind.nombre() : '';
+  const nom = Mind.nombre() ? ', '+Mind.nombre() : '';
   const dias = Mind.daysSince();
   let msg = saludo+', '+(nom||'bienvenido');
   if(dias>=2 && nom) msg += '. Te eché de menos... han sido '+dias+' días. Espero que hayan incluido buen café';
@@ -1975,7 +2090,7 @@ const BOOTLINES = [
   msg += '. Todos mis sistemas están operativos: puedes escribirme o tocar el micrófono y hablarme directamente.';
   setTimeout(()=>{
     personaReply(msg, msg.replace(/\.\.\./g,'... '));
-    renderChips(['¿Qué hora es?','¿Cómo está el clima?','Cuéntame un secreto','¿Cuál es tu café favorito?','Busca agujeros negros','¿Qué sabes de mí?']);
+    renderChips(['¿Qué hora es?','¿Cómo está el clima?','Cuéntame un secreto','¿Cuál es tu café favorito?','Recuérdame tomar agua en 30 minutos','¿Qué sabes de mí?']);
   }, 500);
 };
 </script>
