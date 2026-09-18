@@ -1021,43 +1021,155 @@ function closeSheet(){ $('sheet').classList.remove('open'); $('backdrop').classL
  $('backdrop').onclick = ()=>{ closeSheet(); closeMem(); };
 
 /* =====================================================================
-   SYNC · corregido: nunca re-envía tareas disparadas ni las re-importa
+   SYNC · corregido · nunca re-envía tareas disparadas ni las re-importa
 ===================================================================== */
 const Sync = {
-  online:false, syncing:false,
-  async check(){
-    try{
+  online: false,
+  syncing: false,
+
+  async check() {
+    try {
       const c = new AbortController();
-      const t = setTimeout(()=>c.abort(), 7000);
-      const r = await fetch(`${CONFIG.BACKEND_URL}/health`, {signal:c.signal});
+      const t = setTimeout(() => c.abort(), 7000);
+      const r = await fetch(`${CONFIG.BACKEND_URL}/health`, { signal: c.signal });
       clearTimeout(t);
       this.online = r.ok;
-    }catch{ this.online = false; }
+    } catch (e) {
+      this.online = false;
+    }
     this.paint();
     return this.online;
   },
-  paint(){
-    const p = $('syncPill'), tx = $('syncTxt');
+
+  paint() {
+    const p = $('syncPill');
+    const tx = $('syncTxt');
+    if (!p || !tx) return;
     p.classList.toggle('idle', !this.online);
     tx.textContent = this.online ? 'SYNC' : 'SYNC OFF';
   },
-  async pushTask(tk){
-    if(!this.online) return false;
-    try{
+
+  async pushTask(tk) {
+    if (!this.online) return false;
+    try {
       const r = await fetch(`${CONFIG.BACKEND_URL}/ania/tasks`, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ texto:tk.text, remindAt:tk.when?new Date(tk.when).toISOString():null, usuario:CONFIG.ANIA_USER, source:'web' })
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          texto: tk.text,
+          remindAt: tk.when ? new Date(tk.when).toISOString() : null,
+          usuario: CONFIG.ANIA_USER,
+          source: 'web',
+          notifyVia: 'local'   // ✅ se avisa SOLO en el navegador, no por Telegram
+        })
       });
-      if(!r.ok) throw new Error('HTTP '+r.status);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
       const st = await r.json();
-      tk.serverId = st.id; tk.pendingSync = false; saveTasks();
+      tk.serverId = st.id;
+      tk.pendingSync = false;
+      saveTasks();
       return true;
-    }catch(e){ return false; }
+    } catch (e) {
+      return false;
+    }
   },
-  async markDone(tk){
-    if(!this.online || !tk.serverId) return;
-    try{ await fetch(`${CONFIG.BACKEND_URL}/ania/tasks/${tk.serverId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({done:true})}); }catch(e){}
+
+  async markDone(tk) {
+    if (!this.online || !tk.serverId) return;
+    try {
+      await fetch(`${CONFIG.BACKEND_URL}/ania/tasks/${tk.serverId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ done: true })
+      });
+    } catch (e) { /* silencioso */ }
   },
+
+  async pullTasks() {
+    if (!this.online) return 0;
+    try {
+      const r = await fetch(`${CONFIG.BACKEND_URL}/ania/tasks?user=${CONFIG.ANIA_USER}`);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const remote = await r.json();
+      if (!Array.isArray(remote)) return 0;
+
+      const localIds = new Set(
+        tasks.flatMap(t => [t.id, t.serverId].filter(Boolean))
+      );
+      const nuevas = remote.filter(t => !localIds.has(t.id));
+      let added = 0;
+
+      for (const rem of nuevas) {
+        const when = rem.remindAt ? new Date(rem.remindAt).getTime() : null;
+        const via = rem.notifyVia || (rem.source === 'telegram' ? 'telegram' : 'local');
+
+        const tk = {
+          id: 'srv-' + rem.id,
+          serverId: rem.id,
+          text: rem.texto,
+          when,
+          done: !!rem.done,
+          fired: false,
+          source: rem.source || 'telegram',
+          notifyVia: via,
+          pendingSync: false
+        };
+
+        // ✅ Si la tarea es de Telegram, ya se avisará allá. No disparamos alarma local.
+        const alarmarAqui = (via === 'local' || via === 'both');
+
+        if (when && when < Date.now()) {
+          tk.fired = true;
+          if (Date.now() - when > 2 * 36e5) tk.done = true; // muy antigua → archivada
+        }
+
+        tasks.push(tk);
+        if (!tk.done && !tk.fired && tk.when && alarmarAqui) scheduleTask(tk);
+        added++;
+      }
+
+      // Propagar "done" desde el servidor a tareas locales
+      for (const local of tasks) {
+        if (!local.serverId) continue;
+        const rem = remote.find(x => x.id === local.serverId);
+        if (rem && rem.done && !local.done) {
+          local.done = true;
+          cancelTimer(local.id);
+        }
+      }
+
+      if (added > 0) {
+        saveTasks();
+        renderTasks();
+        const s = added === 1 ? '' : 's';
+        toast(added + ' tarea' + s + ' nueva' + s + ' desde Telegram');
+      }
+      return added;
+    } catch (e) {
+      return 0;
+    }
+  },
+
+  async fullSync() {
+    if (this.syncing) return;
+    this.syncing = true;
+    try {
+      await this.check();
+      if (this.online) {
+        // ✅ Solo se envían tareas NUNCA enviadas (sin serverId) y no disparadas
+        for (const tk of tasks) {
+          if (tk.pendingSync && !tk.serverId && !tk.done && !tk.fired) {
+            await this.pushTask(tk);
+          }
+        }
+        await this.pullTasks();
+      }
+    } finally {
+      this.syncing = false;
+    }
+  }
+};
+  
 async pullTasks(){
   if(!this.online) return 0;
   try{
