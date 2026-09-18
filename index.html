@@ -1,1345 +1,1516 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#00ff88">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>ANIA 3.0 — Tu Asistente Personal</title>
-    <link rel="manifest" href='data:application/manifest+json,{"name":"ANIA 3.0","short_name":"Ania","start_url":".","display":"standalone","background_color":"%230a0a0f","theme_color":"%2300ff88","icons":[{"src":"data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 512 512%27%3E%3Crect width=%27512%27 height=%27512%27 rx=%27100%27 fill=%27%230a0a0f%27/%3E%3Ctext x=%27256%27 y=%27340%27 font-size=%27280%27 text-anchor=%27middle%27 fill=%27%2300ff88%27%3EΩ%3C/text%3E%3C/svg%3E","sizes":"512x512","type":"image/svg+xml"}]}'>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#040806">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ANIA · Asistente Personal</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23040806'/%3E%3Ctext x='50' y='72' font-family='monospace' font-size='64' font-weight='bold' fill='%232de08a' text-anchor='middle'%3EΩ%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#040806; --bg2:#071009; --panel:#08150f;
+    --line:rgba(45,224,138,.20); --line2:rgba(45,224,138,.45);
+    --text:#cfeede; --dim:#79a88f;
+    --acc:#2de08a; --acc2:#39ff9b; --amber:#ffb547; --danger:#ff5470;
+    --mono:'Share Tech Mono', ui-monospace, Menlo, Consolas, monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg); color:var(--text); font-family:var(--mono);
+    overflow:hidden; overscroll-behavior:none;
+    background-image:radial-gradient(rgba(45,224,138,.05) 1px, transparent 1px);
+    background-size:26px 26px;
+  }
+  body::after{
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:900;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,.16) 0 1px, transparent 1px 3px);
+    opacity:.35;
+  }
+  button{font-family:var(--mono); cursor:pointer; color:var(--acc); background:transparent; border:1px solid var(--line); border-radius:6px;}
+  button:active{transform:translateY(1px);}
+  button:focus-visible{outline:1px solid var(--acc2); outline-offset:2px;}
+  svg{display:block;}
 
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230a0a0f'/%3E%3Ctext x='50' y='70' font-family='Arial' font-size='70' font-weight='bold' fill='%2300ff88' text-anchor='middle'%3EΩ%3C/text%3E%3C/svg%3E">
-    
-    <style>
-        :root {
-            --bg: #0a0a0f; --bg-panel: #0f0f18; --bg-panel-light: #16162a;
-            --neon: #00ff88; --neon-dim: rgba(0, 255, 136, 0.1);
-            --neon-glow: 0 0 15px rgba(0, 255, 136, 0.4);
-            --purple: #b44aff; --text: #e0e0e8; --dim: #8888a0;
-            --danger: #ff4466; --font: 'Courier New', monospace;
-            --radius: 12px; --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { height: 100%; overflow: hidden; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--bg); color: var(--text);
-            display: flex; flex-direction: column;
-            user-select: none; -webkit-tap-highlight-color: transparent;
-        }
-        #matrix-canvas { position: fixed; inset: 0; z-index: 0; opacity: 0.05; pointer-events: none; }
+  #boot{position:fixed; inset:0; z-index:1000; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; transition:opacity .6s;}
+  #boot.hide{opacity:0; pointer-events:none;}
+  #bootBox{width:min(560px,100%);}
+  #bootTitle{letter-spacing:.55em; font-size:clamp(26px,8vw,44px); color:var(--acc2); text-align:center; margin-bottom:26px;}
+  #bootTitle small{display:block; letter-spacing:.3em; font-size:11px; color:var(--dim); margin-top:8px;}
+  #bootLog{min-height:180px; font-size:13px; line-height:1.75; color:var(--dim);}
+  #bootLog .ok{color:var(--acc);}
+  #bootStart{
+    display:none; margin:26px auto 0; padding:14px 34px; font-size:15px; letter-spacing:.35em;
+    border-color:var(--line2); color:var(--acc2); background:rgba(45,224,138,.06);
+    clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);
+    animation:breathe 2.4s ease-in-out infinite;
+  }
+  @keyframes breathe{50%{background:rgba(45,224,138,.14);}}
 
-        /* --- Layout Principal --- */
-        .app-container { display: flex; flex-direction: column; height: 100vh; position: relative; z-index: 5; }
+  #app{display:flex; flex-direction:column; height:100dvh; max-width:760px; margin:0 auto; padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom);}
 
-        /* --- Header --- */
-        .header {
-            display: flex; align-items: center; gap: 12px;
-            padding: 10px 16px; background: rgba(15, 15, 24, 0.9);
-            backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0, 255, 136, 0.1);
-        }
-        .avatar {
-            width: 40px; height: 40px; border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, var(--neon), #006633);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 20px; font-weight: 900; color: var(--bg);
-            box-shadow: var(--neon-glow); position: relative; flex-shrink: 0;
-        }
-        .avatar::after {
-            content: ''; position: absolute; inset: -3px; border-radius: 50%;
-            border: 2px solid transparent; border-top-color: var(--neon);
-            animation: spin 3s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .header-info h1 {
-            font-family: var(--font); font-size: 16px;
-            letter-spacing: 2px; color: var(--neon); text-shadow: var(--neon-glow);
-        }
-        .header-info .status {
-            font-size: 10px; color: var(--dim); font-family: var(--font);
-            display: flex; align-items: center; gap: 6px;
-        }
-        .status-dot {
-            width: 6px; height: 6px; border-radius: 50%;
-            background: var(--neon); box-shadow: 0 0 6px var(--neon);
-            animation: blink 1.5s infinite;
-        }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  header{
+    display:flex; align-items:center; gap:10px; padding:10px 6px;
+    border-bottom:1px solid var(--line); flex:0 0 auto;
+  }
+  #logo{font-size:22px; letter-spacing:.5em; color:var(--acc2); user-select:none;}
+  #logo .c{animation:blink 1.1s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0;}}
+  .pill{font-size:10px; letter-spacing:.18em; border:1px solid var(--line); border-radius:999px; padding:3px 9px; color:var(--dim); white-space:nowrap;}
+  .pill .dot{display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--acc); margin-right:5px; animation:blink 1.6s steps(1) infinite;}
+  .pill.off{color:var(--amber); border-color:rgba(255,181,71,.4);}
+  .pill.off .dot{background:var(--amber); animation:none;}
+  #headRight{margin-left:auto; display:flex; gap:8px; align-items:center; font-size:11px; color:var(--dim);}
+  #clock{color:var(--text); letter-spacing:.1em;}
+  #weatherChip{display:flex; gap:6px; align-items:center; border:1px solid var(--line); border-radius:999px; padding:3px 10px; color:var(--dim); font-size:11px;}
+  #weatherChip:active{border-color:var(--line2);}
+  #weatherChip svg{width:13px; height:13px;}
 
-        /* --- Status Bar --- */
-        .status-bar {
-            display: flex; gap: 8px; padding: 8px 16px;
-            background: var(--bg-panel); border-bottom: 1px solid rgba(0, 255, 136, 0.05);
-            overflow-x: auto; scrollbar-width: none;
-        }
-        .status-bar::-webkit-scrollbar { display: none; }
-        .chip {
-            display: flex; align-items: center; gap: 6px;
-            padding: 4px 12px; border-radius: 16px;
-            background: var(--bg-panel-light); border: 1px solid rgba(0, 255, 136, 0.08);
-            font-family: var(--font); font-size: 10px; white-space: nowrap;
-            color: var(--dim); transition: var(--transition);
-        }
-        .chip.glow {
-            border-color: var(--neon); color: var(--neon);
-            box-shadow: 0 0 10px rgba(0, 255, 136, 0.1);
-        }
+  #coreZone{flex:0 0 auto; display:flex; flex-direction:column; align-items:center; padding:8px 0 2px;}
+  #reactorWrap{position:relative; width:min(58vw,230px); height:min(58vw,230px);}
+  #reactor{width:100%; height:100%;}
+  #phase{font-size:10px; letter-spacing:.4em; color:var(--dim); margin-top:2px; user-select:none;}
+  #phase.amber{color:var(--amber);}
 
-        /* --- Chat --- */
-        #chat {
-            flex: 1; overflow-y: auto; padding: 16px;
-            display: flex; flex-direction: column; gap: 12px;
-            scroll-behavior: smooth;
-        }
-        #chat::-webkit-scrollbar { width: 4px; }
-        #chat::-webkit-scrollbar-thumb { background: var(--neon); border-radius: 4px; }
-        .msg {
-            max-width: 85%; padding: 12px 16px; border-radius: var(--radius);
-            font-size: 14px; line-height: 1.6; animation: msgIn 0.3s ease;
-            word-wrap: break-word;
-        }
-        @keyframes msgIn {
-            from { opacity: 0; transform: translateY(10px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .msg.ania {
-            align-self: flex-start;
-            background: linear-gradient(135deg, var(--bg-panel-light), #1a1a30);
-            border: 1px solid rgba(0, 255, 136, 0.1);
-            border-bottom-left-radius: 4px;
-        }
-        .msg.user {
-            align-self: flex-end;
-            background: linear-gradient(135deg, #003322, #004433);
-            border: 1px solid rgba(0, 255, 136, 0.2);
-            border-bottom-right-radius: 4px; color: #ccffdd;
-        }
-        .msg.system {
-            align-self: center;
-            background: rgba(180, 74, 255, 0.08);
-            border: 1px solid rgba(180, 74, 255, 0.2);
-            color: var(--purple); font-family: var(--font);
-            font-size: 11px; padding: 6px 16px; border-radius: 20px;
-        }
-        .msg .timestamp {
-            font-family: var(--font); font-size: 9px; color: var(--dim);
-            margin-top: 6px; text-align: right; opacity: 0.5;
-        }
-        .msg strong { color: var(--neon); }
-        .msg code {
-            background: rgba(0, 255, 136, 0.1); padding: 2px 6px;
-            border-radius: 4px; font-family: var(--font); font-size: 12px;
-        }
+  #chat{flex:1 1 auto; overflow-y:auto; padding:10px 8px 6px; scroll-behavior:smooth; -webkit-overflow-scrolling:touch;}
+  .line{display:flex; gap:8px; padding:5px 0; font-size:14px; line-height:1.55; animation:lin .18s ease-out;}
+  @keyframes lin{from{opacity:0; transform:translateX(-4px);}}
+  .line .who{flex:0 0 auto; font-size:10px; letter-spacing:.12em; padding-top:4px; color:var(--dim);}
+  .line.ania .who{color:var(--acc);}
+  .line.you .who{color:var(--amber);}
+  .line .msg{flex:1; word-break:break-word; white-space:pre-wrap;}
+  .line.you .msg{color:#f0dcb0;}
+  .line.ania .msg{color:var(--text);}
+  .line .ts{flex:0 0 auto; font-size:9px; color:#42604f; padding-top:5px;}
 
-        /* --- Input Area --- */
-        .input-area {
-            padding: 12px 16px 20px;
-            background: linear-gradient(0deg, var(--bg-panel) 60%, transparent);
-        }
-        .input-row { display: flex; gap: 8px; align-items: flex-end; }
-        .input-wrap { flex: 1; position: relative; display: flex; align-items: center; }
-        #input {
-            width: 100%; padding: 12px 48px 12px 16px;
-            border-radius: 24px; border: 1px solid rgba(0, 255, 136, 0.15);
-            background: var(--bg-panel-light); color: var(--text);
-            font-size: 14px; font-family: inherit; outline: none;
-            transition: var(--transition); resize: none;
-            min-height: 48px; max-height: 120px;
-        }
-        #input:focus {
-            border-color: var(--neon);
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.1);
-        }
-        #input::placeholder { color: #555570; font-style: italic; }
-        .btn-icon {
-            width: 48px; height: 48px; border-radius: 50%;
-            border: none; cursor: pointer; display: flex;
-            align-items: center; justify-content: center;
-            font-size: 20px; transition: var(--transition); flex-shrink: 0;
-        }
-        .btn-send {
-            background: linear-gradient(135deg, var(--neon), #00aa55);
-            color: var(--bg); box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
-        }
-        .btn-send:active { transform: scale(0.9); }
-        .btn-mic {
-            background: rgba(0, 255, 136, 0.06);
-            border: 1px solid rgba(0, 255, 136, 0.15);
-            color: var(--neon); position: absolute; right: 2px;
-            width: 40px; height: 40px; font-size: 16px;
-        }
-        .btn-mic.on {
-            background: var(--danger); border-color: var(--danger);
-            color: white; animation: micPulse 1s infinite;
-        }
-        @keyframes micPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 68, 102, 0.5); }
-            50% { box-shadow: 0 0 0 10px rgba(255, 68, 102, 0); }
-        }
+  #chips{display:flex; flex-wrap:wrap; gap:6px; padding:2px 8px 8px; flex:0 0 auto;}
+  .chip{font-size:11px; padding:6px 11px; border-radius:999px; color:var(--dim);}
+  .chip:active{color:var(--acc2); border-color:var(--line2);}
 
-        /* --- Quick Actions --- */
-        .quick-actions {
-            display: flex; gap: 6px; padding: 0 16px 8px;
-            overflow-x: auto; scrollbar-width: none;
-        }
-        .quick-actions::-webkit-scrollbar { display: none; }
-        .qa-btn {
-            padding: 8px 14px; border-radius: 18px;
-            border: 1px solid rgba(0, 255, 136, 0.12);
-            background: var(--bg-panel-light); color: var(--dim);
-            font-size: 11px; font-family: var(--font); white-space: nowrap;
-            cursor: pointer; transition: var(--transition);
-        }
-        .qa-btn:active {
-            background: rgba(0, 255, 136, 0.15); color: var(--neon);
-            border-color: var(--neon); transform: scale(0.95);
-        }
+  #inputBar{flex:0 0 auto; display:flex; gap:8px; padding:6px 4px 8px; border-top:1px solid var(--line);}
+  #userInput{
+    flex:1; min-width:0; background:var(--panel); border:1px solid var(--line); border-radius:8px;
+    color:var(--text); font-family:var(--mono); font-size:16px; padding:11px 13px; caret-color:var(--acc2);
+  }
+  #userInput:focus{outline:none; border-color:var(--line2);}
+  #userInput::placeholder{color:#3d5a4b;}
+  .ibtn{flex:0 0 auto; width:46px; height:46px; display:grid; place-items:center; border-radius:8px;}
+  .ibtn svg{width:20px; height:20px;}
+  #micBtn.live{border-color:var(--amber); color:var(--amber); background:rgba(255,181,71,.08); animation:pulseA 1.2s ease-in-out infinite;}
+  @keyframes pulseA{50%{box-shadow:0 0 0 6px rgba(255,181,71,.10);}}
 
-        /* --- Modal Tareas --- */
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(8px); z-index: 100;
-            display: none; align-items: center; justify-content: center;
-            padding: 20px; animation: fadeIn 0.3s ease;
-        }
-        .modal-overlay.active { display: flex; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .modal {
-            background: var(--bg-panel); border-radius: 16px;
-            padding: 24px; max-width: 500px; width: 100%;
-            max-height: 80vh; overflow-y: auto;
-            border: 1px solid rgba(0, 255, 136, 0.1);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-        }
-        .modal-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px; padding-bottom: 12px;
-            border-bottom: 1px solid rgba(0, 255, 136, 0.1);
-        }
-        .modal-header h2 {
-            font-family: var(--font); font-size: 16px;
-            color: var(--neon); letter-spacing: 1px;
-        }
-        .modal-close {
-            background: none; border: none; color: var(--dim);
-            font-size: 24px; cursor: pointer; transition: var(--transition);
-        }
-        .modal-close:hover { color: var(--neon); }
-        .task-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
-        .task-item {
-            display: flex; align-items: center; gap: 12px;
-            padding: 12px 16px; background: var(--bg-panel-light);
-            border-radius: 10px; border: 1px solid rgba(0, 255, 136, 0.05);
-            transition: var(--transition);
-        }
-        .task-item.done { opacity: 0.5; text-decoration: line-through; }
-        .task-item .task-check {
-            width: 20px; height: 20px; border-radius: 50%;
-            border: 2px solid var(--neon); background: none;
-            cursor: pointer; display: flex; align-items: center;
-            justify-content: center; transition: var(--transition);
-            flex-shrink: 0;
-        }
-        .task-item .task-check.done {
-            background: var(--neon); color: var(--bg);
-        }
-        .task-item .task-text { flex: 1; font-size: 14px; }
-        .task-item .task-time {
-            font-family: var(--font); font-size: 10px; color: var(--dim);
-        }
-        .task-item .task-delete {
-            background: none; border: none; color: var(--danger);
-            cursor: pointer; font-size: 16px; opacity: 0.5;
-            transition: var(--transition); padding: 4px;
-        }
-        .task-item .task-delete:hover { opacity: 1; }
-        .empty-tasks {
-            text-align: center; color: var(--dim);
-            padding: 40px 20px; font-size: 14px;
-        }
+  #dock{flex:0 0 auto; display:flex; gap:8px; padding:0 4px 8px;}
+  .dbtn{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 2px; font-size:9px; letter-spacing:.2em; color:var(--dim); position:relative;}
+  .dbtn svg{width:17px; height:17px;}
+  .dbtn:active{color:var(--acc2);}
+  .badge{position:absolute; top:-5px; right:8px; min-width:16px; height:16px; border-radius:8px; background:var(--amber); color:#1a1000; font-size:10px; line-height:16px; padding:0 4px; display:none;}
+  .badge.on{display:block;}
+  #btnInstall::before{content:''; position:absolute; top:4px; right:8px; width:7px; height:7px; border-radius:50%; background:var(--acc2); display:none; animation:blink 1.4s steps(1) infinite;}
+  #btnInstall.can::before{display:block;}
 
-        /* --- Load Overlay --- */
-        #load-overlay {
-            position: fixed; inset: 0; z-index: 2000;
-            background: rgba(10, 10, 15, 0.98);
-            display: none; flex-direction: column;
-            align-items: center; justify-content: center;
-            gap: 20px; padding: 24px;
-        }
-        #load-overlay.on { display: flex; }
-        .load-ring {
-            width: 64px; height: 64px; border-radius: 50%;
-            border: 3px solid rgba(0, 255, 136, 0.1);
-            border-top-color: var(--neon);
-            animation: spin 1s linear infinite;
-        }
-        .load-text {
-            font-family: var(--font); font-size: 13px;
-            color: var(--neon); text-align: center; letter-spacing: 1px;
-        }
-        .load-bar {
-            width: 220px; height: 3px;
-            background: rgba(0, 255, 136, 0.1); border-radius: 3px;
-            overflow: hidden;
-        }
-        .load-bar-inner {
-            height: 100%; background: linear-gradient(90deg, var(--neon), #00d4ff);
-            border-radius: 3px; transition: width 0.5s; width: 0%;
-        }
+  #backdrop{position:fixed; inset:0; background:rgba(2,5,3,.72); z-index:940; opacity:0; pointer-events:none; transition:opacity .25s;}
+  #backdrop.on{opacity:1; pointer-events:auto;}
+  #sheet{
+    position:fixed; left:0; right:0; bottom:0; z-index:950; max-width:760px; margin:0 auto;
+    background:var(--bg2); border:1px solid var(--line); border-bottom:none; border-radius:14px 14px 0 0;
+    transform:translateY(105%); transition:transform .3s cubic-bezier(.2,.9,.3,1);
+    max-height:82dvh; display:flex; flex-direction:column;
+  }
+  #sheet.open{transform:translateY(0);}
+  .sheetHead{display:flex; align-items:center; gap:10px; padding:14px 16px 8px; border-bottom:1px solid var(--line);}
+  .grab{width:38px; height:4px; border-radius:2px; background:#1d3a2b; margin:8px auto 0;}
+  .sheetHead h2{font-size:13px; letter-spacing:.35em; color:var(--acc); font-weight:normal;}
+  .sheetHead .pill{margin-left:auto;}
+  .xbtn{width:32px; height:32px; display:grid; place-items:center; border-radius:6px;}
+  .xbtn svg{width:15px; height:15px;}
+  #taskList{overflow-y:auto; padding:6px 14px; flex:1;}
+  .task{display:flex; align-items:center; gap:10px; padding:11px 4px; border-bottom:1px dashed rgba(45,224,138,.12);}
+  .task .tmain{flex:1; min-width:0;}
+  .task .ttext{font-size:14px; word-break:break-word;}
+  .task.done .ttext{color:#42604f; text-decoration:line-through;}
+  .task .twhen{font-size:10px; color:var(--dim); margin-top:3px; letter-spacing:.08em;}
+  .task .twhen.late{color:var(--amber);}
+  .task .tsrc{display:inline-block; font-size:9px; padding:1px 5px; border-radius:3px; margin-left:5px; letter-spacing:.08em;}
+  .task .tsrc.tg{color:#5fc9ff; border:1px solid rgba(95,201,255,.3);}
+  .task .tsrc.web{color:var(--acc); border:1px solid rgba(45,224,138,.3);}
+  .tsmall{width:34px; height:34px; display:grid; place-items:center; border-radius:6px; flex:0 0 auto;}
+  .tsmall svg{width:15px; height:15px;}
+  .tcheck{color:var(--dim);} .task.done .tcheck{color:var(--acc);}
+  .tdel{color:#5a3040;} .tdel:active{color:var(--danger);}
+  .empty{padding:30px 10px; text-align:center; color:var(--dim); font-size:12px; letter-spacing:.15em;}
+  #taskForm{display:flex; gap:8px; padding:10px 14px calc(14px + env(safe-area-inset-bottom)); border-top:1px solid var(--line); flex-wrap:wrap;}
+  #taskInput{flex:1 1 150px; min-width:0; background:var(--panel); border:1px solid var(--line); border-radius:6px; color:var(--text); font-family:var(--mono); font-size:14px; padding:9px 10px;}
+  #taskWhen{flex:0 1 auto; background:var(--panel); border:1px solid var(--line); border-radius:6px; color:var(--dim); font-family:var(--mono); font-size:12px; padding:9px 8px; color-scheme:dark;}
+  #addTaskBtn{flex:0 0 auto; padding:0 16px; letter-spacing:.2em; font-size:11px; border-radius:6px;}
 
-        /* --- Toast --- */
-        .toast {
-            position: fixed; top: 80px; left: 50%;
-            transform: translateX(-50%) translateY(-16px);
-            background: var(--bg-panel-light); border: 1px solid var(--neon);
-            border-radius: 10px; padding: 12px 20px;
-            font-size: 13px; color: var(--neon); z-index: 1000;
-            opacity: 0; transition: var(--transition);
-            pointer-events: none; box-shadow: var(--neon-glow);
-            font-family: var(--font); max-width: 90vw; text-align: center;
-        }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    </style>
+  .overlay{position:fixed; inset:0; z-index:960; background:rgba(2,5,3,.78); display:none; align-items:center; justify-content:center; padding:20px;}
+  .overlay.on{display:flex;}
+  .modal{
+    width:min(480px,100%); max-height:86dvh; overflow-y:auto; background:var(--bg2); border:1px solid var(--line2);
+    clip-path:polygon(16px 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%,0 16px);
+    padding:22px 20px;
+  }
+  .modal h2{font-size:14px; letter-spacing:.35em; color:var(--acc2); font-weight:normal; margin-bottom:14px; display:flex; align-items:center;}
+  .modal h2 .xbtn{margin-left:auto;}
+  .modal p, .modal li{font-size:13px; color:var(--text); line-height:1.7;}
+  .modal ul{padding-left:18px; margin:8px 0;}
+  .modal .dim{color:var(--dim);}
+  .modal .step{display:flex; gap:10px; margin:12px 0; align-items:flex-start;}
+  .modal .step b{color:var(--amber); font-weight:normal; flex:0 0 auto;}
+  .bigbtn{display:block; width:100%; margin-top:16px; padding:13px; font-size:13px; letter-spacing:.3em; color:var(--acc2); border-color:var(--line2); background:rgba(45,224,138,.07); border-radius:0; clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);}
+  .modal hr{border:none; border-top:1px dashed rgba(45,224,138,.2); margin:16px 0;}
+  .frow{display:flex; align-items:center; gap:12px; margin:14px 0;}
+  .frow label{flex:0 0 118px; font-size:11px; letter-spacing:.15em; color:var(--dim);}
+  .frow input[type=range]{flex:1; accent-color:var(--acc);}
+  .frow select{flex:1; background:var(--panel); border:1px solid var(--line); color:var(--text); font-family:var(--mono); font-size:12px; padding:8px; border-radius:6px;}
+  .frow output{flex:0 0 40px; text-align:right; color:var(--acc); font-size:12px;}
+
+  #toasts{position:fixed; top:calc(10px + env(safe-area-inset-top)); left:0; right:0; z-index:1200; display:flex; flex-direction:column; align-items:center; gap:8px; pointer-events:none;}
+  .toast{
+    background:var(--bg2); border:1px solid var(--line2); color:var(--acc2); font-size:12px;
+    padding:9px 16px; max-width:88%; letter-spacing:.05em; border-radius:0;
+    clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);
+    animation:tIn .25s ease-out;
+  }
+  .toast.warn{color:var(--amber); border-color:rgba(255,181,71,.5);}
+  @keyframes tIn{from{opacity:0; transform:translateY(-8px);}}
+
+  @media (min-width:700px){
+    #reactorWrap{width:250px; height:250px;}
+    .line{font-size:15px;}
+  }
+</style>
 </head>
 <body>
-    <canvas id="matrix-canvas"></canvas>
 
-    <div class="app-container">
-        <!-- HEADER -->
-        <header class="header">
-            <div class="avatar" id="avatar">Ω</div>
-            <div class="header-info">
-                <h1>ANIA 3.0</h1>
-                <div class="status"><span class="status-dot"></span><span id="status-txt">INICIANDO...</span></div>
-            </div>
-        </header>
-
-        <!-- STATUS BAR -->
-        <div class="status-bar">
-            <div class="chip" id="chip-hora">🕐 <span id="v-hora">--:--</span></div>
-            <div class="chip" id="chip-temp">🌡️ <span id="v-temp">--°</span></div>
-            <div class="chip" id="chip-loc">📍 <span id="v-loc">Localizando...</span></div>
-            <div class="chip" id="chip-tasks">📋 <span id="v-tasks">0</span></div>
-            <div class="chip" id="chip-sync">☁️ <span id="v-sync">—</span></div>
-        </div>
-
-        <!-- CHAT -->
-        <main id="chat"></main>
-
-        <!-- QUICK ACTIONS -->
-        <div class="quick-actions">
-            <button class="qa-btn" onclick="pedirPermisoNotificaciones()">🔔 Notificaciones</button>
-            <button class="qa-btn" onclick="qa('hora')">🕐 Hora</button>
-            <button class="qa-btn" onclick="qa('clima')">🌤️ Clima</button>
-            <button class="qa-btn" onclick="qa('noticias')">📰 Noticias</button>
-            <button class="qa-btn" onclick="qa('tareas')">📋 Tareas</button>
-            <button class="qa-btn" onclick="qa('nueva')">➕ Nueva Tarea</button>
-            <button class="qa-btn" onclick="qa('briefing')">☀️ Briefing</button>
-            <button class="qa-btn" onclick="qa('festivos')">🎉 Festivos</button>
-            <button class="qa-btn" onclick="qa('ayuda')">❓ Ayuda</button>
-        </div>
-
-        <!-- INPUT -->
-        <div class="input-area">
-            <div class="input-row">
-                <div class="input-wrap">
-                    <textarea id="input" placeholder="Habla con Ania..." rows="1"></textarea>
-                    <button class="btn-icon btn-mic" id="mic-btn" onclick="toggleMic()">🎙️</button>
-                </div>
-                <button class="btn-icon btn-send" onclick="sendMsg()">➤</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL DE TAREAS -->
-    <div class="modal-overlay" id="task-modal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2>📋 MIS TAREAS</h2>
-                <button class="modal-close" onclick="cerrarModalTareas()">&times;</button>
-            </div>
-            <ul class="task-list" id="modal-task-list"></ul>
-        </div>
-    </div>
-
-    <!-- LOAD OVERLAY -->
-    <div id="load-overlay">
-        <div class="load-ring"></div>
-        <div class="load-text" id="load-text">Inicializando núcleo de IA...</div>
-        <div class="load-bar"><div class="load-bar-inner" id="load-progress"></div></div>
-    </div>
-
-    <!-- TOAST -->
-    <div class="toast" id="toast"></div>
-
-    <script>
-        /* ==========================================================
-           ANIA 3.0 — Asistente Personal Unificada
-           Arquitectura: Motor de Reglas + Sincronización Backend
-           ========================================================== */
-
-        // ====== CONFIGURACIÓN GLOBAL ======
-        const CONFIG = {
-            BACKEND_URL: 'https://meditech-bot.onrender.com/api',
-            ANIA_USER: 'admin',
-            WEATHER_API: 'https://api.open-meteo.com/v1',
-            GEO_API: 'https://nominatim.openstreetmap.org/reverse',
-            HOLIDAYS_API: 'https://date.nager.at/api/v3/NextPublicHolidays',
-            NEWS_PROXY: 'https://corsproxy.io/?url=',
-            SYNC_INTERVAL: 30000, // 30 segundos
-            TASK_CHECK_INTERVAL: 15000 // 15 segundos
-        };
-
-        // ====== ESTADO GLOBAL ======
-        const S = {
-            tasks: [],
-            location: null,
-            weather: null,
-            airQuality: null,
-            holidays: [],
-            listening: false,
-            recognition: null,
-            synth: speechSynthesis,
-            voices: [],
-            femaleVoice: null,
-            userName: '',
-            history: [],
-            conversationMemory: [],
-            lastBriefing: null,
-            isOnline: false
-        };
-
-        // ====== MÓDULO DE PERSISTENCIA ======
-        const DB = {
-            get(key, fallback) {
-                try { return JSON.parse(localStorage.getItem('ania_' + key)) ?? fallback; }
-                catch { return fallback; }
-            },
-            set(key, val) {
-                try { localStorage.setItem('ania_' + key, JSON.stringify(val)); }
-                catch(e) { console.warn('Storage full', e); }
-            }
-        };
-
-        // ====== MÓDULO DE SINCRONIZACIÓN ======
-        const Sync = {
-            online: false,
-            lastSync: null,
-            checking: false,
-
-            async check() {
-                if (this.checking) return this.online;
-                this.checking = true;
-                try {
-                    const ctrl = new AbortController();
-                    const t = setTimeout(() => ctrl.abort(), 8000);
-                    const r = await fetch(`${CONFIG.BACKEND_URL}/health`, { signal: ctrl.signal });
-                    clearTimeout(t);
-                    this.online = r.ok;
-                } catch { this.online = false; }
-                finally { this.checking = false; }
-                this.updateChip();
-                return this.online;
-            },
-
-            updateChip() {
-                const el = document.getElementById('v-sync');
-                const chip = document.getElementById('chip-sync');
-                if (!el) return;
-                if (this.online) {
-                    el.textContent = this.lastSync
-                        ? this.lastSync.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
-                        : 'Online';
-                    chip.classList.add('glow');
-                } else {
-                    el.textContent = 'Offline';
-                    chip.classList.remove('glow');
-                }
-            },
-
-            async pushTask(task) {
-                if (!this.online) { this.queuePush(task); return false; }
-                try {
-                    const r = await fetch(`${CONFIG.BACKEND_URL}/ania/tasks`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            texto: task.text,
-                            remindAt: task.remindAt,
-                            usuario: CONFIG.ANIA_USER,
-                            source: 'web'
-                        })
-                    });
-                    if (!r.ok) throw new Error('Push failed');
-                    const serverTask = await r.json();
-                    task.serverId = serverTask.id;
-                    DB.set('tasks', S.tasks);
-                    return true;
-                } catch (e) {
-                    console.warn('Push falló, encolando:', e.message);
-                    this.queuePush(task);
-                    return false;
-                }
-            },
-
-            async pullTasks() {
-                if (!this.online) return null;
-                try {
-                    const r = await fetch(`${CONFIG.BACKEND_URL}/ania/tasks?user=${CONFIG.ANIA_USER}`);
-                    if (!r.ok) return null;
-                    const remote = await r.json();
-                    if (!Array.isArray(remote)) return null;
-
-                    const localIds = new Set(S.tasks.flatMap(t => [t.id, t.serverId].filter(Boolean)));
-                    const nuevas = remote.filter(t => !localIds.has(t.id));
-
-                    for (const r of nuevas) {
-                        S.tasks.push({
-                            id: r.id,
-                            serverId: r.id,
-                            text: r.texto,
-                            remindAt: r.remindAt,
-                            done: r.done,
-                            created: r.created,
-                            source: r.source || 'telegram'
-                        });
-                    }
-
-                    for (const local of S.tasks) {
-                        if (!local.serverId) continue;
-                        const remoto = remote.find(r => r.id === local.serverId);
-                        if (remoto && remoto.done !== local.done) {
-                            local.done = remoto.done;
-                        }
-                    }
-
-                    DB.set('tasks', S.tasks);
-                    updateTaskChip();
-                    if (nuevas.length > 0) {
-                        addMsg('system', `🔄 Sincronizadas ${nuevas.length} tarea(s) nuevas.`);
-                    }
-                    this.lastSync = new Date();
-                    this.updateChip();
-                    return nuevas;
-                } catch (e) {
-                    console.warn('Pull falló:', e.message);
-                    return null;
-                }
-            },
-
-            queuePush(task) {
-                const q = DB.get('push_queue', []);
-                q.push({ text: task.text, remindAt: task.remindAt, created: task.created });
-                DB.set('push_queue', q);
-            },
-
-            async flushQueue() {
-                const q = DB.get('push_queue', []);
-                if (!q.length || !this.online) return;
-                const remaining = [];
-                for (const t of q) {
-                    try {
-                        const r = await fetch(`${CONFIG.BACKEND_URL}/ania/tasks`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ ...t, usuario: CONFIG.ANIA_USER, source: 'web' })
-                        });
-                        if (!r.ok) remaining.push(t);
-                    } catch { remaining.push(t); }
-                }
-                DB.set('push_queue', remaining);
-            },
-
-            async markDone(task) {
-                if (!this.online || !task.serverId) return;
-                try {
-                    await fetch(`${CONFIG.BACKEND_URL}/ania/tasks/${task.serverId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ done: true })
-                    });
-                } catch (e) { console.warn('markDone failed:', e.message); }
-            }
-        };
-
-        // ====== INICIALIZACIÓN ======
-        document.addEventListener('DOMContentLoaded', async () => {
-            initMatrix();
-            initVoices();
-            initRecognition();
-            loadPersisted();
-            updateClock();
-            setInterval(updateClock, 1000);
-            setInterval(checkTasks, CONFIG.TASK_CHECK_INTERVAL);
-            setInterval(proactiveCheck, 60000);
-            autoLocate();
-            updateNotifButton();
-
-            S.tasks = DB.get('tasks', []);
-            S.userName = DB.get('userName', '');
-            updateTaskChip();
-
-            const inp = document.getElementById('input');
-            inp.addEventListener('input', () => {
-                inp.style.height = 'auto';
-                inp.style.height = Math.min(inp.scrollHeight, 120) + 'px';
-            });
-            inp.addEventListener('keydown', e => {
-                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
-            });
-
-            registerSW();
-            initSync();
-
-            const h = new Date().getHours();
-            const greet = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
-            setTimeout(() => {
-                addMsg('ania', `${greet}${S.userName ? ', ' + S.userName : ''}. Soy ANIA 3.0. ` +
-                    `Estoy lista para gestionar tus tareas, darte el clima, las noticias y mucho más. ` +
-                    `Todo se sincroniza con tu Telegram. ` +
-                    `\n\n💡 Prueba a decir: "recuérdame comprar leche mañana a las 10" o "mis tareas".`);
-            }, 800);
-        });
-
-        // ====== MÓDULO DE NOTIFICACIONES ======
-        function updateNotifButton() {
-            const btn = document.querySelector('.qa-btn[onclick*="pedirPermisoNotificaciones"]');
-            if (!btn) return;
-            if (!('Notification' in window)) {
-                btn.textContent = '🔕 Sin soporte';
-                btn.disabled = true;
-                return;
-            }
-            if (Notification.permission === 'granted') {
-                btn.textContent = '🔔 Notif. activas';
-                btn.classList.add('notif-on');
-            } else if (Notification.permission === 'denied') {
-                btn.textContent = '🔕 Notif. bloqueadas';
-                btn.disabled = true;
-            } else {
-                btn.textContent = '🔔 Activar notif.';
-            }
-        }
-
-        function pedirPermisoNotificaciones() {
-            if (!('Notification' in window)) {
-                toast('Este navegador no soporta notificaciones');
-                return;
-            }
-            if (Notification.permission === 'granted') {
-                toast('Las notificaciones ya están activas');
-                return;
-            }
-            if (Notification.permission === 'denied') {
-                toast('Notificaciones bloqueadas. Actívalas en los ajustes.');
-                return;
-            }
-            Notification.requestPermission().then(perm => {
-                updateNotifButton();
-                if (perm === 'granted') {
-                    toast('¡Notificaciones activadas!');
-                    try { new Notification('🔔 ANIA', { body: 'Notificaciones funcionando.' }); } catch {}
-                } else {
-                    toast('No se activaron las notificaciones');
-                }
-            });
-        }
-
-        // ====== FONDO MATRIX ======
-        function initMatrix() {
-            const c = document.getElementById('matrix-canvas');
-            const ctx = c.getContext('2d');
-            let w, h, cols, drops;
-            function resize() {
-                w = c.width = innerWidth; h = c.height = innerHeight;
-                cols = Math.floor(w / 14); drops = Array(cols).fill(1);
-            }
-            resize(); addEventListener('resize', resize);
-            const chars = 'アイウエオカキクケコサシスセソタチツテト0123456789ABCDEFΩ∆∇≡⟨⟩';
-            setInterval(() => {
-                ctx.fillStyle = 'rgba(10,10,15,.05)';
-                ctx.fillRect(0, 0, w, h);
-                ctx.fillStyle = '#00ff88';
-                ctx.font = '12px monospace';
-                for (let i = 0; i < drops.length; i++) {
-                    ctx.fillText(chars[Math.random() * chars.length | 0], i * 14, drops[i] * 14);
-                    if (drops[i] * 14 > h && Math.random() > .975) drops[i] = 0;
-                    drops[i]++;
-                }
-            }, 60);
-        }
-
-        // ====== VOCES ======
-        function initVoices() {
-            const load = () => {
-                S.voices = S.synth.getVoices();
-                const femaleNames = /elena|sabina|helena|monica|paulina|maria|sofia|lucia|carmen|elvira|isabel|female|mujer/i;
-                S.femaleVoice =
-                    S.voices.find(v => v.lang.startsWith('es') && femaleNames.test(v.name)) ||
-                    S.voices.find(v => v.lang.startsWith('es-ES') && femaleNames.test(v.name)) ||
-                    S.voices.find(v => v.lang.startsWith('es')) ||
-                    S.voices.find(v => femaleNames.test(v.name));
-            };
-            load();
-            speechSynthesis.onvoiceschanged = load;
-        }
-
-        function speak(text) {
-            if (!S.synth) return;
-            S.synth.cancel();
-            const u = new SpeechSynthesisUtterance(text);
-            u.lang = 'es-ES'; u.rate = 1.0; u.pitch = 1.18; u.volume = 0.95;
-            if (S.femaleVoice) u.voice = S.femaleVoice;
-            u.onstart = () => setStatus('HABLANDO...');
-            u.onend = () => setStatus('SISTEMA ACTIVO');
-            S.synth.speak(u);
-        }
-
-        function setStatus(txt) { document.getElementById('status-txt').textContent = txt; }
-
-        // ====== RECONOCIMIENTO DE VOZ ======
-        function initRecognition() {
-            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SR) return;
-            const r = new SR();
-            r.lang = 'es-ES'; r.continuous = false; r.interimResults = false;
-            r.onresult = e => {
-                document.getElementById('input').value = e.results[0][0].transcript;
-                sendMsg();
-            };
-            r.onerror = stopMic;
-            r.onend = stopMic;
-            S.recognition = r;
-        }
-
-        function toggleMic() {
-            if (!S.recognition) { toast('Voz no soportada en este navegador'); return; }
-            if (S.listening) { S.recognition.stop(); return; }
-            try {
-                S.recognition.start();
-                S.listening = true;
-                document.getElementById('mic-btn').classList.add('on');
-                document.getElementById('avatar').classList.add('listening');
-                setStatus('ESCUCHANDO...');
-            } catch { toast('Error al acceder al micrófono'); }
-        }
-
-        function stopMic() {
-            S.listening = false;
-            document.getElementById('mic-btn').classList.remove('on');
-            document.getElementById('avatar').classList.remove('listening');
-            setStatus('SISTEMA ACTIVO');
-        }
-
-        // ====== RELOJ ======
-        function updateClock() {
-            document.getElementById('v-hora').textContent =
-                new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-        }
-
-        // ====== UBICACIÓN ======
-        function autoLocate() {
-            if (!navigator.geolocation) { document.getElementById('v-loc').textContent = 'No GPS'; return; }
-            navigator.geolocation.getCurrentPosition(
-                async pos => {
-                    S.location = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-                    try {
-                        const r = await fetch(`${CONFIG.GEO_API}?lat=${S.location.lat}&lon=${S.location.lon}&format=json&accept-language=es`, { headers: { 'User-Agent': 'AniaIA/3.0' } });
-                        const d = await r.json();
-                        const city = d.address?.city || d.address?.town || d.address?.village || d.address?.state || '';
-                        const country = d.address?.country || '';
-                        S.location.city = city; S.location.country = country;
-                        document.getElementById('v-loc').textContent = city + (country ? ', ' + country : '');
-                    } catch { document.getElementById('v-loc').textContent = S.location.lat.toFixed(2) + ',' + S.location.lon.toFixed(2); }
-                    fetchWeather();
-                    fetchHolidays();
-                },
-                () => { document.getElementById('v-loc').textContent = 'Sin permiso'; },
-                { enableHighAccuracy: true, timeout: 10000 }
-            );
-        }
-
-        // ====== CLIMA ======
-        async function fetchWeather() {
-            if (!S.location) return;
-            try {
-                const [wRes, aqRes] = await Promise.all([
-                    fetch(`${CONFIG.WEATHER_API}/forecast?latitude=${S.location.lat}&longitude=${S.location.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,uv_index&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max&timezone=auto&forecast_days=3`),
-                    fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${S.location.lat}&longitude=${S.location.lon}&current=european_aqi,pm10,pm2_5&timezone=auto`)
-                ]);
-                const wData = await wRes.json();
-                const aqData = await aqRes.json();
-                S.weather = wData;
-                S.airQuality = aqData.current;
-                document.getElementById('v-temp').textContent = Math.round(wData.current.temperature_2m) + '°';
-            } catch { document.getElementById('v-temp').textContent = 'Error'; }
-        }
-
-        function weatherDesc(code) {
-            const m = { 0: 'despejado', 1: 'mayormente despejado', 2: 'parcialmente nublado', 3: 'nublado', 45: 'niebla', 48: 'niebla con escarcha', 51: 'llovizna ligera', 53: 'llovizna moderada', 55: 'llovizna densa', 61: 'lluvia ligera', 63: 'lluvia moderada', 65: 'lluvia fuerte', 71: 'nieve ligera', 73: 'nieve moderada', 75: 'nieve fuerte', 80: 'chubascos ligeros', 81: 'chubascos moderados', 82: 'chubascos violentos', 95: 'tormenta', 96: 'tormenta con granizo' };
-            return m[code] || 'condición desconocida';
-        }
-
-        // ====== FESTIVOS ======
-        async function fetchHolidays() {
-            const country = S.location?.country;
-            if (!country) return;
-            const isoMap = { 'España': 'ES', 'Mexico': 'MX', 'México': 'MX', 'Argentina': 'AR', 'Colombia': 'CO', 'Chile': 'CL', 'Peru': 'PE', 'Perú': 'PE', 'United States': 'US', 'Estados Unidos': 'US', 'Cuba': 'CU' };
-            const iso = isoMap[country] || 'ES';
-            try {
-                const r = await fetch(`${CONFIG.HOLIDAYS_API}/${iso}`);
-                S.holidays = await r.json();
-            } catch {}
-        }
-
-        // ====== PARSEO DE FECHA NATURAL ======
-        function nextWeekday(desde, diaTarget) {
-            const d = new Date(desde);
-            const diff = (diaTarget + 7 - d.getDay()) % 7 || 7;
-            d.setDate(d.getDate() + diff);
-            return d;
-        }
-
-        function parsearFechaNatural(texto) {
-            const ahora = new Date();
-            const t = texto.toLowerCase();
-            let fecha = new Date(ahora);
-            let tieneFecha = false;
-
-            if (/\bpasado mañana\b/.test(t)) { fecha.setDate(fecha.getDate() + 2); tieneFecha = true; }
-            else if (/\bmañana\b/.test(t)) { fecha.setDate(fecha.getDate() + 1); tieneFecha = true; }
-            else if (/\bhoy\b/.test(t)) { tieneFecha = true; }
-            else if (/\blunes\b/.test(t)) { fecha = nextWeekday(fecha, 1); tieneFecha = true; }
-            else if (/\bmartes\b/.test(t)) { fecha = nextWeekday(fecha, 2); tieneFecha = true; }
-            else if (/\bmiércoles|miercoles\b/.test(t)) { fecha = nextWeekday(fecha, 3); tieneFecha = true; }
-            else if (/\bjueves\b/.test(t)) { fecha = nextWeekday(fecha, 4); tieneFecha = true; }
-            else if (/\bviernes\b/.test(t)) { fecha = nextWeekday(fecha, 5); tieneFecha = true; }
-            else if (/\bsábado|sabado\b/.test(t)) { fecha = nextWeekday(fecha, 6); tieneFecha = true; }
-            else if (/\bdomingo\b/.test(t)) { fecha = nextWeekday(fecha, 0); tieneFecha = true; }
-
-            const horaM = t.match(/a\s+las?\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
-            if (horaM) {
-                let hh = parseInt(horaM[1]);
-                const mm = parseInt(horaM[2] || '0');
-                const pm = horaM[3] === 'pm';
-                const am = horaM[3] === 'am';
-                if (pm && hh < 12) hh += 12;
-                if (am && hh === 12) hh = 0;
-                fecha.setHours(hh, mm, 0, 0);
-                tieneFecha = true;
-                if (!/\b(hoy|mañana|pasado mañana|lunes|martes|miércoles|jueves|viernes|sábado|domingo)\b/.test(t) && fecha < ahora) {
-                    fecha.setDate(fecha.getDate() + 1);
-                }
-            }
-            return tieneFecha ? fecha : null;
-        }
-
-        // ====== GESTIÓN DE TAREAS ======
-        function addTask(text, remindAt) {
-            const t = {
-                id: Date.now(),
-                text,
-                remindAt: remindAt instanceof Date ? remindAt.toISOString() : remindAt,
-                done: false,
-                created: new Date().toISOString(),
-                source: 'web'
-            };
-            S.tasks.push(t);
-            DB.set('tasks', S.tasks);
-            updateTaskChip();
-            if (t.remindAt) scheduleReminder(t);
-            Sync.pushTask(t).catch(() => {});
-            return t;
-        }
-
-        function scheduleReminder(task) {
-            const delay = new Date(task.remindAt) - Date.now();
-            if (delay <= 0 || delay > 2147483647) return;
-            setTimeout(() => fireReminder(task), delay);
-        }
-
-        function fireReminder(task) {
-            if (task.done) return;
-            if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-                try { new Notification('🔔 ANIA — Recordatorio', { body: task.text, tag: 'ania-' + task.id }); } catch {}
-            }
-            addMsg('ania', `⏰ **Recordatorio:** ${task.text}`);
-            speak(`Recordatorio: ${task.text}`);
-        }
-
-        function checkTasks() {
-            const now = Date.now();
-            let cambios = false;
-            S.tasks.forEach(t => {
-                if (!t.done && t.remindAt && new Date(t.remindAt).getTime() <= now && !t.notified) {
-                    t.notified = true;
-                    cambios = true;
-                    fireReminder(t);
-                }
-            });
-            if (cambios) DB.set('tasks', S.tasks);
-        }
-
-        function updateTaskChip() {
-            const pending = S.tasks.filter(t => !t.done).length;
-            document.getElementById('v-tasks').textContent = pending;
-        }
-
-        function completarTarea(taskId) {
-            const t = S.tasks.find(x => x.id === taskId);
-            if (!t) return;
-            t.done = true;
-            DB.set('tasks', S.tasks);
-            updateTaskChip();
-            Sync.markDone(t);
-            renderModalTareas();
-        }
-
-        function eliminarTarea(taskId) {
-            S.tasks = S.tasks.filter(t => t.id !== taskId);
-            DB.set('tasks', S.tasks);
-            updateTaskChip();
-            renderModalTareas();
-        }
-
-        function abrirModalTareas() {
-            renderModalTareas();
-            document.getElementById('task-modal').classList.add('active');
-        }
-
-        function cerrarModalTareas() {
-            document.getElementById('task-modal').classList.remove('active');
-        }
-
-        function renderModalTareas() {
-            const list = document.getElementById('modal-task-list');
-            if (!list) return;
-            const tareas = S.tasks.filter(t => !t.done);
-            if (!tareas.length) {
-                list.innerHTML = '<div class="empty-tasks">🎉 No tienes tareas pendientes. ¡Todo al día!</div>';
-                return;
-            }
-            tareas.sort((a, b) => new Date(a.created) - new Date(b.created));
-            list.innerHTML = tareas.map(t => {
-                let timeStr = '';
-                if (t.remindAt) {
-                    const d = new Date(t.remindAt);
-                    timeStr = `⏰ ${d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })} ${d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
-                }
-                return `<li class="task-item">
-                    <button class="task-check" onclick="completarTarea(${t.id})">✓</button>
-                    <span class="task-text">${t.text}</span>
-                    <span class="task-time">${timeStr}</span>
-                    <button class="task-delete" onclick="eliminarTarea(${t.id})">✕</button>
-                </li>`;
-            }).join('');
-        }
-
-        // ====== SERVICE WORKER ======
-        function registerSW() {
-            if (!('serviceWorker' in navigator)) return;
-            const swCode = `
-                const CACHE = 'ania-v3';
-                self.addEventListener('install', e => {
-                    e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./'])));
-                    self.skipWaiting();
-                });
-                self.addEventListener('activate', e => e.waitUntil(clients.claim()));
-                self.addEventListener('fetch', e => {
-                    e.respondWith(
-                        caches.match(e.request).then(r => r || fetch(e.request).then(res => {
-                            if (res.ok && e.request.method === 'GET') {
-                                const clone = res.clone();
-                                caches.open(CACHE).then(c => c.put(e.request, clone));
-                            }
-                            return res;
-                        })).catch(() => caches.match('./'))
-                    );
-                });
-            `;
-            navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode], { type: 'application/javascript' }))).catch(() => {});
-        }
-
-        // ====== SINCRONIZACIÓN ======
-        async function initSync() {
-            await Sync.check();
-            if (Sync.online) {
-                await Sync.pullTasks();
-                await Sync.flushQueue();
-            }
-            setInterval(async () => {
-                if (await Sync.check()) {
-                    await Sync.pullTasks();
-                    await Sync.flushQueue();
-                }
-            }, CONFIG.SYNC_INTERVAL);
-        }
-
-        // ====== MOTOR DE REGLAS AVANZADO ======
-        function ruleEngine(text) {
-            const t = text.toLowerCase().trim();
-
-            // --- Recordatorios ---
-            const remindMatch = text.match(/(?:recuérdame|recordar|avísame|no me olvides(?: de)?|apunta(?: que)?|anota(?: que)?)\s+(.+)/i);
-            if (remindMatch) {
-                const tareaTexto = remindMatch[1].trim();
-                const fecha = parsearFechaNatural(tareaTexto);
-                let textoSinFecha = tareaTexto;
-                if (fecha) {
-                    textoSinFecha = tareaTexto
-                        .replace(/\b(mañana|hoy|pasado mañana|lunes|martes|miércoles|miercoles|jueves|viernes|sábado|sabado|domingo)\b/gi, '')
-                        .replace(/a\s+las?\s+\d{1,2}(:\d{2})?\s*(am|pm)?/gi, '')
-                        .replace(/\s+/g, ' ').trim();
-                    if (!textoSinFecha) textoSinFecha = tareaTexto;
-                }
-                addTask(textoSinFecha, fecha);
-                let r = `✅ Recordatorio programado: "${textoSinFecha}".`;
-                if (fecha) {
-                    r += ` Te avisaré el ${fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })} a las ${fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}.`;
-                }
-                return r;
-            }
-
-            // --- Saludos ---
-            if (/^(hola|hey|buenas|qué tal|saludos|buenos días|buenas tardes|buenas noches)/.test(t)) {
-                const h = new Date().getHours();
-                const g = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
-                return `${g}${S.userName ? ', ' + S.userName : ''}. ¿En qué puedo servirle?`;
-            }
-
-            // --- Nombre ---
-            const nameM = text.match(/(?:me llamo|mi nombre es|soy)\s+(\w+)/i);
-            if (nameM) {
-                S.userName = nameM[1];
-                DB.set('userName', S.userName);
-                return `Encantada, ${S.userName}. Lo recordaré. ¿Algo más?`;
-            }
-            if (/cómo me llamo|cuál es mi nombre/.test(t)) return S.userName ? `Se llama ${S.userName}.` : 'Aún no me ha dicho su nombre.';
-
-            // --- Hora ---
-            if (/hora|qué hora/.test(t)) {
-                return `Son las ${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}.`;
-            }
-
-            // --- Fecha ---
-            if (/fecha|qué día|día es/.test(t)) {
-                return `Hoy es ${new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.`;
-            }
-
-            // --- Clima ---
-            if (/clima|tiempo|temperatura|llueve|frío|calor/.test(t)) {
-                if (!S.weather) return 'Aún no tengo datos del clima. Verifique el permiso de ubicación.';
-                const w = S.weather.current;
-                const city = S.location?.city || 'su zona';
-                let r = `En ${city}: ${weatherDesc(w.weather_code)}, ${Math.round(w.temperature_2m)}°C (sensación ${Math.round(w.apparent_temperature)}°C). Humedad ${w.relative_humidity_2m}%, viento ${w.wind_speed_10m} km/h.`;
-                if (S.airQuality) {
-                    const aqi = S.airQuality.european_aqi;
-                    const calidad = aqi <= 20 ? 'excelente' : aqi <= 40 ? 'buena' : aqi <= 60 ? 'moderada' : 'mala';
-                    r += ` Calidad del aire: ${calidad} (AQI ${aqi}).`;
-                }
-                return r;
-            }
-
-            // --- Ubicación ---
-            if (/dónde estoy|mi ubicación|dónde me encuentro/.test(t)) {
-                if (!S.location) return 'No tengo acceso a su ubicación.';
-                return `Se encuentra en ${S.location.city || 'su zona'}${S.location.country ? ', ' + S.location.country : ''} (${S.location.lat.toFixed(4)}, ${S.location.lon.toFixed(4)}).`;
-            }
-
-            // --- Tareas: listar (abre modal) ---
-            if (/mis tareas|qué tareas|pendientes|lista/.test(t)) {
-                abrirModalTareas();
-                return `He abierto tu lista de tareas. Tienes ${S.tasks.filter(x => !x.done).length} pendientes.`;
-            }
-
-            // --- Tareas: crear (formato explícito) ---
-            const taskM = t.match(/(?:crea|añade|agrega|nueva|tengo que)\s+(?:una?\s+)?(?:tarea|recordatorio|nota)?:?\s*(.+)/i);
-            if (taskM) {
-                let taskText = taskM[1].trim();
-                const fecha = parsearFechaNatural(taskText);
-                if (fecha) {
-                    taskText = taskText.replace(/\b(mañana|hoy|pasado mañana|lunes|martes|miércoles|jueves|viernes|sábado|domingo)\b/gi, '')
-                                     .replace(/a\s+las?\s+\d{1,2}(:\d{2})?\s*(am|pm)?/gi, '').trim();
-                }
-                addTask(taskText || taskM[1], fecha);
-                let r = `✅ Tarea guardada: "${taskText || taskM[1]}".`;
-                if (fecha) r += ` Programada para ${fecha.toLocaleDateString('es-ES')} a las ${fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}.`;
-                return r;
-            }
-
-            // --- Tareas: completar (por número) ---
-            const doneM = t.match(/(?:completar|terminar|hecho|listo|elimina|borra)\s+(?:tarea\s+)?(\d+)/i);
-            if (doneM) {
-                const idx = parseInt(doneM[1]) - 1;
-                const p = S.tasks.filter(x => !x.done);
-                if (idx >= 0 && idx < p.length) {
-                    p[idx].done = true;
-                    DB.set('tasks', S.tasks);
-                    updateTaskChip();
-                    Sync.markDone(p[idx]);
-                    renderModalTareas();
-                    return `✅ "${p[idx].text}" completada. ¡Bien hecho!`;
-                }
-                return 'No encontré esa tarea. Diga "mis tareas" para ver la lista.';
-            }
-
-            // --- Noticias ---
-            if (/noticias|novedades|qué pasa|actualidad/.test(t)) return { action: 'news' };
-
-            // --- Festivos ---
-            if (/festivo|feriado|día libre|próximo festivo/.test(t)) {
-                if (!S.holidays.length) return 'No tengo datos de festivos para su país.';
-                const next = S.holidays[0];
-                return `El próximo festivo es el ${new Date(next.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}: ${next.localName || next.name}.`;
-            }
-
-            // --- Briefing ---
-            if (/briefing|resumen|qué tengo hoy|resumen del día/.test(t)) return { action: 'briefing' };
-
-            // --- Ayuda ---
-            if (/ayuda|qué puedes hacer|tus funciones|comandos/.test(t)) {
-                return `**Mis capacidades:**\n\n🕐 Hora y fecha\n🌤️ Clima + calidad del aire\n📍 Ubicación GPS\n📋 Tareas y recordatorios (sincronizadas con Telegram)\n📰 Noticias\n🎉 Festivos\n☀️ Briefing matutino\n🎙️ Voz (hablar y escuchar)\n\n**Ejemplos:**\n"recuérdame comprar leche mañana a las 10"\n"avísame de llamar a Juan el lunes a las 3 pm"\n"mis tareas"`;
-            }
-
-            if (/gracias|te agradezco/.test(t)) return '¡De nada! Para eso estoy. ¿Algo más?';
-            if (/adiós|chao|hasta luego|nos vemos/.test(t)) return 'Hasta luego. Aquí estaré cuando me necesite.';
-            if (/cómo estás|qué tal estás/.test(t)) return 'Funcionando al 100%. Todos los sistemas operativos. ¿Y usted?';
-
-            return null; // Si no coincide, se usa el fallback final
-        }
-
-        // ====== GENERAR BRIEFING ======
-        async function generateBriefing() {
-            const parts = [];
-            const h = new Date().getHours();
-            const greet = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
-            parts.push(`${greet}${S.userName ? ', ' + S.userName : ''}. Aquí tiene su briefing:`);
-            parts.push(`📅 ${new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`);
-
-            if (S.weather) {
-                const w = S.weather.current;
-                const d = S.weather.daily;
-                parts.push(`🌤️ **Clima:** ${weatherDesc(w.weather_code)}, ${Math.round(w.temperature_2m)}°C. Máx ${Math.round(d.temperature_2m_max[0])}° / Mín ${Math.round(d.temperature_2m_min[0])}°. UV: ${d.uv_index_max[0]}.`);
-            }
-
-            const pending = S.tasks.filter(t => !t.done);
-            if (pending.length) {
-                parts.push(`📋 **${pending.length} tarea${pending.length > 1 ? 's' : ''} pendiente${pending.length > 1 ? 's' : ''}:**`);
-                pending.slice(0, 5).forEach((t, i) => {
-                    let line = `  ${i + 1}. ${t.text}`;
-                    if (t.remindAt) line += ` — ⏰ ${new Date(t.remindAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`;
-                    parts.push(line);
-                });
-            } else {
-                parts.push('📋 Sin tareas pendientes.');
-            }
-
-            const today = new Date().toISOString().slice(0, 10);
-            const holidayToday = S.holidays.find(x => x.date === today);
-            if (holidayToday) parts.push(`🎉 **Hoy es festivo:** ${holidayToday.localName || holidayToday.name}`);
-
-            try {
-                const news = await fetchNews();
-                if (news.length) {
-                    parts.push('📰 **Titulares:**');
-                    news.slice(0, 3).forEach(n => parts.push(`  • ${n.title}`));
-                }
-            } catch {}
-
-            S.lastBriefing = new Date().toISOString();
-            DB.set('lastBriefing', S.lastBriefing);
-            return parts.join('\n');
-        }
-
-        // ====== NOTICIAS (con proxy CORS) ======
-async function fetchNews(query) {
-  // 🔥 Ya NO usamos proxies externos.
-  // Usamos el motor de noticias de nuestro backend:
-  //   https://meditech-bot.onrender.com/api/noticias
-  // El backend descarga los RSS y nos los sirve sin CORS.
-  try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 15000);
-    const r = await fetch(`${CONFIG.BACKEND_URL}/noticias`, { signal: ctrl.signal });
-    clearTimeout(timer);
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const data = await r.json();
-    if (!data.ok || !data.noticias) throw new Error('Sin datos');
-
-    // Combinar las 3 categorías en una sola lista plana
-    const todo = [
-      ...(data.noticias.latam || []),
-      ...(data.noticias.tech || []),
-      ...(data.noticias.tendencias || [])
-    ];
-
-    // Si el usuario pasó una query, filtrar por ella
-    let filtrado = todo;
-    if (query && query.trim() && query.trim() !== 'noticias españa') {
-      const q = query.toLowerCase().trim();
-      filtrado = todo.filter(n =>
-        (n.titulo || '').toLowerCase().includes(q) ||
-        (n.fuente || '').toLowerCase().includes(q)
-      );
-      if (filtrado.length === 0) filtrado = todo; // fallback: mostrar todo
+<div id="boot">
+  <div id="bootBox">
+    <div id="bootTitle">ANIA<small>ASISTENTE PERSONAL · v3.2.0</small></div>
+    <div id="bootLog"></div>
+    <button id="bootStart">INICIAR SISTEMA</button>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <span id="logo">ANIA<span class="c">_</span></span>
+    <span class="pill" id="netPill"><span class="dot"></span><span id="netTxt">EN LÍNEA</span></span>
+    <span id="headRight">
+      <button id="weatherChip" title="Ver clima">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.2 11.2A3.9 3.9 0 0 0 6.5 19z"/></svg>
+        <span id="wTxt">--°</span>
+      </button>
+      <span id="clock">--:--:--</span>
+    </span>
+  </header>
+
+  <div id="coreZone">
+    <div id="reactorWrap"><canvas id="reactor"></canvas></div>
+    <div id="phase">EN ESPERA</div>
+  </div>
+
+  <div id="chat"></div>
+  <div id="chips"></div>
+
+  <form id="inputBar" autocomplete="off">
+    <button type="button" class="ibtn" id="micBtn" title="Hablar con Ania">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
+    </button>
+    <input id="userInput" placeholder="Escribe o habla a Ania..." enterkeyhint="send">
+    <button type="submit" class="ibtn" title="Enviar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>
+    </button>
+  </form>
+
+  <nav id="dock">
+    <button class="dbtn" id="btnTasks">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>
+      AGENDA<span class="badge" id="taskBadge"></span>
+    </button>
+    <button class="dbtn" id="btnSync">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>
+      SINCRONIZAR
+    </button>
+    <button class="dbtn" id="btnInstall">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 7v7"/><path d="M9.5 11.5 12 14l2.5-2.5"/></svg>
+      INSTALAR
+    </button>
+    <button class="dbtn" id="btnSettings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/></svg>
+      AJUSTES
+    </button>
+  </nav>
+</div>
+
+<div id="backdrop"></div>
+<div id="sheet">
+  <div class="grab"></div>
+  <div class="sheetHead">
+    <h2>AGENDA</h2>
+    <span class="pill" id="taskCount">0 PENDIENTES</span>
+    <button class="xbtn" id="closeSheet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div id="taskList"></div>
+  <div id="taskForm">
+    <input id="taskInput" placeholder="Nueva tarea...">
+    <input id="taskWhen" type="datetime-local">
+    <button id="addTaskBtn">AÑADIR</button>
+  </div>
+</div>
+
+<div class="overlay" id="installModal">
+  <div class="modal">
+    <h2>INSTALAR ANIA
+      <button class="xbtn" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </h2>
+    <p class="dim">Ania puede vivir en tu pantalla de inicio como una aplicación, a pantalla completa y con su propio icono.</p>
+    <button class="bigbtn" id="installNow" style="display:none">INSTALAR AHORA</button>
+    <hr>
+    <div class="step"><b>01</b><p><span class="dim">Android (Chrome):</span> abre el menú <span class="dim">(⋮)</span> y toca <b>«Añadir a pantalla de inicio»</b> o <b>«Instalar aplicación»</b>.</p></div>
+    <div class="step"><b>02</b><p><span class="dim">iPhone (Safari):</span> botón Compartir <span class="dim">(□↑)</span> → <b>«Añadir a pantalla de inicio»</b>.</p></div>
+    <div class="step"><b>03</b><p><span class="dim">PC (Chrome/Edge):</span> icono de instalación en la barra de direcciones.</p></div>
+    <hr>
+    <button class="bigbtn" id="saveOffline">GUARDAR COPIA OFFLINE (.HTML)</button>
+  </div>
+</div>
+
+<div class="overlay" id="settingsModal">
+  <div class="modal">
+    <h2>AJUSTES
+      <button class="xbtn" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </h2>
+    <div class="frow"><label>VOZ</label><select id="voiceSelect"></select></div>
+    <div class="frow"><label>VELOCIDAD</label><input type="range" id="rateRange" min="0.7" max="1.4" step="0.05"><output id="rateOut">1.05</output></div>
+    <div class="frow"><label>TONO</label><input type="range" id="pitchRange" min="0.7" max="1.5" step="0.05"><output id="pitchOut">1.10</output></div>
+    <button class="bigbtn" id="testVoice">PROBAR VOZ</button>
+    <hr>
+    <button class="bigbtn" id="forgetGeo">OLVIDAR MI UBICACIÓN</button>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+/* =====================================================================
+   ANIA v3.2 · Asistente personal con backend + Telegram
+   - UI local (reactor, boot, agenda, ajustes, PWA)
+   - Sincronización de tareas con backend Render
+   - Noticias vía /api/noticias (sin proxies CORS)
+===================================================================== */
+'use strict';
+
+/* ---------- configuración backend ---------- */
+const CONFIG = {
+  BACKEND_URL: 'https://meditech-bot.onrender.com/api',
+  ANIA_USER: 'admin',
+  SYNC_INTERVAL: 30000
+};
+
+/* ---------- utilidades ---------- */
+const $ = id => document.getElementById(id);
+const store = {
+  get(k,d){ try{ const v = JSON.parse(localStorage.getItem('ania_'+k)); return v===null?d:v; }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem('ania_'+k, JSON.stringify(v)); }catch(e){} },
+  del(k){ localStorage.removeItem('ania_'+k); }
+};
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const isOffline = () => !navigator.onLine;
+
+async function jget(url, t=9000){
+  const c = new AbortController();
+  const id = setTimeout(()=>c.abort(), t);
+  try{
+    const r = await fetch(url, {signal:c.signal});
+    if(!r.ok) throw new Error(r.status);
+    return await r.json();
+  } finally { clearTimeout(id); }
+}
+
+/* ---------- estado ---------- */
+const S = {
+  phase:'idle',
+  muted: store.get('muted', false),
+  voice: null, rate: store.get('rate',1.05), pitch: store.get('pitch',1.10),
+  awaitingCity:false, booted:false
+};
+
+/* =====================================================================
+   MÓDULO DE SINCRONIZACIÓN CON BACKEND
+===================================================================== */
+const Sync = {
+  online: false,
+  lastSync: 0,
+  syncing: false,
+
+  async check(){
+    if(this.syncing) return this.online;
+    try{
+      const ctrl = new AbortController();
+      const t = setTimeout(()=>ctrl.abort(), 8000);
+      const r = await fetch(`${CONFIG.BACKEND_URL}/health`, { signal: ctrl.signal });
+      clearTimeout(t);
+      this.online = r.ok;
+    }catch{ this.online = false; }
+    return this.online;
+  },
+
+  async pushTask(tk){
+    if(!this.online) return false;
+    try{
+      const r = await fetch(`${CONFIG.BACKEND_URL}/ania/tasks`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          texto: tk.text,
+          remindAt: tk.when ? new Date(tk.when).toISOString() : null,
+          usuario: CONFIG.ANIA_USER,
+          source: 'web'
+        })
+      });
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const serverTask = await r.json();
+      tk.serverId = serverTask.id;
+      saveTasks();
+      return true;
+    }catch(e){
+      console.warn('pushTask falló:', e.message);
+      return false;
     }
+  },
 
-    // Devolver en el formato que espera el resto de la app
-    return filtrado.slice(0, 8).map(n => ({
-      title: n.titulo || '',
-      link: n.link || '',
-      source: n.fuente || '',
-      date: n.fecha || ''
+  async markDone(tk){
+    if(!this.online || !tk.serverId) return;
+    try{
+      await fetch(`${CONFIG.BACKEND_URL}/ania/tasks/${tk.serverId}`, {
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ done: true })
+      });
+    }catch(e){ console.warn('markDone falló:', e.message); }
+  },
+
+  async pullTasks(){
+    if(!this.online) return 0;
+    try{
+      const r = await fetch(`${CONFIG.BACKEND_URL}/ania/tasks?user=${CONFIG.ANIA_USER}`);
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const remote = await r.json();
+      if(!Array.isArray(remote)) return 0;
+
+      const localIds = new Set(tasks.flatMap(t => [t.id, t.serverId].filter(Boolean)));
+      const nuevas = remote.filter(t => !localIds.has(t.id));
+      let añadidas = 0;
+
+      for(const r of nuevas){
+        const tk = {
+          id: r.id,
+          serverId: r.id,
+          text: r.texto,
+          when: r.remindAt ? new Date(r.remindAt).getTime() : null,
+          done: !!r.done,
+          fired: false,
+          source: r.source || 'telegram'
+        };
+        tasks.push(tk);
+        if(!tk.done && tk.when) scheduleTask(tk);
+        añadidas++;
+      }
+
+      // Sincronizar estado done de tareas locales que existen en remoto
+      for(const local of tasks){
+        if(!local.serverId) continue;
+        const remoto = remote.find(r => r.id === local.serverId);
+        if(remoto && remoto.done && !local.done){
+          local.done = true;
+          cancelTimer(local.id);
+        }
+      }
+
+      if(añadidas > 0){
+        saveTasks();
+        renderTasks();
+        toast(añadidas+' tarea'+(añadidas===1?'':'s')+' nueva'+(añadidas===1?'':'s')+' desde Telegram');
+      }
+      this.lastSync = Date.now();
+      return añadidas;
+    }catch(e){
+      console.warn('pullTasks falló:', e.message);
+      return 0;
+    }
+  },
+
+  async fullSync(){
+    if(this.syncing) return;
+    this.syncing = true;
+    try{
+      await this.check();
+      if(this.online) await this.pullTasks();
+    } finally {
+      this.syncing = false;
+    }
+  }
+};
+
+async function initSyncLoop(){
+  await Sync.fullSync();
+  setInterval(() => Sync.fullSync(), CONFIG.SYNC_INTERVAL);
+}
+
+/* ---------- toasts ---------- */
+function toast(msg, warn){
+  const t = document.createElement('div');
+  t.className = 'toast'+(warn?' warn':'');
+  t.textContent = '» '+msg;
+  $('toasts').appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .4s'; setTimeout(()=>t.remove(),400); }, 3600);
+}
+
+/* ---------- reloj ---------- */
+function tickClock(){ $('clock').textContent = new Date().toLocaleTimeString('es-ES'); }
+setInterval(tickClock, 1000); tickClock();
+
+/* ---------- red ---------- */
+function updateNet(){
+  const off = isOffline();
+  $('netPill').classList.toggle('off', off);
+  $('netTxt').textContent = off ? 'SIN CONEXIÓN' : 'EN LÍNEA';
+}
+addEventListener('online', ()=>{ updateNet(); toast('Conexión restaurada'); Sync.fullSync(); });
+addEventListener('offline', ()=>{ updateNet(); toast('Modo sin conexión activo', true); });
+updateNet();
+
+/* =====================================================================
+   REACTOR
+===================================================================== */
+const cv = $('reactor'), ctx = cv.getContext('2d');
+let CW = 0, R = 0, DPR = 1;
+const seeds = Array.from({length:72}, ()=>Math.random());
+function sizeReactor(){
+  const w = $('reactorWrap').clientWidth;
+  DPR = Math.min(devicePixelRatio||1, 2);
+  cv.width = w*DPR; cv.height = w*DPR;
+  CW = w; R = w/2;
+}
+addEventListener('resize', sizeReactor); sizeReactor();
+
+const PH = {
+  idle:     {c:'#2de08a', spin:0.18, lvl:0.10},
+  listening:{c:'#ffb547', spin:0.55, lvl:0.38},
+  thinking: {c:'#ffb547', spin:1.9,  lvl:0.16},
+  speaking: {c:'#39ff9b', spin:0.35, lvl:0}
+};
+let drawLevel = 0.1;
+
+function setPhase(p){
+  S.phase = p;
+  const lbl = {idle:'EN ESPERA', listening:'ESCUCHANDO', thinking:'PROCESANDO', speaking:'HABLANDO'}[p];
+  const el = $('phase');
+  el.textContent = lbl;
+  el.classList.toggle('amber', p==='listening'||p==='thinking');
+}
+
+function reactorLoop(ms){
+  const t = ms/1000;
+  const ph = PH[S.phase] || PH.idle;
+  let target = ph.lvl;
+  if(S.phase==='speaking')
+    target = 0.35 + 0.55*Math.abs(Math.sin(t*8.7)*0.6 + Math.sin(t*21.3+1.4)*0.3 + Math.sin(t*3.1)*0.25);
+  if(S.phase==='listening')
+    target = 0.25 + 0.45*Math.abs(Math.sin(t*5.2) * Math.sin(t*1.7+2));
+  if(S.phase==='idle')
+    target = 0.08 + 0.05*Math.sin(t*1.3);
+  drawLevel += (target - drawLevel)*0.12;
+
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.clearRect(0,0,CW,CW);
+  ctx.translate(R,R);
+  const TAU = Math.PI*2;
+  const rot = t*ph.spin;
+
+  for(let i=0;i<64;i++){
+    const a = i/64*TAU + rot*0.4;
+    const long = (i%8===0);
+    const r1 = R*0.94, r2 = r1 - (long?13:6);
+    ctx.strokeStyle = ph.c;
+    ctx.globalAlpha = long?0.85:0.3;
+    ctx.lineWidth = long?2:1.2;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a)*r1, Math.sin(a)*r1);
+    ctx.lineTo(Math.cos(a)*r2, Math.sin(a)*r2);
+    ctx.stroke();
+  }
+
+  if(S.phase==='thinking'){
+    ctx.strokeStyle = ph.c; ctx.globalAlpha = 0.9; ctx.lineWidth = 3; ctx.lineCap='round';
+    ctx.beginPath();
+    ctx.arc(0,0,R*0.82, rot*3, rot*3+0.7);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0,0,R*0.82, rot*3+Math.PI, rot*3+Math.PI+0.7);
+    ctx.stroke();
+  }
+
+  for(let i=0;i<72;i++){
+    const a = i/72*TAU + rot*0.2;
+    const h = 3 + drawLevel*R*0.30*(0.35+0.65*Math.abs(Math.sin(i*2.7 + t*6 + seeds[i]*10)));
+    const r1 = R*0.60;
+    ctx.strokeStyle = ph.c;
+    ctx.globalAlpha = 0.25 + drawLevel*0.7;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a)*r1, Math.sin(a)*r1);
+    ctx.lineTo(Math.cos(a)*(r1+h), Math.sin(a)*(r1+h));
+    ctx.stroke();
+  }
+
+  ctx.setLineDash([3,7]);
+  ctx.strokeStyle = ph.c; ctx.globalAlpha = 0.5; ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.arc(0,0,R*0.42, 0, TAU);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.lineCap='butt';
+
+  const core = R*0.13 + drawLevel*R*0.05;
+  ctx.globalAlpha = 0.16;
+  ctx.fillStyle = ph.c;
+  ctx.beginPath(); ctx.arc(0,0,core*2.1,0,TAU); ctx.fill();
+  ctx.globalAlpha = 0.9;
+  ctx.beginPath(); ctx.arc(0,0,core,0,TAU); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#040806';
+  ctx.beginPath(); ctx.arc(0,0,core*0.35,0,TAU); ctx.fill();
+
+  requestAnimationFrame(reactorLoop);
+}
+requestAnimationFrame(reactorLoop);
+
+/* =====================================================================
+   VOZ
+===================================================================== */
+let voices = [];
+function loadVoices(){
+  voices = speechSynthesis.getVoices().filter(v => /^es/i.test(v.lang));
+  if(!voices.length) voices = speechSynthesis.getVoices();
+  renderVoiceSelect();
+  if(!S.voice) S.voice = pickFemale();
+}
+function pickFemale(){
+  const hints = /female|mujer|sabina|laura|m[oó]nica|paulina|helena|elvira|esperanza|carolina|marisol|isabela|google espa|dalia|salome|camila/i;
+  return voices.find(v => hints.test(v.name)) ||
+         voices.find(v => /google espa/i.test(v.name)) ||
+         voices.find(v => /^es[-_]/i.test(v.lang)) ||
+         voices[0] || null;
+}
+if('speechSynthesis' in window){
+  loadVoices();
+  speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function speak(text, onend){
+  if(S.muted || !('speechSynthesis' in window) || !text){ if(onend) onend(); return; }
+  try{ speechSynthesis.cancel(); }catch(e){}
+  const u = new SpeechSynthesisUtterance(text);
+  if(S.voice) { u.voice = S.voice; u.lang = S.voice.lang; } else u.lang='es-ES';
+  u.rate = S.rate; u.pitch = S.pitch;
+  u.onstart = ()=> setPhase('speaking');
+  const done = ()=>{ setPhase('idle'); if(onend) onend(); };
+  u.onend = done; u.onerror = done;
+  speechSynthesis.speak(u);
+}
+function stopSpeak(){ try{ speechSynthesis.cancel(); }catch(e){} setPhase('idle'); }
+
+let AC = null;
+function ensureAudio(){ if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC && AC.state==='suspended') AC.resume(); }
+function beep(freq, dur, delay){
+  if(!AC) return;
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type='square'; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, AC.currentTime+delay);
+  g.gain.exponentialRampToValueAtTime(0.18, AC.currentTime+delay+0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime+delay+dur);
+  o.connect(g); g.connect(AC.destination);
+  o.start(AC.currentTime+delay); o.stop(AC.currentTime+delay+dur+0.05);
+}
+function alarmSound(){ [0,0.22,0.44].forEach((d,i)=> beep(i===2?1175:880, 0.16, d)); }
+
+/* =====================================================================
+   CHAT
+===================================================================== */
+const chat = $('chat');
+function scrollChat(){ chat.scrollTop = chat.scrollHeight; }
+
+function addChat(who, text){
+  const line = document.createElement('div');
+  line.className = 'line '+(who==='you'?'you':'ania');
+  const ts = new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  line.innerHTML = `<span class="who">${who==='you'?'TÚ ▸':'ANIA ▸'}</span><span class="msg"></span><span class="ts">${ts}</span>`;
+  chat.appendChild(line);
+  const span = line.querySelector('.msg');
+  if(who==='you'){ span.textContent = text; scrollChat(); return span; }
+  let i = 0;
+  const iv = setInterval(()=>{
+    i++;
+    span.textContent = text.slice(0,i) + (i<text.length?'▌':'');
+    scrollChat();
+    if(i>=text.length){ clearInterval(iv); span.textContent = text; }
+  }, 13);
+  return span;
+}
+
+function reply(text, say){
+  addChat('ania', text);
+  speak(say !== undefined ? say : text.slice(0,340));
+}
+
+function renderChips(list){
+  const box = $('chips'); box.innerHTML='';
+  list.forEach(c=>{
+    const b = document.createElement('button');
+    b.type='button'; b.className='chip'; b.textContent=c;
+    b.onclick = ()=> send(c);
+    box.appendChild(b);
+  });
+}
+
+/* =====================================================================
+   RECONOCIMIENTO DE VOZ
+===================================================================== */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recog = null, recogActive = false;
+if(SR){
+  recog = new SR();
+  recog.lang = 'es-ES'; recog.interimResults = true; recog.continuous = false;
+  recog.onresult = e=>{
+    let fin='', inter='';
+    for(const r of e.results){ if(r.isFinal) fin += r[0].transcript; else inter += r[0].transcript; }
+    if(inter) $('userInput').value = inter;
+    if(fin){ $('userInput').value = ''; send(fin.trim()); }
+  };
+  recog.onend = ()=>{ recogActive=false; $('micBtn').classList.remove('live'); if(S.phase==='listening') setPhase('idle'); };
+  recog.onerror = e=>{
+    recogActive=false; $('micBtn').classList.remove('live');
+    if(e.error==='not-allowed') toast('Permiso de micrófono denegado', true);
+    else if(e.error!=='no-speech' && e.error!=='aborted') toast('Error de voz: '+e.error, true);
+    if(S.phase==='listening') setPhase('idle');
+  };
+}
+$('micBtn').onclick = ()=>{
+  if(!recog){ toast('Reconocimiento de voz no disponible aquí. Usa Chrome o Edge.', true); return; }
+  if(recogActive){ try{recog.stop();}catch(e){} return; }
+  stopSpeak(); ensureAudio();
+  recogActive = true; $('micBtn').classList.add('live');
+  setPhase('listening');
+  try{ recog.start(); }catch(e){}
+};
+
+/* =====================================================================
+   TAREAS · agenda local + sincronizada con backend
+===================================================================== */
+let tasks = store.get('tasks', []);
+const timers = new Map();
+
+function saveTasks(){ store.set('tasks', tasks); }
+function taskPending(){ return tasks.filter(t=>!t.done).length; }
+
+function fmtWhen(when){
+  if(!when) return '· sin hora';
+  const d = new Date(when), diff = when - Date.now();
+  if(diff > 0){
+    if(diff < 6e4) return '· en '+Math.max(1,Math.round(diff/1e3))+' s';
+    if(diff < 36e5) return '· en '+Math.round(diff/6e4)+' min';
+    if(diff < 864e5) return '· en '+Math.round(diff/36e5)+' h · '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  } else if(diff <= 0 && diff > -36e5) return '· vencida hace '+Math.round(-diff/6e4)+' min';
+  return '· '+d.toLocaleDateString('es-ES',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+}
+
+function renderTasks(){
+  const list = $('taskList'); list.innerHTML='';
+  const pend = taskPending();
+  $('taskCount').textContent = pend+' PENDIENTE'+(pend===1?'':'S');
+  const badge = $('taskBadge');
+  badge.textContent = pend; badge.classList.toggle('on', pend>0);
+  if(!tasks.length){
+    list.innerHTML = '<div class="empty">AGENDA VACÍA<br>Dime: «recuérdame estudiar en 20 minutos»</div>';
+    return;
+  }
+  const orden = [...tasks].sort((a,b)=>{
+    if(a.done !== b.done) return a.done?1:-1;
+    return (a.when||9e15) - (b.when||9e15);
+  });
+  orden.forEach(tk=>{
+    const row = document.createElement('div');
+    row.className = 'task'+(tk.done?' done':'');
+    const srcTag = tk.source === 'telegram'
+      ? '<span class="tsrc tg">TG</span>'
+      : '<span class="tsrc web">WEB</span>';
+    row.innerHTML = `
+      <button class="tsmall tcheck" title="Completar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+      </button>
+      <div class="tmain">
+        <div class="ttext">${esc(tk.text)}${srcTag}</div>
+        <div class="twhen ${(!tk.done && tk.when && tk.when<Date.now() && !tk.fired)?'late':''}">${tk.fired?'· DISPARADA ':''}${fmtWhen(tk.when)}</div>
+      </div>
+      <button class="tsmall tdel" title="Eliminar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/></svg>
+      </button>`;
+    row.querySelector('.tcheck').onclick = ()=>{
+      tk.done = !tk.done;
+      if(tk.done){ cancelTimer(tk.id); Sync.markDone(tk); }
+      saveTasks(); renderTasks();
+    };
+    row.querySelector('.tdel').onclick = ()=>{ removeTask(tk.id); renderTasks(); };
+    list.appendChild(row);
+  });
+}
+
+function cancelTimer(id){ if(timers.has(id)){ clearTimeout(timers.get(id)); timers.delete(id); } }
+function removeTask(id){ cancelTimer(id); tasks = tasks.filter(t=>t.id!==id); saveTasks(); }
+
+function addTask(text, when, opts){
+  const tk = {
+    id: Date.now()+'-'+Math.random().toString(36).slice(2,6),
+    text,
+    when,
+    done:false,
+    fired:false,
+    source: (opts && opts.source) || 'web'
+  };
+  tasks.push(tk);
+  saveTasks();
+  renderTasks();
+  scheduleTask(tk);
+  // 🔄 Sincronizar con el backend (fire-and-forget)
+  Sync.pushTask(tk).catch(()=>{});
+  return tk;
+}
+
+function scheduleTask(tk){
+  if(!tk.when || tk.done || tk.fired) return;
+  cancelTimer(tk.id);
+  const delay = tk.when - Date.now();
+  if(delay <= 0){ fireTask(tk); return; }
+  timers.set(tk.id, setTimeout(()=>fireTask(tk), delay));
+}
+
+function fireTask(tk){
+  tk.fired = true; saveTasks(); renderTasks();
+  ensureAudio(); alarmSound();
+  toast('Recordatorio: '+tk.text);
+  notify('ANIA · Recordatorio', tk.text);
+  reply('Recordatorio activado: '+tk.text+'.', 'Atención. Recordatorio: '+tk.text);
+}
+
+function notify(title, body){
+  try{
+    if('Notification' in window && Notification.permission==='granted')
+      new Notification(title, {body, badge:null, tag:'ania-'+Date.now()});
+  }catch(e){}
+}
+setInterval(()=>{ if($('sheet').classList.contains('open')) renderTasks(); }, 30000);
+
+$('addTaskBtn').onclick = ()=>{
+  const text = $('taskInput').value.trim();
+  if(!text){ toast('Escribe la tarea primero', true); return; }
+  const wv = $('taskWhen').value;
+  addTask(text, wv ? new Date(wv).getTime() : null);
+  $('taskInput').value=''; $('taskWhen').value='';
+  toast('Tarea añadida a la agenda');
+};
+
+function openSheet(){ $('sheet').classList.add('open'); $('backdrop').classList.add('on'); renderTasks(); }
+function closeSheet(){ $('sheet').classList.remove('open'); $('backdrop').classList.remove('on'); }
+$('btnTasks').onclick = openSheet;
+$('closeSheet').onclick = closeSheet;
+$('backdrop').onclick = ()=> closeSheet();
+
+/* botón de sync manual */
+$('btnSync').onclick = async ()=>{
+  toast('Sincronizando con el servidor...');
+  const ok = await Sync.check();
+  if(!ok){ toast('No se pudo conectar al servidor', true); return; }
+  const n = await Sync.pullTasks();
+  if(n === 0) toast('Todo sincronizado · agenda al día');
+};
+
+/* =====================================================================
+   SERVICIOS · geo, clima, búsqueda, traducción, noticias
+===================================================================== */
+function geoCache(){ return store.get('geo', null); }
+
+function getPosition(timeout=10000){
+  return new Promise((res, rej)=>{
+    if(!navigator.geolocation) return rej(new Error('no-geo'));
+    navigator.geolocation.getCurrentPosition(res, rej, {timeout, maximumAge:60000, enableHighAccuracy:false});
+  });
+}
+async function reverseGeo(lat, lon){
+  try{
+    const d = await jget(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=es&zoom=10`);
+    const a = d.address || {};
+    const city = a.city || a.town || a.village || a.municipality || a.county || d.name || 'tu zona';
+    return {city, country: a.country || ''};
+  }catch(e){ return {city:'tu zona', country:''}; }
+}
+async function locate(){
+  try{
+    const p = await getPosition();
+    const {lat, lon} = p.coords;
+    const rc = await reverseGeo(lat, lon);
+    const g = {lat, lon, city:rc.city, country:rc.country, t:Date.now()};
+    store.set('geo', g);
+    return g;
+  }catch(e){ return null; }
+}
+async function cityGeo(name){
+  const d = await jget(`https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(name)}&limit=1&accept-language=es`);
+  const hit = d && d[0];
+  if(!hit) return null;
+  const g = {lat:+hit.lat, lon:+hit.lon, city: hit.name || name, country:'', t:Date.now()};
+  store.set('geo', g);
+  return g;
+}
+
+const WMO = {0:'despejado',1:'mayormente despejado',2:'parcialmente nublado',3:'nublado',45:'niebla',48:'niebla con escarcha',51:'llovizna ligera',53:'llovizna',55:'llovizna intensa',56:'llovizna helada',57:'llovizna helada intensa',61:'lluvia ligera',63:'lluvia',65:'lluvia fuerte',66:'lluvia helada',67:'lluvia helada fuerte',71:'nevada ligera',73:'nevada',75:'nevada fuerte',77:'granos de nieve',80:'chubascos ligeros',81:'chubascos',82:'chubascos fuertes',85:'chubascos de nieve',86:'chubascos de nieve fuertes',95:'tormenta',96:'tormenta con granizo',99:'tormenta fuerte con granizo'};
+
+async function getWeather(g){
+  const key = Math.round(g.lat*50)+'_'+Math.round(g.lon*50);
+  const wc = store.get('wx_'+key, null);
+  if(wc && Date.now()-wc.t < 600000) return wc.data;
+  const d = await jget(`https://api.open-meteo.com/v1/forecast?latitude=${g.lat}&longitude=${g.lon}` +
+    `&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,precipitation` +
+    `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`);
+  store.set('wx_'+key, {t:Date.now(), data:d});
+  return d;
+}
+function weatherText(g, d){
+  const c = d.current, dy = d.daily;
+  const desc = WMO[c.weather_code] || 'condiciones variables';
+  const rain = dy.precipitation_probability_max && dy.precipitation_probability_max[0];
+  let s = `En ${g.city}${g.country?', '+g.country:''}: ${Math.round(c.temperature_2m)}°C (sensación ${Math.round(c.apparent_temperature)}°C), ${desc}.`;
+  s += ` Humedad ${c.relative_humidity_2m}%, viento ${Math.round(c.wind_speed_10m)} km/h.`;
+  if(dy.temperature_2m_max) s += ` Hoy: máx ${Math.round(dy.temperature_2m_max[0])}° / mín ${Math.round(dy.temperature_2m_min[0])}°.`;
+  if(rain !== undefined && rain !== null) s += ` Probabilidad de lluvia: ${rain}%.`;
+  return s;
+}
+function updateChip(g, d){
+  const c = d.current;
+  $('wTxt').textContent = Math.round(c.temperature_2m)+'° '+WMO[c.weather_code].split(' ')[0];
+}
+async function weatherIntent(){
+  if(isOffline()){
+    const g = geoCache();
+    if(g){ try{ const d = await getWeather(g); return reply(weatherText(g,d)+' (datos en caché, sin conexión).'); }catch(e){} }
+    return reply('Estoy sin conexión y no tengo clima en caché. Cuando recuperes red, pregúntame de nuevo.');
+  }
+  setPhase('thinking');
+  let g = geoCache();
+  if(!g || Date.now()-g.t > 864e5) g = await locate();
+  if(!g){
+    S.awaitingCity = true;
+    return reply('No pude obtener tu ubicación (revisa los permisos de GPS). Dime una ciudad y te doy su clima.');
+  }
+  try{
+    const d = await getWeather(g);
+    updateChip(g, d);
+    reply(weatherText(g, d));
+  }catch(e){ netFail('clima'); }
+}
+async function weatherForCity(name){
+  setPhase('thinking');
+  try{
+    const g = await cityGeo(name);
+    if(!g) return reply('No encontré esa ciudad. Revisa el nombre.');
+    const d = await getWeather(g);
+    updateChip(g, d);
+    reply(weatherText(g, d));
+  }catch(e){ netFail('clima'); }
+}
+
+/* ---------- conocimiento ---------- */
+async function wikiSummary(term){
+  try{
+    const d = await jget('https://es.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(term));
+    if(d && d.extract) return {extract:d.extract, url:(d.content_urls&&d.content_urls.desktop&&d.content_urls.desktop.page)||'', title:d.title};
+  }catch(e){}
+  try{
+    const s = await jget(`https://es.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(term)}&format=json&origin=*&srlimit=1`);
+    const hit = s && s.query && s.query.search && s.query.search[0];
+    if(!hit) return null;
+    const d2 = await jget('https://es.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(hit.title));
+    if(d2 && d2.extract) return {extract:d2.extract, url:(d2.content_urls&&d2.content_urls.desktop&&d2.content_urls.desktop.page)||'', title:d2.title};
+  }catch(e){}
+  return null;
+}
+async function ddg(q){
+  try{
+    const d = await jget(`https://api.duckduckgo.com/?q=${encodeURIComponent(q)}&format=json&no_html=1&skip_disambig=1&lang=es`);
+    if(d && d.AbstractText) return d.AbstractText;
+  }catch(e){}
+  return null;
+}
+async function doSearch(term){
+  setPhase('thinking');
+  let a = await ddg(term);
+  let src = 'DuckDuckGo';
+  if(!a){ const w = await wikiSummary(term); if(w){ a = w.extract; src = 'Wikipedia'; } }
+  if(a){
+    let txt = a.slice(0, 620);
+    const cut = txt.lastIndexOf('. ');
+    if(cut > 200) txt = txt.slice(0, cut+1);
+    reply(txt + '\n[fuente: '+src+']');
+  } else {
+    reply(pick([
+      'No encontré información fiable sobre «'+term+'». Prueba con otras palabras o dime «busca '+term+'».',
+      'Mis fuentes no devolvieron nada sólido para «'+term+'». ¿Puedes concretar más?'
+    ]));
+  }
+}
+
+/* ---------- NOTICIAS (backend propio, sin proxies) ---------- */
+async function fetchNews(categoria){
+  try{
+    const r = await fetch(`${CONFIG.BACKEND_URL}/noticias`);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const data = await r.json();
+    if(!data.ok || !data.noticias) throw new Error('Sin datos');
+
+    let items = [];
+    if(categoria && data.noticias[categoria]){
+      items = data.noticias[categoria];
+    } else {
+      items = [
+        ...(data.noticias.latam || []),
+        ...(data.noticias.tech || []),
+        ...(data.noticias.tendencias || [])
+      ];
+    }
+    return items.slice(0, 8).map(n => ({
+      titulo: n.titulo || '',
+      fuente: n.fuente || '',
+      link: n.link || ''
     }));
-  } catch (e) {
+  }catch(e){
     console.warn('fetchNews error:', e.message);
     return [];
   }
 }
 
-        // ====== PROACTIVIDAD ======
-        function proactiveCheck() {
-            const now = new Date();
-            const h = now.getHours();
-            if (h >= 7 && h <= 9) {
-                const today = now.toISOString().slice(0, 10);
-                const lastB = S.lastBriefing ? S.lastBriefing.slice(0, 10) : '';
-                if (lastB !== today && S.location && S.weather) {
-                    generateBriefing().then(b => {
-                        addMsg('ania', b);
-                        speak('Buenos días. Aquí tiene su briefing matutino.');
-                    });
-                }
-            }
-            const pending = S.tasks.filter(t => !t.done);
-            if (pending.length >= 3 && h >= 10 && h <= 20 && Math.random() < 0.05) {
-                addMsg('system', `💡 Tienes ${pending.length} tareas pendientes. Di "mis tareas" para revisarlas.`);
-            }
-        }
+async function newsIntent(tipo){
+  setPhase('thinking');
+  const items = await fetchNews(tipo);
+  if(!items.length){
+    return reply(isOffline()
+      ? 'Sin conexión no puedo traer noticias. Cuando vuelvas a estar online lo intento.'
+      : 'No pude obtener noticias en este momento. Inténtalo en unos segundos.');
+  }
+  let s = tipo ? '📰 Noticias de '+tipo+':\n' : '📰 Últimas noticias:\n';
+  items.forEach((n,i)=>{ s += (i+1)+'. '+n.titulo+' — ('+n.fuente+')\n'; });
+  reply(s.trim(), 'Aquí tienes los titulares más recientes.');
+}
 
-        // ====== ENVIAR MENSAJE ======
-        async function sendMsg() {
-            const inp = document.getElementById('input');
-            const text = inp.value.trim();
-            if (!text) return;
-            inp.value = '';
-            inp.style.height = 'auto';
+/* ---------- traducción ---------- */
+const LANGS = {ingles:'en', inglés:'en', inglesa:'en', frances:'fr', francés:'fr', aleman:'de', alemán:'de', italiano:'it', portugues:'pt', portugués:'pt', japones:'ja', japonés:'ja', chino:'zh', ruso:'ru'};
+async function translateIntent(text){
+  const m = text.match(/traduc(?:e|ime)\s+(?:["«']?(.+?)["»]?)\s*(?:al|a)?\s*(ingl[eé]s|franc[eé]s|alem[aá]n|italiano|portugu[eé]s|japon[eé]s|chino|ruso)?/);
+  if(!m) return null;
+  const q = (m[1]||'').trim(), tgtName = m[2] || 'inglés';
+  const tgt = LANGS[tgtName];
+  if(!q) return reply('Dime qué quieres traducir. Por ejemplo: «traduce buenos días al francés».');
+  if(isOffline()) return reply('La traducción necesita conexión. Estoy en modo local ahora mismo.');
+  setPhase('thinking');
+  try{
+    const d = await jget(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(q)}&langpair=es|${tgt}`);
+    const r = d && d.responseData && d.responseData.translatedText;
+    if(r) reply(`«${q}» en ${tgtName}: ${r}`);
+    else reply('No pude traducir eso ahora.');
+  }catch(e){ netFail('traducción'); }
+  return '';
+}
 
-            addMsg('user', text);
-            setStatus('PROCESANDO...');
-            document.getElementById('avatar').classList.add('thinking');
+function netFail(what){
+  reply(isOffline()
+    ? `Sin conexión ahora mismo: ${what} necesita internet. Puedo seguir con la hora, tus tareas, cálculos y charla local.`
+    : `No pude conectar con el servicio de ${what}. Revisa tu red e inténtalo otra vez.`);
+}
 
-            const typing = document.createElement('div');
-            typing.className = 'typing';
-            typing.innerHTML = '<span></span><span></span><span></span>';
-            document.getElementById('chat').appendChild(typing);
-            scrollBottom();
+/* =====================================================================
+   PARSER DE INTENCIONES
+===================================================================== */
+function parseWhen(t){
+  const now = new Date();
+  let m = t.match(/\ben\s+(\d+(?:[.,]\d+)?)\s*(segundos?|minutos?|mins?|horas?|hrs?|h|m)\b/);
+  if(m){
+    const n = parseFloat(m[1].replace(',','.'));
+    const ms = /^seg/.test(m[2]) ? n*1e3 : (/^min|^m$/.test(m[2]) ? n*6e4 : n*36e5);
+    if(ms>0 && ms < 864e5*30) return Date.now()+ms;
+  }
+  const manana = /\bmañana\b/.test(t);
+  m = t.match(/\b(?:a\s+las?|alas)\s+(\d{1,2})(?::(\d{2}))?\s*(?:de\s+la\s+(?:mañana|tarde|noche))?/);
+  if(m){
+    let hh = +m[1], mm = m[2] ? +m[2] : 0;
+    const part = m[3]||'';
+    if(/tarde|noche/.test(part) && hh<12) hh += 12;
+    const d = new Date(now); d.setHours(hh,mm,0,0);
+    if(d.getTime() <= Date.now() || manana) d.setDate(d.getDate()+1);
+    return d.getTime();
+  }
+  if(/\bmediod[ií]a\b/.test(t)){
+    const d = new Date(now); d.setHours(12,0,0,0);
+    if(d<=Date.now()) d.setDate(d.getDate()+1);
+    return d.getTime();
+  }
+  if(manana){
+    const d = new Date(now); d.setDate(d.getDate()+1); d.setHours(9,0,0,0);
+    return d.getTime();
+  }
+  return null;
+}
+function parseTask(raw){
+  let t = ' '+raw.toLowerCase()+' ';
+  const when = parseWhen(t);
+  t = t.replace(/\ben\s+\d+(?:[.,]\d+)?\s*(?:segundos?|minutos?|mins?|horas?|hrs?|h|m)\b/g,'')
+       .replace(/\b(?:a\s+las?|alas)\s+\d{1,2}(?::\d{2})?\s*(?:de\s+la\s+(?:mañana|tarde|noche))?\b/g,'')
+       .replace(/\bmañana\b|\bhoy\b|\bmediod[ií]a\b|\bpor\s+favor\b/g,'')
+       .replace(/,/g,' ')
+       .replace(/^(?:\s*ania\s*[,:]?\s*)?/,'')
+       .replace(/^(?:recu[eé]rdame|recuerda\s+que|recuerda|recordatorio|an[oó]tame|anota\s+que|anota|ap[uú]ntame|apunta|ag[eé]ndame|agenda|nueva?\s+tarea|tarea)\s*/,'')
+       .replace(/^(?:que\s+|de\s+|me\s+|tengo\s+que\s+|debo\s+|a\s+|para\s+)/,'')
+       .replace(/[¿?¡!.]/g,'').trim();
+  if(!t) t = 'recordatorio';
+  return {text: t[0].toUpperCase()+t.slice(1), when};
+}
 
-            const ruleResult = ruleEngine(text);
+function safeMath(text){
+  let t = text.replace(/^(?:calcula(?:me)?|cu[aá]nto\s+es|cuanto\s+es|resuelve)\s*/,'');
+  t = t.replace(/dividido\s+por/g,'/').replace(/dividido/g,'/')
+       .replace(/elevado\s+a\s+la/g,'**').replace(/elevado\s+al?/g,'**')
+       .replace(/\bm[aá]s\b/g,'+').replace(/\bmenos\b/g,'-')
+       .replace(/\bpor\b/g,'*').replace(/\bentre\b/g,'/')
+       .replace(/,/g,'.').replace(/[×x]/g,'*').replace(/÷/g,'/').replace(/\^/g,'**');
+  t = t.replace(/[^0-9+\-*/().%\s]/g,'').trim();
+  if(!/\d/.test(t) || !/[+\-*/%]/.test(t)) return null;
+  try{
+    const r = Function('"use strict"; return ('+t+')')();
+    if(typeof r === 'number' && isFinite(r)) return {expr:t, val:Math.round(r*1e6)/1e6};
+  }catch(e){}
+  return null;
+}
 
-            if (ruleResult && typeof ruleResult === 'object' && ruleResult.action) {
-                typing.remove();
-                if (ruleResult.action === 'news') {
-                    const news = await fetchNews(text.replace(/noticias|novedades|qué pasa|actualidad/gi, '').trim());
-                    if (news.length) {
-                        let r = '📰 **Últimas noticias:**\n';
-                        news.forEach((n, i) => { r += `${i + 1}. ${n.title} (${n.source})\n`; });
-                        addMsg('ania', r);
-                        speak('Aquí tiene las últimas noticias.');
-                    } else {
-                        addMsg('ania', 'No pude obtener noticias en este momento.');
-                    }
-                } else if (ruleResult.action === 'briefing') {
-                    const b = await generateBriefing();
-                    addMsg('ania', b);
-                    speak('Aquí tiene su briefing.');
-                }
-                setStatus('SISTEMA ACTIVO');
-                document.getElementById('avatar').classList.remove('thinking');
-                return;
-            }
+const SITES = {
+  youtube:'YouTube', google:'Google', gmail:'Gmail', correo:'Gmail',
+  wikipedia:'Wikipedia', github:'GitHub', whatsapp:'WhatsApp Web',
+  twitter:'X', x:'X', instagram:'Instagram', reddit:'Reddit', twitch:'Twitch'
+};
 
-            if (ruleResult) {
-                typing.remove();
-                addMsg('ania', ruleResult);
-                if (ruleResult.length < 350) speak(ruleResult);
-                setStatus('SISTEMA ACTIVO');
-                document.getElementById('avatar').classList.remove('thinking');
-                return;
-            }
+const JOKES = [
+  '¿Por qué los programadores confunden Halloween con Navidad? Porque OCT 31 es igual a DEC 25.',
+  'Hay 10 tipos de personas: las que entienden binario y las que no.',
+  '¿Qué le dice un bit a otro bit? Nos vemos en el bus.',
+  'Mi código favorito es el que funciona a la primera. Todavía no lo he encontrado.',
+  '¿Sabes cómo se despiden los programadores? Con un «exit» muy sentido.',
+  'Un QA entra a un bar. Pide 1 cerveza, 0 cervezas, 999 cervezas, una cerveza «-1», y luego rompe el bar.'
+];
 
-            typing.remove();
-            const fallback = `No estoy segura de cómo responder a eso. ` +
-                `Puedo ayudarte con: hora, clima, ubicación, tareas, noticias, festivos o un briefing. ` +
-                `También puedes usar "recuérdame ..." para crear recordatorios.`;
-            addMsg('ania', fallback);
-            speak(fallback);
-            setStatus('SISTEMA ACTIVO');
-            document.getElementById('avatar').classList.remove('thinking');
-        }
+async function respond(raw){
+  const t = raw.trim();
+  const low = t.toLowerCase();
 
-        // ====== UI HELPERS ======
-        function addMsg(role, text) {
-            const c = document.getElementById('chat');
-            const m = document.createElement('div');
-            m.className = `msg ${role}`;
-            const formatted = String(text)
-                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                .replace(/`(.+?)`/g, '<code>$1</code>')
-                .replace(/\n/g, '<br>');
-            m.innerHTML = formatted + `<div class="timestamp">${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</div>`;
-            c.appendChild(m);
-            scrollBottom();
-            S.history.push({ role, text, time: new Date().toISOString() });
-            DB.set('history', S.history.slice(-100));
-        }
+  if(S.awaitingCity){
+    if(/cancela|olvida|nada|deja/i.test(low)){ S.awaitingCity=false; return reply('De acuerdo, clima cancelado.'); }
+    if(low.split(/\s+/).length <= 4){ S.awaitingCity=false; return weatherForCity(low); }
+    S.awaitingCity = false;
+  }
 
-        function scrollBottom() {
-            const c = document.getElementById('chat');
-            requestAnimationFrame(() => { c.scrollTop = c.scrollHeight; });
-        }
+  /* ---- noticias (antes que tareas, para no capturar "tarea de noticias") ---- */
+  if(/(noticias|novedades|titulares|qu[eé]\s+pasa\s+en\s+el\s+mundo)/.test(low) && !/sobre\s+/.test(low)){
+    let tipo = null;
+    if(/tecnolog[ií]a|tech|ia\b/.test(low)) tipo = 'tech';
+    else if(/latam|cuba|espa[ñn]a|latinoam/i.test(low)) tipo = 'latam';
+    else if(/tendencia|trending/i.test(low)) tipo = 'tendencias';
+    return newsIntent(tipo);
+  }
 
-        function qa(action) {
-            const map = {
-                hora: '¿Qué hora es?',
-                clima: '¿Cómo está el clima?',
-                noticias: 'Dame las últimas noticias',
-                tareas: 'mis tareas',
-                nueva: 'Recuérdame ',
-                briefing: 'Dame mi briefing del día',
-                festivos: '¿Cuál es el próximo festivo?',
-                ayuda: 'Ayuda'
-            };
-            const t = map[action] || action;
-            document.getElementById('input').value = t;
-            if (action === 'nueva') { document.getElementById('input').focus(); return; }
-            sendMsg();
-        }
+  /* ---- tareas ---- */
+  if(/(recu[eé]rdame|recuerda|an[oó]tame|anota|ap[uú]ntame|apunta|ag[eé]ndame|agenda|nueva tarea|tarea:|recordatorio)/.test(low) && !/tareas?$|pendiente/.test(low)){
+    const p = parseTask(t);
+    addTask(p.text, p.when);
+    if(p.when){
+      const cuando = fmtWhen(p.when).replace('· ','');
+      reply(`Anotado: «${p.text}». Te lo recordaré ${cuando}.`);
+    } else {
+      reply(`Anotado en tu agenda: «${p.text}», sin hora.`);
+    }
+    return;
+  }
+  if(/(mis tareas|qué tengo pendiente|que tengo pendiente|mi agenda|ver agenda|lista de tareas|qué tengo que hacer|que tengo que hacer)/.test(low)){
+    openSheet();
+    const pend = tasks.filter(tk=>!tk.done);
+    if(!pend.length) return reply('Tu agenda está vacía. Dime algo como «recuérdame llamar a Ana a las 18:00».');
+    let s = 'Tienes '+pend.length+' tarea'+(pend.length===1?'':'s')+' pendiente'+(pend.length===1?'':'s')+':\n';
+    pend.slice(0,10).forEach((tk,i)=>{ s += (i+1)+'. '+tk.text+(tk.when?' ('+fmtWhen(tk.when).replace('· ','')+')':'')+'\n'; });
+    return reply(s.trim(), 'Tienes '+pend.length+' tareas pendientes.');
+  }
+  let m = low.match(/(?:tarea|recordatorio)\s+(?:hecha|completada|terminada|lista)\s*(?:de\s+)?(.*)/);
+  if(m){
+    const key = (m[1]||'').trim();
+    const tk = tasks.find(x=>!x.done && (!key || x.text.toLowerCase().includes(key)));
+    if(tk){ tk.done=true; cancelTimer(tk.id); Sync.markDone(tk); saveTasks(); renderTasks(); return reply('Bien hecho: «'+tk.text+'» completada.'); }
+    return reply('No encontré esa tarea pendiente.');
+  }
+  m = low.match(/(?:borra|elimina)\s+(?:la\s+)?tarea\s+(?:de\s+)?(.+)/);
+  if(m){
+    const key = m[1].trim();
+    const tk = tasks.find(x=>x.text.toLowerCase().includes(key));
+    if(tk){ removeTask(tk.id); renderTasks(); return reply('Eliminada: «'+tk.text+'».'); }
+    return reply('No encontré esa tarea.');
+  }
 
-        function toast(msg) {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 2500);
-        }
+  /* ---- temporizador ---- */
+  m = low.match(/(?:temporizador|timer|cuenta\s+atr[aá]s)\s*(?:de|en|para)?\s*(\d+)\s*(segundos?|minutos?|horas?)/);
+  if(m){
+    const n = +m[1];
+    const ms = /^seg/.test(m[2]) ? n*1e3 : (/^min/.test(m[2]) ? n*6e4 : n*36e5);
+    const id = 'timer-'+Date.now();
+    const label = n+' '+m[2];
+    timers.set(id, setTimeout(()=>{
+      ensureAudio(); alarmSound();
+      toast('Temporizador finalizado');
+      notify('ANIA · Temporizador', 'Tu temporizador de '+label+' ha terminado');
+      reply('Temporizador de '+label+' finalizado.', 'Tu temporizador de '+label+' ha terminado.');
+    }, ms));
+    return reply('Temporizador activo: '+label+'.');
+  }
 
-        function loadPersisted() {
-            S.history = DB.get('history', []);
-            S.conversationMemory = DB.get('memory', []);
-            S.lastBriefing = DB.get('lastBriefing', null);
-        }
+  /* ---- hora y fecha ---- */
+  if(/(qué\s+hora|que\s+hora|hora\s+es|dime\s+la\s+hora|hora\s+actual)/.test(low)){
+    const d = new Date();
+    return reply(d.toLocaleTimeString('es-ES')+' — '+d.toLocaleDateString('es-ES',{weekday:'long', day:'numeric', month:'long', year:'numeric'}),
+      'Son las '+d.toLocaleTimeString('es-ES',{hour:'numeric',minute:'numeric'})+'.');
+  }
+  if(/(qué\s+fecha|que\s+fecha|qué\s+d[ií]a|que\s+d[ií]a|fecha\s+de\s+hoy|hoy\s+es)/.test(low)){
+    const d = new Date();
+    return reply('Hoy es '+d.toLocaleDateString('es-ES',{weekday:'long', day:'numeric', month:'long', year:'long'})+'.');
+  }
 
-        // Exponer funciones globalmente
-        window.pedirPermisoNotificaciones = pedirPermisoNotificaciones;
-        window.toggleMic = toggleMic;
-        window.sendMsg = sendMsg;
-        window.qa = qa;
-        window.abrirModalTareas = abrirModalTareas;
-        window.cerrarModalTareas = cerrarModalTareas;
-        window.completarTarea = completarTarea;
-        window.eliminarTarea = eliminarTarea;
-    </script>
+  /* ---- clima y ubicación ---- */
+  if(/(clima|tiempo\s+hace|temperatura|va\s+a\s+llover|llueve|llovizna|está\s+haciendo|hace\s+fr[ií]o|hace\s+calor)/.test(low)) return weatherIntent();
+  if(/(d[oó]nde\s+estoy|mi\s+ubicaci[oó]n|ubicaci[oó]n|localizaci[oó]n|mi\s+posici[oó]n|d[oó]nde\s+me\s+encuentro)/.test(low)){
+    if(isOffline()){
+      const g = geoCache();
+      if(g) return reply('Última ubicación conocida: '+g.city+(g.country?', '+g.country:'')+'.');
+      return reply('Sin conexión no puedo localizarte.');
+    }
+    setPhase('thinking');
+    let g = geoCache();
+    if(!g || Date.now()-g.t > 864e5) g = await locate();
+    if(!g) return reply('No pude obtener tu ubicación. Revisa que el GPS y los permisos estén activos.');
+    return reply('Estás en '+g.city+(g.country?', '+g.country:'')+' — coordenadas '+g.lat.toFixed(3)+', '+g.lon.toFixed(3)+'.');
+  }
+
+  /* ---- abrir sitios ---- */
+  m = low.match(/(?:abre|abrir|ve\s+a|navega\s+a|ll[eé]vame\s+a)\s+(?:el\s+|la\s+|a\s+)?(\w+)/);
+  if(m){
+    const k = m[1];
+    if(/mapa|mapas/.test(k)){
+      const g = geoCache();
+      const url = g ? 'https://www.google.com/maps?q='+g.lat+','+g.lon : 'https://www.google.com/maps';
+      window.open(url, '_blank');
+      return reply('Abriendo el mapa'+(g?' en '+g.city:'')+'.');
+    }
+    if(SITES[k]){
+      window.open('https://www.'+(k==='x'?'x.com':k==='whatsapp'?'web.whatsapp.com':k.replace('correo','gmail')+'.com'), '_blank');
+      return reply('Abriendo '+SITES[k]+'.');
+    }
+  }
+
+  /* ---- búsqueda / conocimiento ---- */
+  m = low.match(/(?:busca|buscar|b[uú]scame|informaci[oó]n\s+(?:de|sobre)|inf[oó]rmate\s+sobre)\s+(.+)/);
+  if(m) return doSearch(m[1].trim());
+  m = low.match(/(?:qui[eé]n\s+(?:es|fue)|qu[eé]\s+(?:es|fue|significa)|definici[oó]n\s+de|def(?:ine|ineme)?\s+|h[aá]blame\s+(?:de|sobre)|dime\s+(?:de|sobre)|explica(?:me)?\s+(?:qu[eé]\s+es)?)(.+)/);
+  if(m){
+    let term = m[1].replace(/^(?:el|la|los|las|un|una)\s+/,'').replace(/\?+$/,'').trim();
+    return doSearch(term);
+  }
+
+  /* ---- traducción ---- */
+  const tr = await translateIntent(low);
+  if(tr !== null) return;
+
+  /* ---- matemáticas ---- */
+  const mm = safeMath(low);
+  if(mm){
+    const val = mm.val.toLocaleString('es-ES');
+    return reply(mm.expr+' = '+val, 'El resultado es '+val+'.');
+  }
+
+  /* ---- sistema ---- */
+  if(/(qui[eé]n\s+eres|c[oó]mo\s+te\s+llamas|pres[eé]ntate)/.test(low)){
+    return reply('Soy Ania, tu asistente personal. Funciono en tu dispositivo y me sincronizo con tu backend para que tus tareas viajen contigo entre la web y Telegram.');
+  }
+  if(/jarvis/i.test(low))
+    return reply('Aquí la única IA de la casa soy yo: Ania. Jarvis se quedó en otra película.');
+  if(/(qu[eé]\s+sabes|hacer|ayuda|comandos|help|funciones|para\s+qu[eé]\s+sirves)/.test(low)){
+    renderChips(['¿Qué hora es?','¿Cómo está el clima?','Dame noticias','Busca agujeros negros','Recuérdame estirar en 15 minutos']);
+    return reply(
+      'Mis sistemas operativos:\n'+
+      '· Hora y fecha — «¿qué hora es?»\n'+
+      '· Clima y ubicación — «¿cómo está el clima?»\n'+
+      '· Noticias — «dame noticias», «noticias de tecnología»\n'+
+      '· Búsqueda — «busca...», «¿quién es...?»\n'+
+      '· Traducción — «traduce hola al francés»\n'+
+      '· Cálculos — «calcula 12*9+3»\n'+
+      '· Agenda — «recuérdame... en 20 minutos», «mis tareas»\n'+
+      '· Temporizadores — «temporizador de 5 minutos»\n'+
+      '· Navegación — «abre youtube»\n'+
+      '· Sincronización — todo se guarda y viaja a Telegram');
+  }
+  if(/(silencio|mute|c[aá]llate|calla|apaga\s+la\s+voz)/.test(low)){
+    S.muted = true; store.set('muted', true);
+    return addChat('ania','Voz desactivada. Di «habla» cuando quieras oírme.');
+  }
+  if(/(habla|activa\s+la\s+voz|voice\s+on|des\s+silencio|quita\s+el\s+silencio)/.test(low)){
+    S.muted = false; store.set('muted', false);
+    return reply('Voz reactivada. Aquí estoy.');
+  }
+  if(/(c[oó]mo\s+est[aá]s|estado\s+del\s+sistema|diagn[oó]stico|todo\s+bien)/.test(low)){
+    const g = geoCache();
+    return reply('Diagnóstico: '+(isOffline()?'sin conexión':'red operativa')+
+      '; backend: '+(Sync.online?'conectado':'desconectado')+
+      '; ubicación: '+(g?g.city:'sin registrar')+
+      '; agenda: '+taskPending()+' pendiente'+(taskPending()===1?'':'s')+
+      '; voz: '+(S.muted?'silenciada':'activa')+'.');
+  }
+  if(/instal/i.test(low) && /app|aplicaci|m[oó]vil|instal/.test(low)){ openModal('installModal'); return reply('Te muestro cómo instalarme.'); }
+  if(/sincroniza|sync|actualiza\s+tareas/.test(low)){ await Sync.fullSync(); return reply('Sincronización completa. Agenda al día.'); }
+
+  /* ---- ocio offline ---- */
+  if(/chiste|broma|hazme\s+re[ií]r/.test(low)) return reply(pick(JOKES));
+  if(/(moneda|cara\s+o\s+cruz)/.test(low)) return reply(Math.random()<0.5 ? 'Cara.' : 'Cruz.');
+  if(/(dado|d[ií]ce|tira)/.test(low)) { const n = 1+Math.floor(Math.random()*6); return reply('El dado marca '+n+'.', 'Ha salido '+n+'.'); }
+
+  /* ---- cortesía ---- */
+  if(/gracias/.test(low)) return reply(pick(['De nada, para eso estoy.','Un placer. Sigo a tus órdenes.']));
+  if(/(adi[oó]s|chao|hasta\s+luego|descansa|me\s+voy)/.test(low))
+    return reply('Hasta pronto. Dejo el núcleo en espera.');
+  if(/(hola|buenas|hey|ey|qu[eé]\s+tal|que\s+tal|saludos)/.test(low)){
+    const h = new Date().getHours();
+    const saludo = h<12?'Buenos días':(h<20?'Buenas tardes':'Buenas noches');
+    return reply(saludo+'. '+pick(['¿Qué necesitas?','Sistema listo.','Aquí Ania.']));
+  }
+
+  /* ---- último recurso ---- */
+  if(isOffline()){
+    return reply(pick([
+      'Estoy sin conexión. Puedo darte la hora, tus tareas, cálculos, noticias en caché y compañía local.',
+      'Eso requiere red y estoy en modo local. Prueba «mis tareas», «calcula 45*12» o pídeme un chiste.'
+    ]));
+  }
+  setPhase('thinking');
+  const q = low.replace(/^(?:por\s+favor|ania)\s*/,'').replace(/\?+$/,'');
+  const a = await ddg(q) || (await wikiSummary(q) || {}).extract;
+  if(a){
+    let txt = a.slice(0,560);
+    const cut = txt.lastIndexOf('. ');
+    if(cut>180) txt = txt.slice(0,cut+1);
+    reply(txt+'\n[puedes pedir «busca '+q+'» para más detalle]');
+  } else {
+    reply(pick([
+      'No tengo una respuesta fiable para eso. Prueba «busca '+q+'».',
+      'Eso se me escapa. Reformúlalo o pídeme «información sobre '+q+'».'
+    ]));
+  }
+}
+
+/* ---------- envío ---------- */
+let busy = false;
+async function send(text){
+  if(!text || busy) return;
+  busy = true;
+  try{
+    addChat('you', text);
+    $('chips').innerHTML = '';
+    await respond(text);
+  } finally { busy = false; }
+}
+$('inputBar').addEventListener('submit', e=>{
+  e.preventDefault();
+  const v = $('userInput').value.trim();
+  $('userInput').value='';
+  if(v) send(v);
+});
+
+/* =====================================================================
+   PWA · instalación
+===================================================================== */
+(function injectManifest(){
+  try{
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#040806"/><circle cx="256" cy="256" r="150" fill="none" stroke="#2de08a" stroke-width="10" stroke-dasharray="18 14"/><circle cx="256" cy="256" r="110" fill="none" stroke="#2de08a" stroke-width="6" stroke-dasharray="4 18"/><circle cx="256" cy="256" r="46" fill="#39ff9b"/><circle cx="256" cy="256" r="16" fill="#040806"/><text x="256" y="452" font-family="monospace" font-size="58" fill="#2de08a" text-anchor="middle" letter-spacing="14">ANIA</text></svg>`;
+    const icon = 'data:image/svg+xml,'+encodeURIComponent(svg);
+    const man = {
+      name:'ANIA · Asistente Personal', short_name:'ANIA',
+      description:'Asistente con sincronización backend y Telegram.',
+      start_url: location.href.split('#')[0],
+      scope: location.href.replace(/[^/]*$/,'') || location.href,
+      display:'standalone', orientation:'portrait', lang:'es',
+      background_color:'#040806', theme_color:'#040806',
+      icons:[
+        {src:icon, sizes:'512x512', type:'image/svg+xml', purpose:'any'},
+        {src:icon, sizes:'512x512', type:'image/svg+xml', purpose:'maskable'}
+      ]
+    };
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = URL.createObjectURL(new Blob([JSON.stringify(man)], {type:'application/manifest+json'}));
+    document.head.appendChild(link);
+  }catch(e){}
+})();
+
+if('serviceWorker' in navigator && /^https/.test(location.protocol)){
+  try{
+    const sw = "self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('fetch',e=>{});";
+    navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw], {type:'text/javascript'}))).catch(()=>{});
+  }catch(e){}
+}
+
+let deferPrompt = null;
+addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault();
+  deferPrompt = e;
+  $('btnInstall').classList.add('can');
+  $('installNow').style.display = 'block';
+  toast('Ania puede instalarse como aplicación');
+});
+$('installNow').onclick = async ()=>{
+  if(!deferPrompt) return;
+  deferPrompt.prompt();
+  const c = await deferPrompt.userChoice.catch(()=>null);
+  if(c && c.outcome==='accepted') toast('Instalando Ania...');
+  deferPrompt = null;
+  $('installNow').style.display='none';
+};
+addEventListener('appinstalled', ()=>{ toast('Ania instalada'); $('btnInstall').classList.remove('can'); });
+
+async function downloadOffline(){
+  try{
+    toast('Generando copia offline...');
+    let html;
+    try{ html = await (await fetch(location.href)).text(); }
+    catch(e){ html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML; }
+    const blob = new Blob([html], {type:'text/html'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'ania-asistente.html';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  }catch(e){ toast('No pude generar la copia', true); }
+}
+$('saveOffline').onclick = downloadOffline;
+
+/* ---------- modales ---------- */
+function openModal(id){ $(id).classList.add('on'); }
+document.querySelectorAll('.overlay').forEach(ov=>{
+  ov.addEventListener('click', e=>{ if(e.target===ov) ov.classList.remove('on'); });
+  ov.querySelectorAll('[data-close]').forEach(b=> b.onclick = ()=> ov.classList.remove('on'));
+});
+$('btnInstall').onclick = ()=> openModal('installModal');
+$('btnSettings').onclick = ()=>{ renderVoiceSelect(); openModal('settingsModal'); };
+
+/* ---------- ajustes ---------- */
+function renderVoiceSelect(){
+  const sel = $('voiceSelect');
+  if(!sel) return;
+  if(!voices.length){ sel.innerHTML = '<option>No hay voces disponibles</option>'; return; }
+  sel.innerHTML = voices.map(v=>`<option value="${esc(v.name)}">${esc(v.name)} · ${esc(v.lang)}</option>`).join('');
+  if(S.voice) sel.value = S.voice.name;
+}
+$('voiceSelect').onchange = e=>{
+  S.voice = voices.find(v=>v.name===e.target.value) || S.voice;
+  if(S.voice) store.set('voiceName', S.voice.name);
+  toast('Voz cambiada: '+(S.voice?S.voice.name:'-'));
+};
+$('rateRange').oninput = e=>{ S.rate = +e.target.value; $('rateOut').value = S.rate; store.set('rate', S.rate); };
+$('pitchRange').oninput = e=>{ S.pitch = +e.target.value; $('pitchOut').value = S.pitch; store.set('pitch', S.pitch); };
+$('rateRange').value = S.rate; $('rateOut').value = S.rate;
+$('pitchRange').value = S.pitch; $('pitchOut').value = S.pitch;
+$('testVoice').onclick = ()=> speak('Sistemas verificados. Esta es mi voz.');
+$('forgetGeo').onclick = ()=>{
+  store.del('geo');
+  Object.keys(localStorage).filter(k=>k.startsWith('ania_wx_')).forEach(k=>localStorage.removeItem(k));
+  $('wTxt').textContent = '--°';
+  toast('Ubicación y caché de clima eliminadas');
+};
+const savedVoice = store.get('voiceName', null);
+if(savedVoice && voices.length){ const v = voices.find(x=>x.name===savedVoice); if(v) S.voice = v; }
+
+$('weatherChip').onclick = ()=> weatherIntent();
+
+/* =====================================================================
+   ARRANQUE
+===================================================================== */
+const BOOTLINES = [
+  '» ANIA KERNEL v3.2.0 — arranque en frío',
+  '» compilando módulos de red ............ OK',
+  '» motor de voz sintetizada ............ OK',
+  '» banco de conocimiento local ......... OK',
+  '» agenda y recordatorios .............. OK',
+  '» conector backend / Telegram ......... OK',
+  '» interfaz neuronal ................... OK',
+  '» esperando autorización del usuario _'
+];
+(async function boot(){
+  const log = $('bootLog');
+  for(const line of BOOTLINES){
+    const div = document.createElement('div');
+    log.appendChild(div);
+    for(let i=0;i<=line.length;i++){
+      div.textContent = line.slice(0,i);
+      await new Promise(r=>setTimeout(r, 7));
+    }
+    div.innerHTML = esc(line).replace(/OK$/,'<span class="ok">OK</span>');
+    await new Promise(r=>setTimeout(r, 180));
+  }
+  $('bootStart').style.display = 'block';
+})();
+
+$('bootStart').onclick = async ()=>{
+  if(S.booted) return; S.booted = true;
+  ensureAudio();
+  try{ if('Notification' in window) Notification.requestPermission().catch(()=>{}); }catch(e){}
+  $('boot').classList.add('hide');
+  setTimeout(()=>$('boot').remove(), 700);
+  renderTasks();
+
+  // 🔄 Sincronización inicial con backend
+  await Sync.check();
+  if(Sync.online){
+    await Sync.pullTasks();
+    initSyncLoop();
+  } else {
+    console.warn('Backend no disponible, modo local');
+  }
+
+  // Tareas locales: reprogramar timers
+  tasks.forEach(tk => { if(!tk.done && tk.when) scheduleTask(tk); });
+
+  // Clima en caché
+  const g = geoCache();
+  if(g){ try{ const d = await getWeather(g); updateChip(g,d); }catch(e){} }
+
+  const h = new Date().getHours();
+  const saludo = h<12?'Buenos días':(h<20?'Buenas tardes':'Buenas noches');
+  const extra = Sync.online ? ' Sincronizada con tu backend.' : ' Modo local (backend no disponible).';
+  setTimeout(()=>{
+    reply(saludo+'. Soy Ania, todos los sistemas operativos.'+extra, saludo+'. Soy Ania. ¿En qué te ayudo?');
+    renderChips(['¿Qué hora es?','¿Cómo está el clima?','Dame noticias','Busca agujeros negros','Recuérdame beber agua en 30 minutos']);
+  }, 500);
+};
+</script>
 </body>
 </html>
