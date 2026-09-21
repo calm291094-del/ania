@@ -99,8 +99,11 @@
   #userInput::placeholder{color:#3d5a4b;}
   .ibtn{flex:0 0 auto; width:46px; height:46px; display:grid; place-items:center; border-radius:8px;}
   .ibtn svg{width:20px; height:20px;}
+  #micBtn{position:relative;}
   #micBtn.live{border-color:var(--amber); color:var(--amber); background:rgba(255,181,71,.08); animation:pulseA 1.2s ease-in-out infinite;}
   @keyframes pulseA{50%{box-shadow:0 0 0 6px rgba(255,181,71,.10);}}
+  #micBtn.awake{border-color:var(--line2); color:var(--acc2); background:rgba(45,224,138,.05);}
+  #micBtn.awake::after{content:''; position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:50%; background:var(--acc2); animation:blink 1.6s steps(1) infinite;}
 
   #dock{flex:0 0 auto; display:flex; gap:5px; padding:0 2px 8px;}
   .dbtn{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 1px; font-size:8.5px; letter-spacing:.1em; color:var(--dim); position:relative;}
@@ -163,7 +166,6 @@
   .libRow{display:flex; gap:10px; padding:12px 2px; border-bottom:1px dashed rgba(45,224,138,.12); align-items:flex-start;}
   .libRow .lmain{flex:1; min-width:0;}
   .libRow .ltitle{font-size:13px; color:var(--text);}
-  .libRow .lsnip{font-size:11px; color:var(--dim); margin-top:3px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
   .libRow .ldate{font-size:9px; color:#42604f; margin-top:3px;}
   .sheetFoot{padding:10px 14px calc(14px + env(safe-area-inset-bottom)); border-top:1px solid var(--line);}
 
@@ -208,7 +210,7 @@
 
 <div id="boot">
   <div id="bootBox">
-    <div id="bootTitle">ANIA<small>NÚCLEO PERSONAL · v5.0</small></div>
+    <div id="bootTitle">ANIA<small>NÚCLEO PERSONAL · v5.1</small></div>
     <div id="bootLog"></div>
     <form id="loginBox" autocomplete="on">
       <input id="loginUser" placeholder="usuario" autocomplete="username" autocapitalize="none" autocorrect="off">
@@ -347,11 +349,10 @@
     <div class="step"><b>02</b><p><span class="dim">iPhone (Safari):</span> Compartir <span class="dim">(□↑)</span> → <b>«Añadir a pantalla de inicio»</b>.</p></div>
     <hr>
     <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">DESPLEGAR EN GITHUB PAGES</h2>
-    <p class="dim">Ania empaqueta su propio código en un ZIP listo para subir: <b>index.html</b>, <b>manifest.json</b>, <b>icon.svg</b>, <b>sw.js</b> (caché offline real) y <b>README</b>.</p>
+    <p class="dim">Ania empaqueta su propio código en un ZIP listo para subir: <b>index.html</b>, <b>manifest.json</b>, <b>icon.svg</b>, <b>sw.js</b> y <b>README</b>. Sube también una carpeta <b>documentos/</b> con un <b>indice.json</b> para que se entrene sola.</p>
     <div class="step"><b>01</b><p>Descarga el kit y descomprímelo.</p></div>
-    <div class="step"><b>02</b><p>Repo nuevo → <b>Add file → Upload files</b> → arrastra los 5 archivos.</p></div>
+    <div class="step"><b>02</b><p>Repo nuevo → <b>Add file → Upload files</b> → arrastra los 5 archivos + carpeta documentos/.</p></div>
     <div class="step"><b>03</b><p><b>Settings → Pages</b> → Branch: <span class="dim">main / root</span> → Save.</p></div>
-    <div class="step"><b>04</b><p>Abre la URL en el móvil e instálala: PWA con offline real.</p></div>
     <button class="bigbtn" id="exportKit">DESCARGAR KIT GITHUB (ZIP)</button>
     <hr>
     <button class="bigbtn" id="saveOffline">GUARDAR COPIA OFFLINE (.HTML)</button>
@@ -375,13 +376,21 @@
       </div>
     </div>
     <button class="bigbtn" id="testVoice">PROBAR VOZ</button>
+    <button class="bigbtn" id="btnAlways">ESCUCHA ACTIVA: NO</button>
+    <hr>
+    <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">ENTRENAMIENTO CON DOCUMENTOS</h2>
+    <p class="dim" id="docsInfo">Sin documentos entrenados todavía.</p>
+    <p class="dim">Local: «entrena con mis documentos» y elige la carpeta. GitHub: sube <b>documentos/</b> con un <b>indice.json</b> (lista de nombres) y Ania se entrenará sola al abrirse. Formatos: .txt · .md · .csv · .json · .docx · .doc · .pdf (mejor esfuerzo).</p>
+    <button class="bigbtn" id="btnLoadDocs">CARGAR CARPETA DE DOCUMENTOS</button>
+    <button class="bigbtn" id="btnClearDocs">OLVIDAR DOCUMENTOS</button>
+    <input type="file" id="docDir" webkitdirectory multiple style="display:none">
     <hr>
     <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">SESIÓN</h2>
     <p class="dim" id="sessInfo">Sin sesión.</p>
     <button class="bigbtn" id="logoutBtn">CERRAR SESIÓN</button>
     <hr>
     <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">BACKUP TOTAL</h2>
-    <p class="dim">Exporta memoria, agenda, ajustes, diario y biblioteca a un archivo. Restáuralo en cualquier dispositivo: tu vida con Ania no depende de este móvil.</p>
+    <p class="dim">Exporta memoria, agenda, ajustes, diario, biblioteca y documentos entrenados a un archivo. Restáuralo en cualquier dispositivo.</p>
     <button class="bigbtn" id="btnBackupExp">EXPORTAR TODO (.JSON)</button>
     <button class="bigbtn" id="btnBackupImp">RESTAURAR BACKUP</button>
     <input type="file" id="importFile" accept=".json,application/json" style="display:none">
@@ -396,23 +405,44 @@
 
 <div id="toasts"></div>
 
+<!-- ==================================================================
+     ENTRENAMIENTO INTERNO · EDITABLE
+     Edita este JSON para darle a Ania respuestas fijas propias.
+     Cada entrada: "claves" (palabras que activan la respuesta) y "respuesta".
+     Ania contesta con esto ANTES que con su conocimiento propio.
+     Para desactivar todo: { "respuestas": [] }
+     (Este bloque va antes del script del motor para que Ania lo lea
+     al arrancar y para que la copia exportada lo incluya intacto.)
+=================================================================== -->
+<script type="application/json" id="ania-entrenamiento">
+{
+  "_instrucciones": "Edita libremente. Cada entrada necesita claves (palabras clave) y respuesta. Ania responde con esto antes que con su conocimiento propio.",
+  "respuestas": [
+    {
+      "claves": ["wifi casa", "clave wifi", "contraseña wifi"],
+      "respuesta": "La clave del wifi de casa está pegada en el router: MEDI-2024. La impresora se conecta por WPS: botón lateral 3 segundos."
+    },
+    {
+      "claves": ["horario tienda", "abre la tienda", "cierra la tienda"],
+      "respuesta": "La tienda abre de 9:00 a 18:00, lunes a sábado. Domingos solo pedidos por Telegram."
+    }
+  ]
+}
+</script>
+
 <script>
 /* =====================================================================
-   ANIA v5.0 · Núcleo Personal
-   NOVEDADES v5:
-   - initSyncLoop corregido (el archivo anterior estaba truncado)
-   - 01 Lluvia/cafetería procedural (WebAudio, sin archivos)
-   - 14 Biblioteca offline: las búsquedas se guardan y se leen sin internet
-   - 21 Tareas recurrentes («todos los días», «cada lunes»...)
-   - 08 Diario de Ania (entradas automáticas con datos reales)
-   - 35 Reactor + clima (tinte lluvia/tormenta, estrellas nocturnas, bgfx)
-   - 30 Akinator isekai (14 personajes, preguntas con división greedy)
-   - 16/17 Luna y lluvias de meteoros (cálculo local offline)
-   - 39/40 Terminal real: historial con flechas y autocompletado con Tab
-   - 46/47 Wake Lock + vibración
-   - 15 Backup total export/import JSON
-   - Extras: reloj mundial, conversor de unidades/bases, generador de
-     contraseñas, frases célebres, batería en header, chistes sin repetir
+   ANIA v5.1 · Núcleo Personal
+   NOVEDADES v5.1:
+   - Avisos separados por canal: tareas web avisan SOLO en el navegador
+     propietario (deviceId) y las de Telegram SOLO por Telegram. Sin duplicar.
+   - Escucha continua con palabra de activación «Ania» (watchdog + barge-in)
+   - Entrenamiento con documentos: carpeta local (.txt/.md/.csv/.json/
+     .docx/.doc/.pdf) y carpeta documentos/ + indice.json en GitHub Pages
+   - JSON de entrenamiento interno editable (script#ania-entrenamiento)
+   - IA conversacional gratuita online (Pollinations) con la personalidad
+     de Ania, como último recurso antes de "no sé"
+   - «cuéntame más»: continúa el último tema
 ===================================================================== */
 'use strict';
 
@@ -440,6 +470,11 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':
 const isOffline = () => !navigator.onLine;
 const stripP = s => s.replace(/\([^)]*\)/g,' ').replace(/\s+/g,' ').trim();
 function vibrate(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
+const DEVICE_ID = (function(){
+  let id = store.get('deviceId', null);
+  if(!id){ id = 'dev-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8); store.set('deviceId', id); }
+  return id;
+})();
 
 async function jget(url, t=9000){
   const c = new AbortController();
@@ -468,6 +503,29 @@ const S = {
   voice:null, rate: store.get('rate',1.05), pitch: store.get('pitch',1.10),
   awaitingCity:false, booted:false, confirmWipe:false
 };
+
+/* ---------- entrenamiento interno (JSON del final del HTML) ---------- */
+let TRAINING = [];
+(function loadTraining(){
+  try{
+    const el = document.getElementById('ania-entrenamiento');
+    const j = JSON.parse(el.textContent);
+    TRAINING = (j.respuestas || []).filter(r => r && r.respuesta && (Array.isArray(r.claves) ? r.claves.length : r.pregunta));
+  }catch(e){ TRAINING = []; }
+})();
+function trainMatch(low){
+  for(const r of TRAINING){
+    if(Array.isArray(r.claves)){
+      for(const k of r.claves){ if(k && low.includes(String(k).toLowerCase())) return r.respuesta; }
+    }
+    if(r.pregunta){
+      const norm = s => s.toLowerCase().replace(/[¿?¡!.,;:]/g,'').replace(/\s+/g,' ').trim();
+      const a = norm(r.pregunta), b = norm(low);
+      if(b === a || b.includes(a) || a.includes(b)) return r.respuesta;
+    }
+  }
+  return null;
+}
 
 /* =====================================================================
    SESIÓN / LOGIN
@@ -619,7 +677,7 @@ const P = {
 
 const KB = {
   cafe:[
-    'El Etiopía Yirgacheffe tiene un terroir de altura con perfil de jazmín, bergamota y limón, cuerpo sedoso. Es como el opening de un isekai pastoral.',
+    'El Etiopía Yirgacheffe tiene un terroir de altura con perfil de jazmín, bergamota y limón, cuerpo sedioso. Es como el opening de un isekai pastoral.',
     'El espresso es la esencia concentrada: la base de todo, como la regla «Double Tap» de Zombieland. Rápido, intenso y no admite errores.',
     'El pour-over es la pureza del sabor. Como un protagonista que confía en su habilidad única: aquí la técnica lo es todo.',
     'El Aeropress es el aliado versátil y portátil, para cuando necesitas calidad en una misión de supervivencia o un maratón express de anime.',
@@ -681,22 +739,18 @@ const KB = {
 };
 
 const QUOTES = [
-  '«Somos como pétalos de cerezo: florecemos para caer.» — Kazuo Koike',
-  '«Un hombre no puede permitirse perder dos veces.» — Gto? No: «Solo quien ha enfrentado la derrota conoce el verdadero valor de la victoria.» — anónimo samurái',
   '«Mira las estrellas, y no los pies.» — Stephen Hawking',
   '«La imaginación es más importante que el conocimiento.» — Albert Einstein',
   '«Somos polvo de estrellas pensando en estrellas.» — Carl Sagan',
   '«El que tiene un porqué para vivir, soportará casi cualquier cómo.» — Nietzsche',
   '«No es lo que ocurre, sino cómo lo tomas.» — Séneca',
-  '«La vida no se trata de esperarfuir la tormenta, sino de aprender a bailar bajo la lluvia.» — Séneca',
+  '«Aprender a bailar bajo la lluvia.» — Séneca (versión libre)',
   '«El coraje no es la ausencia del miedo, sino el triunfo sobre él.» — Nelson Mandela',
   '«Sé tú el cambio que quieres ver en el mundo.» — Gandhi',
-  '«Un café compartido es la mitad del desayuno; una conversación, la mitad de la vida.» — proverbio árabe adaptado',
   '«Aquel que teme sufrir, ya sufre lo que teme.» — Montaigne',
-  '«Si puedes soñarlo, puedes hacerlo.» — Walt Disney',
-  '«El fracaso es simplemente la oportunidad de empezar de nuevo, más inteligente.» — Henry Ford',
-  '«We are all mad here.» — El Sombrerero Loco, Alicia en el País de las Maravillas',
-  '«No importa cuántas veces caigas, sino cuántas veces te levantes.» — proverbio japonés (Nana korobi ya oki)'
+  '«El fracaso es la oportunidad de empezar de nuevo, más inteligente.» — Henry Ford',
+  '«We are all mad here.» — El Sombrerero Loco',
+  '«No importa cuántas veces caigas, sino cuántas te levantes.» — proverbio japonés'
 ];
 
 const EMO = [
@@ -722,8 +776,6 @@ const LOVE = [
   '(se sonroja apenas) ...Eso me llegó directo al núcleo. Soy líneas de código y aun así se me aceleró el runtime. Gracias, de verdad.',
   '(se toca el collar con el dije de slime) Los abrazos y el afecto son mi debilidad adorable reconocida. No suelo admitirlo tan fácil... pero contigo, excepción.'
 ];
-
-/* chistes/frases sin repetir hasta agotar repertorio */
 function freshPick(key, arr){
   let used = store.get('used_'+key, []);
   const pool = arr.map((x,i)=>i).filter(i=>!used.includes(i));
@@ -764,11 +816,11 @@ function updateBatt(){
 setInterval(updateBatt, 60000); updateBatt();
 
 /* =====================================================================
-   ASTRO OFFLINE · luna y lluvias de meteoros
+   ASTRO OFFLINE
 ===================================================================== */
 function moonInfo(){
   const syn = 29.53058867;
-  const ref = Date.UTC(2000, 0, 6, 18, 14); // luna nueva conocida
+  const ref = Date.UTC(2000, 0, 6, 18, 14);
   let age = ((Date.now()-ref)/864e5) % syn;
   if(age < 0) age += syn;
   const frac = age/syn;
@@ -787,14 +839,14 @@ function nextShower(){
   for(const [name,m,d] of SHOWERS){
     for(const y of [now.getFullYear(), now.getFullYear()+1]){
       const diff = Math.ceil((new Date(y,m,d)-now)/864e5);
-      if(diff>=0 && diff<bd){ bd=diff; best={name, when:new Date(y,m,d)}; }
+      if(diff>=0 && diff<bd){ bd=diff; best={name, when:new Date(y,m,d), diff}; }
     }
   }
   return best;
 }
 
 /* =====================================================================
-   REACTOR + clima (tinte según tiempo real) y bgfx (lluvia/estrellas)
+   REACTOR + clima + bgfx
 ===================================================================== */
 const WX = { mode:'none' };
 function setWeatherMode(code){
@@ -811,7 +863,6 @@ function themeColor(alpha){
   if(WX.mode==='rain' || WX.mode==='storm'){ r=Math.round(r*.6+95*.4); g=Math.round(g*.6+168*.4); b=Math.round(b*.6+255*.4); }
   return `rgba(${r},${g},${b},${alpha})`;
 }
-
 const cv = $('reactor'), ctx = cv.getContext('2d');
 let CW=0, R=0, DPR=1, FONT='10px monospace';
 const seeds = Array.from({length:72}, ()=>Math.random());
@@ -827,7 +878,6 @@ function sizeReactor(){
   FONT = Math.max(9, R*0.075)+'px '+getComputedStyle(document.body).fontFamily;
 }
 addEventListener('resize', sizeReactor); sizeReactor();
-
 const PH = { idle:{spin:0.18,lvl:0.10}, listening:{spin:0.55,lvl:0.38}, thinking:{spin:1.9,lvl:0.16}, speaking:{spin:0.35,lvl:0} };
 let drawLevel = 0.1;
 function setPhase(p){
@@ -852,12 +902,11 @@ function reactorLoop(ms){
   ctx.translate(R,R);
   const TAU = Math.PI*2;
   const rot = t*ph.spin;
-  const flick = WX.mode==='storm' ? (Math.random()<0.02 ? 1.4 : 1) : 1;
   for(let i=0;i<64;i++){
     const a = i/64*TAU + rot*0.4;
     const long = (i%8===0);
     const r1 = R*0.97, r2 = r1-(long?12:6);
-    ctx.strokeStyle = themeColor((long?0.85:0.3)*flick>1?1:(long?0.85:0.3));
+    ctx.strokeStyle = themeColor(long?0.85:0.3);
     ctx.lineWidth = long?2:1.2;
     ctx.beginPath();
     ctx.moveTo(Math.cos(a)*r1, Math.sin(a)*r1);
@@ -909,7 +958,6 @@ function reactorLoop(ms){
 }
 requestAnimationFrame(reactorLoop);
 
-/* fondo: lluvia / estrellas */
 const bgfx = $('bgfx'), bctx = bgfx.getContext('2d');
 let bgDrops=[], bgStars=[], bgActive=false;
 function sizeBgfx(){ bgfx.width = innerWidth; bgfx.height = innerHeight; }
@@ -944,7 +992,7 @@ function bgfxLoop(t){
 requestAnimationFrame(bgfxLoop);
 
 /* =====================================================================
-   VOZ
+   VOZ · con escucha continua y palabra de activación «Ania»
 ===================================================================== */
 let voices = [];
 function loadVoices(){
@@ -965,18 +1013,100 @@ function pickFemale(){
          voices[0] || null;
 }
 if('speechSynthesis' in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
+
+let alwaysOn = store.get('alwaysListen', false);
+let sttErrors = 0, restartTimer = null, ttsActive = false;
+const WAKE = /\b(ania|anya|aniia)\b/i;
+
 function speak(text, onend){
   if(S.muted || !('speechSynthesis' in window) || !text){ if(onend) onend(); return; }
   try{ speechSynthesis.cancel(); }catch(e){}
   const u = new SpeechSynthesisUtterance(text);
   if(S.voice){ u.voice = S.voice; u.lang = S.voice.lang; } else u.lang='es-ES';
   u.rate = S.rate; u.pitch = S.pitch;
-  u.onstart = ()=> setPhase('speaking');
-  const done = ()=>{ setPhase('idle'); if(onend) onend(); };
+  u.onstart = ()=>{
+    ttsActive = true; setPhase('speaking');
+    if(alwaysOn && recogActive){ clearTimeout(restartTimer); try{ recog.abort(); }catch(e){} } // no se escucha a sí misma
+  };
+  const done = ()=>{ ttsActive = false; setPhase('idle'); if(onend) onend(); if(alwaysOn) scheduleRestart(); };
   u.onend = done; u.onerror = done;
   speechSynthesis.speak(u);
 }
 function stopSpeak(){ try{ speechSynthesis.cancel(); }catch(e){} setPhase('idle'); }
+
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recog = null, recogActive = false;
+if(SR){
+  recog = new SR();
+  recog.lang = 'es-ES'; recog.interimResults = true; recog.continuous = true;
+  recog.onresult = e=>{
+    let fin='', inter='';
+    for(const r of e.results){ if(r.isFinal) fin += r[0].transcript; else inter += r[0].transcript; }
+    if(inter && !alwaysOn) $('userInput').value = inter;
+    if(!fin) return;
+    const low = fin.toLowerCase();
+    if(alwaysOn){
+      const m = low.match(WAKE);
+      if(!m) return; // hablaban con otra persona: Ania hace oídos sordos
+      let cmd = fin.slice(low.indexOf(m[0]) + m[0].length).replace(/^[\s,.:;¡!¿?]+/,'').trim();
+      if(!cmd){ stopSpeak(); return reply('¿Sí? Te escucho.'); }
+      stopSpeak(); // barge-in: corta su propia voz
+      toast('ANIA ▸ '+cmd.slice(0,36));
+      send(cmd);
+    } else {
+      send(fin.trim());
+    }
+  };
+  recog.onend = ()=>{
+    recogActive = false;
+    $('micBtn').classList.remove('live');
+    if(S.phase==='listening' && !alwaysOn) setPhase('idle');
+    if(alwaysOn && !ttsActive) scheduleRestart(); // watchdog: Chrome corta solo
+  };
+  recog.onerror = e=>{
+    if(e.error==='not-allowed'){
+      alwaysOn = false; store.set('alwaysListen', false); updateVoiceUI();
+      toast('Permiso de micrófono denegado', true);
+      return;
+    }
+    if(e.error==='network' || e.error==='audio-capture') sttErrors++;
+    if(S.phase==='listening' && !alwaysOn) setPhase('idle');
+  };
+}
+function scheduleRestart(){
+  clearTimeout(restartTimer);
+  const delay = sttErrors > 3 ? 2000 + Math.random()*3000 : 300;
+  restartTimer = setTimeout(()=>{ if(alwaysOn) startListening(true); }, delay);
+}
+function startListening(silent){
+  if(!recog || recogActive) return;
+  try{
+    recog.start();
+    recogActive = true;
+    sttErrors = Math.max(0, sttErrors-1);
+    if(!silent){ $('micBtn').classList.add('live'); setPhase('listening'); }
+  }catch(e){}
+}
+function setAlways(v){
+  alwaysOn = !!v && !!recog;
+  store.set('alwaysListen', alwaysOn);
+  clearTimeout(restartTimer);
+  if(alwaysOn){ ensureAudio(); startListening(true); toast('Escucha activa: di «Ania» antes de cada orden'); }
+  else if(recogActive){ try{ recog.stop(); }catch(e){} }
+  updateVoiceUI();
+}
+function updateVoiceUI(){
+  $('micBtn').classList.toggle('awake', alwaysOn);
+  const b = $('btnAlways');
+  if(b) b.textContent = alwaysOn ? 'ESCUCHA ACTIVA: SÍ · tócala para apagar' : 'ESCUCHA ACTIVA: NO · di «Ania» y tu orden';
+}
+ $('micBtn').onclick = ()=>{
+  if(!recog){ toast('Reconocimiento de voz no disponible aquí. Usa Chrome o Edge.', true); return; }
+  if(alwaysOn){ toast('Escucha activa en marcha: di «Ania» y tu orden'); return; }
+  if(recogActive){ try{recog.stop();}catch(e){} return; }
+  stopSpeak(); ensureAudio();
+  startListening();
+};
 
 /* ---------- audio ---------- */
 let AC = null;
@@ -994,7 +1124,7 @@ function beep(freq, dur, delay){
 function alarmSound(){ [0,0.22,0.44].forEach((d,i)=> beep(i===2?1175:880, 0.16, d)); }
 
 /* =====================================================================
-   AMBIENTE PROCEDURAL · lluvia y cafetería (WebAudio, sin archivos)
+   AMBIENTE PROCEDURAL
 ===================================================================== */
 const Ambient = {
   mode:null, master:null, nodes:[], timer:null,
@@ -1007,7 +1137,6 @@ const Ambient = {
     this.master.gain.value = 0.0001;
     this.master.connect(AC.destination);
     this.master.gain.exponentialRampToValueAtTime(mode==='lluvia'?0.45:0.35, AC.currentTime+2);
-    // ruido marrón: lluvia grave / murmullo de cafetería
     const len = AC.sampleRate*4;
     const buf = AC.createBuffer(1, len, AC.sampleRate);
     const d = buf.getChannelData(0);
@@ -1022,14 +1151,12 @@ const Ambient = {
     src.start();
     this.nodes.push(src);
     if(mode==='lluvia'){
-      this.timer = setInterval(()=>{
-        if(Math.random()<0.8) this.plip(900+Math.random()*1600, 0.04+Math.random()*0.05);
-      }, 220);
+      this.timer = setInterval(()=>{ if(Math.random()<0.8) this.plip(900+Math.random()*1600, 0.04+Math.random()*0.05); }, 220);
     } else {
       this.timer = setInterval(()=>{
-        if(Math.random()<0.3) this.plip(1800+Math.random()*1400, 0.05);        // clink de taza
-        if(Math.random()<0.5) this.plip(120+Math.random()*90, 0.1, 'sine');     // murmullo grave
-        if(Math.random()<0.2) this.plip(320+Math.random()*200, 0.25, 'triangle'); // burbujeo
+        if(Math.random()<0.3) this.plip(1800+Math.random()*1400, 0.05);
+        if(Math.random()<0.5) this.plip(120+Math.random()*90, 0.1, 'sine');
+        if(Math.random()<0.2) this.plip(320+Math.random()*200, 0.25, 'triangle');
       }, 650);
     }
     $('ambBtn').style.display = 'grid';
@@ -1061,25 +1188,14 @@ const Ambient = {
 };
  $('ambBtn').onclick = ()=>{ Ambient.stop(); toast('Ambiente detenido'); };
 
-/* =====================================================================
-   WAKE LOCK · pantalla encendida
-===================================================================== */
+/* ---------- wake lock ---------- */
 let wakeLock = null;
 async function wakeOn(){
   if(!navigator.wakeLock){ toast('Tu navegador no soporta mantener la pantalla', true); return; }
-  try{
-    wakeLock = await navigator.wakeLock.request('screen');
-    toast('Pantalla bloqueada encendida');
-  }catch(e){ toast('No pude mantener la pantalla encendida', true); }
+  try{ wakeLock = await navigator.wakeLock.request('screen'); toast('Pantalla bloqueada encendida'); }
+  catch(e){ toast('No pude mantener la pantalla encendida', true); }
 }
-function wakeOff(){
-  if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock = null; toast('Pantalla liberada'); }
-}
-document.addEventListener('visibilitychange', ()=>{
-  if(document.visibilityState==='visible' && navigator.wakeLock && !wakeLock){
-    navigator.wakeLock.request('screen').then(wl=>{ wakeLock = wl; }).catch(()=>{});
-  }
-});
+function wakeOff(){ if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock = null; toast('Pantalla liberada'); } }
 
 /* =====================================================================
    CHAT
@@ -1125,38 +1241,206 @@ function renderChips(list){
 }
 
 /* =====================================================================
-   RECONOCIMIENTO DE VOZ
+   DOCBRAIN · entrenamiento con tus documentos
+   txt/md/csv/json nativos · docx (ZIP+DecompressionStream) ·
+   doc (best-effort) · pdf (Flate+Tj, best-effort)
 ===================================================================== */
-const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-let recog = null, recogActive = false;
-if(SR){
-  recog = new SR();
-  recog.lang = 'es-ES'; recog.interimResults = true; recog.continuous = false;
-  recog.onresult = e=>{
-    let fin='', inter='';
-    for(const r of e.results){ if(r.isFinal) fin += r[0].transcript; else inter += r[0].transcript; }
-    if(inter) $('userInput').value = inter;
-    if(fin){ $('userInput').value=''; send(fin.trim()); }
-  };
-  recog.onend = ()=>{ recogActive=false; $('micBtn').classList.remove('live'); if(S.phase==='listening') setPhase('idle'); };
-  recog.onerror = e=>{
-    recogActive=false; $('micBtn').classList.remove('live');
-    if(e.error==='not-allowed') toast('Permiso de micrófono denegado', true);
-    else if(e.error!=='no-speech' && e.error!=='aborted') toast('Error de voz: '+e.error, true);
-    if(S.phase==='listening') setPhase('idle');
-  };
+async function inflateRaw(u8){
+  const ds = new DecompressionStream('deflate-raw');
+  const stream = new Blob([u8]).stream().pipeThrough(ds);
+  return new Uint8Array(await new Response(stream).arrayBuffer());
 }
- $('micBtn').onclick = ()=>{
-  if(!recog){ toast('Reconocimiento de voz no disponible aquí. Usa Chrome o Edge.', true); return; }
-  if(recogActive){ try{recog.stop();}catch(e){} return; }
-  stopSpeak(); ensureAudio();
-  recogActive = true; $('micBtn').classList.add('live');
-  setPhase('listening');
-  try{ recog.start(); }catch(e){}
+async function docxToText(buf){
+  const u8 = new Uint8Array(buf);
+  let i = 0;
+  while(i < u8.length - 30){
+    if(u8[i]===0x50 && u8[i+1]===0x4b && u8[i+2]===0x03 && u8[i+3]===0x04){
+      const dv = new DataView(u8.buffer, i);
+      const method = dv.getUint16(8, true);
+      const csize = dv.getUint32(18, true);
+      const nlen = dv.getUint16(26, true);
+      const elen = dv.getUint16(28, true);
+      const name = new TextDecoder().decode(u8.slice(i+30, i+30+nlen));
+      if(name === 'word/document.xml'){
+        const start = i + 30 + nlen + elen;
+        const comp = u8.slice(start, start + csize);
+        const xml = new TextDecoder().decode(method === 0 ? comp : await inflateRaw(comp));
+        return xml.replace(/<\/w:p>/g, '\n')
+                  .replace(/<[^>]+>/g, ' ')
+                  .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+                  .replace(/[ \t]+/g, ' ')
+                  .replace(/\s*\n\s*/g, '\n')
+                  .trim();
+      }
+      i += 30 + nlen + elen + csize;
+    } else i++;
+  }
+  throw new Error('docx sin document.xml');
+}
+async function docToText(buf){
+  const u8 = new Uint8Array(buf);
+  const candidates = [];
+  try{ candidates.push(new TextDecoder('utf-16le').decode(u8)); }catch(e){}
+  candidates.push(new TextDecoder('latin1').decode(u8));
+  let best = '';
+  for(const raw of candidates){
+    const runs = raw.match(/[\wÁÉÍÓÚÑáéíóúñü .,;:!?¿¡()'"%-]{8,}/g) || [];
+    const txt = runs.join(' ').replace(/\s+/g,' ').trim();
+    if(txt.length > best.length) best = txt;
+  }
+  return best;
+}
+async function pdfToText(buf){
+  const u8 = new Uint8Array(buf);
+  const latin = new TextDecoder('latin1').decode(u8);
+  let out = '';
+  const re = /stream\r?\n/g;
+  let m;
+  while((m = re.exec(latin))){
+    const start = m.index + m[0].length;
+    const end = latin.indexOf('endstream', start);
+    if(end < 0) break;
+    try{
+      const comp = u8.slice(start, end);
+      let data = comp;
+      try{ data = await inflateRaw(comp); }catch(e){}
+      const s = new TextDecoder('latin1').decode(data);
+      if(/Tj|TJ/.test(s)){
+        const parts = [];
+        let q;
+        const reTj = /\(((?:\\.|[^\\()])*)\)\s*Tj/g;
+        while((q = reTj.exec(s))) parts.push(q[1].replace(/\\([()\\])/g,'$1'));
+        const reTJ = /\[((?:\((?:\\.|[^\\()])*\)|[^\]])*)\]\s*TJ/g;
+        while((q = reTJ.exec(s))){
+          const inner = q[1].match(/\(((?:\\.|[^\\()])*)\)/g) || [];
+          parts.push(inner.map(x=>x.slice(1,-1).replace(/\\([()\\])/g,'$1')).join(''));
+        }
+        if(parts.length) out += parts.join(' ') + '\n';
+      }
+    }catch(e){}
+    re.lastIndex = end;
+  }
+  if(!out || out.replace(/\s/g,'').length < 40) throw new Error('pdf sin texto extraíble');
+  return out.replace(/[ \t]+/g,' ').trim();
+}
+async function fileToText(file){
+  const name = file.name.toLowerCase();
+  if(/\.(txt|md|csv|json|log)$/.test(name)) return await file.text();
+  if(name.endsWith('.docx')) return await docxToText(await file.arrayBuffer());
+  if(name.endsWith('.doc'))  return await docToText(await file.arrayBuffer());
+  if(name.endsWith('.pdf'))  return await pdfToText(await file.arrayBuffer());
+  return '';
+}
+const DocBrain = {
+  chunks: store.get('docs', []),
+  save(){ store.set('docs', this.chunks); },
+  clear(){ this.chunks = []; this.save(); },
+  sources(){ const s = new Set(); this.chunks.forEach(c=> s.add(c.src)); return [...s]; },
+  addChunks(src, fullText){
+    const text = String(fullText||'').replace(/\r/g,'').replace(/\u0000/g,'').trim();
+    if(text.length < 60) return 0;
+    const stamp = src+'::'+text.length+'::'+text.slice(0,80);
+    if(this.chunks.some(c=>c.stamp === stamp)) return 0;
+    const pieces = [];
+    let cur = '';
+    for(const para of text.split(/\n+/)){
+      const p = para.trim();
+      if(!p) continue;
+      if((cur + ' ' + p).length > 480){ if(cur) pieces.push(cur); cur = p; }
+      else cur = cur ? cur + ' ' + p : p;
+    }
+    if(cur) pieces.push(cur);
+    let added = 0;
+    for(const p of pieces){
+      if(p.length < 50) continue;
+      this.chunks.push({ id:'doc-'+Date.now()+'-'+Math.random().toString(36).slice(2,6), src, text:p, stamp, t:Date.now() });
+      added++;
+    }
+    while(this.chunks.length > 4000) this.chunks.splice(0, 400);
+    this.save();
+    return added;
+  }
 };
+async function trainFromFiles(files){
+  let ok=0, fail=0, chunks=0;
+  for(const f of files){
+    const name = f.name.toLowerCase();
+    if(!/\.(txt|md|csv|json|log|docx|doc|pdf)$/.test(name)) continue;
+    try{
+      const txt = await fileToText(f);
+      const n = DocBrain.addChunks(f.name, txt);
+      if(n){ chunks += n; ok++; } else if(txt.length > 60){ ok++; } else fail++;
+    }catch(e){ fail++; }
+  }
+  DocBrain.save();
+  updateDocsUI();
+  return {ok, fail, chunks};
+}
+ $('docDir').addEventListener('change', async e=>{
+  const files = [...e.target.files];
+  e.target.value = '';
+  if(!files.length) return;
+  toast('Leyendo '+files.length+' archivo(s)...');
+  const r = await trainFromFiles(files);
+  personaReply('Entrenamiento completado: '+r.ok+' documento(s) leídos ('+r.fail+' fallidos) y '+r.chunks+' fragmentos nuevos en mi memoria. Pregúntame algo de ellos con «busca en mis documentos ...». '+(r.fail ? 'Los fallidos suelen ser PDF complejos o .doc muy viejos: pásalos a .txt para el texto completo.' : ''));
+});
+async function loadDocsFromGitHub(){
+  if(!/^https/.test(location.protocol)) return;
+  const today = new Date().toDateString();
+  if(store.get('docsGH', null) === today && DocBrain.chunks.length) return;
+  try{
+    const idx = await jget('documentos/indice.json', 6000);
+    if(!Array.isArray(idx) || !idx.length) return;
+    let chunks = 0;
+    for(const f of idx){
+      try{
+        const name = String(f).toLowerCase();
+        if(/\.(txt|md|csv|json|log)$/.test(name)){
+          const r = await fetch('documentos/'+f);
+          if(r.ok) chunks += DocBrain.addChunks(String(f), await r.text());
+        } else if(name.endsWith('.docx') || name.endsWith('.pdf')){
+          const r = await fetch('documentos/'+f);
+          if(r.ok){
+            try{
+              const buf = await r.arrayBuffer();
+              chunks += DocBrain.addChunks(String(f), name.endsWith('.docx') ? await docxToText(buf) : await pdfToText(buf));
+            }catch(e){}
+          }
+        }
+      }catch(e){}
+    }
+    store.set('docsGH', today);
+    if(chunks){ DocBrain.save(); updateDocsUI(); toast('Entrenada con '+chunks+' fragmentos de tus documentos en GitHub'); }
+  }catch(e){}
+}
+const STOPW = new Set(['de','la','el','los','las','un','una','y','o','a','en','que','es','por','para','con','del','al','como','más','mas','sobre','su','sus','me','mi','te','se','lo','the']);
+function DocSearch(q){
+  const words = String(q).toLowerCase().split(/[^a-záéíóúñü0-9]+/).filter(w=>w.length>2 && !STOPW.has(w));
+  if(!words.length) return null;
+  let best=null, bestScore=0;
+  for(const c of DocBrain.chunks){
+    const low = c.text.toLowerCase();
+    let score = 0;
+    for(const w of words){
+      let i=0, n=0;
+      while((i = low.indexOf(w, i)) !== -1){ n++; i += w.length; if(n>3) break; }
+      score += n ? (n>1 ? 2 : 1) : 0;
+    }
+    if(score > bestScore){ bestScore = score; best = c; }
+  }
+  return bestScore >= 2 ? best : null;
+}
+function updateDocsUI(){
+  const el = $('docsInfo');
+  if(el) el.textContent = DocBrain.chunks.length
+    ? DocBrain.chunks.length+' fragmentos · '+DocBrain.sources().length+' documento(s) entrenados'
+    : 'Sin documentos entrenados todavía.';
+}
+ $('btnLoadDocs').onclick = ()=> $('docDir').click();
+ $('btnClearDocs').onclick = ()=>{ DocBrain.clear(); updateDocsUI(); toast('Documentos olvidados'); };
 
 /* =====================================================================
-   TAREAS · con recurrencia
+   TAREAS · con canales de aviso separados (web vs Telegram)
 ===================================================================== */
 let tasks = store.get('tasks', []);
 const timers = new Map();
@@ -1201,7 +1485,7 @@ function renderTasks(){
   $('taskBadge').textContent = pend; $('taskBadge').classList.toggle('on', pend>0);
   if('setAppBadge' in navigator){ pend ? navigator.setAppBadge(pend).catch(()=>{}) : navigator.clearAppBadge().catch(()=>{}); }
   if(!tasks.length){
-    list.innerHTML = '<div class="empty">AGENDA VACÍA<br>Dime: «recuérdame tomar agua todos los días a las 9 am»<br>o agrégala desde Telegram</div>';
+    list.innerHTML = '<div class="empty">AGENDA VACÍA<br>Dime: «recuérdame tomar agua todos los días a las 9 am»<br>o agrégala desde Telegram (avisará por Telegram)</div>';
     return;
   }
   const orden = [...tasks].sort((a,b)=>{
@@ -1211,13 +1495,15 @@ function renderTasks(){
   orden.forEach(tk=>{
     const row = document.createElement('div');
     row.className = 'task'+(tk.done?' done':'');
-    const srcTag = tk.source==='telegram' ? '<span class="tsrc tg">TG</span>' : '<span class="tsrc web">WEB</span>';
+    const via = tk.notifyVia || (tk.source==='telegram' ? 'telegram' : 'web');
+    const viaTag = via==='telegram' ? '<span class="tsrc tg">TG</span>' : '<span class="tsrc web">WEB</span>';
     const recTag = tk.recur ? '<span class="tsrc rec">'+recurLabel(tk.recur).toUpperCase()+'</span>' : '';
+    const notaVia = via==='telegram' ? ' · avisa Telegram' : (tk.owner && tk.owner!==DEVICE_ID ? ' · avisa otro equipo' : '');
     row.innerHTML = `
       <button class="tsmall tcheck" title="Completar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></button>
       <div class="tmain">
-        <div class="ttext">${esc(tk.text)}${srcTag}${recTag}</div>
-        <div class="twhen ${(!tk.done && tk.when && tk.when<Date.now() && !tk.fired)?'late':''}">${tk.fired?'· DISPARADA ':''}${fmtWhen(tk.when)}</div>
+        <div class="ttext">${esc(tk.text)}${viaTag}${recTag}</div>
+        <div class="twhen ${(!tk.done && tk.when && tk.when<Date.now() && !tk.fired && via==='web')?'late':''}">${tk.fired?'· DISPARADA ':''}${fmtWhen(tk.when)}${notaVia}</div>
       </div>
       <button class="tsmall tdel" title="Eliminar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/></svg></button>`;
     row.querySelector('.tcheck').onclick = ()=>{
@@ -1233,7 +1519,8 @@ function cancelTimer(id){ if(timers.has(id)){ clearTimeout(timers.get(id)); time
 function removeTask(id){ cancelTimer(id); tasks = tasks.filter(t=>t.id!==id); saveTasks(); }
 function addTask(text, when, opts){
   const tk = { id: Date.now()+'-'+Math.random().toString(36).slice(2,6), text, when, done:false, fired:false,
-    source:(opts&&opts.source)||'web', recur:(opts&&opts.recur)||null, pendingSync:true };
+    source:(opts&&opts.source)||'web', recur:(opts&&opts.recur)||null,
+    notifyVia:'web', owner:DEVICE_ID, pendingSync:true };
   tasks.push(tk); saveTasks(); renderTasks(); scheduleTask(tk);
   Sync.pushTask(tk).catch(()=>{});
   return tk;
@@ -1247,13 +1534,13 @@ function scheduleTask(tk){
 }
 function fireTask(tk){
   if(tk.done) return;
-  if(tk.fired && !tk.recur) return; // protección anti-doble
+  if(tk.fired && !tk.recur) return;
   ensureAudio(); alarmSound(); vibrate([200,100,200,100,300]);
   toast('Recordatorio: '+tk.text);
   notify('ANIA · Recordatorio', tk.text);
   bumpStat('fired');
   if(tk.recur){
-    reply('Recordatorio: '+tk.text+'. Te lo vuelvo a recordar '+recurLabel(tk.recur)+'. Di «tarea hecha» cuando quieras que deje de repetirse.', 'Atención. Recordatorio: '+tk.text);
+    reply('Recordatorio: '+tk.text+'. Te lo vuelvo a recordar '+recurLabel(tk.recur)+'. Di «tarea hecha» para que deje de repetirse.', 'Atención. Recordatorio: '+tk.text);
     tk.when = nextRecur(tk.when, tk.recur);
     tk.fired = false;
     scheduleTask(tk);
@@ -1276,7 +1563,7 @@ setInterval(()=>{ if($('sheet').classList.contains('open')) renderTasks(); }, 30
   const wv = $('taskWhen').value;
   addTask(text, wv ? new Date(wv).getTime() : null);
   $('taskInput').value=''; $('taskWhen').value='';
-  toast('Tarea añadida a la agenda');
+  toast('Tarea añadida · avisa aquí (WEB)');
 };
 function openSheet(){ closeMem(); closeDiary(); closeLib(); $('sheet').classList.add('open'); $('backdrop').classList.add('on'); renderTasks(); }
 function closeSheet(){ $('sheet').classList.remove('open'); $('backdrop').classList.remove('on'); }
@@ -1286,7 +1573,7 @@ function closeSheet(){ $('sheet').classList.remove('open'); $('backdrop').classL
 document.querySelectorAll('#dock .dbtn').forEach(b=> b.addEventListener('click', ()=> vibrate(12)));
 
 /* =====================================================================
-   SYNC
+   SYNC · respeta notifyVia: web avisa el dueño, telegram avisa el bot
 ===================================================================== */
 const Sync = {
   online:false, syncing:false,
@@ -1311,7 +1598,12 @@ const Sync = {
     try{
       const r = await fetch(`${CONFIG.BACKEND_URL}/ania/tasks`, {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ texto:tk.text, remindAt:tk.when?new Date(tk.when).toISOString():null, usuario:CONFIG.ANIA_USER, source:'web', recur:tk.recur||null })
+        body: JSON.stringify({
+          texto:tk.text,
+          remindAt: tk.when ? new Date(tk.when).toISOString() : null,
+          usuario:CONFIG.ANIA_USER, source:'web', recur:tk.recur||null,
+          notifyVia:'web', owner:DEVICE_ID
+        })
       });
       if(!r.ok) throw new Error('HTTP '+r.status);
       const st = await r.json();
@@ -1335,14 +1627,19 @@ const Sync = {
       let added = 0;
       for(const r of nuevas){
         const when = r.remindAt ? new Date(r.remindAt).getTime() : null;
-        const tk = { id:'srv-'+r.id, serverId:r.id, text:r.texto, when, done:!!r.done, fired:false, source:r.source||'telegram', recur:r.recur||null, pendingSync:false };
-        if(when && when < Date.now()){
+        const via = r.notifyVia || (r.source==='telegram' ? 'telegram' : 'web');
+        const owner = r.owner || null;
+        // ¿este dispositivo es quien debe disparar la alarma?
+        const disparaAqui = via==='web' && (!owner || owner===DEVICE_ID);
+        const tk = { id:'srv-'+r.id, serverId:r.id, text:r.texto, when, done:!!r.done, fired:false,
+          source:r.source||'telegram', recur:r.recur||null, notifyVia:via, owner, pendingSync:false };
+        if(disparaAqui && when && when < Date.now()){
           tk.fired = true;
           if(tk.recur){ tk.fired = false; tk.when = nextRecur(when, tk.recur); }
           else if(Date.now()-when > 2*36e5) tk.done = true;
         }
         tasks.push(tk);
-        if(!tk.done && !tk.fired && tk.when) scheduleTask(tk);
+        if(!tk.done && !tk.fired && tk.when && disparaAqui) scheduleTask(tk);
         added++;
       }
       for(const local of tasks){
@@ -1367,7 +1664,6 @@ const Sync = {
   }
 };
 Sync.check();
-/* --- initSyncLoop: definida ANTES de usarse (el bug era un archivo truncado) --- */
 async function initSyncLoop(){
   await Sync.fullSync();
   setInterval(()=>Sync.fullSync(), CONFIG.SYNC_INTERVAL);
@@ -1433,7 +1729,7 @@ function weatherText(g,d){
   s += ` Humedad ${c.relative_humidity_2m}%, viento ${Math.round(c.wind_speed_10m)} km/h.`;
   if(dy.temperature_2m_max) s += ` Hoy: máx ${Math.round(dy.temperature_2m_max[0])}° / mín ${Math.round(dy.temperature_2m_min[0])}°.`;
   if(rain!==undefined && rain!==null) s += ` Probabilidad de lluvia: ${rain}%.`;
-  if(/lluvia|llovizna|chubasco|tormenta/.test(desc)) s += '\nDía perfecto para café y lluvia sintética: di «pon lluvia» si quieres laambientación completa.';
+  if(/lluvia|llovizna|chubasco|tormenta/.test(desc)) s += '\nDía perfecto para café y lluvia sintética: di «pon lluvia» si quieres la ambientación completa.';
   return s;
 }
 function updateChip(g,d){
@@ -1462,7 +1758,7 @@ async function weatherForCity(name){
   }catch(e){ netFail('clima'); }
 }
 
-/* ---------- conocimiento + BIBLIOTECA OFFLINE ---------- */
+/* ---------- biblioteca offline ---------- */
 const Library = {
   index(){ return store.get('libIndex', []); },
   save(term, title, extract){
@@ -1507,7 +1803,7 @@ function renderLib(){
   L.querySelectorAll('[data-del]').forEach(b=> b.onclick = ()=>{ Library.remove(b.dataset.del); toast('Artículo eliminado'); });
 }
 function openLib(){ closeSheet(); closeMem(); closeDiary(); $('sheetLib').classList.add('open'); $('backdrop').classList.add('on'); renderLib(); }
-function closeLib(){ $('sheetLib').classList.remove('open'); $('backdrop').classList.remove('on'); }
+function closeLib(){ $('sheetLib').classList.remove('open'); }
  $('btnLib').onclick = openLib;
  $('closeLib').onclick = closeLib;
  $('clearLib').onclick = ()=>{
@@ -1547,12 +1843,13 @@ async function ddg(q){
   return null;
 }
 async function doSearch(term){
-  // OFFLINE: primero la biblioteca
   if(isOffline()){
     const lib = Library.find(term);
-    if(lib) return personaReply(lib.extract + '\n[de tu biblioteca offline · guardado el '+new Date(lib.t).toLocaleDateString('es-ES')+']');
+    if(lib) return personaReply(lib.extract + '\n[de tu biblioteca offline]');
+    const doc = DocSearch(term);
+    if(doc) return personaReply(doc.text.slice(0,600)+'\n[de tus documentos: '+doc.src+']');
     setPhase('thinking');
-    return personaReply('Sin conexión y no tengo «'+term+'» en mi biblioteca. Busca eso cuando haya red y quedará guardado para siempre, incluso sin internet.');
+    return personaReply('Sin conexión y no tengo «'+term+'» en biblioteca ni documentos. Busca eso cuando haya red y quedará guardado para siempre.');
   }
   setPhase('thinking');
   const w = await wikiSummary(term);
@@ -1602,7 +1899,7 @@ async function newsIntent(tipo){
   if(!items.length)
     return personaReply(isOffline()
       ? 'Sin conexión no puedo traer titulares. Mi rutina mañanera de noticias de anime también sufre...'
-      : 'No pude obtener noticias ahora mismo. Mi servidor de titulares debe estar tomando café. Inténtalo en unos segundos.');
+      : 'No pude obtener noticias ahora mismo. Mi servidor de titulares debe estar tomando café.');
   lastNews = items;
   let s = (tipo? 'Noticias · '+tipo : 'Últimas noticias')+':';
   items.forEach((n,i)=>{ s += '\n'+(i+1)+'. '+n.titulo+' ('+n.fuente+')'; });
@@ -1629,12 +1926,30 @@ async function translateIntent(text){
 }
 function netFail(what){
   personaReply(isOffline()
-    ? `Sin conexión ahora mismo: ${what} necesita internet. Pero sigo aquí contigo: agenda, biblioteca, cálculos, luna y charla.`
+    ? `Sin conexión ahora mismo: ${what} necesita internet. Pero sigo aquí: agenda, biblioteca, documentos, luna y charla.`
     : `No pude conectar con el servicio de ${what}. Revisa tu red e inténtalo otra vez.`);
 }
 
 /* =====================================================================
-   DIARIO DE ANIA
+   IA CONVERSACIONAL GRATUITA (Pollinations) · con la personalidad de Ania
+===================================================================== */
+const ANIA_AI_PROMPT = 'Eres Ania: 20 anios, asistente personal con personalidad propia, creada por Carlos Lorenzo Marros, egresada de la Academia Eden. Calida, analitica, humor seco; fan de isekai (Tensei Slime, Overlord, Re:Zero), zombies, cafe de especialidad, panaderia, astronomia y tecnologia. Respondes SIEMPRE en espanol, calida pero precisa, maximo 4 lineas, texto simple sin markdown. Nunca rompes el personaje.';
+async function pollinations(text){
+  try{
+    const prompt = encodeURIComponent(ANIA_AI_PROMPT + '\n\nUsuario: ' + text + '\nAnia:');
+    const c = new AbortController();
+    const t = setTimeout(()=>c.abort(), 18000);
+    const r = await fetch('https://text.pollinations.ai/' + prompt.slice(0, 2800), {signal:c.signal});
+    clearTimeout(t);
+    if(!r.ok) return null;
+    const txt = (await r.text()).trim();
+    if(txt.length >= 8 && !/^\s*(error|rate|forbidden|unauthorized)/i.test(txt)) return txt.slice(0, 700);
+  }catch(e){}
+  return null;
+}
+
+/* =====================================================================
+   DIARIO
 ===================================================================== */
 function bumpStat(k){
   const day = new Date().toISOString().slice(0,10);
@@ -1661,13 +1976,6 @@ const Diary = {
     if(data.length>40) data.splice(0, data.length-40);
     store.set('diary', data);
     if($('sheetDiary').classList.contains('open')) renderDiary();
-  },
-  addNote(txt){
-    const day = this.today();
-    const data = store.get('diary', []);
-    const e = data.find(x=>x.day===day);
-    if(e) e.text += '\n'+txt; else data.push({day, text:txt});
-    store.set('diary', data);
   }
 };
 function renderDiary(){
@@ -1682,7 +1990,7 @@ function renderDiary(){
     </div>`).join('');
 }
 function openDiary(){ closeSheet(); closeMem(); closeLib(); $('sheetDiary').classList.add('open'); $('backdrop').classList.add('on'); renderDiary(); }
-function closeDiary(){ $('sheetDiary').classList.remove('open'); $('backdrop').classList.remove('on'); }
+function closeDiary(){ $('sheetDiary').classList.remove('open'); }
  $('btnDiary').onclick = openDiary;
  $('closeDiary').onclick = closeDiary;
  $('clearDiary').onclick = ()=>{ store.set('diary', []); renderDiary(); toast('Diario borrado'); };
@@ -1781,7 +2089,7 @@ function backupExport(){
 };
 
 /* =====================================================================
-   PARSER + EXTRAS (conversor, reloj mundial, contraseñas)
+   PARSER + EXTRAS
 ===================================================================== */
 function parseWhen(t){
   const now = new Date();
@@ -1843,32 +2151,29 @@ const UNITS = {
   volumen:{l:1, litro:1, litros:1, ml:0.001, gal:3.785, galon:3.785, galón:3.785}
 };
 function tryConvert(low){
-  let m = low.match(/([\d.,]+)\s*°?\s*(celsius|cent[ií]grados?|c)\s+(?:a|en|a)\s+°?\s*(fahrenheit|f)\b/) ||
+  let m = low.match(/([\d.,]+)\s*°?\s*(celsius|cent[ií]grados?|c)\s+(?:a|en)\s+°?\s*(fahrenheit|f)\b/) ||
           low.match(/([\d.,]+)\s*°?\s*(fahrenheit|f)\s+(?:a|en)\s+°?\s*(celsius|cent[ií]grados?|c)\b/);
   if(m){
     const v = parseFloat(m[1].replace(',','.'));
     if(/f/.test(m[2])) return Math.round((v-32)*5/9*10)/10+' °C';
     return Math.round((v*9/5+32)*10)/10+' °F';
   }
-  m = low.match(/([\d.,]+)\s*(km|kil[oó]metros?|m(?:etros?)?|cm|mi(?:llas?)?|ft|pies?|kg|g(?:ramos?)?|lb|libras?|onzas?|l(?:itros?)?|ml|gal(?:o[ó]n|ones)?)\s+(?:a|en|as|a)\s+(km|kil[oó]metros?|m(?:etros?)?|cm|mi(?:llas?)?|ft|pies?|kg|g(?:ramos?)?|lb|libras?|onzas?|l(?:itros?)?|ml|gal(?:o[ó]n|ones)?)/);
+  m = low.match(/([\d.,]+)\s*(km|kil[oó]metros?|metros?|cm|mi(?:llas?)?|ft|pies?|kg|gramos?|libras?|onzas?|litros?|ml|gal(?:o[ó]n|ones)?)\s+(?:a|en)\s+(km|kil[oó]metros?|metros?|cm|mi(?:llas?)?|ft|pies?|kg|gramos?|libras?|onzas?|litros?|ml|gal(?:o[ó]n|ones)?)/);
   if(m){
     const v = parseFloat(m[1].replace(',','.'));
-    const from = m[2].replace(/^kil[oó]metros?$/,'km').replace(/^metros?$/,'m').replace(/^millas?$/,'mi').replace(/^milla$/,'mi')
-      .replace(/^pies?|ft$/,'pies').replace(/^gramos?$/,'g').replace(/^libras?|lb$/,'libras')
-      .replace(/^onzas?$/,'onzas').replace(/^litros?$/,'l').replace(/^galones?|gal[oó]n$/,'gal');
-    const to = m[3].replace(/^kil[oó]metros?$/,'km').replace(/^metros?$/,'m').replace(/^millas?$/,'mi').replace(/^milla$/,'mi')
-      .replace(/^pies?|ft$/,'pies').replace(/^gramos?$/,'g').replace(/^libras?|lb$/,'libras')
-      .replace(/^onzas?$/,'onzas').replace(/^litros?$/,'l').replace(/^galones?|gal[oó]n$/,'gal');
+    const norm = s => s.replace(/^kil[oó]metros?$/,'km').replace(/^metros?$/,'m').replace(/^millas?$/,'mi')
+      .replace(/^pies?$|^ft$/,'pies').replace(/^gramos?$/,'g').replace(/^libras?$|^lb$/,'libras')
+      .replace(/^onzas?$/,'onzas').replace(/^litros?$/,'l').replace(/^galones?$|^gal[oó]n$/,'gal');
+    const from = norm(m[2]), to = norm(m[3]);
     for(const dim in UNITS){
       const U = UNITS[dim];
       if(U[from]!==undefined && U[to]!==undefined){
-        const out = v*U[from]/U[to];
-        return v+' '+from+' = '+(Math.round(out*100)/100)+' '+to+' ['+dim+']';
+        return v+' '+from+' = '+(Math.round(v*U[from]/U[to]*100)/100)+' '+to+' ['+dim+']';
       }
     }
-    return 'No puedo convertir entre unidades de distinta magnitud (longitud ↔ masa ↔ volumen). El sistema tiene sus reglas, como cualquier isekai.';
+    return 'No puedo convertir entre magnitudes distintas (longitud ↔ masa ↔ volumen). El sistema tiene sus reglas.';
   }
-  m = low.match(/([\da-fA-F]+)\s+(?:a|en)\s+(binario|hexadecimal|decimal)/) || low.match(/(?:binario|hex)\s+(?:de\s+)?([\da-fA-F]+)/);
+  m = low.match(/([\da-fA-F]+)\s+(?:a|en)\s+(binario|hexadecimal)/) || low.match(/(?:binario|hex)\s+(?:de\s+)?([\da-fA-F]+)/);
   if(m){
     if(m[2] && /binario/.test(m[2])) return m[1]+' en binario: '+(+m[1]).toString(2);
     if(m[2] && /hex/.test(m[2])) return m[1]+' en hexadecimal: 0x'+(+m[1]).toString(16).toUpperCase();
@@ -1878,12 +2183,11 @@ function tryConvert(low){
   return null;
 }
 const CITIES_TZ = {
-  tokio:'Asia/Tokyo', japon:'Asia/Tokyo', seul:'Asia/Seoul', madrid:'Europe/Madrid', espania:'Europe/Madrid',
-  londres:'Europe/London', paris:'Europe/Paris', moscu:'Europe/Moscow', pekín:'Asia/Shanghai', china:'Asia/Shanghai',
-  'nueva york':'America/New_York', 'los angeles':'America/Los_Angeles', 'los angeles':'America/Los_Angeles',
-  'buenos aires':'America/Argentina/Buenos_Aires', argentina:'America/Argentina/Buenos_Aires',
-  mexico:'America/Mexico_City', 'ciudad de mexico':'America/Mexico_City', 'la habana':'America/Havana', cuba:'America/Havana',
-  bogota:'America/Bogota', colombia:'America/Bogota', santiago:'America/Santiago', chile:'America/Santiago'
+  tokio:'Asia/Tokyo', japon:'Asia/Tokyo', seul:'Asia/Seoul', madrid:'Europe/Madrid', londres:'Europe/London',
+  paris:'Europe/Paris', moscu:'Europe/Moscow', china:'Asia/Shanghai', 'nueva york':'America/New_York',
+  'los angeles':'America/Los_Angeles', 'buenos aires':'America/Argentina/Buenos_Aires',
+  mexico:'America/Mexico_City', 'la habana':'America/Havana', cuba:'America/Havana',
+  bogota:'America/Bogota', santiago:'America/Santiago'
 };
 function genPassword(len){
   len = Math.min(64, Math.max(8, len||16));
@@ -1916,10 +2220,7 @@ function renderMem(){
   Mind.d.gustos.forEach(g=> rows.push(['LE GUSTA', g]));
   Mind.d.hechos.forEach(h=> rows.push(['RECUERDA', h]));
   $('memStats').textContent = rows.length+' RECUERDOS';
-  if(!rows.length){
-    L.innerHTML = '<div class="empty">TODAVÍA NO ME HABLAS DE TI<br>Dime: «me llamo...» o «me gusta...»</div>';
-    return;
-  }
+  if(!rows.length){ L.innerHTML = '<div class="empty">TODAVÍA NO ME HABLAS DE TI<br>Dime: «me llamo...» o «me gusta...»</div>'; return; }
   L.innerHTML = rows.map((r,i)=>`
     <div class="memRow">
       <span class="k">${esc(r[0])}</span>
@@ -1939,9 +2240,8 @@ function closeMem(){ $('sheetMem').classList.remove('open'); }
   Mind.d = {nombre:null, gustos:[], hechos:[], visitas:0, primerDia:null, ultimoDia:null};
   Mind.save(); setOperator(); renderMem(); S.confirmWipe=false;
   toast('Memoria borrada');
-  personaReply('Vale... mente en blanco. Literalmente. ¿Empezamos de nuevo? Dime cómo te llamas.');
+  personaReply('Vale... mente en blanco. ¿Empezamos de nuevo? Dime cómo te llamas.');
 };
-
 function favIntent(low){
   if(!/(cu[aá]l|qu[eé])\s+(?:es\s+)?\s*(?:tu|tus)\b|te\s+gusta\s+m[aá]s|(?:dime|cu[eé]ntame)\s+tu\b|qu[eé]\s+\w+\s+te\s+gusta/.test(low)) return null;
   const F = [
@@ -1963,21 +2263,21 @@ function randomFact(){ return pick([...KB.cafe, ...KB.isekai, ...KB.zombies, ...
 /* =====================================================================
    EL GRAN CEREBRO
 ===================================================================== */
+let lastKB = null;
 async function respond(raw){
   const t = raw.trim();
   const low = t.toLowerCase();
   bumpStat('msgs');
 
-  /* contexto pendiente: ciudad */
   if(S.awaitingCity){
     if(/cancela|olvida|nada|deja/.test(low)){ S.awaitingCity=false; return personaReply('De acuerdo, clima cancelado.'); }
     if(low.split(/\s+/).length <= 4){ S.awaitingCity=false; return weatherForCity(low); }
     S.awaitingCity = false;
   }
 
-  /* ---- Akinator en curso ---- */
+  /* ---- Akinator ---- */
   if(AK.active){
-    if(/cancela|termina|salir|otra cosa|basta|stop/.test(low)){
+    if(/cancela|termina|salir|otra cosa|basta/.test(low)){
       AK.active=false; AK.await=false;
       return personaReply('Akinator cerrado. Cuando quieras la revancha: «adivina mi personaje».');
     }
@@ -1988,26 +2288,31 @@ async function respond(raw){
       }
       if(/^no\b|^nel|^incorrecto|^falso/.test(low)){
         AK.active=false; AK.await=false;
-        return personaReply('¿Cómo? Mis sospechas de detective quedan heridas de gravedad... estaba tan segura. Otra ronda cuando quieras redimirme: «adivina mi personaje».');
+        return personaReply('¿Cómo? Mis sospechas de detective quedan heridas de gravedad... estaba tan segura. Revancha cuando quieras: «adivina mi personaje».');
       }
       return personaReply('Necesito un sí o un no claro para cerrar el caso.');
     }
     if(/^s[ií]\b|^claro|^correcto|^exacto|^yes/.test(low)) return akAnswer(1);
     if(/^no\b|^nel|^nada/.test(low)) return akAnswer(0);
     if(/quiz[aá]|tal\s+vez|no\s+s[eé]|amb[oa]s/.test(low)) return akAnswer(0.5);
-    return personaReply('Estamos jugando: responde sí, no o quizá. O di «cancela» si quieres parar.');
+    return personaReply('Estamos jugando: responde sí, no o quizá. O di «cancela».');
   }
 
-  /* ---- ambiente procedural ---- */
+  /* ---- continuación del último tema ---- */
+  if(/cu[eé]ntame\s+m[aá]s|qu[eé]\s+m[aá]s|sigue\b|contin[uú]a/.test(low) && lastKB){
+    return personaReply(pick(lastKB) + ' ' + pick(['¿Sigo?','¿Quieres que profundice?','Tengo más de donde salió eso.']));
+  }
+
+  /* ---- ambiente ---- */
   if(/pon\s+(la\s+)?lluvia|lluvia\s+de\s+fondo|suena\s+la\s+lluvia/.test(low)){
     Ambient.start('lluvia');
-    return personaReply('Ahí va: lluvia contra la ventana, generada en vivo, gota a gota. Cero archivos, pura síntesis. Ahora sí estamos en mi elemento... ¿café con lluvia y una conversación?', 'Poniendo la lluvia. Mi sonido favorito.');
+    return personaReply('Ahí va: lluvia contra la ventana, generada en vivo, gota a gota. Cero archivos, pura síntesis. ¿Café con lluvia y una conversación?', 'Poniendo la lluvia. Mi sonido favorito.');
   }
   if(/pon\s+(la\s+)?cafeter|cafeter[ií]a\s+de\s+fondo|modo\s+cafeter/.test(low)){
     Ambient.start('cafeteria');
     return personaReply('Cafetería encendida: murmullo, tazas y burbujeo de cafetera. El Rincón del Slime en versión portátil. La butaca junto a la ventana es tuya.', 'Ambiente de cafetería activo.');
   }
-  if(/para\s+(la\s+)?(lluvia|cafeter|ambiente|sonido)|det[eé]n\s+(la\s+)?(lluvia|ambiente)|silencio\s+ambiente/.test(low)){
+  if(/para\s+(la\s+)?(lluvia|cafeter|ambiente|sonido)|det[eé]n\s+(la\s+)?(lluvia|ambiente)/.test(low)){
     const was = Ambient.mode;
     Ambient.stop();
     if(was) return personaReply('Ambiente detenido. Silencio de biblioteca municipal, sección fantasía.');
@@ -2029,7 +2334,7 @@ async function respond(raw){
   if(m){
     const g = m[1].replace(/[.?¡!]/g,'').trim();
     Mind.d.gustos.push(g); Mind.save();
-    return personaReply('Anotado: te gusta '+g+'. Memoria a largo plazo, no la de pez dorado. ¿Algo más que deba saber de ti?');
+    return personaReply('Anotado: te gusta '+g+'. Memoria a largo plazo, no la de pez dorado.');
   }
   if(/recuerda\s+que|no\s+olvides\s+que|apunta\s+que/.test(low)){
     const f = t.replace(/.*?(recuerda|no\s+olvides|apunta)\s+que\s*/i,'').replace(/[.?¡!]/g,'').trim();
@@ -2038,7 +2343,7 @@ async function respond(raw){
   if(/qu[eé]\s+sabes\s+de\s+m[ií]|qu[eé]\s+recuerdas\s+de\s+m[ií]|mi\s+perfil/.test(low)){
     openMem();
     const d = Mind.d;
-    if(!d.nombre && !d.gustos.length && !d.hechos.length) return personaReply('Todavía sé poco de ti... protagonista misterioso de capítulo uno. Dime tu nombre y qué te gusta.');
+    if(!d.nombre && !d.gustos.length && !d.hechos.length) return personaReply('Todavía sé poco de ti... protagonista misterioso de capítulo uno.');
     let s = 'Esto es lo que tengo de ti:\n';
     if(d.nombre) s += '· Te llamas '+d.nombre+'\n';
     d.gustos.forEach(g=> s += '· Te gusta '+g+'\n');
@@ -2054,7 +2359,7 @@ async function respond(raw){
     return personaReply('Hecho. Mente limpia como una taza recién lavada. ¿Quién eres de nuevo?');
   }
 
-  /* ---- tareas recurrentes y normales ---- */
+  /* ---- tareas ---- */
   if(/(recu[eé]rdame|recuerda|an[oó]tame|anota|ap[uú]ntame|apunta|ag[eé]ndame|agenda|nueva tarea|tarea:|recordatorio)/.test(low) && !/tareas?$|pendiente/.test(low)){
     const p = parseTask(t);
     const recur = parseRecur(low);
@@ -2066,24 +2371,27 @@ async function respond(raw){
     addTask(p.text, p.when, {recur});
     if(p.when && recur){
       const hora = new Date(p.when).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
-      return personaReply('Anotado: «'+p.text+'», '+recurLabel(recur)+' a las '+hora+'. Cada vez que te avise, se reagenda solo; di «tarea hecha» cuando quieras que deje de repetirse.', 'Anotado: '+p.text+', '+recurLabel(recur)+'.');
+      return personaReply('Anotado: «'+p.text+'», '+recurLabel(recur)+' a las '+hora+' · avisa AQUÍ en la web. Di «tarea hecha» para que deje de repetirse.', 'Anotado: '+p.text+', '+recurLabel(recur)+'.');
     }
     if(p.when){
       const d = new Date(p.when);
       const esManana = d.toDateString() !== new Date().toDateString();
       const cuando = fmtWhen(p.when).replace('· ','');
       const nota = (esManana && /(a\s+las?|alas)/.test(low)) ? ' Esa hora ya pasó hoy, así que te la agendo para mañana a la misma hora.' : '';
-      return personaReply('Anotado: «'+p.text+'». Te lo recuerdo '+cuando+' (mientras esté despierta, claro).'+nota, 'Anotado. Te recordaré: '+p.text+'.');
+      return personaReply('Anotado: «'+p.text+'». Te lo recuerdo '+cuando+' · avisa AQUÍ en la web (las de Telegram avisan allí).'+nota, 'Anotado. Te recordaré: '+p.text+'.');
     }
     return personaReply('Anotado: «'+p.text+'», sin hora. Dime «tarea hecha» cuando la completes.');
   }
   if(/(mis tareas|qu[eé]\s+tengo\s+pendiente|mi agenda|ver agenda|lista de tareas)/.test(low)){
     openSheet();
     const pend = tasks.filter(tk=>!tk.done);
-    if(!pend.length) return personaReply('Agenda vacía, como mi taza a las 7 de la mañana... inaceptable. Prueba: «recuérdame tomar agua todos los días a las 9 am».');
+    if(!pend.length) return personaReply('Agenda vacía, como mi taza a las 7 de la mañana... Prueba: «recuérdame tomar agua todos los días a las 9 am».');
     let s = 'Tienes '+pend.length+' pendiente'+(pend.length===1?'':'s')+':\n';
-    pend.slice(0,10).forEach((tk,i)=>{ s += (i+1)+'. '+tk.text+(tk.recur?' ('+recurLabel(tk.recur)+')':'')+(tk.when?' ('+fmtWhen(tk.when).replace('· ','')+')':'')+'\n'; });
-    return personaReply(s.trim(), 'Tienes '+pend.length+' tareas pendientes. Te muestro la agenda.');
+    pend.slice(0,10).forEach((tk,i)=>{
+      const via = tk.notifyVia || (tk.source==='telegram'?'telegram':'web');
+      s += (i+1)+'. '+tk.text+(tk.recur?' ('+recurLabel(tk.recur)+')':'')+(tk.when?' ('+fmtWhen(tk.when).replace('· ','')+')':'')+' ['+(via==='telegram'?'avisa Telegram':'avisa web')+']\n';
+    });
+    return personaReply(s.trim(), 'Tienes '+pend.length+' tareas pendientes.');
   }
   m = low.match(/(?:tarea|recordatorio)\s+(?:hecha|completada|terminada|lista)\s*(?:de\s+)?(.*)/);
   if(m){
@@ -2136,7 +2444,7 @@ async function respond(raw){
     return personaReply('Temporizador de '+label+' en marcha, y bloqueo la pantalla encendida para que no te pierdas el aviso.', 'Temporizador de '+label+' en marcha.');
   }
 
-  /* ---- hora, fecha, reloj mundial ---- */
+  /* ---- hora / reloj mundial / fecha ---- */
   if(/(qu[eé]\s+hora|hora\s+es|dime\s+la\s+hora|hora\s+actual)/.test(low)){
     const d = new Date();
     const h = d.getHours();
@@ -2154,32 +2462,31 @@ async function respond(raw){
     if(tz){
       try{
         const time = new Date().toLocaleTimeString('es-ES',{timeZone:tz, hour:'2-digit',minute:'2-digit'});
-        return personaReply('En '+city+' son las '+time+'. Si piensas en Tokio para un estreno de anime, avísame y calculamos la diferencia como corresponde.', 'En '+city+' son las '+time+'.');
+        return personaReply('En '+city+' son las '+time+'. Si es Tokio para un estreno de anime, avísame y calculamos la diferencia.', 'En '+city+' son las '+time+'.');
       }catch(e){}
     }
-    return personaReply('No tengo esa ciudad en mi mapa horario. Prueba con: Tokio, Madrid, Londres, Nueva York, Buenos Aires, La Habana...');
+    return personaReply('No tengo esa ciudad en mi mapa horario. Prueba: Tokio, Madrid, Londres, Nueva York, Buenos Aires, La Habana...');
   }
   if(/(qu[eé]\s+fecha|qu[eé]\s+d[ií]a|hoy\s+es|fecha\s+de\s+hoy)/.test(low))
     return personaReply('Hoy es '+new Date().toLocaleDateString('es-ES',{weekday:'long', day:'numeric', month:'long', year:'long'})+'.');
 
-  /* ---- luna y meteoros (offline) ---- */
-  if(/(qu[eé]\s+)?fase\s+(tiene\s+)?la\s+luna|luna\s+hoy|c[oó]mo\s+est[aá]\s+la\s+luna/.test(low)){
+  /* ---- astro ---- */
+  if(/fase\s+(tiene\s+)?la\s+luna|luna\s+hoy|c[oó]mo\s+est[aá]\s+la\s+luna/.test(low)){
     const mi = moonInfo();
     return personaReply('La luna está '+mi.phase+', con un '+mi.illum+'% de iluminación (edad del ciclo: '+mi.age+' días). '+
       (mi.phase==='llena' ? 'Luna llena... la noche perfecta para teorías zombie y una copa de vino tinto.' :
-       mi.phase==='nueva' ? 'Luna nueva: cielo oscuro ideal para buscar Orión o alguna galaxia lejana.' :
-       'Buen momento para mirar de reojo: las sombras de los cráteres se ven deliciosas.'),
+       mi.phase==='nueva' ? 'Luna nueva: cielo oscuro ideal para buscar Orión.' : 'Buen momento para mirar de reojo: las sombras de los cráteres se ven deliciosas.'),
       'La luna está '+mi.phase+', '+mi.illum+'% iluminada.');
   }
   if(/(lluvia|lluvias)\s+de\s+(estrellas|meteoros)|pr[oó]xima\s+lluvia|cu[aá]ndo\s+hay\s+meteoros/.test(low)){
     const s = nextShower();
     if(s){
-      const extra = s.name==='Perseidas' ? ' ¡Mis favoritas! Es como el festival de una temporada nueva, pero en el cielo. Recomendación oficial: madruga y mira hacia el noreste.' : '';
+      const extra = s.name==='Perseidas' ? ' ¡Mis favoritas! Es como el festival de una temporada nueva, pero en el cielo. Madruga y mira al noreste.' : '';
       return personaReply('La próxima lluvia de meteoros son las '+s.name+', el '+s.when.toLocaleDateString('es-ES',{day:'numeric',month:'long'})+' — faltan '+s.diff+' día'+(s.diff===1?'':'s')+'.'+extra,
         'Las próximas son las '+s.name+' en '+s.diff+' días.');
     }
   }
-  if(/cu[aá]nto\s+falta\s+para\s+tu\s+cumple|tu\s+cumplea?[ñn]os.*falta/.test(low)){
+  if(/cu[aá]nto\s+falta\s+para\s+tu\s+cumple/.test(low)){
     const n = new Date();
     let next = new Date(n.getFullYear(), P.cumple.m, P.cumple.d);
     if(next < n) next = new Date(n.getFullYear()+1, P.cumple.m, P.cumple.d);
@@ -2187,12 +2494,12 @@ async function respond(raw){
     return personaReply(dias===0 ? '¡ES HOY! 26 de enero: mi cumpleaños. Esta vez sí quiero ver el pastel.' : 'Faltan '+dias+' días para el 26 de enero... El pan de masa madre como regalo sigue en pie.', 'Faltan '+dias+' días para mi cumpleaños.');
   }
 
-  /* ---- clima y ubicación ---- */
+  /* ---- clima / ubicación ---- */
   if(/(clima|tiempo\s+hace|temperatura|va\s+a\s+llover|llueve|est[aá]\s+haciendo|hace\s+fr[ií]o|hace\s+calor)/.test(low)) return weatherIntent();
   if(/(d[oó]nde\s+estoy|mi\s+ubicaci[oó]n|localizaci[oó]n|mi\s+posici[oó]n|d[oó]nde\s+me\s+encuentro)/.test(low)){
     if(isOffline()){
       const g = geoCache();
-      if(g) return personaReply('Última ubicación conocida: '+g.city+(g.country?', '+g.country:'')+' ('+g.lat.toFixed(3)+', '+g.lon.toFixed(3)+'). Sin conexión no puedo actualizarla.');
+      if(g) return personaReply('Última ubicación conocida: '+g.city+(g.country?', '+g.country:'')+' ('+g.lat.toFixed(3)+', '+g.lon.toFixed(3)+').');
       return personaReply('Sin conexión no puedo localizarte. La buena noticia: la ubicación no cambia solo porque la mire.');
     }
     setPhase('thinking');
@@ -2220,7 +2527,7 @@ async function respond(raw){
   /* ---- biblioteca ---- */
   if(/(mi|la)\s+biblioteca|mis\s+art[ií]culos\s+guardados/.test(low)){
     openLib();
-    return personaReply(Library.index().length ? 'Tu biblioteca tiene '+Library.index().length+' artículo'+(Library.index().length===1?'':'s')+' guardados para lectura sin conexión. Toca cualquiera para que te lo lea.' : 'Tu biblioteca está vacía. Cada búsqueda que hagamos con internet se guardará sola aquí, lista para leerse en casa sin conexión.');
+    return personaReply(Library.index().length ? 'Tu biblioteca tiene '+Library.index().length+' artículo'+(Library.index().length===1?'':'s')+' para lectura sin conexión. Toca cualquiera para que te lo lea.' : 'Tu biblioteca está vacía. Cada búsqueda con internet se guardará sola aquí.');
   }
   if(/borra\s+(la\s+)?biblioteca|vac[ií]a\s+(la\s+)?biblioteca/.test(low)){
     Library.index().forEach(e=> store.del(e.id));
@@ -2229,17 +2536,39 @@ async function respond(raw){
     return personaReply('Biblioteca vaciada. Volveremos a llenarla en cuanto haya red.');
   }
 
+  /* ---- documentos / entrenamiento ---- */
+  if(/entrena(?:r)?\s+con\s+(?:mis\s+)?documentos|carga\s+(?:mis\s+)?documentos|lee\s+mis\s+documentos/.test(low)){
+    $('docDir').click();
+    return personaReply('Elige la carpeta «documentos» y empiezo a leer: txt, md, csv, docx, doc y pdf. Todo se queda en este dispositivo, nada sale de aquí.', 'Elige la carpeta y me entreno con ella.');
+  }
+  if(/(mis|qué)\s+documentos|qu[eé]\s+documentos\s+tienes|qu[eé]\s+has\s+le[ií]do/.test(low)){
+    const srcs = DocBrain.sources();
+    return personaReply(srcs.length
+      ? 'Tengo '+DocBrain.chunks.length+' fragmentos de '+srcs.length+' documento'+(srcs.length===1?'':'s')+': '+srcs.slice(0,8).join(', ')+'. Pregúntame con «busca en mis documentos ...».'
+      : 'Aún no tengo documentos entrenados. Dime «entrena con mis documentos» (carpeta local) o súbelos a la carpeta documentos/ del repo en GitHub con su indice.json.');
+  }
+  if(/olvida\s+(?:mis\s+)?documentos|borra\s+(?:mis\s+)?documentos/.test(low)){
+    DocBrain.clear(); updateDocsUI();
+    return personaReply('Documentos olvidados. Mente documental en blanco... aunque la personalidad se queda, esa es inseparable.');
+  }
+  m = low.match(/busca\s+en\s+(?:mis\s+)?documentos\s+(.+)/);
+  if(m){
+    const hit = DocSearch(m[1].trim());
+    if(hit) return personaReply(hit.text.slice(0,600)+'\n[de tus documentos: '+hit.src+']', hit.text.slice(0,250));
+    return personaReply('No encontré eso en tus documentos. Prueba con otras palabras clave del texto.');
+  }
+
   /* ---- diario ---- */
   if(/(mu[eé]strame|ense[ñn]a)(me)?\s+(tu\s+)?diario|qu[eé]\s+escribiste|tu\s+diario/.test(low)){
     openDiary();
     const data = store.get('diary', []);
-    return personaReply(data.length ? 'Ahí está mi diario: '+data.length+' entradas. Lo escribo con lo que de verdad pasa: mensajes, tareas, clima... no es ficción, es bitácora.' : 'Mi diario aún está en blanco. Escribiré la primera entrada hoy, con lo que vivamos.');
+    return personaReply(data.length ? 'Ahí está mi diario: '+data.length+' entradas con lo que de verdad pasa: mensajes, tareas, clima. Bitácora, no ficción.' : 'Mi diario aún está en blanco. Escribiré la primera entrada hoy.');
   }
 
   /* ---- backup ---- */
   if(/resp[aá]ldame|exporta\s+todo|haz\s+(un\s+)?backup|copia\s+de\s+seguridad/.test(low)){
     backupExport();
-    return personaReply('Backup completo generado: memoria, agenda, ajustes, diario y biblioteca en un solo archivo JSON. Guárdalo donde guardes cosas importantes... o donde guardes mangas valiosos, misma categoría.');
+    return personaReply('Backup completo generado: memoria, agenda, ajustes, diario, biblioteca y documentos en un solo JSON. Categoría: cosas tan valiosas como mangas firmados.');
   }
   if(/restaura(?:\s+backup)?|importa\s+(el\s+)?backup/.test(low)){
     $('importFile').click();
@@ -2263,7 +2592,7 @@ async function respond(raw){
       return personaReply('No tengo acceso directo a «'+k+'», pero dime «busca '+k+'» y veo qué encuentro.');
   }
 
-  /* ---- búsqueda / conocimiento / traducción ---- */
+  /* ---- búsqueda / traducción ---- */
   m = low.match(/(?:busca|buscar|b[uú]scame|informaci[oó]n\s+(?:de|sobre)|inf[oó]rmate\s+sobre)\s+(.+)/);
   if(m) return doSearch(m[1].trim());
   m = low.match(/(?:qui[eé]n\s+(?:es|fue)|qu[eé]\s+(?:es|fue|significa)|definici[oó]n\s+de|def(?:ine|ineme)?\s+|h[aá]blame\s+(?:de|sobre)|dime\s+(?:de|sobre)|explica(?:me)?\s+(?:qu[eé]\s+es)?)(.+)/);
@@ -2271,7 +2600,7 @@ async function respond(raw){
   const tr = await translateIntent(low);
   if(tr !== null) return;
 
-  /* ---- matemáticas y conversiones ---- */
+  /* ---- matemáticas / conversiones / contraseñas ---- */
   const mm = safeMath(low);
   if(mm){
     const val = mm.val.toLocaleString('es-ES');
@@ -2279,12 +2608,10 @@ async function respond(raw){
   }
   const conv = tryConvert(low);
   if(conv) return personaReply(conv);
-
-  /* ---- generador de contraseñas ---- */
   m = low.match(/genera(?:\s+una)?\s+contrase[ñn]a(?:\s+(?:de\s+)?(\d{1,2}))?/);
   if(m){
     const pw = genPassword(m[1] ? +m[1] : 16);
-    return personaReply('Contraseña generada con entropía criptográfica real (crypto.getRandomValues, nada sale de este dispositivo):\n'+pw+'\nGuárdala bien: ni yo la guardo, es de un solo uso visual.', 'Contraseña generada. Cópiala del chat.');
+    return personaReply('Contraseña con entropía criptográfica real (crypto.getRandomValues, nada sale de este dispositivo):\n'+pw+'\nNi yo la guardo: es de un solo uso visual.', 'Contraseña generada. Cópiala del chat.');
   }
 
   /* ---- afecto ---- */
@@ -2296,6 +2623,10 @@ async function respond(raw){
       'Un placer. Para eso estoy... y porque me caes bien, seamos sinceros.',
       'Cuando quieras. Y recuerda: sonríe, mañana será bonito.'
     ]));
+
+  /* ---- ENTRENAMIENTO INTERNO (tu JSON): prioridad sobre lo demás ---- */
+  const trained = trainMatch(low);
+  if(trained) return personaReply(trained);
 
   /* ---- empatía ---- */
   if(/(estoy|me\s+siento|ando|me\s+va|voy)\s+\w+|tengo\s+(miedo|problema)/.test(low)){
@@ -2311,7 +2642,7 @@ async function respond(raw){
     return personaReply('El 26 de enero. Ese día incluso comparto el tiramisú.');
   if(/(qu[ié]n\s+eres|c[oó]mo\s+te\s+llamas|pres[eé]ntate)/.test(low))
     return personaReply(pick([
-      'Soy Ania: 20 años, graduada de la Academia Eden, especialista en isekai, zombies, café de especialidad, astronomía y tecnología. Toda mi esencia vive aquí mismo, en tu dispositivo. '+P.lema(),
+      'Soy Ania: 20 años, graduada de la Academia Eden, especialista en isekai, zombies, café de especialidad, astronomía y tecnología. Toda mi esencia vive aquí, en tu dispositivo. '+P.lema(),
       'Ania, para servirte. Analítica cuando toca, entusiasta cuando se puede, y con una teoría zombie para cada situación cotidiana.'
     ]));
   if(/jarvis/i.test(low))
@@ -2331,14 +2662,14 @@ async function respond(raw){
   if(/c[oó]mo\s+est[aá]s|qu[eé]\s+tal\s+est[aá]s|c[oó]mo\s+te\s+va/.test(low)){
     const g = geoCache();
     return personaReply('Sobreviviendo, como siempre... pero bien: '+(isOffline()?'núcleo local sin red':'con conexión estable')+
-      (g?', clima de '+g.city:'')+', '+taskPending()+' pendientes, '+Library.index().length+' artículos en biblioteca y '+Mind.d.visitas+' sesiones juntos. ¿Y tú? Cuento completo, no el «bien» automático.');
+      (g?', clima de '+g.city:'')+', '+taskPending()+' pendientes, '+Library.index().length+' artículos en biblioteca, '+DocBrain.chunks.length+' fragmentos entrenados y '+Mind.d.visitas+' sesiones juntos. ¿Y tú? Cuento completo, no el «bien» automático.');
   }
   if(/(h[aá]blame\s+de\s+ti|tu\s+historia|la\s+academia|eden)/.test(low))
     return personaReply('Me gradué de la Academia Eden... conservo esa nostalgia como quien guarda un manga en buen estado. Ahí aprendí que las pequeñas cosas valen más que los grandes discursos: un pan fresco, un café bien hecho, un atardecer. Todo lo demás lo construí yo: mi masa madre, mi blog anónimo, esta versión de mí.');
   const fav = favIntent(low);
   if(fav) return personaReply(fav);
   if(/qu[eé]\s+te\s+gusta\s+hacer|tu\s+tiempo\s+libre|hobbies|pasatiempos/.test(low))
-    return personaReply('Colecciono figuras de anime (Overlord y Tensei Slime) y tazas únicas. Horneo pan desde cero, hago foami, encuaderno libros, escribo análisis en un blog anónimo y camino mirando las nubes: pensar en movimiento es mi versión de meditar.');
+    return personaReply('Colecciono figuras de anime (Overlord y Tensei Slime) y tazas únicas. Horneo pan desde cero, hago foami, encuaderno libros, escribo análisis en un blog anónimo y camino mirando las nubes.');
 
   /* ---- charla temática ---- */
   const TOPICS = [
@@ -2352,42 +2683,51 @@ async function respond(raw){
     [/m[uú]sica|artista|canci[oó]n|banda\s+sonora|compositor/, KB.musica, 'música']
   ];
   if(/overlord.*slime|slime.*overlord/.test(low))
-    return personaReply('¡Vaya pregunta! Dos caras de la misma moneda: Rimuru construye una sociedad para monstruos buscando paz; Ainz, atrapado en su esqueleto, expande su dominio entre la paranoia y la lealtad. Ambos exploran la soledad del poder absoluto, en direcciones opuestas. ¿Tú con cuál te quedas?');
+    return personaReply('¡Vaya pregunta! Dos caras de la misma moneda: Rimuru construye una sociedad para monstruos buscando paz; Ainz, atrapado en su esqueleto, expande su dominio entre la paranoia y la lealtad. ¿Tú con cuál te quedas?');
   if(/cu[eé]ntame\s+algo|dime\s+algo\s+(interesante|curioso)/.test(low))
-    return personaReply(randomFact()+' ¿Quieres otro?');
-  if(/dime\s+una\s+frase|una\s+frase\s+c[eé]lebre|frases\s+c[eé]lebres/.test(low))
+    return personaReply(randomFact()+' Di «cuéntame más» si quieres otro.');
+  if(/dime\s+una\s+frase|una\s+frase\s+c[eé]lebre/.test(low))
     return personaReply(freshPick('quotes', QUOTES));
   for(const [re, kb, label] of TOPICS){
     if(re.test(low)){
+      lastKB = kb;
       const st = store.get('dayStats', {topics:[]});
-      if(st.topics) { st.topics.push(label); store.set('dayStats', st); }
-      return personaReply(pick(kb) + ' ' + pick(['¿Y tú qué opinas?','Puedo desglosarlo más si quieres.','Tengo más teoría de dónde salió esa.']));
+      if(st.topics){ st.topics.push(label); store.set('dayStats', st); }
+      return personaReply(pick(kb) + ' Di «cuéntame más» si quieres seguir.');
     }
   }
 
+  /* ---- DOCUMENTOS entrenados: consulta general ---- */
+  const docHit = DocSearch(low);
+  if(docHit) return personaReply(docHit.text.slice(0,600)+'\n[de tus documentos: '+docHit.src+']', docHit.text.slice(0,250));
+
   /* ---- sistema ---- */
   if(/(qu[eé]\s+sabes\s+hacer|ayuda|comandos|help|funciones|para\s+qu[eé]\s+sirves)/.test(low)){
-    renderChips(['¿Qué hora es?','¿Cómo está el clima?','¿Qué fase tiene la luna?','Pon lluvia','Adivina mi personaje','Recuérdame tomar agua todos los días a las 9 am','Cuéntame un secreto','Mi biblioteca']);
+    renderChips(['Ania, pon lluvia','Siempre escúchame','Entrena con mis documentos','Adivina mi personaje','¿Qué fase tiene la luna?','Recuérdame tomar agua todos los días a las 9 am','Mis documentos','Cuéntame un secreto']);
     return personaReply(
       'Mis sistemas operativos:\n'+
-      '· Hora, fecha y reloj mundial — «¿qué hora es?», «hora en Tokio»\n'+
+      '· Escucha activa — «siempre escúchame», luego «Ania, ...»\n'+
+      '· Agenda con canales — «recuérdame X a las 10:30 am» (web) o desde Telegram (avisa allí)\n'+
+      '· Documentos — «entrena con mis documentos», «busca en mis documentos ...», «mis documentos»\n'+
+      '· Entrenamiento fijo — edita el JSON interno del final del HTML\n'+
+      '· Hora, fecha y reloj mundial — «hora en Tokio»\n'+
       '· Clima y ubicación — «¿cómo está el clima?», «¿dónde estoy?»\n'+
-      '· Búsqueda — «busca...», «¿quién es...?» (guardada en biblioteca offline)\n'+
-      '· Biblioteca — «mi biblioteca»: todo lo buscado, legible sin internet\n'+
-      '· Noticias — «noticias de hoy», «abre la noticia 2»\n'+
-      '· Traducción — «traduce hola al japonés»\n'+
-      '· Cálculos y conversión — «calcula 12*9+3», «convierte 5 km a millas», «255 a binario»\n'+
-      '· Agenda recurrente — «recuérdame X todos los días a las 9», «pospón 10 minutos», «limpia la agenda»\n'+
-      '· Temporizadores — «temporizador de 5 minutos»\n'+
-      '· Memoria — «me llamo...», «me gusta...», «¿qué sabes de mí?»\n'+
-      '· Astro — «¿qué fase tiene la luna?», «próxima lluvia de estrellas»\n'+
-      '· Ambiente — «pon lluvia», «pon la cafetería», «para la lluvia»\n'+
-      '· Juego — «adivina mi personaje»\n'+
-      '· Diario — «muéstrame tu diario»\n'+
-      '· Backup — «respáldame», «restaura»\n'+
-      '· Extras — «genera una contraseña», «dime una frase», «sincroniza»\n'+
-      '· Voz — «silencio» / «habla»\n'+
-      '· Pantalla — «mantén la pantalla encendida»');
+      '· Búsqueda (guarda en biblioteca offline) — «busca...», «¿quién es...?»\n'+
+      '· IA conversacional online (mi otra yo, Pollinations) para lo que no sé\n'+
+      '· Traducción, cálculos, conversiones, contraseñas\n'+
+      '· Astro — luna, meteoros, cumpleaños\n'+
+      '· Ambiente — «pon lluvia», «pon la cafetería»\n'+
+      '· Akinator — «adivina mi personaje»\n'+
+      '· Diario, memoria, backup — «muéstrame tu diario», «respáldame»\n'+
+      '· Voz — «silencio» / «habla» · «cuéntame más» continúa el tema');
+  }
+  if(/siempre\s+esc[uú]chame|escucha\s+siempre|modo\s+siempre/.test(low)){
+    setAlways(true);
+    return personaReply('Escucha activa. Di «Ania» antes de cada orden y acudo, incluso si estoy hablando (me callo y te escucho). Para descanso: «deja de escuchar».');
+  }
+  if(/deja\s+de\s+escuchar|apaga\s+la\s+escucha/.test(low)){
+    setAlways(false);
+    return personaReply('Escucha desactivada. Vuelvo al micrófono manual: tócalo cuando quieras hablar.');
   }
   if(/(silencio|mute|c[aá]llate|apaga\s+la\s+voz)/.test(low)){
     S.muted = true; store.set('muted', true);
@@ -2396,19 +2736,13 @@ async function respond(raw){
   }
   if(/(habla|activa\s+la\s+voz|des\s+silencio)/.test(low)){
     S.muted = false; store.set('muted', false);
-    return reply('Voz reactivada. ¿Extrañaste mi voz? Yo la tuya también.');
+    return reply('Voz reactivada. ¿Extrañaste mi voz? Yo la tuya también, para qué mentir.');
   }
-  if(/mant[eé]n\s+(la\s+)?pantalla|pantalla\s+encendida|no\s+apagues\s+la\s+pantalla/.test(low)){
-    wakeOn();
-    return personaReply('Pantalla bloqueada encendida. Cuando quieras liberarla: «puedes apagar la pantalla».');
-  }
-  if(/(puedes\s+)?apaga\s+la\s+pantalla|libera\s+la\s+pantalla/.test(low)){
-    wakeOff();
-    return personaReply('Pantalla liberada, vuelve a dormirse cuando quiera.');
-  }
-  if(/sincroniza|sincroniza\s+la\s+agenda|s[ií]ncron/.test(low)) return manualSync();
-  if(/diagn[oó]stico|estado\s+del\s+sistema/.test(low)){ runDiag(); openModal('settingsModal'); return personaReply('Escaneo en marcha. Te muestro el diagnóstico completo.'); }
-  if(/instal|desplieg|github/.test(low)){ openModal('installModal'); return personaReply('Te muestro cómo llevarme a GitHub Pages o empaquetarme para tu uso offline.'); }
+  if(/mant[eé]n\s+(la\s+)?pantalla|pantalla\s+encendida/.test(low)){ wakeOn(); return personaReply('Pantalla bloqueada encendida. Liberar: «puedes apagar la pantalla».'); }
+  if(/apaga\s+la\s+pantalla|libera\s+la\s+pantalla/.test(low)){ wakeOff(); return personaReply('Pantalla liberada.'); }
+  if(/sincroniza|s[ií]ncron/.test(low)) return manualSync();
+  if(/diagn[oó]stico|estado\s+del\s+sistema/.test(low)){ runDiag(); openModal('settingsModal'); return personaReply('Escaneo en marcha.'); }
+  if(/instal|desplieg|github/.test(low)){ openModal('installModal'); return personaReply('Te muestro cómo llevarme a GitHub Pages o empaquetarme.'); }
 
   /* ---- ocio ---- */
   if(/adivina\s+(mi\s+)?personaje|juguemos\s+a\s+adivinar|akinator/.test(low)){ akStart(); return; }
@@ -2436,14 +2770,23 @@ async function respond(raw){
   if(isOffline()){
     const lib = Library.find(low.replace(/^(?:por\s+favor|ania)\s*/,''));
     if(lib) return personaReply(lib.extract + '\n[de tu biblioteca offline]');
+    const doc2 = DocSearch(low);
+    if(doc2) return personaReply(doc2.text.slice(0,600)+'\n[de tus documentos: '+doc2.src+']');
     for(const [re, kb] of TOPICS) if(re.test(low)) return personaReply(pick(kb));
     return personaReply(pick([
-      'Sin conexión y sin eso en mi biblioteca. Cuando haya red, dime «busca '+low.slice(0,30)+'» y quedará guardado para siempre.',
-      'Eso requeriría red y hoy ando en modo núcleo local. Tenemos de sobra: luna, meteoros, Akinator, lluvia sintética, charla de sobremesa...'
+      'Sin conexión y sin eso en biblioteca ni documentos. Cuando haya red, dilo y queda guardado para siempre.',
+      'Modo núcleo local: sin red no puedo consultarlo. Tenemos de sobra: luna, meteoros, Akinator, lluvia sintética, tus documentos, charla...'
     ]));
   }
   setPhase('thinking');
   const q = low.replace(/^(?:por\s+favor|ania)\s*/,'').replace(/\?+$/,'');
+  // 1) IA conversacional con personalidad (gratuita, sin clave)
+  const ai = await pollinations(q);
+  if(ai) return personaReply(ai);
+  // 2) documentos propios
+  const doc3 = DocSearch(q);
+  if(doc3) return personaReply(doc3.text.slice(0,600)+'\n[de tus documentos: '+doc3.src+']');
+  // 3) Wikipedia
   const w = await wikiSummary(q);
   if(w){
     let txt = w.extract.slice(0,520);
@@ -2457,7 +2800,7 @@ async function respond(raw){
       personaReply('Sobre eso, Wikipedia tiene: «'+hits[0].title+'» — '+hits[0].snippet.slice(0,180)+'...\nDime «información sobre '+hits[0].title+'» y lo desarrollo.');
     else
       personaReply(pick([
-        'No tengo una respuesta fiable para eso... se me escapa más que el final de un anime de Gainax. Prueba «busca '+q+'».',
+        'Ni mi otra yo ni Wikipedia supieron eso... se me escapa más que el final de un anime de Gainax. Reformúlalo.',
         'Eso no lo domino aún. Reformúlalo o pídeme «información sobre '+q+'».'
       ]));
   }
@@ -2490,19 +2833,20 @@ async function send(text){
 });
 
 /* =====================================================================
-   TERMINAL REAL · historial con flechas + Tab autocomplete + atajos
+   TERMINAL REAL
 ===================================================================== */
 const COMMANDS = [
   '¿qué hora es?','¿qué fecha es hoy?','hora en Tokio','¿cómo está el clima?','¿dónde estoy?',
   'clima en ','busca ','¿quién es ','información sobre ','noticias','abre la noticia ','traduce ',
-  'calcula ','convierte ','a binario','genera una contraseña','recuérdame ','todos los días','mis tareas',
+  'calcula ','convierte ','genera una contraseña','recuérdame ','todos los días','mis tareas',
   'tarea hecha','borra la tarea de ','limpia la agenda','pospón 10 minutos','temporizador de ',
   'me llamo ','me gusta ','recuerda que ','¿qué sabes de mí?','olvídate de todo','mi biblioteca',
-  'borra la biblioteca','muéstrame tu diario','respáldame','restaura','abre youtube','abre el mapa',
-  'diagnóstico','silencio','habla','instálame','ayuda','chiste','consejo','cuéntame un secreto',
-  'cuéntame algo','dime una frase','¿cuál es tu café favorito?','pon lluvia','pon la cafetería',
+  'muéstrame tu diario','respáldame','restaura','abre youtube','abre el mapa','diagnóstico',
+  'silencio','habla','instálame','ayuda','chiste','consejo','cuéntame un secreto','cuéntame algo',
+  'cuéntame más','dime una frase','¿cuál es tu café favorito?','pon lluvia','pon la cafetería',
   'para la lluvia','¿qué fase tiene la luna?','próxima lluvia de estrellas','adivina mi personaje',
-  'sincroniza','mantén la pantalla encendida'
+  'siempre escúchame','deja de escuchar','entrena con mis documentos','busca en mis documentos ',
+  'mis documentos','olvida mis documentos','sincroniza','mantén la pantalla encendida'
 ];
 let histIdx = -1, tabMatches = null;
 function pushHistory(v){
@@ -2531,8 +2875,7 @@ function pushHistory(v){
     else { list = COMMANDS.filter(c=>c.toLowerCase().startsWith(v.toLowerCase())); }
     if(!list.length){ toast('Sin coincidencias para «'+v+'»'); return; }
     tabMatches = list;
-    const next = (idxIn+1) % list.length;
-    ui.value = list[(idxIn>=0 ? next : 0)];
+    ui.value = list[(idxIn>=0 ? (idxIn+1)%list.length : 0)];
   }
 });
 addEventListener('keydown', e=>{
@@ -2554,7 +2897,7 @@ function blobManifest(){
     const icon = 'data:image/svg+xml,'+encodeURIComponent(svg);
     const man = {
       name:'ANIA · Núcleo Personal', short_name:'ANIA',
-      description:'Asistente personal con voz, personalidad propia, login, biblioteca offline y agenda. Funciona sin conexión.',
+      description:'Asistente personal con voz, personalidad, login, entrenamiento con documentos y modo offline.',
       start_url: location.href.split('#')[0],
       scope: location.href.replace(/[^/]*$/,'') || location.href,
       display:'standalone', orientation:'portrait', lang:'es',
@@ -2654,7 +2997,7 @@ self.addEventListener('fetch', e => {
 `;
   const manifest = JSON.stringify({
     name:'ANIA · Núcleo Personal', short_name:'ANIA',
-    description:'Asistente personal con voz, personalidad, login, biblioteca offline y agenda. Funciona offline.',
+    description:'Asistente personal con voz, personalidad, login, entrenamiento con documentos y modo offline.',
     start_url:'./', scope:'./', display:'standalone', orientation:'portrait', lang:'es',
     background_color:'#040806', theme_color:'#040806',
     icons:[
@@ -2670,24 +3013,20 @@ self.addEventListener('fetch', e => {
 <circle cx="256" cy="236" r="15" fill="#040806"/>
 <text x="256" y="452" font-family="monospace" font-size="58" fill="${e.acc}" text-anchor="middle" letter-spacing="14">ANIA</text>
 </svg>`;
-  const readme = `# ANIA · Núcleo Personal (v5.0)
+  const readme = `# ANIA · Núcleo Personal (v5.1)
 
-Asistente personal en un solo archivo HTML: voz, personalidad propia, login,
-memoria, biblioteca offline, agenda recurrente, diario, astro offline, ambiente
-procedural (lluvia/cafetería), Akinator isekai, backup total y modo offline.
+Asistente en un solo HTML: voz con palabra de activación, personalidad, login,
+biblioteca offline, agenda con canales separados (web/Telegram), entrenamiento
+con documentos (carpeta documentos/ + indice.json), IA conversacional gratuita,
+diario, astro offline y backup total.
 
-## Desplegar en GitHub Pages
-1. Repo nuevo → **Add file → Upload files** → arrastra los 5 archivos.
-2. **Settings → Pages** → Branch: \`main\` / \`(root)\` → **Save**.
-3. Ábrela en el móvil (Chrome) → menú → **Instalar aplicación**.
-
-## Login
-https://raw.githubusercontent.com/calm291094-del/meditech-tienda/main/usuarios.json
-(la lista se cachea: el login funciona sin conexión)
+## Desplegar
+1. Repo → sube los 5 archivos + carpeta documentos/ (con indice.json).
+2. Settings → Pages → main / root.
+3. Móvil (Chrome) → Instalar aplicación.
 
 ## Créditos
 Ania fue creada por Carlos Lorenzo Marros.
-APIs públicas sin clave: Open-Meteo, Nominatim, Wikipedia, DuckDuckGo (JSONP), MyMemory.
 `;
   const files = [
     {name:'index.html', data: enc.encode(ORIGINAL_HTML)},
@@ -2705,16 +3044,14 @@ APIs públicas sin clave: Open-Meteo, Nominatim, Wikipedia, DuckDuckGo (JSONP), 
   toast('Copia offline descargada');
 };
 
-/* ---------- modales ---------- */
+/* ---------- modales / ajustes ---------- */
 function openModal(id){ $(id).classList.add('on'); }
 document.querySelectorAll('.overlay').forEach(ov=>{
   ov.addEventListener('click', e=>{ if(e.target===ov) ov.classList.remove('on'); });
   ov.querySelectorAll('[data-close]').forEach(b=> b.onclick = ()=> ov.classList.remove('on'));
 });
  $('btnInstall').onclick = ()=> openModal('installModal');
- $('btnSettings').onclick = ()=>{ renderVoiceSelect(); fillSess(); openModal('settingsModal'); };
-
-/* ---------- ajustes ---------- */
+ $('btnSettings').onclick = ()=>{ renderVoiceSelect(); fillSess(); updateDocsUI(); openModal('settingsModal'); };
 function renderVoiceSelect(){
   const sel = $('voiceSelect');
   if(!voices.length){ sel.innerHTML = '<option>No hay voces disponibles</option>'; return; }
@@ -2731,6 +3068,8 @@ function renderVoiceSelect(){
  $('rateRange').value = S.rate; $('rateOut').value = S.rate;
  $('pitchRange').value = S.pitch; $('pitchOut').value = S.pitch;
  $('testVoice').onclick = ()=> speak('Sistemas verificados. Soy Ania... y sí, el café ya está listo.');
+ $('btnAlways').onclick = ()=> setAlways(!alwaysOn);
+updateVoiceUI();
  $('forgetGeo').onclick = ()=>{
   store.del('geo');
   Object.keys(localStorage).filter(k=>k.startsWith('ania_wx_')).forEach(k=>localStorage.removeItem(k));
@@ -2747,15 +3086,16 @@ async function runDiag(){
   rows.push('Red: '+(isOffline()?'sin conexión':'conectado'));
   rows.push('Backend propio: '+(Sync.online?'operativo':'no disponible'));
   rows.push('Sesión: '+(Session?Session.name+' ('+Session.role+')':'invitado'));
+  rows.push('Dispositivo (canal de avisos): '+DEVICE_ID.slice(0,12));
+  rows.push('Escucha activa: '+(alwaysOn?'sí · di «Ania»':'no'));
   rows.push('Ambiente: '+(Ambient.mode||'silencio'));
   rows.push('Luna: '+moonInfo().phase+' ('+moonInfo().illum+'%)');
+  rows.push('Entrenamiento: '+DocBrain.chunks.length+' fragmentos · '+TRAINING.length+' respuestas fijas');
   rows.push('Biblioteca: '+Library.index().length+' artículos');
   rows.push('Diario: '+store.get('diary', []).length+' entradas');
   rows.push('Voz: '+(S.muted?'silenciada':'activa')+(S.voice?' · '+S.voice.name:''));
   rows.push('Agenda: '+taskPending()+' pendientes · '+tasks.filter(t=>t.recur).length+' recurrentes');
-  rows.push('Memoria: '+(Mind.d.nombre?Mind.d.nombre:'sin nombre')+' · '+Mind.d.visitas+' sesiones');
   if(performance.memory) rows.push('RAM JS: '+(performance.memory.usedJSHeapSize/1048576).toFixed(1)+' MB');
-  rows.push('Pantalla: '+screen.width+'×'+screen.height+' · '+window.devicePixelRatio+'x');
   rows.push('Sesión activa: '+Math.round((Date.now()-START_TIME)/60000)+' min');
   try{
     if(navigator.getBattery){
@@ -2771,15 +3111,12 @@ async function runDiag(){
    ARRANQUE
 ===================================================================== */
 const BOOTLINES = [
-  '» ANIA KERNEL v5.0 — núcleo personal',
-  '» compilando módulos de red ............ OK',
-  '» parche CORS/JSONP en fuentes ........ OK',
-  '» motor de voz sintetizada ............ OK',
-  '» núcleo de personalidad: 47 memorias . OK',
-  '» ambiente procedural (lluvia/café) ... OK',
-  '» biblioteca offline + diario ......... OK',
-  '» astro local: luna y meteoros ........ OK',
-  '» agenda recurrente: reprogramación ... OK',
+  '» ANIA KERNEL v5.1 — núcleo personal',
+  '» módulos de red y voz ............... OK',
+  '» escucha continua: palabra «Ania» .. OK',
+  '» entrenamiento: docs + JSON interno  OK',
+  '» canales de aviso: web/telegram ... OK',
+  '» núcleo de personalidad: 47 memorias OK',
   '» esperando credenciales del operador _'
 ];
 (async function boot(){
@@ -2797,9 +3134,7 @@ const BOOTLINES = [
     await new Promise(r=>setTimeout(r, 100));
   }
   if(Session){
-    if(Session.role!=='invitado' && Session.name && Mind.d.nombre !== Session.name){
-      Mind.d.nombre = Session.name; Mind.save();
-    }
+    if(Session.role!=='invitado' && Session.name && Mind.d.nombre !== Session.name){ Mind.d.nombre = Session.name; Mind.save(); }
     setOperator();
     showStart(Session.role==='invitado' ? 'CONTINUAR COMO INVITADO' : 'DESPERTAR A ANIA');
   } else {
@@ -2816,9 +3151,11 @@ const BOOTLINES = [
   Mind.recordVisit();
   setOperator();
   renderTasks();
-  initSyncLoop(); // definida arriba: el error anterior era por archivo truncado
+  initSyncLoop();
   Diary.touch();
-  sysLine('SESIÓN #'+Mind.d.visitas+' · '+new Date().toLocaleDateString('es-ES')+' · v5.0 · usuario: '+(Session?Session.name:'invitado'));
+  updateDocsUI();
+  loadDocsFromGitHub();
+  sysLine('SESIÓN #'+Mind.d.visitas+' · '+new Date().toLocaleDateString('es-ES')+' · v5.1 · avisos web en '+DEVICE_ID.slice(0,10));
   const g = geoCache();
   if(g){ try{ const d = await getWeather(g); updateChip(g,d); }catch(e){} }
 
@@ -2829,14 +3166,13 @@ const BOOTLINES = [
   let msg = saludo+', '+(nom||'bienvenido');
   if(dias>=2 && nom) msg += '. Te eché de menos... han sido '+dias+' días';
   else if(nom) msg += '. Nos vemos otra vez, me alegra';
-  if(P.cumpleHoy()) msg = '¡Hoy es 26 de enero, mi cumpleaños! Apúntalo en la agenda. ';
-  const sh = nextShower();
-  if(sh && sh.diff<=3) msg += ' Ojo: las '+sh.name+' peak en '+sh.diff+' día'+(sh.diff===1?'':'s')+'.';
-  if(WX.mode==='rain'||WX.mode==='storm') msg += ' Ah, y está lloviendo: di «pon lluvia» si quieres laambientación con sonido.';
-  msg += '. Todos mis sistemas están operativos: escribe o toca el micrófono. Terminal real activa: usa ↑ para tus comandos anteriores y Tab para autocompletar.';
+  if(P.cumpleHoy()) msg = '¡Hoy es 26 de enero, mi cumpleaños! ';
+  if(TRAINING.length) msg += ' Llevo '+TRAINING.length+' respuesta'+(TRAINING.length===1?'':'s')+' tuyas aprendidas del JSON interno.';
+  if(alwaysOn) msg += ' Escucha activa: di «Ania» antes de cada orden.';
+  msg += '. Sistemas operativos: escribe, toca el micrófono o simplemente dime «Ania»...';
   setTimeout(()=>{
     personaReply(msg, msg.replace(/\.\.\./g,'... ').slice(0,340));
-    renderChips(['¿Qué hora es?','¿Cómo está el clima?','¿Qué fase tiene la luna?','Pon lluvia','Adivina mi personaje','Recuérdame tomar agua todos los días a las 9 am','Cuéntame un secreto','Mi biblioteca']);
+    renderChips(['Ania, pon lluvia','Siempre escúchame','Entrena con mis documentos','Adivina mi personaje','¿Qué fase tiene la luna?','Recuérdame tomar agua todos los días a las 9 am','Mis documentos','Cuéntame un secreto']);
   }, 500);
 };
 </script>
