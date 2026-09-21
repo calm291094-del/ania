@@ -1,6 +1,6 @@
 <div align="center">
   <h1>ANIA</h1>
-  <img src="fondo.png" alt="ANIA · Núcleo Personal" width="880">
+  <img src="icon.svg" alt="ANIA · Núcleo Personal" width="880">
   <p><strong>Asistente personal, secretaria ejecutiva y compañera en un solo archivo HTML</strong></p>
   <p><em>voz · personalidad propia · memoria · música procedural · agente de PC · entrenamiento con documentos · modo offline</em></p>
   <p>
