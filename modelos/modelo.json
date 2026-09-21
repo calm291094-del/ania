@@ -1,0 +1,6 @@
+{
+  "nombre": "Qwen2.5 0.5B Instruct",
+  "archivo": "qwen2.5-0.5b-instruct-q4.gguf",
+  "n_ctx": 2048,
+  "nota": "Cambia 'archivo' al nombre exacto de tu .gguf"
+}
