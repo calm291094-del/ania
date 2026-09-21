@@ -3493,6 +3493,13 @@ const BOOTLINES = [
     renderChips(['Piénsalo: ¿qué opinas del café?','Oído local','Abre el hud','Prepara mi día','Ponme música','Adivina mi personaje']);
   }, 500);
 };
+
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.addEventListener('message', ev=>{
+    if(ev.data && ev.data.type==='ANIA_OFFLINE_READY')
+      toast('Modo offline garantizado: ya puedes abrirme sin internet');
+  });
+}
 </script>
 </body>
 </html>
