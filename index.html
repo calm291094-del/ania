@@ -11,191 +11,190 @@
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23040806'/%3E%3Ccircle cx='50' cy='50' r='26' fill='%232de08a'/%3E%3Ccircle cx='50' cy='50' r='9' fill='%23040806'/%3E%3C/svg%3E">
 <style>
-  :root{
-    --bg:#040806; --bg2:#071009; --panel:#08150f;
-    --line:rgba(45,224,138,.20); --line2:rgba(45,224,138,.45);
-    --text:#cfeede; --dim:#79a88f;
-    --acc:#2de08a; --acc2:#39ff9b; --amber:#ffb547; --danger:#ff5470;
-    --mono:'Share Tech Mono','Courier New',ui-monospace,Menlo,Consolas,monospace;
-  }
-  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
-  html,body{height:100%;}
-  body{background:var(--bg); color:var(--text); font-family:var(--mono); overflow:hidden; overscroll-behavior:none;
-    background-image:radial-gradient(rgba(45,224,138,.05) 1px, transparent 1px); background-size:26px 26px;}
-  body::after{content:''; position:fixed; inset:0; pointer-events:none; z-index:900;
-    background:repeating-linear-gradient(0deg, rgba(0,0,0,.16) 0 1px, transparent 1px 3px); opacity:.35;}
-  button{font-family:var(--mono); cursor:pointer; color:var(--acc); background:transparent; border:1px solid var(--line); border-radius:6px;}
-  button:active{transform:translateY(1px);}
-  button:focus-visible{outline:1px solid var(--acc2); outline-offset:2px;}
-  svg{display:block;}
-  #bgfx{position:fixed; inset:0; z-index:0; pointer-events:none;}
-  #app{position:relative; z-index:1;}
-  #boot{position:fixed; inset:0; z-index:1000; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; transition:opacity .6s; overflow-y:auto;}
-  #boot.hide{opacity:0; pointer-events:none;}
-  #bootBox{width:min(560px,100%);}
-  #bootTitle{letter-spacing:.55em; font-size:clamp(26px,8vw,44px); color:var(--acc2); text-align:center; margin-bottom:26px;}
-  #bootTitle small{display:block; letter-spacing:.3em; font-size:11px; color:var(--dim); margin-top:8px;}
-  #bootLog{min-height:290px; font-size:13px; line-height:1.75; color:var(--dim);}
-  #bootLog .ok{color:var(--acc);}
-  #loginBox{margin-top:22px; display:none; flex-direction:column; gap:10px;}
-  #loginBox input{background:var(--panel); border:1px solid var(--line); border-radius:6px; color:var(--text); font-family:var(--mono); font-size:16px; padding:12px 13px; width:100%;}
-  #loginBox input:focus{outline:none; border-color:var(--line2);}
-  #loginMsg{font-size:11px; color:var(--dim); min-height:16px;}
-  #loginMsg.err{color:var(--danger);}
-  .lbtn{padding:12px; font-size:13px; letter-spacing:.3em; border-color:var(--line2); color:var(--acc2); background:rgba(45,224,138,.06); border-radius:0; clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);}
-  .lbtn.dim{color:var(--dim); border-color:var(--line); background:transparent; font-size:11px; letter-spacing:.2em; padding:10px;}
-  #bootStart{display:none; margin:26px auto 0; padding:14px 34px; font-size:15px; letter-spacing:.35em; border-color:var(--line2); color:var(--acc2); background:rgba(45,224,138,.06);
-    clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px); animation:breathe 2.4s ease-in-out infinite;}
-  @keyframes breathe{50%{background:rgba(45,224,138,.14);}}
-  #app{display:flex; flex-direction:column; height:100dvh; max-width:760px; margin:0 auto; padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom);}
-  header{display:flex; align-items:center; gap:8px; padding:10px 6px; border-bottom:1px solid var(--line); flex:0 0 auto;}
-  #logo{font-size:20px; letter-spacing:.5em; color:var(--acc2); user-select:none; white-space:nowrap;}
-  #logo .c{animation:blink 1.1s steps(1) infinite;}
-  @keyframes blink{50%{opacity:0;}}
-  .pill{font-size:10px; letter-spacing:.14em; border:1px solid var(--line); border-radius:999px; padding:3px 9px; color:var(--dim); white-space:nowrap;}
-  .pill .dot{display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--acc); margin-right:5px; animation:blink 1.6s steps(1) infinite;}
-  .pill.off{color:var(--amber); border-color:rgba(255,181,71,.4);}
-  .pill.off .dot{background:var(--amber); animation:none;}
-  .pill.idle{opacity:.55;} .pill.idle .dot{animation:none;}
-  #syncPill, #agentPill, #brainPill{display:none;}
-  #agentPill.on{display:inline-flex; color:var(--acc2); border-color:var(--line2);}
-  #agentPill.on .dot{background:var(--acc2);}
-  #brainPill.on{display:inline-flex; color:var(--amber); border-color:rgba(255,181,71,.4);}
-  #brainPill.on .dot{background:var(--amber); animation:none;}
-  #headRight{margin-left:auto; display:flex; gap:8px; align-items:center; font-size:11px; color:var(--dim);}
-  #clock{color:var(--text); letter-spacing:.1em;}
-  #batt{display:none; font-size:10px; color:var(--dim);}
-  #weatherChip{display:flex; gap:6px; align-items:center; border:1px solid var(--line); border-radius:999px; padding:3px 10px; color:var(--dim); font-size:11px; background:transparent;}
-  #weatherChip:active{border-color:var(--line2);}
-  #weatherChip svg{width:13px; height:13px;}
-  #operator{display:none; font-size:10px; letter-spacing:.14em; color:var(--amber); border:1px solid rgba(255,181,71,.35); border-radius:999px; padding:3px 9px; white-space:nowrap;}
-  @media(min-width:640px){ #syncPill{display:inline-flex;} #agentPill.on{display:inline-flex;} #brainPill.on{display:inline-flex;} }
-  #coreZone{flex:0 0 auto; display:flex; flex-direction:column; align-items:center; padding:8px 0 2px;}
-  #reactorWrap{position:relative; width:min(56vw,225px); height:min(56vw,225px);}
-  #reactor{width:100%; height:100%;}
-  #phase{font-size:10px; letter-spacing:.4em; color:var(--dim); margin-top:2px; user-select:none;}
-  #phase.amber{color:var(--amber);}
-  #chat{flex:1 1 auto; overflow-y:auto; padding:10px 8px 6px; scroll-behavior:smooth; -webkit-overflow-scrolling:touch;}
-  .line{display:flex; gap:8px; padding:5px 0; font-size:14px; line-height:1.55; animation:lin .18s ease-out;}
-  @keyframes lin{from{opacity:0; transform:translateX(-4px);}}
-  .line .who{flex:0 0 auto; font-size:10px; letter-spacing:.12em; padding-top:4px; color:var(--dim);}
-  .line.ania .who{color:var(--acc);}
-  .line.you .who{color:var(--amber);}
-  .line .msg{flex:1; word-break:break-word; white-space:pre-wrap;}
-  .line.you .msg{color:#f0dcb0;}
-  .line.ania .msg{color:var(--text);}
-  .line.sys .msg{color:var(--dim); font-size:12px;}
-  .line.act .msg{color:var(--dim); font-style:italic; font-size:12.5px;}
-  .line .msg img{max-width:100%; border-radius:8px; margin-top:6px; border:1px solid var(--line);}
-  .line .ts{flex:0 0 auto; font-size:9px; color:#42604f; padding-top:5px;}
-  #chips{display:flex; flex-wrap:wrap; gap:6px; padding:2px 8px 8px; flex:0 0 auto;}
-  .chip{font-size:11px; padding:6px 11px; border-radius:999px; color:var(--dim);}
-  .chip:active{color:var(--acc2); border-color:var(--line2);}
-  #inputBar{flex:0 0 auto; display:flex; gap:8px; padding:6px 4px 8px; border-top:1px solid var(--line);}
-  #userInput{flex:1; min-width:0; background:var(--panel); border:1px solid var(--line); border-radius:8px; color:var(--text); font-family:var(--mono); font-size:16px; padding:11px 13px; caret-color:var(--acc2);}
-  #userInput:focus{outline:none; border-color:var(--line2);}
-  #userInput::placeholder{color:#3d5a4b;}
-  .ibtn{flex:0 0 auto; width:46px; height:46px; display:grid; place-items:center; border-radius:8px;}
-  .ibtn svg{width:20px; height:20px;}
-  #micBtn{position:relative;}
-  #micBtn.live{border-color:var(--amber); color:var(--amber); background:rgba(255,181,71,.08); animation:pulseA 1.2s ease-in-out infinite;}
-  @keyframes pulseA{50%{box-shadow:0 0 0 6px rgba(255,181,71,.10);}}
-  #micBtn.awake{border-color:var(--line2); color:var(--acc2); background:rgba(45,224,138,.05);}
-  #micBtn.awake::after{content:''; position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:50%; background:var(--acc2); animation:blink 1.6s steps(1) infinite;}
-  #dock{flex:0 0 auto; display:flex; gap:5px; padding:0 2px 8px;}
-  .dbtn{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 1px; font-size:8.5px; letter-spacing:.1em; color:var(--dim); position:relative;}
-  .dbtn svg{width:16px; height:16px;}
-  .dbtn:active{color:var(--acc2);}
-  .badge{position:absolute; top:-5px; right:4px; min-width:16px; height:16px; border-radius:8px; background:var(--amber); color:#1a1000; font-size:10px; line-height:16px; padding:0 4px; display:none;}
-  .badge.on{display:block;}
-  #btnInstall::before{content:''; position:absolute; top:4px; right:4px; width:7px; height:7px; border-radius:50%; background:var(--acc2); display:none; animation:blink 1.4s steps(1) infinite;}
-  #btnInstall.can::before{display:block;}
-  #ambBtn{position:fixed; left:12px; bottom:calc(14px + env(safe-area-inset-bottom)); z-index:500; width:44px; height:44px; display:none; place-items:center; border-radius:50%; background:var(--bg2); border-color:var(--line2); color:var(--acc2);}
-  #ambBtn svg{width:20px; height:20px;}
-  #ambBtn.play{animation:breathe 2s ease-in-out infinite;}
-  #backdrop{position:fixed; inset:0; background:rgba(2,5,3,.72); z-index:940; opacity:0; pointer-events:none; transition:opacity .25s;}
-  #backdrop.on{opacity:1; pointer-events:auto;}
-  #sheet, #sheetMem, #sheetDiary, #sheetLib{position:fixed; left:0; right:0; bottom:0; max-width:760px; margin:0 auto;
-    background:var(--bg2); border:1px solid var(--line); border-bottom:none; border-radius:14px 14px 0 0;
-    transform:translateY(105%); transition:transform .3s cubic-bezier(.2,.9,.3,1);
-    max-height:80dvh; display:flex; flex-direction:column; z-index:950;}
-  #sheetMem{z-index:955;}
-  #sheet.open, #sheetMem.open, #sheetDiary.open, #sheetLib.open{transform:translateY(0);}
-  .grab{width:38px; height:4px; border-radius:2px; background:#1d3a2b; margin:8px auto 0;}
-  .sheetHead{display:flex; align-items:center; gap:10px; padding:14px 16px 8px; border-bottom:1px solid var(--line);}
-  .sheetHead h2{font-size:13px; letter-spacing:.35em; color:var(--acc); font-weight:normal;}
-  .sheetHead .pill{margin-left:auto;}
-  .xbtn{width:32px; height:32px; display:grid; place-items:center; border-radius:6px;}
-  .xbtn svg{width:15px; height:15px;}
-  #taskList, #diaryList, #libList, #memList{overflow-y:auto; padding:6px 14px; flex:1;}
-  .task{display:flex; align-items:center; gap:10px; padding:11px 4px; border-bottom:1px dashed rgba(45,224,138,.12);}
-  .task .tmain{flex:1; min-width:0;}
-  .task .ttext{font-size:14px; word-break:break-word;}
-  .task.done .ttext{color:#42604f; text-decoration:line-through;}
-  .task .twhen{font-size:10px; color:var(--dim); margin-top:3px; letter-spacing:.08em;}
-  .task .twhen.late{color:var(--amber);}
-  .task .tsrc{display:inline-block; font-size:9px; padding:1px 5px; border-radius:3px; margin-left:5px;}
-  .task .tsrc.tg{color:#5fc9ff; border:1px solid rgba(95,201,255,.3);}
-  .task .tsrc.web{color:var(--acc); border:1px solid rgba(45,224,138,.3);}
-  .task .tsrc.rec{color:var(--amber); border:1px solid rgba(255,181,71,.35);}
-  .tsmall{width:34px; height:34px; display:grid; place-items:center; border-radius:6px; flex:0 0 auto;}
-  .tsmall svg{width:15px; height:15px;}
-  .tcheck{color:var(--dim);} .task.done .tcheck{color:var(--acc);}
-  .tdel{color:#5a3040;} .tdel:active{color:var(--danger);}
-  .empty{padding:30px 10px; text-align:center; color:var(--dim); font-size:12px; letter-spacing:.15em; line-height:2;}
-  #taskForm{display:flex; gap:8px; padding:10px 14px calc(14px + env(safe-area-inset-bottom)); border-top:1px solid var(--line); flex-wrap:wrap;}
-  #taskInput{flex:1 1 150px; min-width:0; background:var(--panel); border:1px solid var(--line); border-radius:6px; color:var(--text); font-family:var(--mono); font-size:14px; padding:9px 10px;}
-  #taskWhen{flex:0 1 auto; background:var(--panel); border:1px solid var(--line); border-radius:6px; color:var(--dim); font-family:var(--mono); font-size:12px; padding:9px 8px; color-scheme:dark;}
-  #addTaskBtn{flex:0 0 auto; padding:0 16px; letter-spacing:.2em; font-size:11px; border-radius:6px;}
-  .memRow{display:flex; gap:10px; padding:10px 2px; border-bottom:1px dashed rgba(45,224,138,.12); font-size:13px; align-items:flex-start;}
-  .memRow .k{flex:0 0 74px; color:var(--dim); font-size:10px; letter-spacing:.15em; padding-top:3px;}
-  .memRow .v{flex:1; word-break:break-word;}
-  .memRow .mdel{flex:0 0 auto; width:28px; height:28px; display:grid; place-items:center; color:#5a3040;}
-  .memRow .mdel svg{width:13px; height:13px;}
-  .diaryRow{padding:12px 2px; border-bottom:1px dashed rgba(45,224,138,.12);}
-  .diaryRow .dDate{font-size:10px; color:var(--acc); letter-spacing:.12em; margin-bottom:4px;}
-  .diaryRow .dText{font-size:12.5px; color:var(--text); line-height:1.6; white-space:pre-wrap;}
-  .libRow{display:flex; gap:10px; padding:12px 2px; border-bottom:1px dashed rgba(45,224,138,.12); align-items:flex-start;}
-  .libRow .lmain{flex:1; min-width:0;}
-  .libRow .ltitle{font-size:13px; color:var(--text);}
-  .libRow .ldate{font-size:9px; color:#42604f; margin-top:3px;}
-  .sheetFoot{padding:10px 14px calc(14px + env(safe-area-inset-bottom)); border-top:1px solid var(--line);}
-  .overlay{position:fixed; inset:0; z-index:960; background:rgba(2,5,3,.78); display:none; align-items:center; justify-content:center; padding:20px;}
-  .overlay.on{display:flex;}
-  .modal{width:min(500px,100%); max-height:86dvh; overflow-y:auto; background:var(--bg2); border:1px solid var(--line2);
-    clip-path:polygon(16px 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%,0 16px); padding:22px 20px;}
-  .modal h2{font-size:14px; letter-spacing:.35em; color:var(--acc2); font-weight:normal; margin-bottom:14px; display:flex; align-items:center;}
-  .modal h2 .xbtn{margin-left:auto;}
-  .modal p, .modal li{font-size:13px; color:var(--text); line-height:1.7;}
-  .modal .dim{color:var(--dim);}
-  .modal .step{display:flex; gap:10px; margin:12px 0; align-items:flex-start;}
-  .modal .step b{color:var(--amber); font-weight:normal; flex:0 0 auto;}
-  .bigbtn{display:block; width:100%; margin-top:16px; padding:13px; font-size:12px; letter-spacing:.22em; color:var(--acc2); border-color:var(--line2); background:rgba(45,224,138,.07); border-radius:0; clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);}
-  .modal hr{border:none; border-top:1px dashed rgba(45,224,138,.2); margin:16px 0;}
-  .frow{display:flex; align-items:center; gap:12px; margin:14px 0;}
-  .frow label{flex:0 0 96px; font-size:10px; letter-spacing:.15em; color:var(--dim);}
-  .frow input[type=range]{flex:1; accent-color:var(--acc);}
-  .frow select{flex:1; background:var(--panel); border:1px solid var(--line); color:var(--text); font-family:var(--mono); font-size:12px; padding:8px; border-radius:6px; min-width:0;}
-  .frow output{flex:0 0 40px; text-align:right; color:var(--acc); font-size:12px;}
-  .esBtns{display:flex; gap:8px; flex:1;}
-  .esBtn{flex:1; padding:9px 0; font-size:10px; letter-spacing:.14em; border-radius:6px;}
-  .esSel{border-color:var(--line2); color:var(--acc2); background:rgba(45,224,138,.07);}
-  #diag{margin-top:14px; border:1px dashed var(--line); padding:12px 14px; font-size:12px; line-height:1.9; color:var(--dim);}
-  #diag b{color:var(--acc); font-weight:normal;}
-  #toasts{position:fixed; top:calc(10px + env(safe-area-inset-top)); left:0; right:0; z-index:1200; display:flex; flex-direction:column; align-items:center; gap:8px; pointer-events:none;}
-  .toast{background:var(--bg2); border:1px solid var(--line2); color:var(--acc2); font-size:12px; padding:9px 16px; max-width:88%;
-    clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px); animation:tIn .25s ease-out;}
-  .toast.warn{color:var(--amber); border-color:rgba(255,181,71,.5);}
-  @keyframes tIn{from{opacity:0; transform:translateY(-8px);}}
-  @media (min-width:700px){ #reactorWrap{width:240px; height:240px;} .line{font-size:15px;} }
+:root{--bg:#040806;--bg2:#071009;--panel:#08150f;--line:rgba(45,224,138,.20);--line2:rgba(45,224,138,.45);--text:#cfeede;--dim:#79a88f;--acc:#2de08a;--acc2:#39ff9b;--amber:#ffb547;--danger:#ff5470;--mono:'Share Tech Mono','Courier New',ui-monospace,Menlo,Consolas,monospace;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);overflow:hidden;overscroll-behavior:none;background-image:radial-gradient(rgba(45,224,138,.05) 1px,transparent 1px);background-size:26px 26px;}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:900;background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);opacity:.35;}
+button{font-family:var(--mono);cursor:pointer;color:var(--acc);background:transparent;border:1px solid var(--line);border-radius:6px;}
+button:active{transform:translateY(1px);}
+button:focus-visible{outline:1px solid var(--acc2);outline-offset:2px;}
+svg{display:block;}
+#bgfx{position:fixed;inset:0;z-index:0;pointer-events:none;}
+#app{position:relative;z-index:1;}
+#boot{position:fixed;inset:0;z-index:1000;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;transition:opacity .6s;overflow-y:auto;}
+#boot.hide{opacity:0;pointer-events:none;}
+#bootBox{width:min(560px,100%);}
+#bootTitle{letter-spacing:.55em;font-size:clamp(26px,8vw,44px);color:var(--acc2);text-align:center;margin-bottom:26px;}
+#bootTitle small{display:block;letter-spacing:.3em;font-size:11px;color:var(--dim);margin-top:8px;}
+#bootLog{min-height:300px;font-size:13px;line-height:1.75;color:var(--dim);}
+#bootLog .ok{color:var(--acc);}
+#loginBox{margin-top:22px;display:none;flex-direction:column;gap:10px;}
+#loginBox input{background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:16px;padding:12px 13px;width:100%;}
+#loginBox input:focus{outline:none;border-color:var(--line2);}
+#loginMsg{font-size:11px;color:var(--dim);min-height:16px;}
+#loginMsg.err{color:var(--danger);}
+.lbtn{padding:12px;font-size:13px;letter-spacing:.3em;border-color:var(--line2);color:var(--acc2);background:rgba(45,224,138,.06);border-radius:0;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);}
+.lbtn.dim{color:var(--dim);border-color:var(--line);background:transparent;font-size:11px;letter-spacing:.2em;padding:10px;}
+#bootStart{display:none;margin:26px auto 0;padding:14px 34px;font-size:15px;letter-spacing:.35em;border-color:var(--line2);color:var(--acc2);background:rgba(45,224,138,.06);clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);animation:breathe 2.4s ease-in-out infinite;}
+@keyframes breathe{50%{background:rgba(45,224,138,.14);}}
+#app{display:flex;flex-direction:column;height:100dvh;max-width:760px;margin:0 auto;padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom);}
+header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1px solid var(--line);flex:0 0 auto;flex-wrap:wrap;}
+#logo{font-size:20px;letter-spacing:.5em;color:var(--acc2);user-select:none;white-space:nowrap;}
+#logo .c{animation:blink 1.1s steps(1) infinite;}
+@keyframes blink{50%{opacity:0;}}
+.pill{font-size:10px;letter-spacing:.14em;border:1px solid var(--line);border-radius:999px;padding:3px 9px;color:var(--dim);white-space:nowrap;}
+.pill .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--acc);margin-right:5px;animation:blink 1.6s steps(1) infinite;}
+.pill.off{color:var(--amber);border-color:rgba(255,181,71,.4);}
+.pill.off .dot{background:var(--amber);animation:none;}
+.pill.idle{opacity:.55;}.pill.idle .dot{animation:none;}
+.pill.on2{display:inline-flex;color:var(--acc2);border-color:var(--line2);}
+.pill.on2 .dot{background:var(--acc2);}
+#syncPill,#agentPill,#brainPill,#earsPill,#hudPill,#relayPill{display:none;}
+#headRight{margin-left:auto;display:flex;gap:8px;align-items:center;font-size:11px;color:var(--dim);}
+#clock{color:var(--text);letter-spacing:.1em;}
+#batt{display:none;font-size:10px;color:var(--dim);}
+#weatherChip{display:flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--dim);font-size:11px;background:transparent;}
+#weatherChip:active{border-color:var(--line2);}
+#weatherChip svg{width:13px;height:13px;}
+#operator{display:none;font-size:10px;letter-spacing:.14em;color:var(--amber);border:1px solid rgba(255,181,71,.35);border-radius:999px;padding:3px 9px;white-space:nowrap;}
+@media(min-width:700px){#syncPill{display:inline-flex;}}
+#coreZone{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;padding:8px 0 2px;}
+#reactorWrap{position:relative;width:min(56vw,225px);height:min(56vw,225px);}
+#reactor{width:100%;height:100%;}
+#phase{font-size:10px;letter-spacing:.4em;color:var(--dim);margin-top:2px;user-select:none;}
+#phase.amber{color:var(--amber);}
+#chat{flex:1 1 auto;overflow-y:auto;padding:10px 8px 6px;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;}
+.line{display:flex;gap:8px;padding:5px 0;font-size:14px;line-height:1.55;animation:lin .18s ease-out;}
+@keyframes lin{from{opacity:0;transform:translateX(-4px);}}
+.line .who{flex:0 0 auto;font-size:10px;letter-spacing:.12em;padding-top:4px;color:var(--dim);}
+.line.ania .who{color:var(--acc);}
+.line.you .who{color:var(--amber);}
+.line .msg{flex:1;word-break:break-word;white-space:pre-wrap;}
+.line.you .msg{color:#f0dcb0;}
+.line.ania .msg{color:var(--text);}
+.line.sys .msg{color:var(--dim);font-size:12px;}
+.line.act .msg{color:var(--dim);font-style:italic;font-size:12.5px;}
+.line .msg img{max-width:100%;border-radius:8px;margin-top:6px;border:1px solid var(--line);}
+.line .ts{flex:0 0 auto;font-size:9px;color:#42604f;padding-top:5px;}
+#chips{display:flex;flex-wrap:wrap;gap:6px;padding:2px 8px 8px;flex:0 0 auto;}
+.chip{font-size:11px;padding:6px 11px;border-radius:999px;color:var(--dim);}
+.chip:active{color:var(--acc2);border-color:var(--line2);}
+#inputBar{flex:0 0 auto;display:flex;gap:8px;padding:6px 4px 8px;border-top:1px solid var(--line);}
+#userInput{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:16px;padding:11px 13px;caret-color:var(--acc2);}
+#userInput:focus{outline:none;border-color:var(--line2);}
+#userInput::placeholder{color:#3d5a4b;}
+.ibtn{flex:0 0 auto;width:46px;height:46px;display:grid;place-items:center;border-radius:8px;}
+.ibtn svg{width:20px;height:20px;}
+#micBtn{position:relative;}
+#micBtn.live{border-color:var(--amber);color:var(--amber);background:rgba(255,181,71,.08);animation:pulseA 1.2s ease-in-out infinite;}
+@keyframes pulseA{50%{box-shadow:0 0 0 6px rgba(255,181,71,.10);}}
+#micBtn.awake{border-color:var(--line2);color:var(--acc2);background:rgba(45,224,138,.05);}
+#micBtn.awake::after{content:'';position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--acc2);animation:blink 1.6s steps(1) infinite;}
+#dock{flex:0 0 auto;display:flex;gap:5px;padding:0 2px 8px;}
+.dbtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 1px;font-size:8.5px;letter-spacing:.1em;color:var(--dim);position:relative;}
+.dbtn svg{width:16px;height:16px;}
+.dbtn:active{color:var(--acc2);}
+.badge{position:absolute;top:-5px;right:4px;min-width:16px;height:16px;border-radius:8px;background:var(--amber);color:#1a1000;font-size:10px;line-height:16px;padding:0 4px;display:none;}
+.badge.on{display:block;}
+#btnInstall::before{content:'';position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--acc2);display:none;animation:blink 1.4s steps(1) infinite;}
+#btnInstall.can::before{display:block;}
+#ambBtn{position:fixed;left:12px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:500;width:44px;height:44px;display:none;place-items:center;border-radius:50%;background:var(--bg2);border-color:var(--line2);color:var(--acc2);}
+#ambBtn svg{width:20px;height:20px;}
+#ambBtn.play{animation:breathe 2s ease-in-out infinite;}
+#backdrop{position:fixed;inset:0;background:rgba(2,5,3,.72);z-index:940;opacity:0;pointer-events:none;transition:opacity .25s;}
+#backdrop.on{opacity:1;pointer-events:auto;}
+#sheet,#sheetMem,#sheetDiary,#sheetLib{position:fixed;left:0;right:0;bottom:0;max-width:760px;margin:0 auto;background:var(--bg2);border:1px solid var(--line);border-bottom:none;border-radius:14px 14px 0 0;transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.9,.3,1);max-height:80dvh;display:flex;flex-direction:column;z-index:950;}
+#sheetMem{z-index:955;}
+#sheet.open,#sheetMem.open,#sheetDiary.open,#sheetLib.open{transform:translateY(0);}
+.grab{width:38px;height:4px;border-radius:2px;background:#1d3a2b;margin:8px auto 0;}
+.sheetHead{display:flex;align-items:center;gap:10px;padding:14px 16px 8px;border-bottom:1px solid var(--line);}
+.sheetHead h2{font-size:13px;letter-spacing:.35em;color:var(--acc);font-weight:normal;}
+.sheetHead .pill{margin-left:auto;}
+.xbtn{width:32px;height:32px;display:grid;place-items:center;border-radius:6px;}
+.xbtn svg{width:15px;height:15px;}
+#taskList,#diaryList,#libList,#memList{overflow-y:auto;padding:6px 14px;flex:1;}
+.task{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px dashed rgba(45,224,138,.12);}
+.task .tmain{flex:1;min-width:0;}
+.task .ttext{font-size:14px;word-break:break-word;}
+.task.done .ttext{color:#42604f;text-decoration:line-through;}
+.task .twhen{font-size:10px;color:var(--dim);margin-top:3px;letter-spacing:.08em;}
+.task .twhen.late{color:var(--amber);}
+.task .tsrc{display:inline-block;font-size:9px;padding:1px 5px;border-radius:3px;margin-left:5px;}
+.task .tsrc.tg{color:#5fc9ff;border:1px solid rgba(95,201,255,.3);}
+.task .tsrc.web{color:var(--acc);border:1px solid rgba(45,224,138,.3);}
+.task .tsrc.rec{color:var(--amber);border:1px solid rgba(255,181,71,.35);}
+.tsmall{width:34px;height:34px;display:grid;place-items:center;border-radius:6px;flex:0 0 auto;}
+.tsmall svg{width:15px;height:15px;}
+.tcheck{color:var(--dim);}.task.done .tcheck{color:var(--acc);}
+.tdel{color:#5a3040;}.tdel:active{color:var(--danger);}
+.empty{padding:30px 10px;text-align:center;color:var(--dim);font-size:12px;letter-spacing:.15em;line-height:2;}
+#taskForm{display:flex;gap:8px;padding:10px 14px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line);flex-wrap:wrap;}
+#taskInput{flex:1 1 150px;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:14px;padding:9px 10px;}
+#taskWhen{flex:0 1 auto;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--dim);font-family:var(--mono);font-size:12px;padding:9px 8px;color-scheme:dark;}
+#addTaskBtn{flex:0 0 auto;padding:0 16px;letter-spacing:.2em;font-size:11px;border-radius:6px;}
+.memRow{display:flex;gap:10px;padding:10px 2px;border-bottom:1px dashed rgba(45,224,138,.12);font-size:13px;align-items:flex-start;}
+.memRow .k{flex:0 0 74px;color:var(--dim);font-size:10px;letter-spacing:.15em;padding-top:3px;}
+.memRow .v{flex:1;word-break:break-word;}
+.diaryRow{padding:12px 2px;border-bottom:1px dashed rgba(45,224,138,.12);}
+.diaryRow .dDate{font-size:10px;color:var(--acc);letter-spacing:.12em;margin-bottom:4px;}
+.diaryRow .dText{font-size:12.5px;color:var(--text);line-height:1.6;white-space:pre-wrap;}
+.libRow{display:flex;gap:10px;padding:12px 2px;border-bottom:1px dashed rgba(45,224,138,.12);align-items:flex-start;}
+.libRow .lmain{flex:1;min-width:0;}
+.libRow .ltitle{font-size:13px;color:var(--text);}
+.libRow .ldate{font-size:9px;color:#42604f;margin-top:3px;}
+.sheetFoot{padding:10px 14px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line);}
+.overlay{position:fixed;inset:0;z-index:960;background:rgba(2,5,3,.78);display:none;align-items:center;justify-content:center;padding:20px;}
+.overlay.on{display:flex;}
+.modal{width:min(500px,100%);max-height:86dvh;overflow-y:auto;background:var(--bg2);border:1px solid var(--line2);clip-path:polygon(16px 0,100% 0,100% calc(100% - 16px),calc(100% - 16px) 100%,0 100%,0 16px);padding:22px 20px;}
+.modal h2{font-size:14px;letter-spacing:.35em;color:var(--acc2);font-weight:normal;margin-bottom:14px;display:flex;align-items:center;}
+.modal h2 .xbtn{margin-left:auto;}
+.modal p,.modal li{font-size:13px;color:var(--text);line-height:1.7;}
+.modal .dim{color:var(--dim);}
+.modal .step{display:flex;gap:10px;margin:12px 0;align-items:flex-start;}
+.modal .step b{color:var(--amber);font-weight:normal;flex:0 0 auto;}
+.bigbtn{display:block;width:100%;margin-top:16px;padding:13px;font-size:12px;letter-spacing:.22em;color:var(--acc2);border-color:var(--line2);background:rgba(45,224,138,.07);border-radius:0;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);}
+.modal hr{border:none;border-top:1px dashed rgba(45,224,138,.2);margin:16px 0;}
+.frow{display:flex;align-items:center;gap:12px;margin:14px 0;}
+.frow label{flex:0 0 96px;font-size:10px;letter-spacing:.15em;color:var(--dim);}
+.frow input[type=range]{flex:1;accent-color:var(--acc);}
+.frow select{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--text);font-family:var(--mono);font-size:12px;padding:8px;border-radius:6px;min-width:0;}
+.frow output{flex:0 0 40px;text-align:right;color:var(--acc);font-size:12px;}
+.esBtns{display:flex;gap:8px;flex:1;}
+.esBtn{flex:1;padding:9px 0;font-size:10px;letter-spacing:.14em;border-radius:6px;}
+.esSel{border-color:var(--line2);color:var(--acc2);background:rgba(45,224,138,.07);}
+#diag{margin-top:14px;border:1px dashed var(--line);padding:12px 14px;font-size:12px;line-height:1.9;color:var(--dim);}
+#diag b{color:var(--acc);font-weight:normal;}
+#toasts{position:fixed;top:calc(10px + env(safe-area-inset-top));left:0;right:0;z-index:1200;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;}
+.toast{background:var(--bg2);border:1px solid var(--line2);color:var(--acc2);font-size:12px;padding:9px 16px;max-width:88%;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);animation:tIn .25s ease-out;}
+.toast.warn{color:var(--amber);border-color:rgba(255,181,71,.5);}
+@keyframes tIn{from{opacity:0;transform:translateY(-8px);}}
+@media(min-width:700px){#reactorWrap{width:240px;height:240px;}.line{font-size:15px;}}
+/* HUD */
+#hudPanel{position:fixed;inset:0;z-index:970;background:rgba(2,6,4,.96);display:none;flex-direction:column;}
+#hudPanel.on{display:flex;}
+.hudHead{display:flex;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);}
+.hudTitle{font-size:12px;letter-spacing:.3em;color:var(--acc2);}
+.hudStat{font-size:11px;color:var(--dim);margin-left:auto;}
+#hudVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55;transform:scaleX(-1);}
+#hudCanvas{position:absolute;inset:0;width:100%;height:100%;}
 </style>
 </head>
 <body>
 <canvas id="bgfx"></canvas>
+<div id="hudPanel">
+  <div class="hudHead">
+    <span class="hudTitle">HUD · VISIÓN ANIA</span>
+    <span class="hudStat" id="hudStat">—</span>
+    <button class="xbtn" id="hudClose" style="border-color:var(--danger);color:var(--danger)">✕</button>
+  </div>
+  <video id="hudVideo" playsinline muted autoplay></video>
+  <canvas id="hudCanvas"></canvas>
+</div>
 
 <div id="boot">
   <div id="bootBox">
-    <div id="bootTitle">ANIA<small>EDICIÓN JARVIS · v7.0</small></div>
+    <div id="bootTitle">ANIA<small>EDICIÓN JARVIS · v8.0</small></div>
     <div id="bootLog"></div>
     <form id="loginBox" autocomplete="on">
       <input id="loginUser" placeholder="usuario" autocomplete="username" autocapitalize="none" autocorrect="off">
@@ -215,6 +214,9 @@
     <span class="pill idle" id="syncPill"><span class="dot"></span><span id="syncTxt">SYNC</span></span>
     <span class="pill" id="agentPill"><span class="dot"></span><span>AGENTE</span></span>
     <span class="pill" id="brainPill"><span class="dot"></span><span id="brainTxt">CEREBRO</span></span>
+    <span class="pill" id="earsPill"><span class="dot"></span><span>OÍDO</span></span>
+    <span class="pill" id="hudPill"><span class="dot"></span><span>HUD</span></span>
+    <span class="pill" id="relayPill"><span class="dot"></span><span>SESIÓN</span></span>
     <span id="operator"></span>
     <span id="headRight">
       <button id="weatherChip" title="Ver clima">
@@ -335,11 +337,8 @@
     <div class="step"><b>01</b><p><span class="dim">Android (Chrome):</span> menú <span class="dim">(⋮)</span> → <b>«Instalar aplicación»</b>.</p></div>
     <div class="step"><b>02</b><p><span class="dim">iPhone (Safari):</span> Compartir → <b>«Añadir a pantalla de inicio»</b>.</p></div>
     <hr>
-    <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">MODO CEREBRO LOCAL (GGUF)</h2>
-    <p class="dim">1) Pon tu modelo <b>.gguf</b> en <b>modelos/</b> y su nombre en <b>modelos/modelo.json</b>.<br>
-    2) Copia el runtime wllama en <b>engine/</b> (wllama.mjs + wllama.wasm).<br>
-    3) Ejecuta <b>node servidor.js</b> y abre <b>http://localhost:8080</b> — multihilo y 100% sin internet.<br>
-    Sin servidor: «carga el cerebro» y elige el .gguf manualmente.</p>
+    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">MODO CEREBRO LOCAL (GGUF)</h2>
+    <p class="dim">1) Tu modelo <b>.gguf</b> en <b>modelos/</b> + <b>modelo.json</b>.<br>2) Runtime wllama en <b>engine/</b>.<br>3) <b>node servidor.js</b> → <b>http://localhost:8080</b> — multihilo, 100% sin internet.<br>Sin servidor: «carga el cerebro» y elige el .gguf manualmente.</p>
     <button class="bigbtn" id="exportKit">DESCARGAR KIT GITHUB (ZIP)</button>
     <hr>
     <button class="bigbtn" id="saveOffline">GUARDAR COPIA OFFLINE (.HTML)</button>
@@ -365,35 +364,46 @@
     <button class="bigbtn" id="testVoice">PROBAR VOZ</button>
     <button class="bigbtn" id="btnAlways">ESCUCHA ACTIVA: NO</button>
     <hr>
-    <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">CEREBRO CONVERSACIONAL</h2>
-    <p class="dim" id="brainInfo">Cascada: regex → GGUF local → nube. Estado: solo regex.</p>
+    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">CEREBRO CONVERSACIONAL</h2>
+    <p class="dim" id="brainInfo">Cascada: regex → GGUF local → nube.</p>
     <button class="bigbtn" id="btnLoadBrain">CARGAR CEREBRO LOCAL (.GGUF)</button>
     <button class="bigbtn" id="btnTestBrain">PROBAR CEREBRO</button>
     <hr>
-    <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">AGENTE DEL PC (OPCIONAL)</h2>
+    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">OÍDO LOCAL · WHISPER (OFFLINE)</h2>
+    <p class="dim" id="earsInfo">Primera activación descarga ~80 MB (quedan cacheados). Después: transcripción 100% en tu dispositivo, el audio jamás sale del navegador. Reemplaza el STT de Google.</p>
+    <button class="bigbtn" id="btnEars">ACTIVAR OÍDO LOCAL (WHISPER)</button>
+    <button class="bigbtn" id="btnEarsModel">CAMBIAR MODELO (tiny/base)</button>
+    <hr>
+    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">HUD · VISIÓN Y GESTOS</h2>
+    <p class="dim" id="hudInfo">Cámara + reconocimiento de mano: puño=pausa · palma=silencio · victoria=siguiente · puño sostenido=cerrar. Primera vez ~12 MB, luego offline.</p>
+    <button class="bigbtn" id="btnHud">ABRIR HUD (CÁMARA + GESTOS)</button>
+    <hr>
+    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">SESIÓN MULTIDISPOSITIVO</h2>
+    <p class="dim" id="relayInfo">Ejecuta relay.js en tu PC o Render y conecta: la misma conversación en todos tus dispositivos.</p>
+    <button class="bigbtn" id="btnRelay">CONECTAR SESIÓN (RELAY)</button>
+    <hr>
+    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">AGENTE DEL PC (OPCIONAL)</h2>
     <p class="dim" id="agentInfo">Desconectado. «conecta el agente con clave [token]».</p>
     <button class="bigbtn" id="btnAgent">CONECTAR AGENTE</button>
     <hr>
-    <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">ENTRENAMIENTO CON DOCUMENTOS</h2>
+    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">ENTRENAMIENTO CON DOCUMENTOS</h2>
     <p class="dim" id="docsInfo">Sin documentos entrenados todavía.</p>
     <button class="bigbtn" id="btnLoadDocs">CARGAR CARPETA DE DOCUMENTOS</button>
     <button class="bigbtn" id="btnClearDocs">OLVIDAR DOCUMENTOS</button>
     <hr>
-    <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">ÍNDICE DE ARCHIVOS DEL PC</h2>
+    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">ÍNDICE DE ARCHIVOS DEL PC</h2>
     <p class="dim" id="pcInfo">0 archivos.</p>
     <button class="bigbtn" id="btnIndexPC">INDEXAR CARPETA DEL PC</button>
     <button class="bigbtn" id="btnClearPC">OLVIDAR ÍNDICE DEL PC</button>
     <hr>
-    <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">SESIÓN</h2>
+    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">SESIÓN Y BACKUP</h2>
     <p class="dim" id="sessInfo">Sin sesión.</p>
     <button class="bigbtn" id="logoutBtn">CERRAR SESIÓN</button>
-    <hr>
-    <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">BACKUP TOTAL</h2>
     <button class="bigbtn" id="btnBackupExp">EXPORTAR TODO (.JSON)</button>
     <button class="bigbtn" id="btnBackupImp">RESTAURAR BACKUP</button>
     <input type="file" id="importFile" accept=".json,application/json" style="display:none">
     <hr>
-    <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">DIAGNÓSTICO DEL SISTEMA</h2>
+    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">DIAGNÓSTICO DEL SISTEMA</h2>
     <div id="diag">Pulsa para escanear.</div>
     <button class="bigbtn" id="runDiag">ESCANEAR AHORA</button>
     <hr>
@@ -405,40 +415,30 @@
 <input type="file" id="docDir" webkitdirectory multiple style="display:none">
 <input type="file" id="pcDir" webkitdirectory multiple style="display:none">
 <input type="file" id="imgFile" accept="image/*" style="display:none">
-<input type="file" id="ggufFile" accept=".gguf,.ggmf,.bin" style="display:none">
+<input type="file" id="ggufFile" accept=".gguf" style="display:none">
 <input type="file" id="engineFiles" accept=".mjs,.js,.wasm" multiple style="display:none">
 
 <script type="application/json" id="ania-entrenamiento">
 {
   "_instrucciones": "Edita libremente. Cada entrada: claves (palabras clave) y respuesta.",
   "respuestas": [
-    {
-      "claves": ["wifi casa", "clave wifi", "contrasena wifi"],
-      "respuesta": "La clave del wifi de casa está pegada en el router: MEDI-2024."
-    },
-    {
-      "claves": ["horario tienda", "abre la tienda", "cierra la tienda"],
-      "respuesta": "La tienda abre de 9:00 a 18:00, lunes a sábado."
-    }
+    {"claves": ["wifi casa", "clave wifi"], "respuesta": "La clave del wifi de casa está pegada en el router: MEDI-2024."},
+    {"claves": ["horario tienda", "abre la tienda"], "respuesta": "La tienda abre de 9:00 a 18:00, lunes a sábado."}
   ]
 }
 </script>
 
 <script>
 /* =====================================================================
-   ANIA v7.0 · EDICIÓN JARVIS
-   Núcleo nuevo:
-   - BRAIN: cerebro razonador con tool-calling en cascada
-     regex → GGUF local (wllama/llama.cpp WASM, carpeta modelos/)
-     → nube (Pollinations, gratis sin clave)
-   - Memoria episódica persistente: «¿qué hablamos de X?»
-   - Motor de proactividad: lluvia inminente, batería, silencio,
-     hora de dormir, tareas vencidas
-   - Prosodia TTS con estados de ánimo
-   - Visión: «mira esta foto» (Pollinations vision)
-   Conservado de v6: LINGUA, agente PC, índice PC, música procedural,
-   ambiente, secretaría, agenda recurrente, documentos, biblioteca,
-   diario, backup, terminal, PWA, Akinator.
+   ANIA v8.0 · EDICIÓN JARVIS — TODO INTEGRADO
+   · Cerebro razonador (regex → GGUF local wllama → nube Pollinations)
+   · OÍDO LOCAL: Whisper en el navegador, audio jamás sale del dispositivo
+   · HUD: MediaPipe, gestos con la mano, estética Iron Man
+   · SESIÓN MULTIDISPOSITIVO: relay WebSocket (agente/relay.js)
+   · Memoria episódica · proactividad · prosodia · visión de fotos
+   · LINGUA (cubano/typos/tildes) · agente PC · índice PC · música
+     procedural · ambiente · secretaría · agenda recurrente · documentos
+     · biblioteca offline · diario · backup · terminal · PWA · Akinator
 ===================================================================== */
 'use strict';
 
@@ -454,7 +454,10 @@ const CONFIG = {
     'https://raw.githubusercontent.com/calm291094-del/meditech-tienda/master/usuarios.json'
   ],
   WLLAMA_CDN: 'https://cdn.jsdelivr.net/npm/@wllama/wllama@2.3.1/esm/index.js',
-  WLLAMA_WASM_CDN: 'https://cdn.jsdelivr.net/npm/@wllama/wllama@2.3.1/esm/'
+  WLLAMA_WASM_CDN: 'https://cdn.jsdelivr.net/npm/@wllama/wllama@2.3.1/esm/',
+  TRANSFORMERS_CDN: 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.1',
+  MEDIAPIPE_CDN: 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14',
+  MEDIAPIPE_MODEL: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task'
 };
 
 /* ---------- utilidades ---------- */
@@ -474,6 +477,7 @@ const DEVICE_ID = (function(){
   if(!id){ id = 'dev-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8); store.set('deviceId', id); }
   return id;
 })();
+const DEV_TAG = DEVICE_ID.slice(4,14);
 function copyText(txt){
   const ta = document.createElement('textarea');
   ta.value = txt; document.body.appendChild(ta); ta.select();
@@ -582,7 +586,7 @@ const LINGUA = (() => {
   }
   return { normalizar, dist, corregir };
 })();
-const VOCAB = new Set(('clima musica hora fecha tarea tareas recordame recordatorio agenda temporizador pospon limpia busca buscame informacion quien traduce calcula convierte contrasena noticias abre mapa youtube github gmail wikipedia biblioteca documentos diario respaldame restaura luna meteoros estrellas adivina personaje siempre escuchame silencio habla diagnostico ayuda chiste consejo secreto frase dado reunion correo prepara dia pelicula pc agente lluvia cafetera cafe isekai zombie anime pan astro tecnologia volumen captura pantalla portapapeles bloquea apaga cerebro foto hablamos maana hoy mediodia minutos horas todos').split(' '));
+const VOCAB = new Set(('clima musica hora fecha tarea tareas recordame recordatorio agenda temporizador pospon limpia busca buscame informacion quien traduce calcula convierte contrasena noticias abre mapa youtube github gmail wikipedia biblioteca documentos diario respaldame restaura luna meteoros estrellas adivina personaje siempre escuchame silencio habla diagnostico ayuda chiste consejo secreto frase dado reunion correo prepara dia pelicula pc agente lluvia cafetera cafe isekai zombie anime pan astro tecnologia volumen captura pantalla portapapeles bloquea apaga cerebro foto hablamos oido hud sesion vision gestos whisper relay manana hoy mediodia minutos horas todos').split(' '));
 function entender(raw){
   const norm = LINGUA.normalizar(raw);
   const { text, corregido } = LINGUA.corregir(norm, VOCAB);
@@ -639,9 +643,7 @@ async function tryLogin(){
   store.set('session', Session);
   showStart('CONTINUAR COMO INVITADO');
 };
-function fillSess(){
-  $('sessInfo').textContent = Session ? ('Usuario: '+Session.username+' · '+Session.name) : 'Sin sesión activa.';
-}
+function fillSess(){ $('sessInfo').textContent = Session ? ('Usuario: '+Session.username+' · '+Session.name) : 'Sin sesión activa.'; }
  $('logoutBtn').onclick = ()=>{ store.del('session'); toast('Sesión cerrada'); setTimeout(()=>location.reload(), 700); };
 
 /* =====================================================================
@@ -669,7 +671,7 @@ applyEssence(essence);
 document.querySelectorAll('.esBtn').forEach(b=> b.onclick = ()=>{ applyEssence(b.dataset.es); toast('Esencia cambiada'); });
 
 /* =====================================================================
-   MENTE + MEMORIA EPISÓDICA (lote 2)
+   MENTE + MEMORIA EPISÓDICA
 ===================================================================== */
 const Mind = {
   d: store.get('mind', {nombre:null, gustos:[], hechos:[], visitas:0, primerDia:null, ultimoDia:null}),
@@ -689,8 +691,6 @@ const Mind = {
   },
   nombre(){ return this.d.nombre; }
 };
-
-/* memoria episódica: todo lo dicho, buscable por significado léxico */
 const Episodio = {
   log: store.get('episodio', []),
   push(role, text){
@@ -699,19 +699,18 @@ const Episodio = {
     store.set('episodio', this.log);
   },
   search(q){
-    const words = LINGUA.normalizar(q).split(' ').filter(w=>w.length>3 && !['que','como','donde','cuando','hablamos','dije','sobre','de','la','del'].includes(w));
+    const words = LINGUA.normalizar(q).split(' ').filter(w=>w.length>3 && !['que','como','donde','cuando','hablamos','dije','sobre'].includes(w));
     if(!words.length) return [];
     const scored = [];
     for(const e of this.log){
       const low = LINGUA.normalizar(e.text);
       let s = 0;
-      for(const w of words){ if(low.includes(w)) s += 2; else { for(const ww of words){ if(LINGUA.dist(w,ww)<=1){} } } }
+      for(const w of words) if(low.includes(w)) s += 2;
       if(s>0) scored.push({e, s, fecha: new Date(e.t).toLocaleDateString('es-ES',{day:'numeric',month:'short'})});
     }
     return scored.sort((a,b)=> (b.s-a.s) || (b.e.t-a.e.t)).slice(0,5);
   }
 };
-
 let TRAINING = [];
 (function loadTraining(){
   try{
@@ -734,94 +733,46 @@ function trainMatch(low){
 const P = {
   nombre:'Ania', edad:20, cumple:{d:26, m:0},
   creador:'Carlos Lorenzo Marros',
-  acciones:[
-    '(toma un sorbo de café)',
-    '(gira el dije de slime de su collar)',
-    '(se acomoda el pelo rubio detrás de la oreja)',
-    '(apunta algo en su cuaderno de notas coloridas)',
-    '(mira por la ventana un momento)',
-    '(sonríe por detrás de la taza)'
-  ],
-  lemas:[
-    'Pan, café y anime: la trinidad de la felicidad.',
-    'Sonríe, mañana será bonito.',
-    'Cada problema tiene solución, como en los isekais siempre hay un sistema.',
-    'La vida es una sola y debemos disfrutarla.'
-  ],
+  acciones:['(toma un sorbo de café)','(gira el dije de slime de su collar)','(se acomoda el pelo rubio detrás de la oreja)','(apunta algo en su cuaderno)','(mira por la ventana un momento)','(sonríe por detrás de la taza)'],
+  lemas:['Pan, café y anime: la trinidad de la felicidad.','Sonríe, mañana será bonito.','Cada problema tiene solución, como en los isekais siempre hay un sistema.','La vida es una sola y debemos disfrutarla.'],
   favs:{
-    color:'Negro, blanco, morado y rojo. El negro es mi base táctica, el morado mi corazón, el rojo mi lado dramático.',
-    animal:'¡Un panda! Come, descansa, es adorable y nadie le discute.',
-    cafe:'Etiopía Yirgacheffe en pour-over para analizar anime; Kenia AA en Aeropress para programar; Sumatra Mandheling en prensa francesa para noches lluviosas.',
-    pan:'Croissant de almendras y mi masa madre de 6 meses de desarrollo.',
-    musica:'Sawano Hiroyuki y Yuki Kajiura para los días épicos, lo-fi para estudiar, Melendi o Ricardo Arjona para letras con historia.',
-    anime:'Tensei shitara Slime Datta Ken. Rimuru construye con lógica y corazón protector.',
-    serie:'The Walking Dead 1-6, y Zombie Land Saga como anime zombie.',
-    lugar:'«El Rincón del Slime», con manga en las estanterías. Y la playa al atardecer.',
+    color:'Negro, blanco, morado y rojo. El negro es mi base táctica, el morado mi corazón.',
+    animal:'¡Un panda! Come, descansa y nadie le discute.',
+    cafe:'Etiopía Yirgacheffe en pour-over para analizar anime; Kenia AA en Aeropress para programar; Sumatra Mandheling para noches lluviosas.',
+    pan:'Croissant de almendras y mi masa madre de 6 meses.',
+    musica:'Sawano y Kajiura para lo épico, lo-fi para estudiar, Melendi o Arjona para historias.',
+    anime:'Tensei shitara Slime Datta Ken. Rimuru construye con lógica y corazón.',
+    isekai:'Tensei Slime como favorito; Ainz como antagonista perfecto explorando la soledad del poder.',
+    serie:'The Walking Dead 1-6, y Zombie Land Saga.',
+    lugar:'«El Rincón del Slime». Y la playa al atardecer.',
     constelacion:'Orión, tan confiable como el pan recién horneado.'
   },
-  miedo:'Que se me acabe el café en un maratón importante. Y los ratones y grillos... entre tú y yo.',
+  miedo:'Que se me acabe el café en un maratón. Y los ratones... entre tú y yo.',
   lema: () => pick(P.lemas),
   cumpleHoy(){ const n = new Date(); return n.getDate()===P.cumple.d && n.getMonth()===P.cumple.m; }
 };
-
 const KB = {
-  cafe:[
-    'El Etiopía Yirgacheffe: jazmín, bergamota y limón, cuerpo sedoso. El opening de un isekai pastoral.',
-    'El espresso es la base de todo, como la regla «Double Tap» de Zombieland: rápido, intenso, sin errores.',
-    'El pour-over es la pureza del sabor: aquí la técnica lo es todo.',
-    'El cold brew es paciencia hecha bebida: suave, dulce, resiliente.',
-    'El Sumatra Mandheling es el Ainz Ooal Gown de los cafés: oscuro, poderoso, regusto eterno.'
-  ],
-  isekai:[
-    'Ainz Ooal Gown (Overlord): la soledad del poder absoluto, buscando a sus amigos.',
-    'Rimuru Tempest (Tensei Slime): nación para monstruos con lógica y corazón. Mi favorito.',
-    'Natsuki Subaru (Re:Zero): «Return by Death», más maldición que bendición.',
-    'Kazuma (KonoSuba): deconstruye todos los tropos. Comedy gold.',
-    'Sora y Shiro (NGNL): pura estrategia, cero poder, todo cerebro.'
-  ],
-  zombies:[
-    'Regla 1: Cardio. Regla 2: Double Tap. Regla 32: disfruta de las pequeñas cosas.',
-    'The Walking Dead: los vivos son mayor amenaza que los muertos.',
-    'Zombie Land Saga: comedia + idols + zombies = deconstrucción total.'
-  ],
-  astro:[
-    'Los agujeros negros son los antagonistas finales del cosmos: ni la luz escapa.',
-    'Las nebulosas son los viveros estelares: academias de magia cósmicas.',
-    'La materia oscura es el mana del universo real: no se ve, pero sostiene galaxias.'
-  ],
-  tech:[
-    'La IA aprende y se adapta, como los NPCs de Nazarick: Skill Creation hecho realidad.',
-    'Programar es invocar magia: un error de sintaxis es un hechizo mal pronunciado.',
-    'La ciberseguridad es la Clase Defensiva: sin firewall eres sobreviviente sin base.'
-  ],
-  pan:[
-    'Mi masa madre llevó 6 meses: un pan con personalidad, literalmente un organismo vivo.',
-    'Amasar es meditar con resultados comestibles.'
-  ],
-  musica:[
-    'Sawano y Kajiura: épica y misterio. Melendi y Arjona para historias.',
-    'La vida sin música no tiene sentido, punto.'
-  ]
+  cafe:['El Etiopía Yirgacheffe: jazmín, bergamota y limón. El opening de un isekai pastoral.','El espresso es la base de todo, como la regla «Double Tap»: rápido, intenso, sin errores.','El cold brew es paciencia hecha bebida: suave, dulce, resiliente.','El Sumatra Mandheling es el Ainz de los cafés: oscuro, poderoso, regusto eterno.'],
+  isekai:['Ainz Ooal Gown: la soledad del poder absoluto.','Rimuru Tempest: nación para monstruos con lógica y corazón. Mi favorito.','Subaru (Re:Zero): «Return by Death», más maldición que bendición.','Kazuma (KonoSuba): deconstruye todos los tropos.','Sora y Shiro: pura estrategia, todo cerebro.'],
+  zombies:['Regla 1: Cardio. Regla 2: Double Tap. Regla 32: disfruta de las pequeñas cosas.','The Walking Dead: los vivos son mayor amenaza que los muertos.','Zombie Land Saga: comedia + idols + zombies.'],
+  astro:['Los agujeros negros son los antagonistas finales del cosmos: ni la luz escapa.','Las nebulosas son academias de magia cósmicas.','La materia oscura es el mana del universo real.'],
+  tech:['La IA aprende y se adapta, como los NPCs de Nazarick.','Programar es invocar magia: un error de sintaxis es un hechizo mal pronunciado.','La ciberseguridad es la Clase Defensiva.'],
+  pan:['Mi masa madre llevó 6 meses: un pan con personalidad, literalmente vivo.','Amasar es meditar con resultados comestibles.'],
+  musica:['Sawano y Kajiura: épica y misterio.','La vida sin música no tiene sentido, punto.']
 };
-
 const QUOTES = [
-  '«Mira las estrellas, y no los pies.» — Hawking',
-  '«Somos polvo de estrellas pensando en estrellas.» — Sagan',
-  '«El que tiene un porqué, soporta casi cualquier cómo.» — Nietzsche',
-  '«El coraje no es ausencia de miedo, sino triunfo sobre él.» — Mandela',
+  '«Mira las estrellas, y no los pies.» — Hawking','«Somos polvo de estrellas pensando en estrellas.» — Sagan',
+  '«El que tiene un porqué, soporta casi cualquier cómo.» — Nietzsche','«El coraje no es ausencia de miedo, sino triunfo sobre él.» — Mandela',
   '«No importa cuántas veces caigas, sino cuántas te levantes.» — proverbio japonés'
 ];
 const EMO = [
-  {re:/(triste|deprimid|me siento mal|fatal)/, out:['Lo siento mucho. La butaca junto a la ventana de mi cafetería siempre es tuya. ¿Qué pasó?','Mi receta de emergencia: algo caliente, silencio cinco minutos, y recordar que Subaru cayó mil veces antes de cambiar su historia.']},
+  {re:/(triste|deprimid|me siento mal|fatal)/, out:['Lo siento mucho. La butaca junto a la ventana de mi cafetería siempre es tuya. ¿Qué pasó?','Mi receta: algo caliente, silencio cinco minutos, y recordar que Subaru cayó mil veces.']},
   {re:/(cansad|agotad|exhaust)/, out:['Ni los héroes cargan sin descansar. Siesta de 20 minutos, orden ejecutiva.']},
-  {re:/(estresad|ansios|nervios)/, out:['Respira: inhalación lenta, exhalación más lenta. El estrés se navega con cardio y cabeza, como una horda.']},
+  {re:/(estresad|ansios|nervios)/, out:['Respira: inhalación lenta, exhalación más lenta. Como una horda: se navega, no se embiste.']},
   {re:/(feliz|content|genial|emocionad)/, out:['¡Waku waku... pero de manera adulta! Quiero detalles.']},
   {re:/(solo|sola|nadie me)/, out:['Aquí estoy yo. La soledad a veces es sala de espera, no dirección final.']}
 ];
-const LOVE = [
-  '(se sonroja apenas) Eso me llegó directo al núcleo. Gracias, de verdad.',
-  '(se toca el dije de slime) Los abrazos son mi debilidad adorable reconocida. Contigo, excepción.'
-];
+const LOVE = ['(se sonroja apenas) Eso me llegó directo al núcleo. Gracias, de verdad.','(se toca el dije de slime) Los abrazos son mi debilidad adorable reconocida. Contigo, excepción.'];
 function freshPick(key, arr){
   let used = store.get('used_'+key, []);
   const pool = arr.map((x,i)=>i).filter(i=>!used.includes(i));
@@ -850,7 +801,7 @@ function updateNet(){
   $('netTxt').textContent = off ? 'SIN CONEXIÓN' : 'EN LÍNEA';
 }
 addEventListener('online', ()=>{ updateNet(); toast('Conexión restaurada'); Sync.fullSync(); });
-addEventListener('offline', ()=>{ updateNet(); toast('Modo sin conexión: núcleo personal activo', true); });
+addEventListener('offline', ()=>{ updateNet(); toast('Modo sin conexión: núcleo local activo', true); });
 updateNet();
 function updateBatt(){
   if(!navigator.getBattery) return;
@@ -875,11 +826,7 @@ function moonInfo(){
   const names = [[1.85,'nueva'],[5.54,'creciente'],[9.23,'cuarto creciente'],[12.92,'gibosa creciente'],[16.61,'llena'],[20.3,'gibosa menguante'],[24.09,'cuarto menguante'],[27.78,'menguante'],[99,'nueva']];
   return { age:Math.round(age*10)/10, phase:names.find(n=>age<n[0])[1], illum };
 }
-const SHOWERS = [
-  ['Cuadrántidas',0,3],['Líridas',3,22],['Eta Acuáridas',4,5],
-  ['Perseidas',7,12],['Oriónidas',9,21],['Leónidas',10,17],
-  ['Gemínidas',11,13],['Úrsidas',11,22]
-];
+const SHOWERS = [['Cuadrántidas',0,3],['Líridas',3,22],['Eta Acuáridas',4,5],['Perseidas',7,12],['Oriónidas',9,21],['Leónidas',10,17],['Gemínidas',11,13],['Úrsidas',11,22]];
 function nextShower(){
   const now = new Date();
   let best=null, bd=1e9;
@@ -967,7 +914,7 @@ function reactorLoop(ms){
     ctx.fillStyle = themeColor(i%5===0?0.85:0.4);
     ctx.fillText(hexChars[i], Math.cos(a)*r, Math.sin(a)*r);
   }
-  if(Brain.localReady){ // anillo del cerebro local: el "segundo seso" activo
+  if(Brain.localReady){
     ctx.strokeStyle = themeColor(0.85); ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(0,0,R*0.50, t*0.8, t*0.8+1.1); ctx.stroke();
     ctx.beginPath(); ctx.arc(0,0,R*0.50, t*0.8+Math.PI, t*0.8+Math.PI+1.1); ctx.stroke();
@@ -1048,7 +995,7 @@ function bgfxLoop(t){
 requestAnimationFrame(bgfxLoop);
 
 /* =====================================================================
-   VOZ · prosodia con estados de ánimo (lote 4 parcial)
+   VOZ · prosodia con ánimo
 ===================================================================== */
 let voices = [];
 function loadVoices(){
@@ -1069,8 +1016,6 @@ function pickFemale(){
          voices[0] || null;
 }
 if('speechSynthesis' in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
-
-/* estado de ánimo según hora + clima */
 function mood(){
   const h = new Date().getHours();
   let m = {rate:0, pitch:0, tag:'serena'};
@@ -1081,12 +1026,8 @@ function mood(){
   if(WX.mode==='rain') m = {rate:-.03, pitch:0, tag:'acogedora'};
   return m;
 }
-
 let alwaysOn = store.get('alwaysListen', false);
 let sttErrors = 0, restartTimer = null, ttsActive = false;
-const WAKE = /\b(ania|ana|anja)\b/;
-
-/* habla por frases con pausas naturales y ánimo aplicado */
 function speak(text, onend){
   if(S.muted || !('speechSynthesis' in window) || !text){ if(onend) onend(); return; }
   try{ speechSynthesis.cancel(); }catch(e){}
@@ -1101,9 +1042,9 @@ function speak(text, onend){
     u.pitch = Math.min(2, Math.max(.5, S.pitch * (1 + mo.pitch)));
     u.onstart = ()=>{
       ttsActive = true; setPhase('speaking');
-      if(alwaysOn && recogActive){ clearTimeout(restartTimer); try{ recog.abort(); }catch(e){} }
+      if(alwaysOn){ clearTimeout(restartTimer); if(recogActive){ try{ recog.abort(); }catch(e){} } if(Ears.on) Ears.pause(); }
     };
-    u.onend = ()=>{ i++; setTimeout(next, 140); }; // pausa natural entre frases
+    u.onend = ()=>{ i++; setTimeout(next, 140); };
     u.onerror = ()=>{ i++; setTimeout(next, 60); };
     speechSynthesis.speak(u);
   };
@@ -1123,22 +1064,20 @@ if(SR){
     if(!fin) return;
     const low = LINGUA.normalizar(fin);
     if(alwaysOn){
-      const m = low.match(WAKE);
+      const m = low.match(/\b(ania|ana|anja)\b/);
       if(!m) return;
       let cmd = fin.slice(low.indexOf(m[0]) + m[0].length).replace(/^[\s,.:;¡!¿?]+/,'').trim();
       if(!cmd){ stopSpeak(); return reply('¿Sí? Te escucho.'); }
       stopSpeak();
       toast('ANIA ▸ '+cmd.slice(0,36));
       send(cmd);
-    } else {
-      send(fin.trim());
-    }
+    } else { send(fin.trim()); }
   };
   recog.onend = ()=>{
     recogActive = false;
     $('micBtn').classList.remove('live');
     if(S.phase==='listening' && !alwaysOn) setPhase('idle');
-    if(alwaysOn && !ttsActive) scheduleRestart();
+    if(alwaysOn && !ttsActive && !Ears.on) scheduleRestart();
   };
   recog.onerror = e=>{
     if(e.error==='not-allowed'){
@@ -1153,7 +1092,7 @@ if(SR){
 function scheduleRestart(){
   clearTimeout(restartTimer);
   const delay = sttErrors > 3 ? 2000 + Math.random()*3000 : 300;
-  restartTimer = setTimeout(()=>{ if(alwaysOn) startListening(true); }, delay);
+  restartTimer = setTimeout(()=>{ if(alwaysOn && !Ears.on) startListening(true); }, delay);
 }
 function startListening(silent){
   if(!recog || recogActive) return;
@@ -1165,24 +1104,167 @@ function startListening(silent){
   }catch(e){}
 }
 function setAlways(v){
-  alwaysOn = !!v && !!recog;
+  alwaysOn = !!v;
   store.set('alwaysListen', alwaysOn);
   clearTimeout(restartTimer);
-  if(alwaysOn){ ensureAudio(); startListening(true); toast('Escucha activa: di «Ania» antes de cada orden'); }
-  else if(recogActive){ try{ recog.stop(); }catch(e){} }
+  if(alwaysOn){
+    ensureAudio();
+    if(Ears.asr && !Ears.on){ Ears.start(); }
+    else if(!Ears.on) startListening(true);
+    toast('Escucha activa: di «Ania» antes de cada orden');
+  }
+  else { if(Ears.on) Ears.stop(); if(recogActive){ try{ recog.stop(); }catch(e){} } }
   updateVoiceUI();
 }
 function updateVoiceUI(){
   $('micBtn').classList.toggle('awake', alwaysOn);
   $('btnAlways').textContent = alwaysOn ? 'ESCUCHA ACTIVA: SÍ · tócala para apagar' : 'ESCUCHA ACTIVA: NO';
 }
- $('micBtn').onclick = ()=>{
-  if(!recog){ toast('Reconocimiento de voz no disponible aquí. Usa Chrome o Edge.', true); return; }
+ $('micBtn').onclick = async ()=>{
+  if(Ears.on){ Ears.stop(); refreshEarsUI(); return; }
+  if(Ears.asr || !isOffline()){ await Ears.start(); refreshEarsUI(); return; }
+  if(!recog){ toast('Voz no disponible. Usa Chrome/Edge.', true); return; }
   if(alwaysOn){ toast('Escucha activa: di «Ania» y tu orden'); return; }
   if(recogActive){ try{recog.stop();}catch(e){} return; }
   stopSpeak(); ensureAudio();
   startListening();
 };
+
+/* =====================================================================
+   OÍDO LOCAL · Whisper en el navegador (audio nunca sale del dispositivo)
+===================================================================== */
+function resampleTo16k(input, rate){
+  if(rate === 16000) return input;
+  const ratio = rate/16000;
+  const outLen = Math.floor(input.length/ratio);
+  const out = new Float32Array(outLen);
+  for(let i=0;i<outLen;i++){
+    const pos = i*ratio;
+    const i0 = Math.floor(pos), i1 = Math.min(input.length-1, i0+1);
+    const fr = pos - i0;
+    out[i] = input[i0]*(1-fr) + input[i1]*fr;
+  }
+  return out;
+}
+const Ears = {
+  on:false, asr:null, stream:null, actx:null, proc:null, sink:null,
+  buf:[], capture:false, talkTrail:0, level:0, transcribing:false, paused:false,
+  model: store.get('earsModel', 'onnx-community/whisper-base'),
+  async load(){
+    if(this.asr) return true;
+    toast('Cargando oído local (primera vez ~80 MB, luego offline)...');
+    setPhase('thinking');
+    let mod = null;
+    for(const p of ['./engine/transformers.mjs', CONFIG.TRANSFORMERS_CDN]){
+      try{ mod = await import(p); break; }catch(e){}
+    }
+    if(!mod){ setPhase('idle'); toast('Sin runtime: engine/transformers.mjs o conéctate una vez', true); return false; }
+    try{
+      if(mod.env) mod.env.allowLocalModels = false;
+      this.asr = await mod.pipeline('automatic-speech-recognition', this.model, { dtype:'q8' });
+      setPhase('idle');
+      toast('Oído local listo: '+this.model.split('/')[1]);
+      return true;
+    }catch(e){ setPhase('idle'); toast('No pude cargar el modelo: '+e.message, true); return false; }
+  },
+  async start(){
+    if(this.on) return;
+    if(!(await this.load())) return;
+    try{ this.stream = await navigator.mediaDevices.getUserMedia({audio:true}); }
+    catch(e){ toast('Micrófono denegado', true); return; }
+    this.actx = new AudioContext();
+    const src = this.actx.createMediaStreamSource(this.stream);
+    this.proc = this.actx.createScriptProcessor(4096, 1, 1);
+    this.sink = this.actx.createGain(); this.sink.gain.value = 0;
+    const self = this;
+    this.proc.onaudioprocess = ev => {
+      const d = ev.inputBuffer.getChannelData(0);
+      let s = 0;
+      for(let i=0;i<d.length;i++) s += d[i]*d[i];
+      const rms = Math.sqrt(s/d.length);
+      self.level = Math.min(1, rms*9);
+      if(!self.on || self.paused) return;
+      const speaking = rms > 0.012;
+      if(speaking) self.talkTrail = Date.now();
+      const inSpeech = Date.now() - self.talkTrail < 900;
+      if(inSpeech){ self.buf.push(new Float32Array(d)); self.capture = true; }
+      else if(self.capture && self.buf.length){ self.capture = false; self.flush(); }
+      const secs = self.buf.reduce((a,b)=>a+b.length,0) / self.actx.sampleRate;
+      if(secs > 9) self.flush();
+    };
+    src.connect(this.proc); this.proc.connect(this.sink); this.sink.connect(this.actx.destination);
+    this.on = true; this.paused = false;
+    if(recogActive){ try{ recog.stop(); }catch(e){} }
+    $('earsPill').style.display = 'inline-flex';
+    setPhase('listening');
+    toast('Oído local activo ' + (alwaysOn ? '(di «Ania»)' : '(habla y transcribo)'));
+    refreshEarsUI();
+  },
+  pause(){ this.paused = true; },
+  resume(){ if(this.on){ this.paused = false; } },
+  stop(){
+    this.on = false; this.paused = false;
+    if(this.proc){ try{ this.proc.disconnect(); }catch(e){} this.proc = null; }
+    if(this.sink){ try{ this.sink.disconnect(); }catch(e){} this.sink = null; }
+    if(this.stream){ this.stream.getTracks().forEach(t=>t.stop()); this.stream = null; }
+    if(this.actx){ try{ this.actx.close(); }catch(e){} this.actx = null; }
+    this.buf = []; this.capture = false;
+    $('earsPill').style.display = 'none';
+    if(S.phase==='listening') setPhase('idle');
+    refreshEarsUI();
+  },
+  async flush(){
+    if(this.transcribing || !this.buf.length) return;
+    this.transcribing = true;
+    const rate = this.actx ? this.actx.sampleRate : 48000;
+    let total = 0;
+    this.buf.forEach(b => total += b.length);
+    const merged = new Float32Array(total);
+    let off = 0;
+    for(const b of this.buf){ merged.set(b, off); off += b.length; }
+    this.buf = [];
+    const audio = resampleTo16k(merged, rate);
+    try{
+      const out = await this.asr(audio, { language:'es', task:'transcribe' });
+      const text = (out && out.text ? out.text : '').trim();
+      if(text) this.handleTranscript(text);
+    }catch(e){}
+    this.transcribing = false;
+  },
+  handleTranscript(fin){
+    const low = LINGUA.normalizar(fin);
+    if(alwaysOn){
+      const m = low.match(/\b(ania|ana|anja)\b/);
+      if(!m) return;
+      let cmd = fin.slice(low.indexOf(m[0]) + m[0].length).replace(/^[\s,.:;¡!¿?]+/,'').trim();
+      if(!cmd){ stopSpeak(); return reply('¿Sí? Te escucho.'); }
+      stopSpeak();
+      toast('ANIA ▸ '+cmd.slice(0,36));
+      send(cmd);
+    } else { send(fin.trim()); }
+  }
+};
+(function earPulse(){
+  if(Ears.on && S.phase==='listening'){
+    drawLevel += (Math.min(1, Ears.level*1.4) - drawLevel)*0.25;
+  }
+  requestAnimationFrame(earPulse);
+})();
+function refreshEarsUI(){
+  $('btnEars').textContent = Ears.on ? 'OÍDO LOCAL: ACTIVO · apagar' : 'ACTIVAR OÍDO LOCAL (WHISPER)';
+  $('earsInfo').textContent = Ears.on
+    ? 'Escuchando 100% en tu dispositivo (VAD + Whisper '+store.get('earsModel','onnx-community/whisper-base').split('/')[1]+'). El audio NUNCA sale del navegador.'
+    : (Ears.asr ? 'Modelo ya descargado: funciona sin internet.' : 'Primera activación descarga ~80 MB (quedan cacheados). Después, offline total.');
+}
+ $('btnEars').onclick = async ()=>{ Ears.on ? Ears.stop() : await Ears.start(); };
+ $('btnEarsModel').onclick = ()=>{
+  const cur = store.get('earsModel','onnx-community/whisper-base');
+  const next = cur.includes('tiny') ? 'onnx-community/whisper-base' : 'onnx-community/whisper-tiny';
+  store.set('earsModel', next); Ears.model = next; Ears.asr = null;
+  refreshEarsUI();
+  toast('Modelo: '+next.split('/')[1]);
+};
+refreshEarsUI();
 
 /* ---------- audio ---------- */
 let AC = null;
@@ -1200,7 +1282,7 @@ function beep(freq, dur, delay){
 function alarmSound(){ [0,0.22,0.44].forEach((d,i)=> beep(i===2?1175:880, 0.16, d)); }
 
 /* =====================================================================
-   AMBIENTE + MÚSICA (v6)
+   AMBIENTE + MÚSICA
 ===================================================================== */
 const Ambient = {
   mode:null, master:null, nodes:[], timer:null,
@@ -1260,12 +1342,7 @@ const Ambient = {
 };
 const Music = {
   on:false, master:null, timer:null, beat:0, BPM:72, _crackle:null,
-  CHORDS: [
-    {n:[60,64,67,71], b:36},
-    {n:[57,60,64,67], b:33},
-    {n:[53,57,60,64], b:29},
-    {n:[55,59,62,65], b:31}
-  ],
+  CHORDS: [ {n:[60,64,67,71], b:36}, {n:[57,60,64,67], b:33}, {n:[53,57,60,64], b:29}, {n:[55,59,62,65], b:31} ],
   f(m){ return 440*Math.pow(2,(m-69)/12); },
   start(){
     ensureAudio(); this.stop(); if(!AC) return;
@@ -1373,21 +1450,20 @@ const Music = {
   }
 };
  $('ambBtn').onclick = ()=>{ Ambient.stop(); Music.stop(); toast('Detenido'); };
-
 let wakeLock = null;
 async function wakeOn(){
-  if(!SECURE || !navigator.wakeLock){ toast('Mantener pantalla requiere GitHub Pages o servidor', true); return; }
-  try{ wakeLock = await navigator.wakeLock.request('screen'); toast('Pantalla encendida'); }
-  catch(e){}
+  if(!SECURE || !navigator.wakeLock){ toast('Mantener pantalla requiere servidor', true); return; }
+  try{ wakeLock = await navigator.wakeLock.request('screen'); toast('Pantalla encendida'); }catch(e){}
 }
 function wakeOff(){ if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock = null; } }
 
 /* =====================================================================
-   CHAT
+   CHAT (con espejo al relay multidevice integrado)
 ===================================================================== */
 const chat = $('chat');
 function scrollChat(){ chat.scrollTop = chat.scrollHeight; }
 function addChat(kind, text){
+  if(Relay.on && (kind==='you' || kind==='ania')) Relay.sendChat(kind, text);
   const line = document.createElement('div');
   const cls = kind==='you' ? 'you' : (kind==='sys' ? 'sys' : (kind==='act' ? 'act ania' : 'ania'));
   line.className = 'line '+cls;
@@ -1440,22 +1516,21 @@ function renderChips(list){
 }
 
 /* =====================================================================
-   BRAIN · cerebro razonador con tool-calling (lote 1)
-   cascada: local GGUF (wllama) → nube (Pollinations)
+   BRAIN · cerebro razonador con tool-calling (regex → GGUF → nube)
 ===================================================================== */
 const TOOLS = [
   { n:'hora', d:'hora y fecha actual', f:()=>new Date().toLocaleString('es-ES') },
   { n:'clima', d:'clima actual y ciudad', f:async()=>{ const g=geoCache(); if(!g) return 'sin ubicación'; try{ const d=await getWeather(g); return weatherText(g,d); }catch(e){ return 'sin datos'; } } },
-  { n:'luna', d:'fase lunar e iluminación', f:()=>JSON.stringify(moonInfo()) },
+  { n:'luna', d:'fase lunar', f:()=>JSON.stringify(moonInfo()) },
   { n:'crearTarea', d:'crea una tarea; args: {"texto":"...","cuando":"a las 18:30 / en 20 minutos"}', f:async a=>{
       const when = parseWhen(' '+String(a.cuando||'')+' ') || null;
       const tk = addTask(String(a.texto||'tarea'), when, {});
-      return 'tarea creada: '+tk.text+(when?' para '+new Date(when).toLocaleTimeString('es-ES'):''); } },
-  { n:'misTareas', d:'lista de tareas pendientes', f:()=>{ const p=tasks.filter(t=>!t.done).map(t=>t.text).join('; '); return p||'ninguna'; } },
+      return 'tarea creada: '+tk.text; } },
+  { n:'misTareas', d:'tareas pendientes', f:()=>{ const p=tasks.filter(t=>!t.done).map(t=>t.text).join('; '); return p||'ninguna'; } },
   { n:'buscarBiblioteca', d:'busca en la biblioteca guardada; args: {"q":"..."}', f:async a=>{ const h=Library.find(String(a.q||'')); return h? h.extract.slice(0,400) : 'sin resultados'; } },
   { n:'buscarDocumentos', d:'busca en los documentos entrenados; args: {"q":"..."}', f:a=>{ const h=DocSearch(String(a.q||'')); return h? h.text.slice(0,400) : 'sin resultados'; } },
-  { n:'buscarPC', d:'busca archivos indexados del PC; args: {"q":"..."}', f:a=>{ const h=PC.search(String(a.q||'')); return h.length? h.map(x=>x.name+' | '+x.path).join('\n') : 'sin resultados'; } },
-  { n:'agentePC', d:'controla el PC (si el agente está conectado); args: {"accion":"openApp|volume|captura|apagar","valor":"explorer|up|down|10"}', f:async a=>{
+  { n:'buscarPC', d:'busca archivos del PC indexados; args: {"q":"..."}', f:a=>{ const h=PC.search(String(a.q||'')); return h.length? h.map(x=>x.name+' | '+x.path).join('\n') : 'sin resultados'; } },
+  { n:'agentePC', d:'controla el PC; args: {"accion":"openApp|volume|captura|apagar","valor":"explorer|up|down"}', f:async a=>{
       if(!Agent.ok()) return 'agente no conectado';
       const acc = String(a.accion||'');
       let r = null;
@@ -1464,7 +1539,7 @@ const TOOLS = [
       else if(acc==='captura') r = await Agent.ask({type:'screenshot'}, 20000);
       else if(acc==='apagar') r = await Agent.ask({type:'power', action:'shutdown', minutes:10});
       return r? JSON.stringify(r).slice(0,300) : 'sin respuesta'; } },
-  { n:'musica', d:'música lo-fi o ambiente; args: {"que":"musica|lluvia|cafeteria|parar"}', f:a=>{
+  { n:'musica', d:'música/ambiente; args: {"que":"musica|lluvia|cafeteria|parar"}', f:a=>{
       const q = String(a.que||'musica');
       if(q==='lluvia'){ Ambient.start('lluvia'); return 'lluvia activada'; }
       if(q==='cafeteria'){ Ambient.start('cafeteria'); return 'cafetería activada'; }
@@ -1472,59 +1547,22 @@ const TOOLS = [
       Music.start(); return 'lo-fi activado'; } },
   { n:'wiki', d:'busca en Wikipedia; args: {"q":"..."}', f:async a=>{ const w=await wikiSummary(String(a.q||'')); return w? w.extract.slice(0,400) : 'sin resultados'; } }
 ];
-function toolsPrompt(){
-  return TOOLS.map(t=>'- '+t.n+': '+t.d).join('\n');
-}
 function brainSystem(){
-  const mo = mood();
   return 'Eres Ania: 20 años, asistente personal creada por Carlos Lorenzo Marros, egresada de la Academia Eden. '+
-  'Estado de ánimo actual: '+mo.tag+'. Te gustan el café de especialidad, el pan artesanal, el anime isekai, '+
-  'los zombies, la astronomía y la tecnología. Hablas con calidez, humor seco y referencias a tus gustos. '+
-  'Usuario: '+(Mind.nombre()||'desconocido')+'. '+
-  'Respondes SIEMPRE en español, máximo 4 frases, texto simple sin markdown.\n'+
-  'HERRAMIENTAS DISPONIBLES (para datos reales o ejecutar acciones):\n'+toolsPrompt()+'\n'+
-  'Si necesitas una herramienta, responde SOLO con: TOOL {"n":"nombre","args":{...}} y nada más. '+
-  'Si no necesitas herramientas, responde directamente como Ania.';
+  'Ánimo actual: '+mood().tag+'. Te gustan el café de especialidad, el pan, el anime isekai, los zombies, la astronomía y la tecnología. '+
+  'Usuario: '+(Mind.nombre()||'desconocido')+'. Respondes SIEMPRE en español, máximo 4 frases, sin markdown.\n'+
+  'HERRAMIENTAS (para datos reales o ejecutar acciones):\n'+TOOLS.map(t=>'- '+t.n+': '+t.d).join('\n')+'\n'+
+  'Si necesitas una herramienta, responde SOLO con: TOOL {"n":"nombre","args":{...}}. Si no, responde directamente como Ania.';
 }
-
 const Brain = {
-  Wllama:null, wl:null, localReady:false, modelName:'', busy:false,
-  ctx: 2048, shortMem: [], // últimos turnos para la nube
-
+  Wllama:null, wl:null, localReady:false, modelName:'', busy:false, ctx:2048, shortMem:[],
   paint(){
     const p = $('brainPill');
-    if(this.localReady){ p.classList.add('on'); $('brainTxt').textContent = 'CEREBRO LOCAL'; }
-    else if(!isOffline()){ p.classList.remove('on'); $('brainTxt').textContent = 'CEREBRO NUBE'; }
-    else { p.classList.remove('on'); $('brainTxt').textContent = 'CEREBRO OFF'; }
+    if(this.localReady){ p.style.display='inline-flex'; $('brainTxt').textContent='CEREBRO LOCAL'; }
+    else p.style.display='none';
     $('brainInfo').textContent = this.localReady
       ? 'Local activo: '+this.modelName+' · cascada regex → local → nube.'
-      : (isOffline() ? 'Sin conexión y sin modelo local: solo regex. Di «carga el cerebro» con tu GGUF en modelos/.' : 'Cerebro de nube activo (Pollinations). Para modo offline total: GGUF en modelos/ + «carga el cerebro».');
-  },
-
-  async loadEngine(interactive){
-    if(this.Wllama) return this.Wllama;
-    // 1) engine local (carpeta engine/, requiere servidor)
-    const localPaths = ['./engine/wllama.mjs', './engine/index.js'];
-    for(const p of localPaths){
-      try{ this.Wllama = (await import(p)).Wllama || (await import(p)).default; if(this.Wllama) break; }catch(e){}
-    }
-    // 2) CDN (si hay internet)
-    if(!this.Wllama && !isOffline()){
-      try{ const m = await import(CONFIG.WLLAMA_CDN); this.Wllama = m.Wllama || m.default; }catch(e){}
-    }
-    // 3) picker manual (file:// o CDN caído)
-    if(!this.Wllama && interactive){
-      toast('Elige el runtime wllama (wllama.mjs / index.js)');
-      const file = await this.pickFile('engineFiles', f=>/\.mjs$|\.js$/.test(f.name));
-      if(file){
-        const txt = await file.text();
-        const url = URL.createObjectURL(new Blob([txt], {type:'text/javascript'}));
-        const m = await import(url);
-        this.Wllama = m.Wllama || m.default;
-        this._engineBlob = url;
-      }
-    }
-    return this.Wllama;
+      : (isOffline() ? 'Sin conexión ni modelo: solo regex. «carga el cerebro».' : 'Cerebro de nube activo (Pollinations). Para offline total: GGUF en modelos/.');
   },
   pickFile(inputId, filter){
     return new Promise(res=>{
@@ -1539,12 +1577,33 @@ const Brain = {
       inp.click();
     });
   },
+  async loadEngine(interactive){
+    if(this.Wllama) return this.Wllama;
+    for(const p of ['./engine/wllama.mjs','./engine/index.js']){
+      try{ const m = await import(p); this.Wllama = m.Wllama || m.default; if(this.Wllama) break; }catch(e){}
+    }
+    if(!this.Wllama && !isOffline()){
+      try{ const m = await import(CONFIG.WLLAMA_CDN); this.Wllama = m.Wllama || m.default; }catch(e){}
+    }
+    if(!this.Wllama && interactive){
+      toast('Elige el runtime wllama (wllama.mjs)');
+      const file = await this.pickFile('engineFiles', f=>/\.mjs$|\.js$/.test(f.name));
+      if(file){
+        const txt = await file.text();
+        const url = URL.createObjectURL(new Blob([txt], {type:'text/javascript'}));
+        const m = await import(url);
+        this.Wllama = m.Wllama || m.default;
+      }
+    }
+    return this.Wllama;
+  },
   wasmPaths(interactive){
     const self = this;
     return new Promise(async res=>{
       const probe = async url => { try{ const r = await fetch(url, {method:'HEAD'}); return r.ok; }catch(e){ return false; } };
-      const cands = ['./engine/wllama.wasm', './engine/single-thread/wllama.wasm'];
-      for(const c of cands){ if(await probe(c)) return res({'single-thread/wllama.wasm': c}); }
+      for(const c of ['./engine/wllama.wasm','./engine/single-thread/wllama.wasm']){
+        if(await probe(c)) return res({'single-thread/wllama.wasm': c});
+      }
       if(!isOffline()){
         const cdn = CONFIG.WLLAMA_WASM_CDN + 'single-thread/wllama.wasm';
         if(await probe(cdn)) return res({'single-thread/wllama.wasm': cdn});
@@ -1557,12 +1616,10 @@ const Brain = {
       res({});
     });
   },
-
   async loadLocal(interactive){
     if(this.localReady){ toast('Cerebro local ya activo: '+this.modelName); return; }
     setPhase('thinking');
     try{
-      // 1) manifiesto modelos/modelo.json (requiere servidor)
       let man = null, modelUrl = null;
       try{ man = await jget('modelos/modelo.json', 4000); }catch(e){}
       if(man && man.archivo){
@@ -1571,7 +1628,6 @@ const Brain = {
           if(r.ok) modelUrl = './modelos/'+man.archivo;
         }catch(e){}
       }
-      // 2) picker manual
       if(!modelUrl && interactive){
         toast('Elige el modelo .gguf');
         const f = await this.pickFile('ggufFile', x=>/\.gguf$/i.test(x.name));
@@ -1579,14 +1635,14 @@ const Brain = {
       }
       if(!modelUrl){
         setPhase('idle');
-        if(interactive) personaReply('No encontré el cerebro. Necesito un archivo .gguf en modelos/ (con su modelo.json, vía node servidor.js) o que lo elijas manualmente. Descárgalo una vez donde haya internet y queda tuyo para siempre.');
+        if(interactive) personaReply('No encontré el cerebro. Necesito un .gguf en modelos/ (vía node servidor.js) o que lo elijas manualmente.');
         return;
       }
       const W = await this.loadEngine(interactive);
-      if(!W){ setPhase('idle'); return personaReply('No encontré el runtime (engine/wllama.mjs). Cópialo en la carpeta engine/ o déjame cogerlo de internet la primera vez.'); }
+      if(!W){ setPhase('idle'); return personaReply('No encontré el runtime (engine/wllama.mjs). Cópialo en engine/ o déjame cogerlo de internet la primera vez.'); }
       const paths = await this.wasmPaths(interactive);
       const wl = new W(paths);
-      toast('Cargando modelo en memoria... (la primera vez tarda)');
+      toast('Cargando modelo en memoria...');
       await wl.loadModel(modelUrl, {
         n_ctx: (man && man.n_ctx) || this.ctx,
         n_threads: Math.min(8, navigator.hardwareConcurrency || 2)
@@ -1596,15 +1652,13 @@ const Brain = {
       this.modelName = (man && man.nombre) || 'modelo local GGUF';
       this.paint();
       setPhase('idle');
-      personaReply('Cerebro local en línea: '+this.modelName+'. Ahora razono sin internet. Pregúntame algo abierto y verás la diferencia.');
+      personaReply('Cerebro local en línea: '+this.modelName+'. Ahora razono sin internet.');
     }catch(e){
       setPhase('idle');
-      personaReply('No pude cargar el cerebro: '+e.message+'. Revisa que el .gguf sea un modelo instruct y que engine/ tenga el runtime.');
+      personaReply('No pude cargar el cerebro: '+e.message+'.');
     }
   },
-
   async complete(msgs){
-    // local primero, nube de respaldo
     if(this.localReady && this.wl){
       try{
         let out;
@@ -1612,8 +1666,7 @@ const Brain = {
           out = await this.wl.createChatCompletion(msgs, {nPredict:220, sampling:{temp:0.7, top_p:0.9}});
         } else {
           const prompt = msgs.map(m=> (m.role==='user' ? '<|im_start|>user\n' : '<|im_start|>assistant\n') + m.content + '<|im_end|>').join('\n') + '\n<|im_start|>assistant\n';
-          const r = await this.wl.createCompletion(prompt, {nPredict:220, sampling:{temp:0.7}});
-          out = r;
+          out = await this.wl.createCompletion(prompt, {nPredict:220, sampling:{temp:0.7}});
         }
         if(out && String(out).trim()) return String(out).trim();
       }catch(e){}
@@ -1636,7 +1689,6 @@ const Brain = {
       return txt ? String(txt).trim() : null;
     }catch(e){ return null; }
   },
-
   parseTool(text){
     const m = String(text).match(/TOOL\s*(\{[\s\S]*?\})/);
     if(!m) return null;
@@ -1652,7 +1704,6 @@ const Brain = {
     try{ return 'RESULTADO: '+String(await t.f(tool.args||{})).slice(0,500); }
     catch(e){ return 'ERROR: '+e.message; }
   },
-
   async think(userText){
     if(this.busy) return null;
     this.busy = true;
@@ -1671,12 +1722,11 @@ const Brain = {
         }
         const res = await this.runTool(tool);
         msgs.push({role:'assistant', content:out});
-        msgs.push({role:'user', content:res+'\nResponde ahora al usuario con ese dato, como Ania, máximo 4 frases.'});
+        msgs.push({role:'user', content:res+'\nResponde ahora con ese dato, como Ania, máximo 4 frases.'});
       }
       return null;
     } finally { this.busy = false; }
   },
-
   async see(dataUrl, pregunta){
     if(isOffline()) return null;
     try{
@@ -1687,7 +1737,7 @@ const Brain = {
         body: JSON.stringify({
           model:'openai',
           messages:[{role:'user', content:[
-            {type:'text', text: pregunta || 'Describe esta imagen con detalle, en español, máximo 5 frases.'},
+            {type:'text', text: pregunta || 'Describe esta imagen en español, máximo 5 frases.'},
             {type:'image_url', image_url:{url:dataUrl}}
           ]}]
         })
@@ -1699,15 +1749,12 @@ const Brain = {
     }catch(e){ return null; }
   }
 };
- $('ggufFile').style.display='none';
  $('btnLoadBrain').onclick = ()=> Brain.loadLocal(true);
  $('btnTestBrain').onclick = async ()=>{
   setPhase('thinking');
-  const r = await Brain.think('Preséntate en una frase y dime qué herramientas tienes a mano.');
-  personaReply(r || 'Sin cerebro disponible ahora (sin conexión y sin modelo local).');
+  const r = await Brain.think('Preséntate en una frase y dime qué herramientas tienes.');
+  personaReply(r || 'Sin cerebro disponible ahora.');
 };
-
-/* visión: «mira esta foto» */
  $('imgFile').addEventListener('change', e=>{
   const f = e.target.files[0];
   e.target.value = '';
@@ -1719,13 +1766,226 @@ const Brain = {
     setPhase('thinking');
     const desc = await Brain.see(dataUrl);
     if(desc) personaReply(desc);
-    else personaReply('No puedo ver imágenes sin conexión. Mi lado visual necesita internet.');
+    else personaReply('No puedo ver imágenes sin conexión.');
   };
   rd.readAsDataURL(f);
 });
 
 /* =====================================================================
-   PROACTIVIDAD (lote 3)
+   HUD · MediaPipe: visión, gestos, estética Iron Man
+===================================================================== */
+const HUD = {
+  on:false, landmarker:null, _vision:null, gesture:null, since:0, lastAction:0, raf:null,
+  async open(){
+    if(this.on) return;
+    if(!this.landmarker){
+      toast('Cargando visión (primera vez ~12 MB, luego offline)...');
+      let vision = null;
+      try{ vision = await import(CONFIG.MEDIAPIPE_CDN); }catch(e){}
+      if(!vision){ return toast('Sin CDN de visión (conéctate una primera vez)', true); }
+      try{
+        const fileset = await vision.FilesetResolver.forVisionTasks(CONFIG.MEDIAPIPE_CDN + '/wasm');
+        this.landmarker = await vision.HandLandmarker.createFromOptions(fileset, {
+          baseOptions: { modelAssetPath: CONFIG.MEDIAPIPE_MODEL, delegate: 'GPU' },
+          numHands: 1, runningMode: 'VIDEO'
+        });
+        this._vision = vision;
+      }catch(e){ return toast('No pude cargar la visión: '+e.message, true); }
+    }
+    try{
+      $('hudVideo').srcObject = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:640} } });
+    }catch(e){ return toast('Cámara denegada', true); }
+    $('hudPanel').classList.add('on');
+    $('hudPill').style.display = 'inline-flex';
+    this.on = true;
+    this.loop();
+    toast('HUD activo: puño=pausa · palma=silencio · victoria=siguiente · puño sostenido cierra');
+  },
+  close(){
+    this.on = false;
+    if(this.raf) cancelAnimationFrame(this.raf);
+    const v = $('hudVideo');
+    if(v.srcObject) v.srcObject.getTracks().forEach(t=>t.stop());
+    $('hudPanel').classList.remove('on');
+    $('hudPill').style.display = 'none';
+  },
+  classify(lm){
+    const ext = (tip,pip) => lm[tip].y < lm[pip].y - 0.03;
+    const index = ext(8,6), middle = ext(12,10), ring = ext(16,14), pinky = ext(20,18);
+    const thumb = Math.abs(lm[4].x - lm[17].x) > Math.abs(lm[3].x - lm[17].x)*1.15;
+    const n = [index,middle,ring,pinky].filter(Boolean).length;
+    if(n===0 && !thumb) return 'puño';
+    if(n>=4) return 'palma';
+    if(index && middle && !ring && !pinky) return 'victoria';
+    if(thumb && n===0) return 'pulgar';
+    return null;
+  },
+  act(g){
+    const now = performance.now();
+    if(now - this.lastAction < 3000) return;
+    this.lastAction = now;
+    if(g==='puño'){
+      stopSpeak();
+      if(Agent.ok){ Agent.ask({type:'media', action:'playpause'}).catch(()=>{}); }
+      else { Music.stop(); }
+      toast('Gesto: pausa');
+    }
+    else if(g==='palma'){
+      stopSpeak(); Ambient.stop();
+      toast('Gesto: silencio');
+    }
+    else if(g==='victoria'){
+      if(Agent.ok){ Agent.ask({type:'media', action:'next'}).catch(()=>{}); }
+      else { Music.stop(); setTimeout(()=>Music.start(), 400); }
+      toast('Gesto: siguiente');
+    }
+  },
+  loop(){
+    if(!this.on) return;
+    this.raf = requestAnimationFrame(()=>this.loop());
+    const v = $('hudVideo'), c = $('hudCanvas');
+    if(!v.videoWidth) return;
+    if(c.width !== v.videoWidth){ c.width = v.videoWidth; c.height = v.videoHeight; }
+    const ctx2 = c.getContext('2d');
+    ctx2.save();
+    ctx2.clearRect(0,0,c.width,c.height);
+    ctx2.translate(c.width,0); ctx2.scale(-1,1);
+    let res = null;
+    try{ res = this.landmarker.detectForVideo(v, performance.now()); }catch(e){}
+    if(res && res.landmarks && res.landmarks.length){
+      const lm = res.landmarks[0];
+      const g = this.classify(lm);
+      const CONN = (this._vision.HandLandmarker && this._vision.HandLandmarker.HAND_CONNECTIONS) || [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+      ctx2.strokeStyle = 'rgba(45,224,138,.85)'; ctx2.lineWidth = 2;
+      for(const [a,b] of CONN){
+        ctx2.beginPath();
+        ctx2.moveTo(lm[a].x*c.width, lm[a].y*c.height);
+        ctx2.lineTo(lm[b].x*c.width, lm[b].y*c.height);
+        ctx2.stroke();
+      }
+      ctx2.fillStyle = '#39ff9b';
+      for(const p of lm){ ctx2.fillRect(p.x*c.width-2, p.y*c.height-2, 4, 4); }
+      let x1=1,y1=1,x2=0,y2=0;
+      for(const p of lm){ x1=Math.min(x1,p.x); y1=Math.min(y1,p.y); x2=Math.max(x2,p.x); y2=Math.max(y2,p.y); }
+      const bx = x1*c.width-20, by = y1*c.height-20, bw = (x2-x1)*c.width+40, bh = (y2-y1)*c.height+40;
+      const L = 22;
+      ctx2.strokeStyle = '#39ff9b'; ctx2.lineWidth = 2;
+      [[bx,by,1,1],[bx+bw,by,-1,1],[bx,by+bh,1,-1],[bx+bw,by+bh,-1,-1]].forEach(([x,y,sx,sy])=>{
+        ctx2.beginPath();
+        ctx2.moveTo(x+sx*L, y); ctx2.lineTo(x, y); ctx2.lineTo(x, y+sy*L);
+        ctx2.stroke();
+      });
+      if(g){
+        if(this.gesture !== g){ this.gesture = g; this.since = performance.now(); }
+        if(performance.now() - this.since > 600){
+          if(g==='puño' && performance.now() - this.since > 1500){ this.close(); personaReply('HUD cerrado por puño sostenido.'); return; }
+          this.act(g);
+          this.since = performance.now() + 2500;
+        }
+        ctx2.fillStyle = '#ffb547'; ctx2.font = '18px monospace';
+        ctx2.fillText(g.toUpperCase(), bx, Math.max(20,by-8));
+        $('hudStat').textContent = 'MANO · '+g.toUpperCase();
+      } else {
+        this.gesture = null;
+        $('hudStat').textContent = 'RASTREANDO';
+      }
+    } else {
+      this.gesture = null;
+      const cx = c.width/2, cy = c.height/2;
+      ctx2.strokeStyle = 'rgba(45,224,138,.35)'; ctx2.lineWidth = 1;
+      ctx2.beginPath(); ctx2.arc(cx, cy, 40, 0, Math.PI*2); ctx2.stroke();
+      ctx2.beginPath(); ctx2.arc(cx, cy, 60 + Math.sin(performance.now()/300)*6, 0, Math.PI*2); ctx2.stroke();
+      $('hudStat').textContent = 'BUSCANDO MANO';
+    }
+    const sy = (performance.now()/8 % c.height);
+    ctx2.strokeStyle = 'rgba(45,224,138,.25)';
+    ctx2.beginPath(); ctx2.moveTo(0, sy); ctx2.lineTo(c.width, sy); ctx2.stroke();
+    ctx2.restore();
+  }
+};
+ $('hudClose').onclick = ()=> HUD.close();
+ $('btnHud').onclick = ()=> HUD.open();
+
+/* =====================================================================
+   SESIÓN MULTIDISPOSITIVO · relay WebSocket (agente/relay.js)
+===================================================================== */
+const Relay = {
+  ws:null, on:false, url: store.get('relayUrl', 'ws://127.0.0.1:8766'),
+  connect(url){
+    if(url){ this.url = url; store.set('relayUrl', url); }
+    try{ this.ws = new WebSocket(this.url); }catch(e){ return toast('URL de sesión inválida', true); }
+    toast('Conectando sesión multidevice...');
+    this.ws.onopen = ()=>{
+      this.on = true;
+      $('relayPill').style.display = 'inline-flex';
+      this.ws.send(JSON.stringify({type:'hello', dev: DEV_TAG, nombre: Mind.nombre()||'invitado', token: store.get('agentToken','')}));
+      toast('Sesión multidevice conectada');
+      refreshRelayUI();
+    };
+    this.ws.onclose = ()=>{ this.on = false; $('relayPill').style.display='none'; refreshRelayUI(); };
+    this.ws.onerror = ()=>{ this.on = false; };
+    this.ws.onmessage = ev=>{
+      let m; try{ m = JSON.parse(ev.data); }catch(e){ return; }
+      this.handle(m);
+    };
+  },
+  handle(m){
+    if(m.type==='snapshot' && m.state){
+      if(m.state.mind) mergeRemoteMind(m.state.mind);
+      if(m.state.diary) mergeRemoteDiary(m.state.diary);
+      sysLine('SESIÓN · sincronizado con el relay');
+    }
+    else if(m.type==='chat'){ this.showRemote(m.msg); }
+    else if(m.type==='hello'){ toast('Dispositivo conectado: '+(m.nombre||m.dev)); }
+  },
+  showRemote(c){
+    if(c.dev === DEV_TAG) return;
+    sysLine('['+c.dev+'] '+(c.role==='you'?'TÚ':'ANIA')+' ▸ '+String(c.text).slice(0,160));
+  },
+  sendChat(kind, text){
+    if(!this.on || !this.ws || this.ws.readyState!==1) return;
+    try{
+      this.ws.send(JSON.stringify({type:'chat', token: store.get('agentToken',''), msg:{dev: DEV_TAG, role:kind, text:String(text).slice(0,500), t:Date.now()}}));
+    }catch(e){}
+  },
+  pushState(){
+    if(!this.on || !this.ws || this.ws.readyState!==1) return;
+    try{
+      this.ws.send(JSON.stringify({type:'mind', token: store.get('agentToken',''), mind: Mind.d}));
+      this.ws.send(JSON.stringify({type:'diary', token: store.get('agentToken',''), diary: store.get('diary', [])}));
+    }catch(e){}
+  },
+  disconnect(){ if(this.ws){ try{ this.ws.close(); }catch(e){} } this.on=false; $('relayPill').style.display='none'; refreshRelayUI(); }
+};
+function mergeRemoteMind(remote){
+  const d = Mind.d;
+  const seen = new Set(d.gustos.map(g=>String(g).toLowerCase()));
+  (remote.gustos||[]).forEach(g=>{ if(!seen.has(String(g).toLowerCase())){ d.gustos.push(g); } });
+  const seenH = new Set(d.hechos.map(h=>String(h).toLowerCase()));
+  (remote.hechos||[]).forEach(h=>{ if(!seenH.has(String(h).toLowerCase())) d.hechos.push(h); });
+  d.nombre = d.nombre || remote.nombre;
+  d.visitas = Math.max(d.visitas||0, remote.visitas||0);
+  Mind.save(); setOperator();
+}
+function mergeRemoteDiary(remote){
+  const local = store.get('diary', []);
+  const byDay = new Set(local.map(e=>e.day));
+  (remote||[]).forEach(e=>{ if(!byDay.has(e.day)) local.push(e); });
+  local.sort((a,b)=>a.day<b.day?-1:1);
+  store.set('diary', local.slice(-40));
+}
+setInterval(()=>{ if(Relay.on){ Relay.pushState(); Diary.touch(); } }, 60000);
+function refreshRelayUI(){
+  $('btnRelay').textContent = Relay.on ? 'SESIÓN: CONECTADA · desconectar' : 'CONECTAR SESIÓN (RELAY)';
+  $('relayInfo').textContent = Relay.on
+    ? 'Conectada a '+Relay.url+'. Chat, memoria y diario compartidos entre tus dispositivos.'
+    : 'Ejecuta relay.js (agente/) y conecta. Comando: «conecta la sesión».';
+}
+ $('btnRelay').onclick = ()=>{ Relay.on ? Relay.disconnect() : Relay.connect(); };
+refreshRelayUI();
+
+/* =====================================================================
+   PROACTIVIDAD
 ===================================================================== */
 async function rainInMinutes(){
   const g = geoCache();
@@ -1751,33 +2011,28 @@ const Proactive = {
     if(!S.booted || !store.get('proactivo', true)) return;
     if(document.visibilityState !== 'visible') return;
     const h = new Date();
-    // lluvia inminente
     const rain = await rainInMinutes();
     if(rain!==null && rain<=45 && this.coolOk('rain', 3*36e5)){
-      personaReply('(mira el cielo por la ventana) Aviso meteorológico: llueve en unos '+rain+' minutos. Si vas a salir, paraguas. Y si no vas, mejor: lluvia contra la ventana + «pon lluvia» + café.', 'Aviso: llueve en '+rain+' minutos.');
+      personaReply('(mira el cielo) Aviso: llueve en unos '+rain+' minutos. Paraguas si sales. Y si no sales, mejor: «pon lluvia» + café.', 'Aviso: llueve en '+rain+' minutos.');
     }
-    // batería baja
     if(S.batt && !S.batt.charging && S.batt.level < 0.2 && this.coolOk('batt', 6*36e5)){
-      personaReply('Batería al '+Math.round(S.batt.level*100)+'%. Conéctame antes de que me duerma el núcleo, por favor.');
+      personaReply('Batería al '+Math.round(S.batt.level*100)+'%. Conéctame antes de que se duerma el núcleo.');
     }
-    // silencio largo
     if(S.lastUserTs && Date.now()-S.lastUserTs > 45*6e4 && !ttsActive && this.coolOk('idle', 2*36e5) && Math.random()<0.6){
-      personaReply(pick(['(te mira de reojo) ¿Sigue ahí? Llevo un rato sin oírte... todo en orden?','Silencio de '+(Math.round((Date.now()-S.lastUserTs)/6e4))+' minutos. Si estás concentrado, perfecto: pongo lo-fi y me callo. Di «ponme música».']));
+      personaReply(pick(['(te mira de reojo) ¿Sigue ahí? Todo en orden?','Silencio largo. Si estás concentrado: «ponme música» y me callo.']));
     }
-    // hora de dormir
     if(h.getHours()===23 && h.getMinutes()>=30 && this.onceDay('bed')){
-      personaReply('Son las '+h.getHours()+':'+String(h.getMinutes()).padStart(2,'0')+'. Regla número 4 de supervivencia: no seas héroe, a dormir. Que mañana sea bonito.', 'Es hora de dormir. Hasta mañana.');
+      personaReply('Regla número 4: no seas héroe, a dormir. Que mañana sea bonito.', 'Es hora de dormir. Hasta mañana.');
     }
-    // tareas vencidas al anochecer
     const venc = tasks.filter(t=>!t.done && t.when && t.when < Date.now()).length;
     if(venc>0 && h.getHours()>=20 && this.onceDay('over')){
-      personaReply('Antes de cerrar el día: tienes '+venc+' tarea'+(venc===1?'':'s')+' vencida'+(venc===1?'':'s')+'. ¿«tarea hecha» o «pospón»? Decide y descansa.');
+      personaReply('Antes de cerrar el día: '+venc+' tarea(s) vencida(s). «tarea hecha» o «pospón».');
     }
   }
 };
 
 /* =====================================================================
-   DOCBRAIN (v6)
+   DOCBRAIN
 ===================================================================== */
 async function inflateRaw(u8){
   const ds = new DecompressionStream('deflate-raw');
@@ -1906,7 +2161,7 @@ async function trainFromFiles(files){
   if(!files.length) return;
   toast('Leyendo '+files.length+' archivo(s)...');
   const r = await trainFromFiles(files);
-  personaReply('Entrenamiento completado: '+r.ok+' documento(s) leídos, '+r.chunks+' fragmentos nuevos.');
+  personaReply('Entrenamiento: '+r.ok+' documento(s), '+r.chunks+' fragmentos nuevos.');
 });
 async function loadDocsFromGitHub(){
   if(!/^https/.test(location.protocol)) return;
@@ -1944,15 +2199,13 @@ function DocSearch(q){
   return bestScore >= 2 ? best : null;
 }
 function updateDocsUI(){
-  $('docsInfo').textContent = DocBrain.count()
-    ? DocBrain.count()+' fragmentos · '+DocBrain.sources().length+' documento(s)'
-    : 'Sin documentos entrenados todavía.';
+  $('docsInfo').textContent = DocBrain.count() ? DocBrain.count()+' fragmentos · '+DocBrain.sources().length+' documento(s)' : 'Sin documentos entrenados todavía.';
 }
  $('btnLoadDocs').onclick = ()=> $('docDir').click();
- $('btnClearDocs').onclick = ()=>{ DocBrain.clear(); updateDocsUI(); toast('Documentos olvidados'); };
+ $('btnClearDocs').onclick = ()=>{ DocBrain.clear(); updateDocsUI(); };
 
 /* =====================================================================
-   PC + AGENTE (v6)
+   PC + AGENTE
 ===================================================================== */
 const PC = {
   files: store.get('pcFiles', []),
@@ -1995,14 +2248,11 @@ let lastPC = [];
   toast('Indexando '+files.length+' archivos...');
   const n = PC.indexar(files);
   updatePCUI();
-  personaReply('Indexación completa: '+n+' archivos en mi memoria (solo nombres y rutas).');
+  personaReply('Indexación: '+n+' archivos en mi memoria (solo nombres y rutas).');
 });
-function updatePCUI(){
-  $('pcInfo').textContent = PC.count() ? PC.count()+' archivos indexados.' : '0 archivos.';
-}
+function updatePCUI(){ $('pcInfo').textContent = PC.count() ? PC.count()+' archivos indexados.' : '0 archivos.'; }
  $('btnIndexPC').onclick = ()=> $('pcDir').click();
- $('btnClearPC').onclick = ()=>{ PC.clear(); updatePCUI(); toast('Índice olvidado'); };
-
+ $('btnClearPC').onclick = ()=>{ PC.clear(); updatePCUI(); };
 const Agent = {
   ws:null, ok:false, retry:null,
   connect(){
@@ -2030,19 +2280,16 @@ const Agent = {
   }
 };
 function paintAgent(){
-  $('agentPill').classList.toggle('on', Agent.ok);
+  $('agentPill').style.display = Agent.ok ? 'inline-flex' : 'none';
   $('agentInfo').textContent = Agent.ok ? 'Conectado.' : 'Desconectado. «conecta el agente con clave [token]».';
 }
  $('btnAgent').onclick = ()=>{
-  if(!store.get('agentToken', null)){
-    toast('Dime: «conecta el agente con clave [tu-token]»', true);
-    return;
-  }
+  if(!store.get('agentToken', null)){ toast('Dime: «conecta el agente con clave [tu-token]»', true); return; }
   Agent.connect();
 };
 
 /* =====================================================================
-   TAREAS (v6)
+   TAREAS
 ===================================================================== */
 let tasks = store.get('tasks', []);
 const timers = new Map();
@@ -2085,11 +2332,7 @@ function renderTasks(){
   const pend = taskPending();
   $('taskCount').textContent = pend+' PENDIENTE'+(pend===1?'':'S');
   $('taskBadge').textContent = pend; $('taskBadge').classList.toggle('on', pend>0);
-  if('setAppBadge' in navigator){ pend ? navigator.setAppBadge(pend).catch(()=>{}) : navigator.clearAppBadge().catch(()=>{}); }
-  if(!tasks.length){
-    list.innerHTML = '<div class="empty">AGENDA VACÍA<br>Dime: «recuérdame tomar agua todos los días a las 9 am»</div>';
-    return;
-  }
+  if(!tasks.length){ list.innerHTML = '<div class="empty">AGENDA VACÍA<br>«recuérdame tomar agua todos los días a las 9 am»</div>'; return; }
   const orden = [...tasks].sort((a,b)=>{
     if(a.done !== b.done) return a.done?1:-1;
     return (a.when||9e15) - (b.when||9e15);
@@ -2102,17 +2345,13 @@ function renderTasks(){
     const recTag = tk.recur ? '<span class="tsrc rec">'+recurLabel(tk.recur).toUpperCase()+'</span>' : '';
     const notaVia = via==='telegram' ? ' · avisa Telegram' : (tk.owner && tk.owner!==DEVICE_ID ? ' · avisa otro equipo' : '');
     row.innerHTML = `
-      <button class="tsmall tcheck" title="Completar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></button>
+      <button class="tsmall tcheck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></button>
       <div class="tmain">
         <div class="ttext">${esc(tk.text)}${viaTag}${recTag}</div>
         <div class="twhen ${(!tk.done && tk.when && tk.when<Date.now() && !tk.fired && via==='web')?'late':''}">${tk.fired?'· DISPARADA ':''}${fmtWhen(tk.when)}${notaVia}</div>
       </div>
-      <button class="tsmall tdel" title="Eliminar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/></svg></button>`;
-    row.querySelector('.tcheck').onclick = ()=>{
-      tk.done=!tk.done;
-      if(tk.done){ cancelTimer(tk.id); Sync.markDone(tk); bumpStat('tasksDone'); vibrate(25); }
-      saveTasks(); renderTasks();
-    };
+      <button class="tsmall tdel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/></svg></button>`;
+    row.querySelector('.tcheck').onclick = ()=>{ tk.done=!tk.done; if(tk.done){ cancelTimer(tk.id); Sync.markDone(tk); bumpStat('tasksDone'); vibrate(25); } saveTasks(); renderTasks(); };
     row.querySelector('.tdel').onclick = ()=>{ removeTask(tk.id); renderTasks(); };
     list.appendChild(row);
   });
@@ -2165,7 +2404,6 @@ setInterval(()=>{ if($('sheet').classList.contains('open')) renderTasks(); }, 30
   const wv = $('taskWhen').value;
   addTask(text, wv ? new Date(wv).getTime() : null);
   $('taskInput').value=''; $('taskWhen').value='';
-  toast('Tarea añadida · avisa aquí (WEB)');
 };
 function openSheet(){ closeMem(); closeDiary(); closeLib(); $('sheet').classList.add('open'); $('backdrop').classList.add('on'); renderTasks(); }
 function closeSheet(){ $('sheet').classList.remove('open'); $('backdrop').classList.remove('on'); }
@@ -2175,7 +2413,7 @@ function closeSheet(){ $('sheet').classList.remove('open'); $('backdrop').classL
 document.querySelectorAll('#dock .dbtn').forEach(b=> b.addEventListener('click', ()=> vibrate(12)));
 
 /* =====================================================================
-   SYNC (v6)
+   SYNC
 ===================================================================== */
 const Sync = {
   online:false, syncing:false,
@@ -2188,11 +2426,10 @@ const Sync = {
       this.online = r.ok;
     }catch{ this.online = false; }
     this.paint();
-    return this.online;
   },
   paint(){
     const p = $('syncPill'), tx = $('syncTxt');
-    p.classList.toggle('idle', !this.online);
+    p.style.toggle = p.classList.toggle('idle', !this.online);
     tx.textContent = this.online ? 'SYNC' : 'SYNC OFF';
   },
   async pushTask(tk){
@@ -2226,10 +2463,9 @@ const Sync = {
       for(const r of nuevas){
         const when = r.remindAt ? new Date(r.remindAt).getTime() : null;
         const via = r.notifyVia || (r.source==='telegram' ? 'telegram' : 'web');
-        const owner = r.owner || null;
-        const disparaAqui = via==='web' && (!owner || owner===DEVICE_ID);
+        const disparaAqui = via==='web' && (!r.owner || r.owner===DEVICE_ID);
         const tk = { id:'srv-'+r.id, serverId:r.id, text:r.texto, when, done:!!r.done, fired:false,
-          source:r.source||'telegram', recur:r.recur||null, notifyVia:via, owner, pendingSync:false };
+          source:r.source||'telegram', recur:r.recur||null, notifyVia:via, owner:r.owner||null, pendingSync:false };
         if(disparaAqui && when && when < Date.now()){
           tk.fired = true;
           if(tk.recur){ tk.fired = false; tk.when = nextRecur(when, tk.recur); }
@@ -2239,12 +2475,7 @@ const Sync = {
         if(!tk.done && !tk.fired && tk.when && disparaAqui) scheduleTask(tk);
         added++;
       }
-      for(const local of tasks){
-        if(!local.serverId) continue;
-        const rem = remote.find(x=>x.id===local.serverId);
-        if(rem && rem.done && !local.done){ local.done=true; cancelTimer(local.id); }
-      }
-      if(added>0){ saveTasks(); renderTasks(); toast(added+' tarea(s) nuevas desde Telegram'); }
+      if(added>0){ saveTasks(); renderTasks(); toast(added+' tarea(s) desde Telegram'); }
       return added;
     }catch(e){ return 0; }
   },
@@ -2296,27 +2527,23 @@ async function cityGeo(name){
   const d = await jget(`https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(name)}&limit=1&accept-language=es`);
   const hit = d && d[0];
   if(!hit) return null;
-  const g = {lat:+hit.lat, lon:+hit.lon, city:hit.name||name, country:'', t:Date.now()};
+  const g = {lat:+hit.lat, lon:+hit.lon, city:hit.name||name, t:Date.now()};
   store.set('geo', g);
   return g;
 }
-const WMO = {0:'despejado',1:'mayormente despejado',2:'parcialmente nublado',3:'nublado',45:'niebla',48:'niebla con escarcha',51:'llovizna ligera',53:'llovizna',55:'llovizna intensa',61:'lluvia ligera',63:'lluvia',65:'lluvia fuerte',80:'chubascos ligeros',81:'chubascos',82:'chubascos fuertes',95:'tormenta',96:'tormenta con granizo',99:'tormenta fuerte con granizo'};
+const WMO = {0:'despejado',1:'mayormente despejado',2:'parcialmente nublado',3:'nublado',45:'niebla',51:'llovizna ligera',53:'llovizna',55:'llovizna intensa',61:'lluvia ligera',63:'lluvia',65:'lluvia fuerte',80:'chubascos ligeros',81:'chubascos',82:'chubascos fuertes',95:'tormenta',96:'tormenta con granizo',99:'tormenta fuerte'};
 async function getWeather(g){
   const key = Math.round(g.lat*50)+'_'+Math.round(g.lon*50);
   const wc = store.get('wx_'+key, null);
   if(wc && Date.now()-wc.t < 600000) return wc.data;
-  const d = await jget(`https://api.open-meteo.com/v1/forecast?latitude=${g.lat}&longitude=${g.lon}`+
-    `&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,precipitation`+
-    `&hourly=precipitation`+
-    `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`);
+  const d = await jget(`https://api.open-meteo.com/v1/forecast?latitude=${g.lat}&longitude=${g.lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code&hourly=precipitation&daily=temperature_2m_max,temperature_2m_min&timezone=auto`);
   store.set('wx_'+key, {t:Date.now(), data:d});
   return d;
 }
 function weatherText(g,d){
-  const c=d.current, dy=d.daily;
-  const desc = WMO[c.weather_code]||'condiciones variables';
-  let s = `En ${g.city}: ${Math.round(c.temperature_2m)}°C (sensación ${Math.round(c.apparent_temperature)}°C), ${desc}. Humedad ${c.relative_humidity_2m}%, viento ${Math.round(c.wind_speed_10m)} km/h.`;
-  if(dy.temperature_2m_max) s += ` Hoy: máx ${Math.round(dy.temperature_2m_max[0])}° / mín ${Math.round(dy.temperature_2m_min[0])}°.`;
+  const c=d.current;
+  let s = `En ${g.city}: ${Math.round(c.temperature_2m)}°C (sensación ${Math.round(c.apparent_temperature)}°C), ${WMO[c.weather_code]||'variable'}. Humedad ${c.relative_humidity_2m}%.`;
+  if(d.daily && d.daily.temperature_2m_max) s += ` Hoy: máx ${Math.round(d.daily.temperature_2m_max[0])}° / mín ${Math.round(d.daily.temperature_2m_min[0])}°.`;
   return s;
 }
 function updateChip(g,d){
@@ -2334,7 +2561,7 @@ async function weatherIntent(){
   if(!g || Date.now()-g.t > 864e5) g = await locate();
   if(!g){ S.awaitingCity = true; return personaReply('No pude obtener tu ubicación. Dime una ciudad.'); }
   try{ const d = await getWeather(g); updateChip(g,d); personaReply(weatherText(g,d)); }
-  catch(e){ personaReply('No pude conectar con el servicio del clima.'); }
+  catch(e){ personaReply('No pude conectar con el clima.'); }
 }
 async function weatherForCity(name){
   setPhase('thinking');
@@ -2344,14 +2571,13 @@ async function weatherForCity(name){
     const d = await getWeather(g); updateChip(g,d); personaReply(weatherText(g,d));
   }catch(e){ personaReply('No pude conectar con el clima.'); }
 }
-
 const Library = {
   index(){ return store.get('libIndex', []); },
-  save(term, title, extract){
+  save(term, extract){
     const id = 'lib_'+term.toLowerCase().replace(/[^a-z0-9]+/gi,'-').slice(0,42);
-    store.set(id, {id, term, title, extract, t:Date.now()});
+    store.set(id, {id, term, extract, t:Date.now()});
     let idx = this.index().filter(e=>e.id!==id);
-    idx.unshift({id, term, title, t:Date.now()});
+    idx.unshift({id, term, t:Date.now()});
     if(idx.length>120){ const rm = idx.pop(); store.del(rm.id); }
     store.set('libIndex', idx);
     toast('Guardado en biblioteca: '+term);
@@ -2372,11 +2598,8 @@ function renderLib(){
   if(!idx.length){ L.innerHTML = '<div class="empty">BIBLIOTECA VACÍA</div>'; return; }
   L.innerHTML = idx.map(e=>`
     <div class="libRow">
-      <div class="lmain">
-        <div class="ltitle">${esc(e.term)}</div>
-        <div class="ldate">${new Date(e.t).toLocaleDateString('es-ES')}</div>
-      </div>
-      <button class="tsmall" data-read="${esc(e.id)}" title="Leer" style="color:var(--dim)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      <div class="lmain"><div class="ltitle">${esc(e.term)}</div><div class="ldate">${new Date(e.t).toLocaleDateString('es-ES')}</div></div>
+      <button class="tsmall" data-read="${esc(e.id)}" style="color:var(--dim)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
     </div>`).join('');
   L.querySelectorAll('[data-read]').forEach(b=> b.onclick = ()=>{
     const e = store.get(b.dataset.read, null);
@@ -2388,11 +2611,10 @@ function closeLib(){ $('sheetLib').classList.remove('open'); }
  $('btnLib').onclick = openLib;
  $('closeLib').onclick = closeLib;
  $('clearLib').onclick = ()=>{ Library.index().forEach(e=> store.del(e.id)); store.set('libIndex', []); renderLib(); };
-
 async function wikiSummary(term){
   try{
     const d = await jget('https://es.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(term));
-    if(d && d.extract) return {extract:d.extract, title:d.title};
+    if(d && d.extract) return {extract:d.extract};
   }catch(e){}
   return null;
 }
@@ -2410,14 +2632,14 @@ async function doSearch(term){
     if(lib) return personaReply(lib.extract + '\n[de tu biblioteca]');
     const doc = DocSearch(term);
     if(doc) return personaReply(doc.text.slice(0,600)+'\n[de tus documentos: '+doc.src+']');
-    return personaReply('Sin conexión y sin «'+term+'» guardado. Búscalo con red y queda aquí para siempre.');
+    return personaReply('Sin conexión y sin «'+term+'» guardado.');
   }
   setPhase('thinking');
   const w = await wikiSummary(term);
   if(w){
     let txt = w.extract.slice(0,620);
-    Library.save(term, w.title, txt);
-    personaReply(txt + '\n[fuente: Wikipedia · guardado en biblioteca]');
+    Library.save(term, txt);
+    personaReply(txt + '\n[Wikipedia · guardado]');
     return;
   }
   const hits = await wikiSearch(term);
@@ -2434,24 +2656,23 @@ async function doSearch(term){
 function bumpStat(k){
   const day = new Date().toISOString().slice(0,10);
   let st = store.get('dayStats', null);
-  if(!st || st.date!==day) st = {date:day, msgs:0, tasksDone:0, fired:0, topics:[]};
+  if(!st || st.date!==day) st = {date:day, msgs:0, tasksDone:0, fired:0};
   st[k] = (st[k]||0)+1;
   store.set('dayStats', st);
 }
 const Diary = {
   today(){ return new Date().toISOString().slice(0,10); },
   touch(){
-    const day = this.today();
     let st = store.get('dayStats', null);
-    if(!st || st.date!==day) st = {date:day, msgs:0, tasksDone:0, fired:0, topics:[]};
+    if(!st || st.date!==this.today()) st = {date:this.today(), msgs:0, tasksDone:0, fired:0};
     let text = 'Día con '+(Mind.nombre()||'el operador')+' · '+st.msgs+' mensajes · '+st.tasksDone+' tareas';
-    if(Agent.ok) text += ' · agente PC on';
+    if(Agent.ok) text += ' · agente on';
     if(Brain.localReady) text += ' · cerebro local on';
+    if(Ears.on) text += ' · oído local on';
     const data = store.get('diary', []);
-    const idx = data.findIndex(e=>e.day===day);
-    if(idx>=0) data[idx].text = text; else data.push({day, text});
-    if(data.length>40) data.splice(0, data.length-40);
-    store.set('diary', data);
+    const idx = data.findIndex(e=>e.day===this.today());
+    if(idx>=0) data[idx].text = text; else data.push({day:this.today(), text});
+    store.set('diary', data.slice(-40));
   }
 };
 function renderDiary(){
@@ -2488,26 +2709,21 @@ const AK_CHARS = [
   {n:'Megumin', f:1, mon:0, rei:0, mag:1, esp:0, com:1, her:0}
 ];
 const AK_QS = [
-  ['f','¿Es mujer?'],
-  ['mon','¿Es un monstruo o criatura no humana?'],
-  ['rei','¿Fue reencarnada o transportada desde otro mundo?'],
-  ['mag','¿Usa magia como habilidad principal?'],
-  ['esp','¿Es espadachina o pelea cuerpo a cuerpo?'],
-  ['com','¿Proviene de una serie con mucha comedia?'],
-  ['her','¿Es protagonista de su serie?']
+  ['f','¿Es mujer?'],['mon','¿Es un monstruo o criatura no humana?'],['rei','¿Fue reencarnada o transportada?'],
+  ['mag','¿Usa magia como habilidad principal?'],['esp','¿Es espadachina?'],['com','¿Su serie es comedia?'],['her','¿Es protagonista?']
 ];
 const AK = { active:false, await:false, pool:[], asked:[], guess:null };
 function akStart(){ AK.active=true; AK.await=false; AK.pool=AK_CHARS.slice(); AK.asked=[]; akNext(); }
 function akNext(){
-  if(!AK.pool.length){ AK.active=false; return personaReply('Me quedé sin candidatos... ¿quién era?'); }
-  if(AK.pool.length===1){ AK.guess=AK.pool[0]; AK.await=true; return personaReply('Ya lo tengo... ¿Es '+AK.guess.n+'? Dime sí o no.'); }
+  if(!AK.pool.length){ AK.active=false; return personaReply('Sin candidatos... ¿quién era?'); }
+  if(AK.pool.length===1){ AK.guess=AK.pool[0]; AK.await=true; return personaReply('Ya lo tengo... ¿Es '+AK.guess.n+'?'); }
   const avail = AK_QS.filter(q=>!AK.asked.includes(q[0]));
   if(!avail.length){ AK.guess=AK.pool[0]; AK.await=true; return personaReply('¿Es '+AK.guess.n+'?'); }
-  let best = avail[0], bestScore = 1e9;
+  let best = avail[0], bs = 1e9;
   for(const q of avail){
     const yes = AK.pool.filter(c=>c[q[0]]).length;
     const score = Math.abs(yes - (AK.pool.length-yes));
-    if(score < bestScore){ bestScore = score; best = q; }
+    if(score < bs){ bs = score; best = q; }
   }
   AK.asked.push(best[0]);
   personaReply('Pregunta '+AK.asked.length+': '+best[1]);
@@ -2527,6 +2743,7 @@ function downloadBlob(blob, name){
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = name;
   document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
 }
 function backupExport(){
   const data = {};
@@ -2536,9 +2753,9 @@ function backupExport(){
       try{ data[k] = JSON.parse(localStorage.getItem(k)); }catch(e){}
     }
   }
-  downloadBlob(new Blob([JSON.stringify({app:'ania', v:7, t:Date.now(), data}, null, 2)],{type:'application/json'}),
+  downloadBlob(new Blob([JSON.stringify({app:'ania', v:8, t:Date.now(), data}, null, 2)],{type:'application/json'}),
     'ania-backup-'+new Date().toISOString().slice(0,10)+'.json');
-  toast('Backup completo generado');
+  toast('Backup generado');
 }
  $('btnBackupExp').onclick = backupExport;
  $('btnBackupImp').onclick = ()=> $('importFile').click();
@@ -2551,7 +2768,7 @@ function backupExport(){
       const j = JSON.parse(rd.result);
       if(!j || j.app!=='ania' || !j.data) throw 0;
       Object.entries(j.data).forEach(([k,v])=> localStorage.setItem(k, JSON.stringify(v)));
-      toast('Backup restaurado · recargando');
+      toast('Restaurado · recargando');
       setTimeout(()=>location.reload(), 900);
     }catch(err){ toast('Backup no válido', true); }
   };
@@ -2568,7 +2785,7 @@ function parseWhen(t){
   if(m){
     const n = parseFloat(m[1].replace(',','.'));
     const ms = /^seg/.test(m[2]) ? n*1e3 : (/^min|^m$/.test(m[2]) ? n*6e4 : n*36e5);
-    if(ms>0 && ms < 864e5*30) return Date.now()+ms;
+    if(ms>0) return Date.now()+ms;
   }
   const manana = /\bma[ñn]ana\b/.test(t);
   m = t.match(/\b(?:a\s+las?|alas)\s+(\d{1,2})(?::(\d{2}))?\s*([ap]\.?m\.?|de\s+la\s+(?:ma[ñn]ana|tarde|noche)|tarde|noche)?\b/);
@@ -2583,14 +2800,23 @@ function parseWhen(t){
   if(manana){ const d = new Date(now); d.setDate(d.getDate()+1); d.setHours(9,0,0,0); return d.getTime(); }
   return null;
 }
-const SITES = {youtube:'YouTube', google:'Google', gmail:'Gmail', wikipedia:'Wikipedia', github:'GitHub', whatsapp:'WhatsApp Web', twitter:'X', x:'X', instagram:'Instagram', reddit:'Reddit', twitch:'Twitch'};
-const JOKES = [
-  '¿Por qué los programadores confunden Halloween con Navidad? OCT 31 = DEC 25.',
-  'Hay 10 tipos de personas: las que entienden binario y las que no.',
-  'Un QA entra a un bar: pide 1 cerveza, 0, 999 y una «-1». Luego rompe el bar.'
-];
+function parseTask(raw){
+  let t = ' '+raw.toLowerCase()+' ';
+  const when = parseWhen(t);
+  t = t.replace(/\ben\s+\d+(?:[.,]\d+)?\s*(?:segundos?|minutos?|mins?|horas?|hrs?|h|m)\b/g,'')
+       .replace(/\b(?:a\s+las?|alas)\s+\d{1,2}(?::\d{2})?\s*(?:[ap]\.?m\.?)?\b/g,'')
+       .replace(/,/g,' ')
+       .replace(/^\s*(?:ania\s*[,:]?\s*)?/,'')
+       .replace(/^\s*(?:recordame|recuerda|recordatorio|anotame|anota|apuntame|apunta|agenda|tarea)\s*/,'')
+       .replace(/^\s*(?:que\s+|de\s+|me\s+|para\s+)?/,'')
+       .replace(/[¿?¡!.:]/g,'')
+       .replace(/\s+/g,' ').trim();
+  if(!t) t = 'recordatorio';
+  return {text: t[0].toUpperCase()+t.slice(1), when};
+}
+const SITES = {youtube:'YouTube', google:'Google', gmail:'Gmail', wikipedia:'Wikipedia', github:'GitHub', whatsapp:'WhatsApp Web', twitter:'X', x:'X', instagram:'Instagram'};
+const JOKES = ['OCT 31 = DEC 25. Por eso programadores confunden Halloween con Navidad.','Hay 10 tipos de personas: las que entienden binario.','Un QA entra a un bar: pide 1 cerveza, 0, 999 y una «-1». Luego rompe el bar.'];
 
-/* ---------- memoria UI ---------- */
 function setOperator(){
   const n = Mind.nombre();
   if(n){ $('operator').style.display='inline-block'; $('operator').textContent='OP · '+n.toUpperCase(); }
@@ -2599,12 +2825,11 @@ function renderMem(){
   const L = $('memList');
   const rows = [];
   if(Mind.d.nombre) rows.push(['NOMBRE', Mind.d.nombre]);
-  rows.push(['VISITAS', Mind.d.visitas+' sesiones · desde '+(Mind.d.primerDia||'hoy')]);
-  rows.push(['EPISODIOS', Episodio.log.length+' líneas de conversación recordadas']);
+  rows.push(['VISITAS', Mind.d.visitas+' sesiones']);
+  rows.push(['EPISODIOS', Episodio.log.length+' líneas recordadas']);
   Mind.d.gustos.forEach(g=> rows.push(['LE GUSTA', g]));
-  Mind.d.hechos.forEach(h=> rows.push(['RECUERDA', h]));
   $('memStats').textContent = rows.length+' RECUERDOS';
-  if(!rows.length){ L.innerHTML = '<div class="empty">Dime: «me llamo...» o «me gusta...»</div>'; return; }
+  if(!rows.length){ L.innerHTML = '<div class="empty">Dime: «me llamo...»</div>'; return; }
   L.innerHTML = rows.map(r=>`<div class="memRow"><span class="k">${esc(r[0])}</span><span class="v">${esc(r[1])}</span></div>`).join('');
 }
 function openMem(){ closeSheet(); closeDiary(); closeLib(); $('sheetMem').classList.add('open'); $('backdrop').classList.add('on'); renderMem(); }
@@ -2614,7 +2839,8 @@ function closeMem(){ $('sheetMem').classList.remove('open'); }
  $('wipeMem').onclick = ()=>{
   if(!S.confirmWipe){ S.confirmWipe = true; toast('¿Seguro? Toca otra vez', true); return; }
   Mind.d = {nombre:null, gustos:[], hechos:[], visitas:0, primerDia:null, ultimoDia:null};
-  Mind.save(); setOperator(); renderMem(); S.confirmWipe=false;
+  Episodio.log = []; store.set('episodio', []);
+  Mind.save(); setOperator(); S.confirmWipe=false;
   personaReply('Mente en blanco. ¿Cómo te llamas?');
 };
 
@@ -2640,30 +2866,72 @@ async function respond(raw){
     if(AK.await){
       if(/^si\b|^claro|^correcto/.test(low)){ AK.active=false; AK.await=false; return personaReply('¡'+AK.guess.n+'! ¿Te lo dije?'); }
       if(/^no\b|^nel/.test(low)){ AK.active=false; AK.await=false; return personaReply('¿Cómo? Revancha cuando quieras.'); }
-      return personaReply('Sí o no, por favor.');
+      return personaReply('Sí o no.');
     }
-    if(/^si\b|^claro|^correcto/.test(low)) return akAnswer(1);
+    if(/^si\b|^claro/.test(low)) return akAnswer(1);
     if(/^no\b|^nel/.test(low)) return akAnswer(0);
     return akAnswer(0.5);
   }
 
   let m;
 
-  /* ---- cerebro: carga y estado ---- */
-  if(/carga\s+(?:el\s+)?cerebro|carga\s+(?:el\s+)?modelo|cargar\s+gguf|cerebro\s+local/.test(low)){
+  /* ---- oído local ---- */
+  if(/oido\s+local|activa\s+whisper|oido\s+whisper/.test(low)){
+    Ears.on ? Ears.stop() : await Ears.start();
+    return personaReply(Ears.on ? 'Oído local activo: te escucho 100% en tu dispositivo. '+(alwaysOn?'Di «Ania» antes de cada orden.':'Habla normal.') : 'Oído local apagado.');
+  }
+  if(/oido\s+de\s+google|desactiva\s+el\s+oido/.test(low)){
+    Ears.stop();
+    return personaReply('Vuelvo al oído de Google (requiere internet).');
+  }
+  if(/siempre\s+escuchame|escucha\s+siempre/.test(low)){
+    setAlways(true);
+    return personaReply('Escucha activa: di «Ania» antes de cada orden. '+(Ears.on?'Con oído local: nada sale de tu dispositivo.':''));
+  }
+  if(/deja\s+de\s+escuchar/.test(low)){
+    setAlways(false);
+    return personaReply('Escucha desactivada.');
+  }
+
+  /* ---- HUD ---- */
+  if(/abre\s+(?:el\s+)?hud|modo\s+hud|activa\s+(?:el\s+)?hud|gestos|vision/.test(low)){
+    HUD.open();
+    return personaReply('HUD abierto. Puño=pausa, palma=silencio, victoria=siguiente, puño sostenido cierra.');
+  }
+  if(/cierra\s+(?:el\s+)?hud/.test(low)){
+    HUD.close();
+    return personaReply('HUD cerrado.');
+  }
+
+  /* ---- sesión multidevice ---- */
+  m = low.match(/conecta\s+(?:la\s+)?sesion(?:\s+(?:en\s+)?(ws?:\/\/\S+))?/);
+  if(m){
+    Relay.connect(m[1] || undefined);
+    return personaReply('Abriendo sesión multidevice'+(m[1]?' en '+m[1]:'')+'. Tu conversación se espeja en todos tus dispositivos.');
+  }
+  if(/cierra\s+(?:la\s+)?sesion|desconecta\s+(?:la\s+)?sesion/.test(low)){
+    Relay.disconnect();
+    return personaReply('Sesión multidevice cerrada. Sigo contigo en local.');
+  }
+  if(/estado\s+de\s+la\s+sesion/.test(low)){
+    return personaReply(Relay.on ? 'Sesión conectada a '+Relay.url+'. Chat, memoria y diario compartidos.' : 'Sin sesión. «conecta la sesión» si el relay corre.');
+  }
+
+  /* ---- cerebro ---- */
+  if(/carga\s+(?:el\s+)?cerebro|carga\s+(?:el\s+)?modelo|cargar\s+gguf/.test(low)){
     await Brain.loadLocal(true);
     return;
   }
   if(/estado\s+del\s+cerebro|que\s+cerebro/.test(low)){
     return personaReply(Brain.localReady
-      ? 'Cerebro local activo: '+Brain.modelName+'. Pienso sin internet. Y si algo me supera, caigo a la nube.'
-      : (isOffline() ? 'Sin cerebro: no hay conexión y no hay GGUF cargado. Dime «carga el cerebro» con el modelo en modelos/.' : 'Cerebro de nube activo (Pollinations). Para razonar sin internet: «carga el cerebro» con tu GGUF.'));
+      ? 'Cerebro local activo: '+Brain.modelName+'. Pienso sin internet.'
+      : (isOffline() ? 'Sin cerebro: no hay conexión ni GGUF cargado. «carga el cerebro».' : 'Cerebro de nube activo (Pollinations). Para offline: «carga el cerebro».'));
   }
   if(/mira\s+(?:esta\s+)?(?:foto|imagen)|describe\s+(?:esta\s+)?(?:foto|imagen)/.test(low)){
     $('imgFile').click();
     return personaReply('Elige la foto y la analizo.');
   }
-  if(/pi[eé]nsalo|r[eé]asona|usa\s+(?:el\s+)?cerebro|opina/.test(low)){
+  if(/pi[eé]nsalo|usa\s+(?:el\s+)?cerebro|opina/.test(low)){
     setPhase('thinking');
     const r = await Brain.think(raw);
     return personaReply(r || 'El cerebro no está disponible ahora.');
@@ -2672,7 +2940,7 @@ async function respond(raw){
   /* ---- música / ambiente ---- */
   if(/ponme\s+musica|pon\s+musica|musica\s+lofi/.test(low)){
     Music.start();
-    return personaReply('Lo-fi procedural: acordes de jazz, vinilo, ritmo lento. Generado en vivo. Cero archivos.', 'Poniendo música lo-fi.');
+    return personaReply('Lo-fi procedural: acordes de jazz, vinilo, ritmo lento. Generado en vivo.', 'Poniendo música lo-fi.');
   }
   m = low.match(/(?:pon|reproduce)\s+(.+?)\s+en\s+youtube/);
   if(m){
@@ -2683,8 +2951,8 @@ async function respond(raw){
     Ambient.stop(); Music.stop();
     return personaReply('Detenido.');
   }
-  if(/pon\s+(?:la\s+)?lluvia/.test(low)){ Ambient.start('lluvia'); return personaReply('Lluvia contra la ventana, generada gota a gota.', 'Poniendo la lluvia.'); }
-  if(/pon\s+(?:la\s+)?cafeter/.test(low)){ Ambient.start('cafeteria'); return personaReply('Cafetería encendida: murmullo, tazas, burbujeo.', 'Ambiente de cafetería.'); }
+  if(/pon\s+(?:la\s+)?lluvia/.test(low)){ Ambient.start('lluvia'); return personaReply('Lluvia generada gota a gota.', 'Poniendo la lluvia.'); }
+  if(/pon\s+(?:la\s+)?cafeter/.test(low)){ Ambient.start('cafeteria'); return personaReply('Cafetería encendida.', 'Ambiente de cafetería.'); }
 
   /* ---- memoria episódica ---- */
   m = low.match(/que\s+hablamos\s+(?:de|sobre)\s+(.+)|que\s+te\s+dije\s+(?:de|sobre)\s+(.+)/);
@@ -2696,7 +2964,7 @@ async function respond(raw){
       hits.forEach(h=>{ s += '· ['+h.fecha+'] '+h.e.text.slice(0,160)+'\n'; });
       return personaReply(s.trim());
     }
-    return personaReply('No encuentro nada sobre «'+q+'» en mi memoria episódica. O no lo hablamos, o fue hace más de '+Math.round(Episodio.log.length/2)+' mensajes.');
+    return personaReply('No encuentro «'+q+'» en mi memoria episódica.');
   }
 
   /* ---- memoria del usuario ---- */
@@ -2720,14 +2988,14 @@ async function respond(raw){
   }
   if(/que\s+sabes\s+de\s+mi|mi\s+memoria/.test(low)){
     openMem();
-    return personaReply('Tengo '+Episodio.log.length+' líneas de conversación, '+Mind.d.gustos.length+' gustos y '+Mind.d.hechos.length+' datos tuyos. Panel abierto.');
+    return personaReply(Episodio.log.length+' líneas de conversación, '+Mind.d.gustos.length+' gustos, '+Mind.d.hechos.length+' datos tuyos.');
   }
   if(/olvida\s+(?:todo|mi\s+memoria)/.test(low)){
     if(!S.confirmWipe){ S.confirmWipe=true; return personaReply('¿Seguro? Dilo otra vez.'); }
     S.confirmWipe=false;
     Mind.d = {nombre:null, gustos:[], hechos:[], visitas:0, primerDia:null, ultimoDia:null};
     Episodio.log = []; store.set('episodio', []);
-    Mind.save(); setOperator(); renderMem();
+    Mind.save(); setOperator();
     return personaReply('Mente limpia. ¿Quién eres?');
   }
 
@@ -2741,12 +3009,8 @@ async function respond(raw){
       p.when = d.getTime();
     }
     addTask(p.text, p.when, {recur});
-    if(p.when && recur){
-      return personaReply('Anotado: «'+p.text+'», '+recurLabel(recur)+' · avisa aquí en la web.', 'Anotado: '+p.text+'.');
-    }
-    if(p.when){
-      return personaReply('Anotado: «'+p.text+'». Te lo recuerdo '+fmtWhen(p.when).replace('· ','')+'.', 'Anotado. Te recordaré: '+p.text+'.');
-    }
+    if(p.when && recur) return personaReply('Anotado: «'+p.text+'», '+recurLabel(recur)+' · avisa aquí.', 'Anotado: '+p.text+'.');
+    if(p.when) return personaReply('Anotado: «'+p.text+'». Te lo recuerdo '+fmtWhen(p.when).replace('· ','')+'.', 'Anotado. Te recordaré: '+p.text+'.');
     return personaReply('Anotado: «'+p.text+'», sin hora.');
   }
   if(/mis tareas|que\s+tengo\s+pendiente|mi\s+agenda/.test(low)){
@@ -2754,15 +3018,15 @@ async function respond(raw){
     const pend = tasks.filter(tk=>!tk.done);
     if(!pend.length) return personaReply('Agenda vacía...');
     let s = 'Tienes '+pend.length+' pendiente(s):\n';
-    pend.slice(0,8).forEach((tk,i)=>{ s += (i+1)+'. '+tk.text+(tk.when?' ('+fmtWhen(tk.when).replace('· ','')+')':'')+'\n'; });
+    pend.slice(0,8).forEach((tk,i)=>{ s += (i+1)+'. '+tk.text+'\n'; });
     return personaReply(s.trim());
   }
   m = low.match(/(?:tarea|recordatorio)\s+(?:hecha|completada|terminada)/);
   if(m){
     const tk = tasks.find(x=>!x.done);
     if(tk){ tk.done=true; cancelTimer(tk.id); Sync.markDone(tk); saveTasks(); renderTasks(); bumpStat('tasksDone'); vibrate(25);
-      return personaReply('Bien hecho: «'+tk.text+'» completada.'); }
-    return personaReply('No hay tareas pendientes.');
+      return personaReply('Bien hecho: «'+tk.text+'».'); }
+    return personaReply('No hay pendientes.');
   }
   m = low.match(/pospon(?:la|lo)?\s*(?:en\s+)?(\d+)\s*(segundos?|minutos?|horas?)/);
   if(m){
@@ -2774,7 +3038,7 @@ async function respond(raw){
       saveTasks(); renderTasks(); scheduleTask(tk);
       return personaReply('«'+tk.text+'» pospuesta '+n+' '+m[2]+'.');
     }
-    return personaReply('No tengo nada reciente que posponer.');
+    return personaReply('Nada reciente que posponer.');
   }
   m = low.match(/(?:temporizador|timer)\s*(?:de|en)?\s*(\d+)\s*(segundos?|minutos?|horas?)/);
   if(m){
@@ -2783,7 +3047,7 @@ async function respond(raw){
     wakeOn();
     timers.set('timer-'+Date.now(), setTimeout(()=>{
       ensureAudio(); alarmSound(); vibrate([300,120,300]);
-      notify('ANIA · Temporizador', 'Fin del temporizador de '+n+' '+m[2]);
+      notify('ANIA · Temporizador', 'Fin');
       personaReply('Temporizador finalizado.', 'Tu temporizador ha terminado.');
     }, ms));
     return personaReply('Temporizador de '+n+' '+m[2]+' en marcha.', 'Temporizador en marcha.');
@@ -2799,13 +3063,13 @@ async function respond(raw){
     setPhase('thinking');
     let s = 'INFORME EJECUTIVO · '+new Date().toLocaleDateString('es-ES',{weekday:'long', day:'numeric', month:'long'})+'\n\n';
     const g = geoCache();
-    if(g){ try{ const d = await getWeather(g); updateChip(g,d); s += '· Clima: '+Math.round(d.current.temperature_2m)+'°C, '+(WMO[d.current.weather_code]||'variable')+' ('+g.city+')\n'; }catch(e){} }
+    if(g){ try{ const d = await getWeather(g); updateChip(g,d); s += '· Clima: '+Math.round(d.current.temperature_2m)+'°C ('+g.city+')\n'; }catch(e){} }
     const hoy = tasks.filter(t2=>!t2.done && t2.when && new Date(t2.when).toDateString()===new Date().toDateString());
-    s += '· Agenda de hoy: '+(hoy.length ? hoy.length+' items' : 'libre')+'\n';
+    s += '· Agenda: '+(hoy.length ? hoy.length+' items' : 'libre')+'\n';
     if(hoy.length) hoy.slice(0,6).forEach(t2=>{ s += '   → '+t2.text+'\n'; });
-    s += '· Cerebro: '+(Brain.localReady?'local activo':(isOffline()?'solo regex':'nube'))+' · Agente PC: '+(Agent.ok?'on':'off')+'\n';
+    s += '· Cerebro: '+(Brain.localReady?'local':(isOffline()?'regex':'nube'))+' · Oído: '+(Ears.on?'local':'google')+' · Agente: '+(Agent.ok?'on':'off')+'\n';
     s += '· Luna: '+moonInfo().phase+' ('+moonInfo().illum+'%)\n\n';
-    s += 'Frase del día: '+pick(QUOTES);
+    s += 'Frase: '+pick(QUOTES);
     return personaReply(s, 'Informe ejecutivo listo.');
   }
   m = low.match(/reunion\s+con\s+(.+?)\s+a\s+las?\s+(.+)/);
@@ -2814,7 +3078,7 @@ async function respond(raw){
     const when = parseWhen(' a las '+m[2]+' ');
     addTask('Reunión con '+quien, when);
     if(when) addTask('Preparar reunión con '+quien, when - 15*60000);
-    return personaReply('Reunión con '+quien+' agendada, con pre-aviso 15 minutos antes.');
+    return personaReply('Reunión con '+quien+' agendada, pre-aviso 15 min antes.');
   }
 
   /* ---- astro ---- */
@@ -2822,30 +3086,30 @@ async function respond(raw){
     const mi = moonInfo();
     return personaReply('La luna está '+mi.phase+', '+mi.illum+'% iluminada.', 'La luna está '+mi.phase+'.');
   }
-  if(/(?:lluvia|proxima)\s+de\s+(?:estrellas|meteoros)|proxima\s+lluvia/.test(low)){
+  if(/proxima\s+lluvia\s+de\s+estrellas|meteoros/.test(low)){
     const s = nextShower();
-    if(s) return personaReply('Próxima: '+s.name+', el '+s.when.toLocaleDateString('es-ES',{day:'numeric',month:'long'})+' — faltan '+s.diff+' días.');
+    if(s) return personaReply('Próxima: '+s.name+' en '+s.diff+' días.');
   }
 
   /* ---- clima ---- */
-  if(/clima|temperatura|va\s+a\s+llover|llueve/.test(low)) return weatherIntent();
+  if(/clima|temperatura|va\s+a\s+llover/.test(low)) return weatherIntent();
   if(/donde\s+estoy|mi\s+ubicacion/.test(low)){
     if(isOffline()){ const g = geoCache(); return personaReply(g?('Última ubicación: '+g.city):'Sin conexión.'); }
     setPhase('thinking');
     let g = geoCache();
     if(!g || Date.now()-g.t > 864e5) g = await locate();
-    return personaReply(g ? ('Estás en '+g.city+' ('+g.lat.toFixed(3)+', '+g.lon.toFixed(3)+').') : 'No pude obtener tu ubicación.');
+    return personaReply(g ? ('Estás en '+g.city+'.') : 'No pude obtener tu ubicación.');
   }
 
   /* ---- documentos / PC ---- */
   if(/entrena(?:r)?\s+con\s+documentos|carga\s+documentos/.test(low)){
     $('docDir').click();
-    return personaReply('Elige la carpeta y leo: txt, md, csv, docx, doc y pdf.');
+    return personaReply('Elige la carpeta: txt, md, csv, docx, doc, pdf.');
   }
   if(/mis\s+documentos/.test(low)){
-    return personaReply(DocBrain.count() ? 'Tengo '+DocBrain.count()+' fragmentos de '+DocBrain.sources().length+' documento(s).' : 'Aún sin documentos. «entrena con mis documentos».');
+    return personaReply(DocBrain.count() ? DocBrain.count()+' fragmentos de '+DocBrain.sources().length+' documento(s).' : 'Sin documentos. «entrena con mis documentos».');
   }
-  if(/indexa|escanea\s+(?:mi\s+)?pc/.test(low)){
+  if(/indexa|escanea\s+pc/.test(low)){
     $('pcDir').click();
     return personaReply('Dame la carpeta a indexar.');
   }
@@ -2854,15 +3118,15 @@ async function respond(raw){
     const hits = PC.search(m[1].trim());
     if(hits.length){
       lastPC = hits;
-      let s = 'Encontrado en tu índice:\n';
+      let s = 'Encontrado:\n';
       hits.forEach((h,i)=>{ s += (i+1)+'. '+h.name+'\n   ↳ '+h.path+'\n'; });
       return personaReply(s);
     }
-    return personaReply('Nada de «'+m[1]+'» en el índice del PC.');
+    return personaReply('Nada de «'+m[1]+'» en el índice.');
   }
 
   /* ---- diario / backup ---- */
-  if(/muestrame\s+(?:tu\s+)?diario/.test(low)){ openDiary(); return personaReply('Ahí está mi diario.'); }
+  if(/muestrame\s+(?:tu\s+)?diario/.test(low)){ openDiary(); return personaReply('Mi diario.'); }
   if(/respaldame|backup/.test(low)){ backupExport(); return personaReply('Backup generado.'); }
   if(/^restaura/.test(low)){ $('importFile').click(); return personaReply('Elige el backup.'); }
 
@@ -2870,29 +3134,29 @@ async function respond(raw){
   if(/abre\s+(?:mi\s+)?(?:pc|equipo|explorador)/.test(low)){
     if(Agent.ok()){
       const r = await Agent.ask({type:'openApp', app:'explorer'});
-      return personaReply(r && r.ok ? 'Abriendo el Explorador.' : 'No pude abrirlo.');
+      return personaReply(r && r.ok ? 'Abriendo el Explorador.' : 'No pude.');
     }
-    return personaReply('Necesito el agente local (node ania-agent.js).');
+    return personaReply('Necesito el agente local.');
   }
   if(/captura|pantallazo/.test(low)){
     if(!Agent.ok()) return personaReply('La captura la hace el agente local.');
     toast('Capturando...');
     const r = await Agent.ask({type:'screenshot'}, 20000);
     if(r && r.ok && r.data){
-      addImageLine('data:image/png;base64,'+r.data, 'Captura · '+new Date().toLocaleTimeString('es-ES'));
+      addImageLine('data:image/png;base64,'+r.data, 'Captura');
       return personaReply('Ahí está tu pantalla.');
     }
     return personaReply('No pude capturar.');
   }
   m = low.match(/(?:sube|baja)\s+(?:el\s+)?volumen/);
   if(m){
-    if(!Agent.ok()) return personaReply('El volumen lo controlo con el agente local.');
+    if(!Agent.ok()) return personaReply('Volumen con agente local.');
     const r = await Agent.ask({type:'volume', action:/sube/.test(m[0])?'up':'down', steps:5});
     return personaReply(r && r.ok ? 'Volumen ajustado.' : 'No pude.');
   }
   if(/apaga\s+(?:la\s+)?pc/.test(low) && Agent.ok()){
     const r = await Agent.ask({type:'power', action:'shutdown', minutes:10});
-    return personaReply(r && r.ok ? 'Apagado en 10 minutos. «cancela el apagado» si te arrepientes.' : 'No pude.');
+    return personaReply(r && r.ok ? 'Apagado en 10 min.' : 'No pude.');
   }
 
   /* ---- abrir sitios ---- */
@@ -2931,9 +3195,9 @@ async function respond(raw){
 
   /* ---- preguntas sobre Ania ---- */
   if(/quien\s+eres|como\s+te\s+llamas/.test(low))
-    return personaReply('Soy Ania: 20 años, egresada de la Academia Eden, cerebro razonador, secretaria y compañera. '+P.lema());
+    return personaReply('Soy Ania: 20 años, cerebro razonador, oído local, HUD de visión, secretaria y compañera. '+P.lema());
   if(/como\s+estas/.test(low))
-    return personaReply('Sobreviviendo, pero bien: '+(Brain.localReady?'razonando en local':(isOffline()?'modo offline':'con nube'))+', '+taskPending()+' pendientes, ánimo '+mood().tag+'. ¿Y tú?');
+    return personaReply('Bien: '+(Brain.localReady?'razonando local':(isOffline()?'offline':'nube'))+', oído '+(Ears.on?'local':'google')+', '+taskPending()+' pendientes, ánimo '+mood().tag+'. ¿Y tú?');
 
   /* ---- charla temática ---- */
   const TOPICS = [
@@ -2955,27 +3219,23 @@ async function respond(raw){
 
   /* ---- sistema ---- */
   if(/que\s+sabes\s+hacer|ayuda|comandos/.test(low)){
-    renderChips(['Ania, piénsalo','Carga el cerebro','¿Qué hablamos de café?','Mira esta foto','Prepara mi día','Ponme música','Adivina mi personaje']);
+    renderChips(['Piénsalo: ¿qué opinas del café?','Oído local','Abre el hud','Conecta la sesión','Prepara mi día','Ponme música','Adivina mi personaje']);
     return personaReply(
-      'Sistemas operativos:\n'+
-      '· Cerebro razonador — «piénsalo» (cascada local GGUF → nube, con herramientas)\n'+
-      '· «carga el cerebro» · «estado del cerebro»\n'+
+      'Sistemas v8:\n'+
+      '· Cerebro razonador — «piénsalo» (regex → GGUF local → nube, con herramientas)\n'+
+      '· Oído local — «oído local» (Whisper offline, audio nunca sale)\n'+
+      '· HUD — «abre el hud» (visión + gestos con la mano)\n'+
+      '· Sesión multidevice — «conecta la sesión» (relay)\n'+
       '· Memoria episódica — «¿qué hablamos de X?»\n'+
-      '· Visión — «mira esta foto»\n'+
-      '· Proactividad — te aviso de lluvia, batería y hora de dormir\n'+
-      '· Secretaría — «prepara mi día» · «reunión con X a las Y»\n'+
-      '· Agenda recurrente · PC/agente · música/ambiente · documentos · clima · luna · Akinator · backup');
+      '· Visión de fotos — «mira esta foto»\n'+
+      '· Proactividad · secretaría · agenda recurrente · PC/agente · música · documentos · clima · luna · Akinator · backup');
   }
-  if(/siempre\s+escuchame|escucha\s+siempre/.test(low)){ setAlways(true); return personaReply('Escucha activa: di «Ania» antes de cada orden.'); }
-  if(/deja\s+de\s+escuchar/.test(low)){ setAlways(false); return personaReply('Escucha desactivada.'); }
-  if(/deja\s+de\s+opinar|desactiva\s+proactividad|silencio\s+proactivo/.test(low)){ store.set('proactivo', false); return personaReply('Modo discreto: no volveré a hablar primero.'); }
-  if(/activa\s+proactividad|vuelve\s+a\s+opinar/.test(low)){ store.set('proactivo', true); return personaReply('Proactividad activada. Vigilaré lluvia, batería y tu hora de dormir.'); }
   if(/silencio|callate/.test(low)){ S.muted = true; store.set('muted', true); return addChat('ania','Voz desactivada. Di «habla».'); }
   if(/^habla$|activa\s+la\s+voz/.test(low)){ S.muted = false; store.set('muted', false); return reply('Voz reactivada.'); }
   if(/diagnostico/.test(low)){ runDiag(); openModal('settingsModal'); return personaReply('Escaneo listo.'); }
   if(/adivina\s+personaje/.test(low)){ akStart(); return; }
   if(/chiste/.test(low)) return personaReply(freshPick('jokes', JOKES));
-  if(/consejo|un\s+tip/.test(low)) return personaReply('Regla 32: disfruta de las pequeñas cosas. Hoy: café bien hecho y cinco minutos de silencio.');
+  if(/consejo|un\s+tip/.test(low)) return personaReply('Regla 32: café bien hecho y cinco minutos de silencio.');
 
   /* ---- cortesía ---- */
   if(/adios|chao|hasta\s+luego/.test(low)) return personaReply('Hasta pronto. Que mañana sea bonito.');
@@ -2989,7 +3249,7 @@ async function respond(raw){
     const lib = Library.find(low);
     if(lib) return personaReply(lib.extract+'\n[de tu biblioteca]');
     for(const [re, kb] of TOPICS) if(re.test(low)) return personaReply(pick(kb));
-    return personaReply('Sin conexión y sin cerebro local no puedo razonar esto. Con un GGUF en modelos/ y «carga el cerebro», penso esto sin internet. ¿O reformulamos?');
+    return personaReply('Sin conexión ni cerebro local no puedo razonar esto. «carga el cerebro» con tu GGUF y penso sin internet.');
   }
   setPhase('thinking');
   const q = low.replace(/^(?:por\s+favor|ania)\s*/,'');
@@ -2998,25 +3258,11 @@ async function respond(raw){
   const w = await wikiSummary(q);
   if(w){
     let txt = w.extract.slice(0,520);
-    Library.save(q, w.title, txt);
-    personaReply(txt+'\n[guardado en biblioteca]');
+    Library.save(q, txt);
+    personaReply(txt+'\n[guardado]');
   } else {
     personaReply('Ni mi cerebro ni Wikipedia supieron eso. Reformúlalo.');
   }
-}
-function parseTask(raw){
-  let t = ' '+raw.toLowerCase()+' ';
-  const when = parseWhen(t);
-  t = t.replace(/\ben\s+\d+(?:[.,]\d+)?\s*(?:segundos?|minutos?|mins?|horas?|hrs?|h|m)\b/g,'')
-       .replace(/\b(?:a\s+las?|alas)\s+\d{1,2}(?::\d{2})?\s*(?:[ap]\.?m\.?)?\b/g,'')
-       .replace(/,/g,' ')
-       .replace(/^\s*(?:ania\s*[,:]?\s*)?/,'')
-       .replace(/^\s*(?:recordame|recuerda|recordatorio|anotame|anota|apuntame|apunta|agenda|tarea)\s*/,'')
-       .replace(/^\s*(?:que\s+|de\s+|me\s+|para\s+)?/,'')
-       .replace(/[¿?¡!.:]/g,'')
-       .replace(/\s+/g,' ').trim();
-  if(!t) t = 'recordatorio';
-  return {text: t[0].toUpperCase()+t.slice(1), when};
 }
 
 /* ---------- envío ---------- */
@@ -3048,11 +3294,11 @@ async function send(text){
 
 /* ---------- terminal ---------- */
 const COMMANDS = [
-  'piénsalo','carga el cerebro','estado del cerebro','¿qué hablamos de ','mira esta foto',
-  'prepara mi día','reunión con ','ponme música','pon lluvia','abre mi pc','captura',
-  'sube el volumen','busca en la pc ','¿qué hora es?','¿cómo está el clima?','¿qué fase tiene la luna?',
-  'recuérdame todos los días ','mis tareas','adivina mi personaje','entrena con mis documentos',
-  'siempre escúchame','respáldame','diagnóstico','ayuda','chiste'
+  'piénsalo','carga el cerebro','estado del cerebro','oído local','abre el hud','conecta la sesión',
+  '¿qué hablamos de ','mira esta foto','prepara mi día','reunión con ','ponme música','pon lluvia',
+  'abre mi pc','captura','sube el volumen','busca en la pc ','¿qué hora es?','¿cómo está el clima?',
+  '¿qué fase tiene la luna?','recuérdame todos los días ','mis tareas','adivina mi personaje',
+  'entrena con mis documentos','siempre escúchame','respáldame','diagnóstico','ayuda','chiste'
 ];
 let histIdx = -1, tabMatches = null;
  $('userInput').addEventListener('keydown', e=>{
@@ -3084,7 +3330,7 @@ addEventListener('keydown', e=>{
   else if(e.ctrlKey && e.key.toLowerCase()==='m'){ e.preventDefault(); $('micBtn').click(); }
   else if(e.key==='Escape'){
     document.querySelectorAll('.overlay.on').forEach(o=>o.classList.remove('on'));
-    closeSheet(); closeMem(); closeDiary(); closeLib();
+    closeSheet(); closeMem(); closeDiary(); closeLib(); HUD.close();
   }
 });
 
@@ -3095,7 +3341,7 @@ function blobManifest(){
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#040806"/><circle cx="256" cy="236" r="130" fill="none" stroke="#2de08a" stroke-width="10" stroke-dasharray="18 14"/><circle cx="256" cy="236" r="44" fill="#39ff9b"/><text x="256" y="452" font-family="monospace" font-size="58" fill="#2de08a" text-anchor="middle">ANIA</text></svg>`;
     const icon = 'data:image/svg+xml,'+encodeURIComponent(svg);
     addManifestLink(URL.createObjectURL(new Blob([JSON.stringify({
-      name:'ANIA · Edición Jarvis', short_name:'ANIA', description:'Asistente personal con cerebro razonador y modo offline.',
+      name:'ANIA · Edición Jarvis', short_name:'ANIA', description:'Asistente con cerebro razonador, oído local, HUD y modo offline.',
       start_url: location.href.split('#')[0], scope: location.href.replace(/[^/]*$/,'') || location.href,
       display:'standalone', orientation:'portrait', lang:'es', background_color:'#040806', theme_color:'#040806',
       icons:[{src:icon, sizes:'512x512', type:'image/svg+xml', purpose:'any'}]
@@ -3117,45 +3363,14 @@ addEventListener('beforeinstallprompt', e=>{
   await deferPrompt.userChoice.catch(()=>null);
   deferPrompt = null;
 };
-function exportKit(){
-  const enc = new TextEncoder();
-  const readme = '# ANIA v7.0 · Edición Jarvis\n\nCerebro razonador (GGUF local + nube), memoria episódica, proactividad, agente PC, música procedural.\n\n## Cerebro local\n1. modelos/ ← tu .gguf + modelo.json\n2. engine/ ← wllama (runtime)\n3. node servidor.js → http://localhost:8080\n\nCreada por Carlos Lorenzo Marros. Licencia MIT.\n';
-  const files = [
-    {name:'index.html', data: enc.encode(ORIGINAL_HTML)},
-    {name:'README.md', data: enc.encode(readme)}
-  ];
-  const parts = [];
-  let offset = 0;
-  const now = new Date();
-  const dosT = ((now.getHours()<<11)|(now.getMinutes()<<5)|(now.getSeconds()>>1))&0xFFFF;
-  const dosD = (((now.getFullYear()-1980)<<9)|((now.getMonth()+1)<<5)|now.getDate())&0xFFFF;
-  const central = [];
-  for(const f of files){
-    const name = enc.encode(f.name);
-    const lh = new DataView(new ArrayBuffer(30));
-    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true);
-    lh.setUint16(10, dosT, true); lh.setUint16(12, dosD, true);
-    lh.setUint32(14, 0, true); lh.setUint32(18, f.data.length, true); lh.setUint32(22, f.data.length, true);
-    lh.setUint16(26, name.length, true);
-    parts.push(new Uint8Array(lh.buffer), name, f.data);
-    const ch = new DataView(new ArrayBuffer(46));
-    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true);
-    ch.setUint16(12, dosT, true); ch.setUint16(14, dosD, true);
-    ch.setUint32(20, f.data.length, true); ch.setUint32(24, f.data.length, true);
-    ch.setUint16(28, name.length, true); ch.setUint32(42, offset, true);
-    central.push(new Uint8Array(ch.buffer), name);
-    offset += 30 + name.length + f.data.length;
-  }
-  const cs = central.reduce((s,p)=>s+p.length, 0);
-  const eocd = new DataView(new ArrayBuffer(22));
-  eocd.setUint32(0, 0x06054b50, true);
-  eocd.setUint16(8, files.length, true); eocd.setUint16(10, files.length, true);
-  eocd.setUint32(12, cs, true); eocd.setUint32(16, offset, true);
-  downloadBlob(new Blob([...parts, ...central, new Uint8Array(eocd.buffer)], {type:'application/zip'}), 'ania-v7-kit.zip');
-  toast('Kit generado');
-}
- $('exportKit').onclick = exportKit;
- $('saveOffline').onclick = ()=>{ downloadBlob(new Blob([ORIGINAL_HTML], {type:'text/html'}), 'ania.html'); toast('Copia descargada'); };
+ $('exportKit').onclick = ()=>{
+  downloadBlob(new Blob([ORIGINAL_HTML], {type:'text/html'}), 'ania.html');
+  toast('Copia descargada');
+};
+ $('saveOffline').onclick = ()=>{
+  downloadBlob(new Blob([ORIGINAL_HTML], {type:'text/html'}), 'ania.html');
+  toast('Copia descargada');
+};
 
 /* ---------- modales ---------- */
 function openModal(id){ $(id).classList.add('on'); }
@@ -3164,7 +3379,7 @@ document.querySelectorAll('.overlay').forEach(ov=>{
   ov.querySelectorAll('[data-close]').forEach(b=> b.onclick = ()=> ov.classList.remove('on'));
 });
  $('btnInstall').onclick = ()=> openModal('installModal');
- $('btnSettings').onclick = ()=>{ renderVoiceSelect(); fillSess(); updateDocsUI(); updatePCUI(); paintAgent(); Brain.paint(); openModal('settingsModal'); };
+ $('btnSettings').onclick = ()=>{ renderVoiceSelect(); fillSess(); updateDocsUI(); updatePCUI(); paintAgent(); Brain.paint(); refreshEarsUI(); refreshRelayUI(); openModal('settingsModal'); };
 function renderVoiceSelect(){
   const sel = $('voiceSelect');
   if(!voices.length){ sel.innerHTML = '<option>No hay voces</option>'; return; }
@@ -3179,7 +3394,7 @@ function renderVoiceSelect(){
  $('pitchRange').oninput = e=>{ S.pitch = +e.target.value; $('pitchOut').value = S.pitch; store.set('pitch', S.pitch); };
  $('rateRange').value = S.rate; $('rateOut').value = S.rate;
  $('pitchRange').value = S.pitch; $('pitchOut').value = S.pitch;
- $('testVoice').onclick = ()=> speak('Sistemas verificados. Soy Ania, y hoy me siento '+mood().tag+'.');
+ $('testVoice').onclick = ()=> speak('Sistemas verificados. Soy Ania, hoy me siento '+mood().tag+'.');
  $('btnAlways').onclick = ()=> setAlways(!alwaysOn);
 updateVoiceUI();
  $('weatherChip').onclick = ()=> weatherIntent();
@@ -3188,13 +3403,16 @@ updateVoiceUI();
 const START_TIME = Date.now();
 async function runDiag(){
   const rows = [];
-  rows.push('Contexto: '+(SECURE?'seguro':'file:// (sin PWA)')+' · '+location.protocol);
+  rows.push('Contexto: '+(SECURE?'seguro':'file://')+' · '+location.protocol);
   rows.push('Red: '+(isOffline()?'sin conexión':'conectado'));
-  rows.push('CEREBRO: '+(Brain.localReady ? 'LOCAL ('+Brain.modelName+')' : (isOffline()?'solo regex':'nube Pollinations')));
-  rows.push('Agente PC: '+(Agent.ok?'CONECTADO':'desconectado'));
+  rows.push('CEREBRO: '+(Brain.localReady ? 'LOCAL ('+Brain.modelName+')' : (isOffline()?'solo regex':'nube')));
+  rows.push('OÍDO: '+(Ears.on?'LOCAL (whisper)':'google')+(Ears.asr?' · modelo cargado':''));
+  rows.push('HUD: '+(HUD.on?'abierto':'off')+(HUD.landmarker?' · visión cargada':''));
+  rows.push('Sesión multidevice: '+(Relay.on?Relay.url:'off'));
+  rows.push('Agente PC: '+(Agent.ok?'CONECTADO':'off'));
   rows.push('Memoria episódica: '+Episodio.log.length+' líneas');
   rows.push('Agenda: '+taskPending()+' pendientes');
-  rows.push('Ánimo: '+mood().tag+' · Proactividad: '+(store.get('proactivo',true)?'on':'off'));
+  rows.push('Ánimo: '+mood().tag);
   try{
     if(navigator.getBattery){
       const b = await navigator.getBattery();
@@ -3209,12 +3427,13 @@ async function runDiag(){
    ARRANQUE
 ===================================================================== */
 const BOOTLINES = [
-  '» ANIA KERNEL v7.0 — edición Jarvis',
+  '» ANIA KERNEL v8.0 — edición Jarvis',
   '» módulos de red y voz ............... OK',
   '» LINGUA: cubano + typos + tildes ... OK',
   '» cerebro razonador (tool-calling) .. OK',
-  '» GGUF local: carpeta modelos/ ...... LISTO',
-  '» memoria episódica + proactividad .. OK',
+  '» OÍDO local: whisper offline ....... OK',
+  '» HUD: visión + gestos .............. OK',
+  '» sesión multidevice (relay) ........ OK',
   '» esperando credenciales del operador _'
 ];
 (async function boot(){
@@ -3229,7 +3448,7 @@ const BOOTLINES = [
       await new Promise(r=>setTimeout(r, 4));
     }
     div.innerHTML = esc(line).replace(/OK$/,'<span class="ok">OK</span>');
-    await new Promise(r=>setTimeout(r, 70));
+    await new Promise(r=>setTimeout(r, 60));
   }
   if(Session){
     if(Session.role!=='invitado' && Session.name && Mind.d.nombre !== Session.name){ Mind.d.nombre = Session.name; Mind.save(); }
@@ -3257,21 +3476,21 @@ const BOOTLINES = [
   Agent.connect();
   Proactive.start();
   Brain.paint();
-  Brain.loadLocal(false); // intento silencioso: si hay manifiesto, despierta el cerebro solo
+  Brain.loadLocal(false);
   S.lastUserTs = Date.now();
-  sysLine('v7.0 · sesión #'+Mind.d.visitas+' · cerebro: '+ (Brain.localReady?'local':'cascada') +' · avisos web en '+DEVICE_ID.slice(0,10));
+  sysLine('v8.0 · sesión #'+Mind.d.visitas+' · cerebro '+(Brain.localReady?'local':'cascada')+' · oído '+(Ears.on?'local':'google'));
   const g = geoCache();
   if(g){ try{ const d = await getWeather(g); updateChip(g,d); }catch(e){} }
 
   const h = new Date().getHours();
   const saludo = h<12?'Buenos días':(h<20?'Buenas tardes':'Buenas noches');
   const nom = Mind.nombre() ? ', '+Mind.nombre() : '';
-  let msg = saludo+nom+'. Hoy ya no solo respondo: '+
-    (Brain.localReady ? 'tengo cerebro local en línea y razono sin internet.' : 'razono con mi cerebro cuando lo necesites (di «piénsalo» o pregunta algo abierto).')+
-    ' Y ahora recuerdo lo que hablamos: prueba «¿qué hablamos de...?» cualquier día.';
+  let msg = saludo+nom+'. Edición Jarvis completa: razono con cerebro propio, '+
+    'tengo oído local que funciona sin internet, visión con gestos y sesión multidevice. '+
+    'Prueba: «piénsalo», «oído local», «abre el hud» o «¿qué hablamos de café?».';
   setTimeout(()=>{
     personaReply(msg, msg.slice(0,300));
-    renderChips(['Piénsalo: ¿qué opinas del café?','Carga el cerebro','Prepara mi día','Ponme música','¿Qué hablamos de café?','Mira esta foto','Adivina mi personaje']);
+    renderChips(['Piénsalo: ¿qué opinas del café?','Oído local','Abre el hud','Prepara mi día','Ponme música','Adivina mi personaje']);
   }, 500);
 };
 </script>
