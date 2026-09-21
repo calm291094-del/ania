@@ -1,139 +1,193 @@
-ANIA
-ANIA · Núcleo Personal
+<div align="center">
+  <h1>ANIA</h1>
+  <img src="fondo.png" alt="ANIA · Núcleo Personal" width="880">
+  <p><strong>Asistente personal, secretaria ejecutiva y compañera en un solo archivo HTML</strong></p>
+  <p><em>voz · personalidad propia · memoria · música procedural · agente de PC · entrenamiento con documentos · modo offline</em></p>
+  <p>
+    <img src="https://img.shields.io/badge/HTML5-un%20solo%20archivo-2de08a?style=flat-square">
+    <img src="https://img.shields.io/badge/PWA-instalable-39ff9b?style=flat-square">
+    <img src="https://img.shields.io/badge/OFFLINE-nativo-9fdcff?style=flat-square">
+    <img src="https://img.shields.io/badge/APIs-0%20claves-ffb547?style=flat-square">
+    <img src="https://img.shields.io/badge/AGENTE%20PC-opcional-ff7d94?style=flat-square">
+    <img src="https://img.shields.io/badge/licencia-MIT-556677?style=flat-square">
+  </p>
+</div>
 
-Asistente personal, secretaria ejecutiva y compañera que vive en un solo archivo HTML
+---
 
-voz · personalidad propia · memoria · música procedural · agente de PC · entrenamiento con documentos · modo offline
+    » ANIA KERNEL v6.0 · núcleo personal
+    » LINGUA: cubano + typos + tildes ... OK
+    » escucha continua: palabra «Ania» .. OK
+    » música procedural + agente PC ..... OK
+    » esperando credenciales del operador _
 
-            
+      > que bolá
+      ANIA ▸ ¡Hola! ¿Misiones o sobremesa?
+      > ania, ponme musika
+      ANIA ▸ Lo-fi procedural en marcha.
+            (sin tilde y con typo: entendido igual)
 
-» ANIA KERNEL v6.0 · núcleo personal» LINGUA: cubano + typos + tildes ... OK» escucha continua: palabra «Ania» .. OK» música procedural + agente PC ..... OK» esperando credenciales del operador _  > que bolá  ANIA ▸ ¡Hola! ¿Misiones o sobremesa?  > ania, ponme musika  ANIA ▸ Ahí va: lo-fi procedural, acordes de jazz y vinilo, generado en vivo.        (sin tilde y con typo: entendido igual)
+**Ania** no es un chatbot genérico: es un personaje con identidad completa — 20 años, egresada
+de la Academia Eden, especialista en isekai, zombies, café de especialidad, astronomía y
+tecnología — con voz femenina, memoria de usuario, agenda recurrente, entrenamiento con tus
+propios documentos, control del PC mediante un agente opcional, y **te acompaña incluso sin
+internet**. Le escribes normal, con typos, sin tilde o en cubano: «klima», «que bolá, abre mi pc».
 
-Ania no es un chatbot genérico: es un personaje con identidad completa — 20 años, graduadade la Academia Eden, especialista en isekai, series zombie, café de especialidad, astronomía ytecnología — que te habla con voz femenina, recuerda tu nombre y tus gustos, agenda tareasrecurrentes, entrena con tus propios documentos, controla tu PC con un agente opcional yte acompaña incluso cuando no tienes internet.
+Creada por **Carlos Lorenzo Marros**.
 
-Y te puede escribir normal, con faltas de ortografía, con o sin tilde, en coloquial o en cubano:«klima», «ponme musikita», «que bolá, abre mi pc».
+---
 
-Creada por Carlos Lorenzo Marros.
-» Características
-Módulo	Qué hace
-LINGUA	Entiende sin tilde, con typos, coloquial y cubano: 4 capas de normalización + corrección difusa (Levenshtein) + fonética del STT («aña» → «Ania»)
-Voz bidireccional	Voz femenina en español + micrófono; escucha continua opt-in con palabra de activación «Ania» (se calla sola cuando va a responder)
-Agente del PC (opcional)	«abre mi pc», «sube el volumen», «captura mi pantalla» (aparece en el chat), «apaga la pc», «busca en toda la pc», «lee mi portapapeles», «abre [url] en el pc»
-Índice del PC	Indexa tus carpetas (películas, música...) y encuentra archivos con búsqueda difusa, 100% local
-Música procedural	Lo-fi generado en vivo con WebAudio: acordes de jazz, vinilo crujiente, ritmo lento. Cero archivos, cero internet
-Ambiente	Lluvia y cafetería sintetizadas gota a gota: «pon lluvia», «pon la cafetería»
-Secretaría ejecutiva	«prepara mi día» (informe ejecutivo), reuniones con pre-aviso de 15 min, redacción de correos
-Agenda + recordatorios	Recurrentes («todos los días», «cada lunes»), canales de aviso separados web/Telegram (sin duplicar), «pospón 10 minutos»
-Memoria de usuario	«me llamo Carlos» → lo recuerda para siempre, junto a gustos y datos
-Login multiusuario	usuarios.json desde GitHub, caché para login offline y modo invitado
-Entrenamiento con documentos	Carpeta local o documentos/ en el repo (.txt/.md/.csv/.docx/.doc/.pdf) + JSON de respuestas fijas editable dentro del HTML
-Biblioteca offline	Cada búsqueda de Wikipedia se guarda y se lee sin conexión
-Clima, astro y entorno	Clima en tiempo real, fase lunar y lluvias de meteoros (cálculo local), reactor que cambia con el clima real
-IA conversacional	Gratuita y sin clave (Pollinations) como último recurso online, con la personalidad de Ania
-Diario + Backup total	Bitácora diaria automática y export/import de todo tu universo en JSON
-Terminal real	Historial de comandos con ↑/↓, autocompletado con Tab, atajos Ctrl+K/Ctrl+M
-Extras	Akinator isekai, Adivina, conversor de unidades y bases, reloj mundial, generador de contraseñas, frases célebres
-PWA instalable	App a pantalla completa; con service worker funciona sin conexión
-» Empezar
-Opción A · Uso local (sin nada más)
+## » Características
 
-    Descarga index.html.
-    Ábrelo con Chrome o Edge. Listo.
+| Módulo | Qué hace |
+|---|---|
+| LINGUA | Entiende sin tilde, con typos, coloquial y cubano (corrección difusa + fonética del micrófono) |
+| Voz bidireccional | Voz femenina en español + micrófono, con escucha continua opcional: di «Ania» y obedece |
+| Agente del PC (opcional) | «abre mi pc», «sube el volumen», «captura mi pantalla», «apaga la pc», «busca en toda la pc» |
+| Índice del PC | Encuentra tus películas/archivos indexando carpetas, 100% local |
+| Música procedural | Lo-fi en vivo con WebAudio: acordes de jazz, vinilo, ritmo. Sin archivos, sin internet |
+| Secretaría ejecutiva | «prepara mi día» (informe), reuniones con pre-aviso, redacción de correos |
+| Agenda + recordatorios | Recurrentes («todos los días»), canales separados web/Telegram, «pospón 10 minutos» |
+| Memoria de usuario | «me llamo Carlos» → lo recuerda para siempre |
+| Login multiusuario | usuarios.json con caché offline y modo invitado |
+| Entrenamiento | Documentos propios (txt/docx/pdf) + JSON de respuestas fijas editable en el HTML |
+| Biblioteca offline | Cada búsqueda de Wikipedia se guarda y se lee sin conexión |
+| Clima y astro | Clima real, fase lunar y lluvias de meteoros (cálculo local offline) |
+| IA conversacional | Gratuita y sin clave (Pollinations) con la personalidad de Ania |
+| Diario y backup | Bitácora diaria automática + exportar/importar todo |
+| PWA instalable | App a pantalla completa; con service worker funciona sin conexión |
 
-    Funciona sin internet: personalidad, memoria, agenda, música, PC, luna, Akinario y charla.Solo clima / búsqueda / IA necesitan red.
+---
 
-Opción B · GitHub Pages (PWA completa)
+## » Empezar
 
-    Haz fork o clona este repo.
-    Settings → Pages → Deploy from a branch → main / (root) → Save.
-    Ábrela en el móvil (Chrome) → menú ⋮ → Instalar aplicación.
+**Opción A · Uso local:** descarga `index.html` y ábrelo con Chrome/Edge. Funciona sin internet:
+personalidad, memoria, agenda, música, PC, luna y charla. Solo clima/búsqueda/IA usan red.
 
-    Con el service worker incluido, la app instalada funciona sin conexión.También puedes generar el kit completo desde dentro de la propia app:INSTALAR → DESCARGAR KIT GITHUB (ZIP) — Ania empaqueta su propio código.
+**Opción B · GitHub Pages:** Settings → Pages → Branch `main` / root → Save. Ábrela en el móvil
+(Chrome) → menú ⋮ → Instalar aplicación. Instalada, funciona sin conexión.
 
-Opción C · Agente del PC (opcional, modo Iron Man)
+**Opción C · Agente del PC (opcional):**
 
-cd agentenpm install wsset ANIA_TOKEN=mi-clave-secreta      # Windows (o usa siempre la variable de entorno)node ania-agent.js
+    cd agente
+    npm install ws
+    node ania-agent.js
 
-Luego en Ania: «conecta el agente con clave mi-clave-secreta».El puente escucha solo en 127.0.0.1, exige token y usa listas blancas de apps y rutas.Para auto-inicio silencioso, copia agente/ania-agent.vbs en shell:startup.
+Luego en Ania: «conecta el agente con clave [tu-token]». El puente escucha solo en 127.0.0.1,
+exige token y usa listas blancas de apps y rutas. Auto-inicio: copia `agente/ania-agent.vbs`
+en shell:startup.
 
-    El agente publicado trae un token de ejemplo. Si editas tu copia local con la clave real,no subas ese cambio al repo.
+---
 
-» Login y usuarios
+## » Login
 
 Las credenciales se leen en vivo de:
 
-https://raw.githubusercontent.com/calm291094-del/meditech-tienda/main/usuarios.json
+    https://raw.githubusercontent.com/calm291094-del/meditech-tienda/main/usuarios.json
 
-{  "username": "cliente",  "password": "Cliente123",  "name": "cliente",  "email": "cliente@gmail.com",  "role": "user",  "fecha": "2026-07-07T12:29:43.970Z"}
+La lista se cachea en el dispositivo (login offline) y la sesión se recuerda entre visitas.
+Existe modo invitado. Aviso: las contraseñas van en texto plano en un repo público; para
+blindarlo, valida el login en el backend con hashes (bcrypt/argon2).
 
-    Al iniciar sesión, Ania reconoce el campo name y te saluda por tu nombre.
-    La lista se cachea en el dispositivo: el login también funciona sin conexión.
-    La sesión se recuerda entre visitas (cerrar sesión en Ajustes).
-    Existe modo invitado si no hay red ni caché.
+---
 
-    ⚠️ Seguridad: al ser un repo público, las contraseñas viajan en texto plano. Para usocasual está bien; para blindarlo, valida el login en el backend y guarda hashes (bcrypt/argon2).
+## » Comandos que Ania entiende
 
-» Comandos que Ania entiende
-Ver la lista completa de comandos
-» Entrenamiento con documentos
+<details>
+<summary><strong>Ver la lista completa</strong></summary>
 
-Vía GitHub (público): sube tus archivos a documentos/ y lista sus nombres endocumentos/indice.json:
+| Categoría | Ejemplos |
+|---|---|
+| Escucha activa | «siempre escúchame» → luego «Ania, ...» |
+| PC (agente) | «abre mi pc» · «sube el volumen» · «captura mi pantalla» · «bloquea el pc» · «apaga la pc» · «lee mi portapapeles» |
+| PC (índice) | «indexa mi pc» · «busca en la pc [película]» · «abre el resultado 2» |
+| Música / ambiente | «ponme música» · «pon [canción] en youtube» · «pon lluvia» · «pon la cafetería» |
+| Secretaría | «prepara mi día» · «reunión con Ana a las 15:00» · «redacta un correo a Luis» |
+| Agenda | «recuérdame tomar agua todos los días a las 9 am» · «mis tareas» · «tarea hecha» · «pospón 10 minutos» |
+| Memoria | «me llamo Carlos» · «me gusta el café» · «¿qué sabes de mí?» |
+| Astro | «¿qué fase tiene la luna?» · «próxima lluvia de estrellas» |
+| Clima | «¿cómo está el clima?» · «¿dónde estoy?» · «clima en Bogotá» |
+| Conocimiento | «busca agujeros negros» · «¿quién es Ada Lovelace?» · «traduce hola al japonés» |
+| Documentos | «entrena con mis documentos» · «busca en mis documentos [tema]» |
+| Extras | «calcula 12*9+3» · «convierte 5 km a millas» · «genera una contraseña» · «adivina mi personaje» |
 
-["apuntes.txt", "recetas.docx", "manual.pdf"]
+Todo funciona igual escrito «rekuerdame», «klima» o «que bolá».
 
-Vía local (privado): «entrena con mis documentos» → eliges la carpeta → todo quedaen tu dispositivo, nada sale de él.
+</details>
 
-Formatos: .txt · .md · .csv · .json · .docx · .doc (mejor esfuerzo) · .pdf (mejor esfuerzo).
+---
 
-Además, al final del index.html hay un JSON de entrenamiento interno editable:respuestas fijas que Ania prioriza sobre su propio conocimiento.
-» Modo offline
-Con internet	Sin internet
-Clima y ubicación en tiempo real	Clima en caché
-Búsqueda, conocimiento, traducción, IA	Biblioteca offline + documentos entrenados + knowledge local
-Noticias + sincronización con Telegram	Agenda y recordatorios 100% locales
-Login en vivo contra usuarios.json	Login con caché + modo invitado
-Búsqueda del agente en todo el disco	Índice local del PC + música procedural + luna + Akinator
-Voz, memoria, secretaría, personalidad	Voz, memoria, secretaría, personalidad
+## » Entrenamiento con documentos
 
-La transición es automática: si la red se cae, Ania te avisa y cambia al núcleo localsin perder una sola función local.
-» Arquitectura
+**Por GitHub (público):** sube archivos a `documentos/` y lista sus nombres en
+`documentos/indice.json`:
 
-Todo el sistema cabe en un único index.html (cero build, cero framework):
+    ["apuntes.txt", "recetas.docx", "manual.pdf"]
 
-index.html├── Login             · usuarios.json + sesión + caché offline├── LINGUA            · 4 capas: tildes, typos, cubano, fonética STT + fuzzy├── Mente             · memoria del usuario (localStorage)├── Personalidad      · identidad, KB offline, entrenamiento JSON interno├── Reactor + bgfx    · núcleo canvas + clima real + lluvia/estrellas de fondo├── Voz               · TTS/STT + escucha continua con palabra «Ania»├── Música/Ambiente   · lo-fi, lluvia y cafetería procedural (WebAudio)├── Agenda            · recurrentes, canales web/Telegram, disparo único├── PC + Agente       · índice de archivos + puente ws://127.0.0.1├── Secretaría        · briefing ejecutivo, correos, reuniones├── DocBrain          · entrenamiento con documentos (txt/docx/pdf)├── Diario + Backup   · bitácora automática + export/import total├── Sync              · backend opcional (anti-duplicados, degradación limpia)├── Servicios         · clima, wiki, DDG (JSONP), traducción, Pollinations├── Cerebro           · parser de intenciones (español natural + cubano)└── PWA               · manifest + service worker + kit ZIP autogenerado
+**Por carpeta local (privado):** «entrena con mis documentos» → eliges la carpeta → nada
+sale de tu dispositivo. Además, al final de `index.html` hay un JSON interno editable con
+respuestas fijas que Ania prioriza.
 
-APIs públicas usadas — ninguna requiere clave:
-Servicio	Uso
-Open-Meteo	Clima actual + pronóstico
-Nominatim · OpenStreetMap	Geocodificación y ubicación
-Wikipedia · REST + Action API	Conocimiento y búsquedas
-DuckDuckGo · Instant Answer	Respuestas rápidas (vía JSONP)
-MyMemory	Traducción
-Pollinations	IA conversacional con personalidad
-Web Speech / Notification / Battery / WakeLock / Vibration	APIs nativas del navegador
-» Estructura del repositorio
+---
 
-├── index.html      # toda la aplicación (UI + lógica + personalidad)├── manifest.json   # manifiesto PWA├── icon.svg        # icono de la app├── sw.js           # service worker · caché offline + refresh de documentos├── fondo.png       # imagen de portada├── documentos/│   ├── indice.json # lista de archivos de entrenamiento│   └── (tus .txt / .docx / .pdf)├── agente/         # puente del PC (opcional)│   ├── ania-agent.js│   ├── ania-agent.vbs│   └── package.json└── README.md
+## » Estructura del repositorio
 
-» Problemas conocidos
-Ver soluciones rápidas
-» Hoja de ruta
+    ania/
+    ├── index.html      ← toda la aplicación
+    ├── manifest.json   ← PWA
+    ├── icon.svg        ← icono de la app
+    ├── sw.js           ← service worker (caché offline)
+    ├── fondo.png       ← imagen de portada
+    ├── documentos/     ← entrenamiento (indice.json + tus archivos)
+    ├── agente/         ← puente del PC (opcional)
+    └── README.md
 
-     Reconocimiento de voz continuo con palabra de activación
-     Entrenamiento con documentos propios
-     Control del PC vía agente local
-     Agenda recurrente y canales de aviso separados
-     Hash de contraseñas validado en backend (login por API con token)
-     Sincronización de memoria y ajustes entre dispositivos
-     Atajos en pantalla de inicio (manifest shortcuts) y periodic sync
-     PIN local de bloqueo (WebCrypto)
-     Trivia temática y más juegos
-     Más idiomas de interfaz
+APIs usadas, todas gratuitas y sin clave: Open-Meteo (clima), Nominatim (geolocalización),
+Wikipedia, DuckDuckGo, MyMemory (traducción), Pollinations (IA), más las APIs nativas del
+navegador (voz, notificaciones, batería, vibración).
 
-» Créditos y licencia
+---
 
-Ania — concepto, diseño y personalidad: Carlos Lorenzo Marros.
+## » Problemas conocidos
 
-Publicado bajo la licencia MIT. Puedes usarla, modificarla y llevarte a tu propia Aniaa donde quieras... solo recuerda darle buen café.
+<details>
+<summary><strong>Ver soluciones rápidas</strong></summary>
 
-«Pan, café y anime: la trinidad de la felicidad.» — Ania
+| Problema | Solución |
+|---|---|
+| Actualicé index.html pero sale la versión vieja | Sube también sw.js con el caché subido (ania-v6 → ania-v7) |
+| El micrófono no responde | Solo Chrome/Edge; revisa permisos del sitio |
+| Ania no habla | El primer toque habilita el audio; prueba «habla» |
+| La escucha activa se apaga | Ania la reenciende sola; Android la congela en reposo profundo |
+| La captura de pantalla falla | Requiere la sesión de Windows desbloqueada |
+| El agente no conecta | ¿Corre node ania-agent.js? ¿Token idéntico? El pill AGENTE del header lo confirma |
+| El login falla sin conexión | Solo la primera vez; luego queda cacheado |
+
+</details>
+
+---
+
+## » Hoja de ruta
+
+- [x] Reconocimiento de voz continuo con palabra de activación
+- [x] Entrenamiento con documentos propios
+- [x] Control del PC vía agente local
+- [x] Agenda recurrente con canales separados
+- [ ] Hash de contraseñas validado en backend
+- [ ] Sincronización de memoria entre dispositivos
+- [ ] PIN local de bloqueo
+- [ ] Trivia y más juegos
+
+---
+
+## » Créditos y licencia
+
+Ania — concepto, diseño y personalidad: **Carlos Lorenzo Marros**.
+
+Licencia **MIT**. Llévate tu propia Ania a donde quieras... solo dale buen café.
+
+<div align="center">
+
+*«Pan, café y anime: la trinidad de la felicidad.»* — **Ania**
+
+</div>
