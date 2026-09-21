@@ -1,0 +1,13 @@
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node (agente local)
+node_modules/
+package-lock.json
+
+# Respaldos accidentales y basura
+*.log
+ania-backup-*.json
+ania-github-pages.zip
