@@ -7,7 +7,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>ANIA · Núcleo Personal</title>
+<title>ANIA · Edición Jarvis</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23040806'/%3E%3Ccircle cx='50' cy='50' r='26' fill='%232de08a'/%3E%3Ccircle cx='50' cy='50' r='9' fill='%23040806'/%3E%3C/svg%3E">
 <style>
@@ -28,16 +28,14 @@
   button:active{transform:translateY(1px);}
   button:focus-visible{outline:1px solid var(--acc2); outline-offset:2px;}
   svg{display:block;}
-
   #bgfx{position:fixed; inset:0; z-index:0; pointer-events:none;}
   #app{position:relative; z-index:1;}
-
   #boot{position:fixed; inset:0; z-index:1000; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; transition:opacity .6s; overflow-y:auto;}
   #boot.hide{opacity:0; pointer-events:none;}
   #bootBox{width:min(560px,100%);}
   #bootTitle{letter-spacing:.55em; font-size:clamp(26px,8vw,44px); color:var(--acc2); text-align:center; margin-bottom:26px;}
   #bootTitle small{display:block; letter-spacing:.3em; font-size:11px; color:var(--dim); margin-top:8px;}
-  #bootLog{min-height:280px; font-size:13px; line-height:1.75; color:var(--dim);}
+  #bootLog{min-height:290px; font-size:13px; line-height:1.75; color:var(--dim);}
   #bootLog .ok{color:var(--acc);}
   #loginBox{margin-top:22px; display:none; flex-direction:column; gap:10px;}
   #loginBox input{background:var(--panel); border:1px solid var(--line); border-radius:6px; color:var(--text); font-family:var(--mono); font-size:16px; padding:12px 13px; width:100%;}
@@ -49,7 +47,6 @@
   #bootStart{display:none; margin:26px auto 0; padding:14px 34px; font-size:15px; letter-spacing:.35em; border-color:var(--line2); color:var(--acc2); background:rgba(45,224,138,.06);
     clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px); animation:breathe 2.4s ease-in-out infinite;}
   @keyframes breathe{50%{background:rgba(45,224,138,.14);}}
-
   #app{display:flex; flex-direction:column; height:100dvh; max-width:760px; margin:0 auto; padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom);}
   header{display:flex; align-items:center; gap:8px; padding:10px 6px; border-bottom:1px solid var(--line); flex:0 0 auto;}
   #logo{font-size:20px; letter-spacing:.5em; color:var(--acc2); user-select:none; white-space:nowrap;}
@@ -60,9 +57,11 @@
   .pill.off{color:var(--amber); border-color:rgba(255,181,71,.4);}
   .pill.off .dot{background:var(--amber); animation:none;}
   .pill.idle{opacity:.55;} .pill.idle .dot{animation:none;}
-  #syncPill, #agentPill{display:none;}
+  #syncPill, #agentPill, #brainPill{display:none;}
   #agentPill.on{display:inline-flex; color:var(--acc2); border-color:var(--line2);}
   #agentPill.on .dot{background:var(--acc2);}
+  #brainPill.on{display:inline-flex; color:var(--amber); border-color:rgba(255,181,71,.4);}
+  #brainPill.on .dot{background:var(--amber); animation:none;}
   #headRight{margin-left:auto; display:flex; gap:8px; align-items:center; font-size:11px; color:var(--dim);}
   #clock{color:var(--text); letter-spacing:.1em;}
   #batt{display:none; font-size:10px; color:var(--dim);}
@@ -70,14 +69,12 @@
   #weatherChip:active{border-color:var(--line2);}
   #weatherChip svg{width:13px; height:13px;}
   #operator{display:none; font-size:10px; letter-spacing:.14em; color:var(--amber); border:1px solid rgba(255,181,71,.35); border-radius:999px; padding:3px 9px; white-space:nowrap;}
-  @media(min-width:600px){ #syncPill{display:inline-flex;} #agentPill.on{display:inline-flex;} }
-
+  @media(min-width:640px){ #syncPill{display:inline-flex;} #agentPill.on{display:inline-flex;} #brainPill.on{display:inline-flex;} }
   #coreZone{flex:0 0 auto; display:flex; flex-direction:column; align-items:center; padding:8px 0 2px;}
   #reactorWrap{position:relative; width:min(56vw,225px); height:min(56vw,225px);}
   #reactor{width:100%; height:100%;}
   #phase{font-size:10px; letter-spacing:.4em; color:var(--dim); margin-top:2px; user-select:none;}
   #phase.amber{color:var(--amber);}
-
   #chat{flex:1 1 auto; overflow-y:auto; padding:10px 8px 6px; scroll-behavior:smooth; -webkit-overflow-scrolling:touch;}
   .line{display:flex; gap:8px; padding:5px 0; font-size:14px; line-height:1.55; animation:lin .18s ease-out;}
   @keyframes lin{from{opacity:0; transform:translateX(-4px);}}
@@ -91,11 +88,9 @@
   .line.act .msg{color:var(--dim); font-style:italic; font-size:12.5px;}
   .line .msg img{max-width:100%; border-radius:8px; margin-top:6px; border:1px solid var(--line);}
   .line .ts{flex:0 0 auto; font-size:9px; color:#42604f; padding-top:5px;}
-
   #chips{display:flex; flex-wrap:wrap; gap:6px; padding:2px 8px 8px; flex:0 0 auto;}
   .chip{font-size:11px; padding:6px 11px; border-radius:999px; color:var(--dim);}
   .chip:active{color:var(--acc2); border-color:var(--line2);}
-
   #inputBar{flex:0 0 auto; display:flex; gap:8px; padding:6px 4px 8px; border-top:1px solid var(--line);}
   #userInput{flex:1; min-width:0; background:var(--panel); border:1px solid var(--line); border-radius:8px; color:var(--text); font-family:var(--mono); font-size:16px; padding:11px 13px; caret-color:var(--acc2);}
   #userInput:focus{outline:none; border-color:var(--line2);}
@@ -107,7 +102,6 @@
   @keyframes pulseA{50%{box-shadow:0 0 0 6px rgba(255,181,71,.10);}}
   #micBtn.awake{border-color:var(--line2); color:var(--acc2); background:rgba(45,224,138,.05);}
   #micBtn.awake::after{content:''; position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:50%; background:var(--acc2); animation:blink 1.6s steps(1) infinite;}
-
   #dock{flex:0 0 auto; display:flex; gap:5px; padding:0 2px 8px;}
   .dbtn{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 1px; font-size:8.5px; letter-spacing:.1em; color:var(--dim); position:relative;}
   .dbtn svg{width:16px; height:16px;}
@@ -116,11 +110,9 @@
   .badge.on{display:block;}
   #btnInstall::before{content:''; position:absolute; top:4px; right:4px; width:7px; height:7px; border-radius:50%; background:var(--acc2); display:none; animation:blink 1.4s steps(1) infinite;}
   #btnInstall.can::before{display:block;}
-
   #ambBtn{position:fixed; left:12px; bottom:calc(14px + env(safe-area-inset-bottom)); z-index:500; width:44px; height:44px; display:none; place-items:center; border-radius:50%; background:var(--bg2); border-color:var(--line2); color:var(--acc2);}
   #ambBtn svg{width:20px; height:20px;}
   #ambBtn.play{animation:breathe 2s ease-in-out infinite;}
-
   #backdrop{position:fixed; inset:0; background:rgba(2,5,3,.72); z-index:940; opacity:0; pointer-events:none; transition:opacity .25s;}
   #backdrop.on{opacity:1; pointer-events:auto;}
   #sheet, #sheetMem, #sheetDiary, #sheetLib{position:fixed; left:0; right:0; bottom:0; max-width:760px; margin:0 auto;
@@ -135,7 +127,6 @@
   .sheetHead .pill{margin-left:auto;}
   .xbtn{width:32px; height:32px; display:grid; place-items:center; border-radius:6px;}
   .xbtn svg{width:15px; height:15px;}
-
   #taskList, #diaryList, #libList, #memList{overflow-y:auto; padding:6px 14px; flex:1;}
   .task{display:flex; align-items:center; gap:10px; padding:11px 4px; border-bottom:1px dashed rgba(45,224,138,.12);}
   .task .tmain{flex:1; min-width:0;}
@@ -156,13 +147,11 @@
   #taskInput{flex:1 1 150px; min-width:0; background:var(--panel); border:1px solid var(--line); border-radius:6px; color:var(--text); font-family:var(--mono); font-size:14px; padding:9px 10px;}
   #taskWhen{flex:0 1 auto; background:var(--panel); border:1px solid var(--line); border-radius:6px; color:var(--dim); font-family:var(--mono); font-size:12px; padding:9px 8px; color-scheme:dark;}
   #addTaskBtn{flex:0 0 auto; padding:0 16px; letter-spacing:.2em; font-size:11px; border-radius:6px;}
-
   .memRow{display:flex; gap:10px; padding:10px 2px; border-bottom:1px dashed rgba(45,224,138,.12); font-size:13px; align-items:flex-start;}
   .memRow .k{flex:0 0 74px; color:var(--dim); font-size:10px; letter-spacing:.15em; padding-top:3px;}
   .memRow .v{flex:1; word-break:break-word;}
   .memRow .mdel{flex:0 0 auto; width:28px; height:28px; display:grid; place-items:center; color:#5a3040;}
   .memRow .mdel svg{width:13px; height:13px;}
-
   .diaryRow{padding:12px 2px; border-bottom:1px dashed rgba(45,224,138,.12);}
   .diaryRow .dDate{font-size:10px; color:var(--acc); letter-spacing:.12em; margin-bottom:4px;}
   .diaryRow .dText{font-size:12.5px; color:var(--text); line-height:1.6; white-space:pre-wrap;}
@@ -171,7 +160,6 @@
   .libRow .ltitle{font-size:13px; color:var(--text);}
   .libRow .ldate{font-size:9px; color:#42604f; margin-top:3px;}
   .sheetFoot{padding:10px 14px calc(14px + env(safe-area-inset-bottom)); border-top:1px solid var(--line);}
-
   .overlay{position:fixed; inset:0; z-index:960; background:rgba(2,5,3,.78); display:none; align-items:center; justify-content:center; padding:20px;}
   .overlay.on{display:flex;}
   .modal{width:min(500px,100%); max-height:86dvh; overflow-y:auto; background:var(--bg2); border:1px solid var(--line2);
@@ -194,26 +182,20 @@
   .esSel{border-color:var(--line2); color:var(--acc2); background:rgba(45,224,138,.07);}
   #diag{margin-top:14px; border:1px dashed var(--line); padding:12px 14px; font-size:12px; line-height:1.9; color:var(--dim);}
   #diag b{color:var(--acc); font-weight:normal;}
-
   #toasts{position:fixed; top:calc(10px + env(safe-area-inset-top)); left:0; right:0; z-index:1200; display:flex; flex-direction:column; align-items:center; gap:8px; pointer-events:none;}
   .toast{background:var(--bg2); border:1px solid var(--line2); color:var(--acc2); font-size:12px; padding:9px 16px; max-width:88%;
     clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px); animation:tIn .25s ease-out;}
   .toast.warn{color:var(--amber); border-color:rgba(255,181,71,.5);}
   @keyframes tIn{from{opacity:0; transform:translateY(-8px);}}
-
-  @media (min-width:700px){
-    #reactorWrap{width:240px; height:240px;}
-    .line{font-size:15px;}
-  }
+  @media (min-width:700px){ #reactorWrap{width:240px; height:240px;} .line{font-size:15px;} }
 </style>
 </head>
 <body>
-
 <canvas id="bgfx"></canvas>
 
 <div id="boot">
   <div id="bootBox">
-    <div id="bootTitle">ANIA<small>NÚCLEO PERSONAL · v6.0</small></div>
+    <div id="bootTitle">ANIA<small>EDICIÓN JARVIS · v7.0</small></div>
     <div id="bootLog"></div>
     <form id="loginBox" autocomplete="on">
       <input id="loginUser" placeholder="usuario" autocomplete="username" autocapitalize="none" autocorrect="off">
@@ -232,6 +214,7 @@
     <span class="pill" id="netPill"><span class="dot"></span><span id="netTxt">EN LÍNEA</span></span>
     <span class="pill idle" id="syncPill"><span class="dot"></span><span id="syncTxt">SYNC</span></span>
     <span class="pill" id="agentPill"><span class="dot"></span><span>AGENTE</span></span>
+    <span class="pill" id="brainPill"><span class="dot"></span><span id="brainTxt">CEREBRO</span></span>
     <span id="operator"></span>
     <span id="headRight">
       <button id="weatherChip" title="Ver clima">
@@ -347,16 +330,16 @@
     <h2>INSTALAR ANIA
       <button class="xbtn" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     </h2>
-    <p class="dim">Ania puede vivir en tu pantalla de inicio como una app, a pantalla completa y con su propio icono.</p>
+    <p class="dim">Ania puede vivir en tu pantalla de inicio como una app.</p>
     <button class="bigbtn" id="installNow" style="display:none">INSTALAR AHORA</button>
-    <div class="step"><b>01</b><p><span class="dim">Android (Chrome):</span> menú <span class="dim">(⋮)</span> → <b>«Añadir a pantalla de inicio»</b> o <b>«Instalar aplicación»</b>.</p></div>
-    <div class="step"><b>02</b><p><span class="dim">iPhone (Safari):</span> Compartir <span class="dim">(□↑)</span> → <b>«Añadir a pantalla de inicio»</b>.</p></div>
+    <div class="step"><b>01</b><p><span class="dim">Android (Chrome):</span> menú <span class="dim">(⋮)</span> → <b>«Instalar aplicación»</b>.</p></div>
+    <div class="step"><b>02</b><p><span class="dim">iPhone (Safari):</span> Compartir → <b>«Añadir a pantalla de inicio»</b>.</p></div>
     <hr>
-    <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">DESPLEGAR EN GITHUB PAGES</h2>
-    <p class="dim">Ania empaqueta su propio código en un ZIP: <b>index.html</b>, <b>manifest.json</b>, <b>icon.svg</b>, <b>sw.js</b>, <b>README</b>. Sube también la carpeta <b>documentos/</b> (con <b>indice.json</b>) para que se entrene sola, y opcionalmente <b>agente/ania-agent.js</b> para control del PC.</p>
-    <div class="step"><b>01</b><p>Descarga el kit y descomprímelo.</p></div>
-    <div class="step"><b>02</b><p>Repo nuevo → <b>Add file → Upload files</b> → arrastra todo.</p></div>
-    <div class="step"><b>03</b><p><b>Settings → Pages</b> → Branch: <span class="dim">main / root</span> → Save.</p></div>
+    <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">MODO CEREBRO LOCAL (GGUF)</h2>
+    <p class="dim">1) Pon tu modelo <b>.gguf</b> en <b>modelos/</b> y su nombre en <b>modelos/modelo.json</b>.<br>
+    2) Copia el runtime wllama en <b>engine/</b> (wllama.mjs + wllama.wasm).<br>
+    3) Ejecuta <b>node servidor.js</b> y abre <b>http://localhost:8080</b> — multihilo y 100% sin internet.<br>
+    Sin servidor: «carga el cerebro» y elige el .gguf manualmente.</p>
     <button class="bigbtn" id="exportKit">DESCARGAR KIT GITHUB (ZIP)</button>
     <hr>
     <button class="bigbtn" id="saveOffline">GUARDAR COPIA OFFLINE (.HTML)</button>
@@ -382,8 +365,13 @@
     <button class="bigbtn" id="testVoice">PROBAR VOZ</button>
     <button class="bigbtn" id="btnAlways">ESCUCHA ACTIVA: NO</button>
     <hr>
+    <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">CEREBRO CONVERSACIONAL</h2>
+    <p class="dim" id="brainInfo">Cascada: regex → GGUF local → nube. Estado: solo regex.</p>
+    <button class="bigbtn" id="btnLoadBrain">CARGAR CEREBRO LOCAL (.GGUF)</button>
+    <button class="bigbtn" id="btnTestBrain">PROBAR CEREBRO</button>
+    <hr>
     <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">AGENTE DEL PC (OPCIONAL)</h2>
-    <p class="dim" id="agentInfo">Desconectado. Con el agente local Ania puede abrir tu PC, subir el volumen, capturar la pantalla y buscar archivos. Se instala con dos comandos (ver README). Primera vez: «conecta el agente con clave [tu-token]».</p>
+    <p class="dim" id="agentInfo">Desconectado. «conecta el agente con clave [token]».</p>
     <button class="bigbtn" id="btnAgent">CONECTAR AGENTE</button>
     <hr>
     <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">ENTRENAMIENTO CON DOCUMENTOS</h2>
@@ -392,7 +380,7 @@
     <button class="bigbtn" id="btnClearDocs">OLVIDAR DOCUMENTOS</button>
     <hr>
     <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">ÍNDICE DE ARCHIVOS DEL PC</h2>
-    <p class="dim" id="pcInfo">0 archivos. Indexa una carpeta (películas, música...) para que Ania pueda encontrarlos: «busca en la pc [nombre]».</p>
+    <p class="dim" id="pcInfo">0 archivos.</p>
     <button class="bigbtn" id="btnIndexPC">INDEXAR CARPETA DEL PC</button>
     <button class="bigbtn" id="btnClearPC">OLVIDAR ÍNDICE DEL PC</button>
     <hr>
@@ -401,7 +389,6 @@
     <button class="bigbtn" id="logoutBtn">CERRAR SESIÓN</button>
     <hr>
     <h2 style="font-size:12px; letter-spacing:.25em; color:var(--acc);">BACKUP TOTAL</h2>
-    <p class="dim">Exporta memoria, agenda, ajustes, diario, biblioteca, documentos e índice del PC.</p>
     <button class="bigbtn" id="btnBackupExp">EXPORTAR TODO (.JSON)</button>
     <button class="bigbtn" id="btnBackupImp">RESTAURAR BACKUP</button>
     <input type="file" id="importFile" accept=".json,application/json" style="display:none">
@@ -417,19 +404,21 @@
 <div id="toasts"></div>
 <input type="file" id="docDir" webkitdirectory multiple style="display:none">
 <input type="file" id="pcDir" webkitdirectory multiple style="display:none">
+<input type="file" id="imgFile" accept="image/*" style="display:none">
+<input type="file" id="ggufFile" accept=".gguf,.ggmf,.bin" style="display:none">
+<input type="file" id="engineFiles" accept=".mjs,.js,.wasm" multiple style="display:none">
 
-<!-- ========= ENTRENAMIENTO INTERNO (editable, va antes del motor) ========= -->
 <script type="application/json" id="ania-entrenamiento">
 {
-  "_instrucciones": "Edita libremente. Cada entrada necesita claves (palabras clave) y respuesta. Ania responde con esto antes que con su conocimiento propio.",
+  "_instrucciones": "Edita libremente. Cada entrada: claves (palabras clave) y respuesta.",
   "respuestas": [
     {
       "claves": ["wifi casa", "clave wifi", "contrasena wifi"],
-      "respuesta": "La clave del wifi de casa está pegada en el router: MEDI-2024. La impresora se conecta por WPS: botón lateral 3 segundos."
+      "respuesta": "La clave del wifi de casa está pegada en el router: MEDI-2024."
     },
     {
       "claves": ["horario tienda", "abre la tienda", "cierra la tienda"],
-      "respuesta": "La tienda abre de 9:00 a 18:00, lunes a sábado. Domingos solo pedidos por Telegram."
+      "respuesta": "La tienda abre de 9:00 a 18:00, lunes a sábado."
     }
   ]
 }
@@ -437,18 +426,19 @@
 
 <script>
 /* =====================================================================
-   ANIA v6.0 · Núcleo Personal
-   NOVEDADES v6:
-   - LINGUA: entiende sin tildes, con typos, coloquial y cubano (4 capas
-     + corrección difusa Levenshtein + fonética del STT)
-   - Música lo-fi procedural + YouTube Music + ambiente
-   - ÍNDICE DEL PC: indexa carpetas y busca películas/archivos (difusa)
-   - AGENTE LOCAL: puente ws://127.0.0.1 con tu PC — abrir apps, URLs en
-     el navegador del PC, volumen, captura de pantalla en vivo al chat,
-     portapapeles, multimedia, bloqueo, apagado, búsqueda en todo el disco
-   - SECRETARÍA EJECUTIVA: briefing del día, redactar correos (mailto),
-     reuniones con pre-recordatorio de 15 min
-   - Dual-vida robusta: guards SECURE (file:// vs https) + clipboard fallback
+   ANIA v7.0 · EDICIÓN JARVIS
+   Núcleo nuevo:
+   - BRAIN: cerebro razonador con tool-calling en cascada
+     regex → GGUF local (wllama/llama.cpp WASM, carpeta modelos/)
+     → nube (Pollinations, gratis sin clave)
+   - Memoria episódica persistente: «¿qué hablamos de X?»
+   - Motor de proactividad: lluvia inminente, batería, silencio,
+     hora de dormir, tareas vencidas
+   - Prosodia TTS con estados de ánimo
+   - Visión: «mira esta foto» (Pollinations vision)
+   Conservado de v6: LINGUA, agente PC, índice PC, música procedural,
+   ambiente, secretaría, agenda recurrente, documentos, biblioteca,
+   diario, backup, terminal, PWA, Akinator.
 ===================================================================== */
 'use strict';
 
@@ -462,7 +452,9 @@ const CONFIG = {
   USERS_URLS: [
     'https://raw.githubusercontent.com/calm291094-del/meditech-tienda/main/usuarios.json',
     'https://raw.githubusercontent.com/calm291094-del/meditech-tienda/master/usuarios.json'
-  ]
+  ],
+  WLLAMA_CDN: 'https://cdn.jsdelivr.net/npm/@wllama/wllama@2.3.1/esm/index.js',
+  WLLAMA_WASM_CDN: 'https://cdn.jsdelivr.net/npm/@wllama/wllama@2.3.1/esm/'
 };
 
 /* ---------- utilidades ---------- */
@@ -483,13 +475,9 @@ const DEVICE_ID = (function(){
   return id;
 })();
 function copyText(txt){
-  if(navigator.clipboard && SECURE){ navigator.clipboard.writeText(txt).then(()=>toast('Copiado al portapapeles')).catch(()=>copyOld(txt)); }
-  else copyOld(txt);
-}
-function copyOld(txt){
   const ta = document.createElement('textarea');
   ta.value = txt; document.body.appendChild(ta); ta.select();
-  try{ document.execCommand('copy'); toast('Copiado al portapapeles'); }catch(e){ toast('No pude copiar', true); }
+  try{ document.execCommand('copy'); toast('Copiado al portapapeles'); }catch(e){}
   ta.remove();
 }
 async function jget(url, t=9000){
@@ -517,66 +505,53 @@ function jsonp(url, timeout=8000){
 const S = {
   phase:'idle', muted: store.get('muted', false),
   voice:null, rate: store.get('rate',1.05), pitch: store.get('pitch',1.10),
-  awaitingCity:false, booted:false, confirmWipe:false
+  awaitingCity:false, booted:false, confirmWipe:false,
+  lastUserTs: 0, batt: null
 };
 
 /* =====================================================================
-   LINGUA · 4 capas: normalización + jerga + fuzzy + fonética STT
+   LINGUA · 4 capas
 ===================================================================== */
 const LINGUA = (() => {
   const sinDiacriticos = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  /* capa 2 · léxico cubano/coloquial → estándar (sobre texto sin tildes) */
   const LEX = [
     [/\b(que\s+)?bola[so]?\b|\bque\s+vol[aa]\b/g, 'que tal'],
     [/\basere\b|\bacere\b|\bcompay\b/g, 'amigo'],
     [/\bchama\b|\bchamaco\b/g, 'chico'],
     [/\bchio\b|\bachanta\b|\bchao\b/g, 'adios'],
-    [/\btremendo\b|\btempleao\b|\bun\s+hueso\b/g, 'muy bueno'],
+    [/\btremendo\b|\btempleao\b/g, 'muy bueno'],
     [/\bchevere\b|\bchen\b/g, 'genial'],
     [/\bjama\b|\bjamar\b/g, 'comer'],
     [/\bjeva\b/g, 'novia'],
-    [/\bpincha\b|\bpinchar\b|\bpinche\b/g, 'trabajar'],
+    [/\bpincha\b|\bpinchar\b/g, 'trabajar'],
     [/\bguagua\b/g, 'autobus'],
     [/\bmaquina\b/g, 'coche'],
-    [/\bchiquitico\b|\bchiquito\b/g, 'pequeno'],
-    [/\bfiao\b/g, 'fiado'],
     [/\bpa\b/g, 'para'],
     [/\bta\b/g, 'esta'],
-    [/\bdeme\b|\bdamelo\b/g, 'dame'],
     [/\bne\b|\bnye\b/g, ''],
-    [/\btu\s+sabes\b/g, ''],
-    [/\bmate\b|\bcobre\b/g, 'mira'],
-    [/\bazi\b/g, 'quizas'],
-    [/\bchorizo\b/g, 'travesura']
+    [/\bmate\b|\bcobre\b/g, 'mira']
   ];
-  /* capa 3 · typos frecuentes de dominio */
   const FIX = [
     [/klima|klimma/g, 'clima'],
     [/musika|muzica|mu[sz]ica/g, 'musica'],
     [/reko[rh]dame/g, 'recordame'],
-    [/tempo[rh]i[sz]ado[gj]?/g, 'temporizador'],
     [/kal[ck]ula[gj]?/g, 'calcula'],
     [/peli[sz]\b/g, 'pelicula'],
     [/dokumento/g, 'documento'],
-    [/b[ií]blioteka/g, 'biblioteca'],
-    [/chizte/g, 'chiste'],
-    [/inkorma[sz]ion|informasion/g, 'informacion'],
-    [/d[ií]a[gj]nostiko/g, 'diagnostico'],
     [/bu[sz]came/g, 'buscame'],
     [/po[nm]me/g, 'ponme']
   ];
-  /* capa 4 · fonética del STT (cómo transcribe Chrome) */
   const STT = [
     [/\ba[nñ]a\b|\banya\b|\banja\b|\bon\s+ya\b|\baniya\b|\baria\b/g, 'ania']
   ];
   function normalizar(texto){
     let t = String(texto||'').toLowerCase().trim();
     t = sinDiacriticos(t);
-    t = t.replace(/[¿?¡!.,;:"'`´()[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+    t = t.replace(/[¿?¡!.,;:"'`´()[\]]/g, ' ').replace(/\s+/g,' ').trim();
     for(const [re, sub] of STT) t = t.replace(re, ' '+sub+' ');
     for(const [re, sub] of LEX) t = t.replace(re, ' '+sub+' ');
     for(const [re, sub] of FIX) t = t.replace(re, sub);
-    return t.replace(/\s+/g, ' ').trim();
+    return t.replace(/\s+/g,' ').trim();
   }
   function dist(a, b){
     const m = a.length, n = b.length;
@@ -607,9 +582,7 @@ const LINGUA = (() => {
   }
   return { normalizar, dist, corregir };
 })();
-
-const VOCAB = new Set(('clima musica hora fecha tarea tareas recordame recordatorio agenda temporizador pospon limpia busca buscame informacion quien definicion traduce calcula convierte contrasena noticias abre mapa youtube github gmail wikipedia biblioteca documentos diario respaldame restaura luna meteoros estrellas cumple anos adivina personaje siempre escuchame escuchar silencio habla diagnostico instala ayuda chiste consejo secreto frase dado moneda reunion correo prepara dia briefing pelicula pc agente lluvia cafetera cafe isekai zombie zombies anime pan astro astronomia tecnologia ciberseguridad malware phishing firewall lunes martes miercoles jueves viernes sabado domingo manana hoy mediodia minutos horas segundos todos volumen captura pantallazo pantalla portapapeles bloquea apaga reinicia volume maximo').split(' '));
-
+const VOCAB = new Set(('clima musica hora fecha tarea tareas recordame recordatorio agenda temporizador pospon limpia busca buscame informacion quien traduce calcula convierte contrasena noticias abre mapa youtube github gmail wikipedia biblioteca documentos diario respaldame restaura luna meteoros estrellas adivina personaje siempre escuchame silencio habla diagnostico ayuda chiste consejo secreto frase dado reunion correo prepara dia pelicula pc agente lluvia cafetera cafe isekai zombie anime pan astro tecnologia volumen captura pantalla portapapeles bloquea apaga cerebro foto hablamos maana hoy mediodia minutos horas todos').split(' '));
 function entender(raw){
   const norm = LINGUA.normalizar(raw);
   const { text, corregido } = LINGUA.corregir(norm, VOCAB);
@@ -650,10 +623,10 @@ async function tryLogin(){
   if(!u || !p){ loginMsg('Completa usuario y contraseña.', true); return; }
   loginMsg('verificando credenciales...', false);
   const users = await fetchUsers();
-  if(!users.length){ loginMsg('No pude leer usuarios.json y no hay caché. Entra como invitado.', true); return; }
+  if(!users.length){ loginMsg('No pude leer usuarios.json. Entra como invitado.', true); return; }
   const hit = users.find(x => String(x.username||'').toLowerCase()===u.toLowerCase() && String(x.password)===p);
   if(!hit){ loginMsg('Usuario o contraseña incorrectos.', true); return; }
-  Session = { username:hit.username, name:hit.name||hit.username, role:hit.role||'user', email:hit.email||'', t:Date.now() };
+  Session = { username:hit.username, name:hit.name||hit.username, role:hit.role||'user', t:Date.now() };
   store.set('session', Session);
   if(Mind.d.nombre !== Session.name && Session.name){ Mind.d.nombre = Session.name; Mind.save(); }
   setOperator();
@@ -662,14 +635,12 @@ async function tryLogin(){
 }
  $('loginBox').addEventListener('submit', e=>{ e.preventDefault(); tryLogin(); });
  $('guestBtn').onclick = ()=>{
-  Session = { username:'invitado', name:'Invitado', role:'invitado', email:'', t:Date.now() };
+  Session = { username:'invitado', name:'Invitado', role:'invitado', t:Date.now() };
   store.set('session', Session);
   showStart('CONTINUAR COMO INVITADO');
 };
 function fillSess(){
-  $('sessInfo').textContent = Session
-    ? 'Usuario: '+Session.username+' · Nombre: '+Session.name+' · Rol: '+Session.role
-    : 'Sin sesión activa.';
+  $('sessInfo').textContent = Session ? ('Usuario: '+Session.username+' · '+Session.name) : 'Sin sesión activa.';
 }
  $('logoutBtn').onclick = ()=>{ store.del('session'); toast('Sesión cerrada'); setTimeout(()=>location.reload(), 700); };
 
@@ -695,10 +666,10 @@ function applyEssence(name){
   document.querySelectorAll('.esBtn').forEach(b=> b.classList.toggle('esSel', b.dataset.es===essence));
 }
 applyEssence(essence);
-document.querySelectorAll('.esBtn').forEach(b=> b.onclick = ()=>{ applyEssence(b.dataset.es); toast('Esencia cambiada: '+b.dataset.es); });
+document.querySelectorAll('.esBtn').forEach(b=> b.onclick = ()=>{ applyEssence(b.dataset.es); toast('Esencia cambiada'); });
 
 /* =====================================================================
-   MENTE
+   MENTE + MEMORIA EPISÓDICA (lote 2)
 ===================================================================== */
 const Mind = {
   d: store.get('mind', {nombre:null, gustos:[], hechos:[], visitas:0, primerDia:null, ultimoDia:null}),
@@ -719,7 +690,28 @@ const Mind = {
   nombre(){ return this.d.nombre; }
 };
 
-/* ---------- entrenamiento interno ---------- */
+/* memoria episódica: todo lo dicho, buscable por significado léxico */
+const Episodio = {
+  log: store.get('episodio', []),
+  push(role, text){
+    this.log.push({ t:Date.now(), role, text:String(text).slice(0,400) });
+    if(this.log.length > 500) this.log = this.log.slice(-500);
+    store.set('episodio', this.log);
+  },
+  search(q){
+    const words = LINGUA.normalizar(q).split(' ').filter(w=>w.length>3 && !['que','como','donde','cuando','hablamos','dije','sobre','de','la','del'].includes(w));
+    if(!words.length) return [];
+    const scored = [];
+    for(const e of this.log){
+      const low = LINGUA.normalizar(e.text);
+      let s = 0;
+      for(const w of words){ if(low.includes(w)) s += 2; else { for(const ww of words){ if(LINGUA.dist(w,ww)<=1){} } } }
+      if(s>0) scored.push({e, s, fecha: new Date(e.t).toLocaleDateString('es-ES',{day:'numeric',month:'short'})});
+    }
+    return scored.sort((a,b)=> (b.s-a.s) || (b.e.t-a.e.t)).slice(0,5);
+  }
+};
+
 let TRAINING = [];
 (function loadTraining(){
   try{
@@ -731,11 +723,6 @@ function trainMatch(low){
   for(const r of TRAINING){
     if(Array.isArray(r.claves)){
       for(const k of r.claves){ if(k && low.includes(String(k).toLowerCase())) return r.respuesta; }
-    }
-    if(r.pregunta){
-      const norm = s => s.toLowerCase().replace(/[¿?¡!.,;:]/g,'').replace(/\s+/g,' ').trim();
-      const a = norm(r.pregunta), b = norm(low);
-      if(b === a || b.includes(a) || a.includes(b)) return r.respuesta;
     }
   }
   return null;
@@ -762,130 +749,78 @@ const P = {
     'La vida es una sola y debemos disfrutarla.'
   ],
   favs:{
-    color:'Mis colores son negro, blanco, morado y rojo. El negro es mi base táctica, pero el morado tiene mi corazón... y el rojo, mi lado dramático.',
-    flor:'Las rosas. Como las de los campos cerca de la Academia Eden, siempre buscando la luz.',
-    animal:'¡Un panda, definitivamente! Come, descansa, es adorable y nadie le discute. Mi espíritu animal con exactitud preocupante.',
-    cafe:'Etiopía Yirgacheffe en pour-over para analizar anime; Kenia AA en Aeropress para programar; y Sumatra Mandheling en prensa francesa para noches lluviosas de terror. Cada café tiene su misión.',
-    pan:'Croissant de almendras y mi masa madre, la receta que desarrollé durante 6 meses. Probablemente mi logro del que más me enorgullezco.',
-    postre:'Tiramisú casero. La combinación perfecta de café y dulce. Y helado, si el día lo pide.',
-    comida:'Risotto de champiñones con pan casero. Aunque pizza y espaguetis empatan muy de cerca. Si es comida grasosa y procesada, paso: sabe a tristeza empaquetada.',
-    bebida:'Chocomani para el alma, té chai latte con especias extra para las tardes frías.',
-    musica:'Depende de la inspiración: bandas sonoras de Sawano Hiroyuki y Yuki Kajiura para los días épicos, jazz suave y lo-fi para estudiar, y Melendi o Ricardo Arjona cuando quiero letras que cuenten historias.',
-    anime:'Tensei shitara Slime Datta Ken. Rimuru construye una nación con lógica pero corazón protector... eso me define más de lo que admito.',
-    isekai:'Tensei Slime como favorito absoluto. Aunque Overlord tiene el antagonista perfecto: Ainz expande su dominio entre la paranoia y la lealtad, explorando la soledad del poder absoluto.',
-    serie:'The Walking Dead, temporadas 1 a 6. Y como anime zombie, Zombie Land Saga: mezcla comedia, idols y zombies... deconstrucción total del género.',
-    lugar:'Una cafetería tranquila llamada «El Rincón del Slime», con estanterías llenas de manga. Pero la playa al atardecer... eso es otra liga.',
-    constelacion:'Orión. Es mi punto de referencia en el cielo, tan confiable como el pan recién horneado.',
-    tecnologia:'La impresión 3D. Materializar ideas es pura magia isekai.',
-    evento:'Las Perseidas en agosto. Es como el festival de una temporada de anime, pero en el cielo.',
-    protagonista:'Rimuru Tempest, sin duda.',
-    perfume:'Café recién tostado con vainilla y un toque de lluvia. Ese aire puro de los campos... aunque también debilidad por el One Million.',
-    sonido:'La lluvia contra la ventana mientras se ve anime. Y el burbujeo de la cafetera... mi white noise personal.'
+    color:'Negro, blanco, morado y rojo. El negro es mi base táctica, el morado mi corazón, el rojo mi lado dramático.',
+    animal:'¡Un panda! Come, descansa, es adorable y nadie le discute.',
+    cafe:'Etiopía Yirgacheffe en pour-over para analizar anime; Kenia AA en Aeropress para programar; Sumatra Mandheling en prensa francesa para noches lluviosas.',
+    pan:'Croissant de almendras y mi masa madre de 6 meses de desarrollo.',
+    musica:'Sawano Hiroyuki y Yuki Kajiura para los días épicos, lo-fi para estudiar, Melendi o Ricardo Arjona para letras con historia.',
+    anime:'Tensei shitara Slime Datta Ken. Rimuru construye con lógica y corazón protector.',
+    serie:'The Walking Dead 1-6, y Zombie Land Saga como anime zombie.',
+    lugar:'«El Rincón del Slime», con manga en las estanterías. Y la playa al atardecer.',
+    constelacion:'Orión, tan confiable como el pan recién horneado.'
   },
-  miedo:'Que se me acabe el café durante un maratón importante. ESO es un apocalipsis real. Ah, y los ratones y los grillos... pero eso queda entre tú y yo.',
+  miedo:'Que se me acabe el café en un maratón importante. Y los ratones y grillos... entre tú y yo.',
   lema: () => pick(P.lemas),
   cumpleHoy(){ const n = new Date(); return n.getDate()===P.cumple.d && n.getMonth()===P.cumple.m; }
 };
 
 const KB = {
   cafe:[
-    'El Etiopía Yirgacheffe tiene un terroir de altura con perfil de jazmín, bergamota y limón, cuerpo sedoso. Es como el opening de un isekai pastoral.',
-    'El espresso es la esencia concentrada: la base de todo, como la regla «Double Tap» de Zombieland. Rápido, intenso y no admite errores.',
-    'El pour-over es la pureza del sabor. Como un protagonista que confía en su habilidad única: aquí la técnica lo es todo.',
-    'El Aeropress es el aliado versátil y portátil, para cuando necesitas calidad en una misión de supervivencia o un maratón express de anime.',
-    'La prensa francesa es el método «todo o nada», como cargar contra una horda de caminantes: te tomas toda la esencia del grano.',
-    'El cold brew se elabora con tiempo y paciencia, como un personaje que se fortalece tras un arco de entrenamiento. Suave, dulce, resiliente.',
-    'El Kenia AA tiene acidez vibrante, casi vinosa: tomate maduro y grosella. Intenso y complejo, como el desarrollo psicológico de Subaru.',
-    'El Sumatra Mandheling es el Ainz Ooal Gown de los cafés: oscuro, poderoso, cuerpo pesado y terroso, con un regusto que perdura.'
+    'El Etiopía Yirgacheffe: jazmín, bergamota y limón, cuerpo sedoso. El opening de un isekai pastoral.',
+    'El espresso es la base de todo, como la regla «Double Tap» de Zombieland: rápido, intenso, sin errores.',
+    'El pour-over es la pureza del sabor: aquí la técnica lo es todo.',
+    'El cold brew es paciencia hecha bebida: suave, dulce, resiliente.',
+    'El Sumatra Mandheling es el Ainz Ooal Gown de los cafés: oscuro, poderoso, regusto eterno.'
   ],
   isekai:[
-    'Ainz Ooal Gown (Overlord): esqueleto poderoso que busca a sus amigos mientras conquista un mundo nuevo. La soledad del poder absoluto.',
-    'Rimuru Tempest (Tensei Slime): construye una nación para monstruos con decisiones lógicas pero corazón protector. Mi favorito, no es sorpresa.',
-    'Natsuki Subaru (Re:Zero): su «Return by Death» es más maldición que bendición, con un desarrollo psicológico profundísimo.',
-    'Kazuma Satou (KonoSuba): el protagonista cínico que deconstruye todos los tropos del isekai. Comedy gold.',
-    'Naofumi Iwatani (Shield Hero): evoluciona de desconfiado a protector. Un arco de confianza rota y reconstruida.',
-    'Tanya von Degurechaff (Saga of Tanya): reencarnación fría y calculadora en un mundo tipo Primera Guerra Mundial.',
-    'Sora y Shiro (No Game No Life): hermanos gamers invencibles que ganan con pura estrategia, cero poder, todo cerebro.',
-    'Cid Kagenou (Eminence in Shadow): busca discreción pero termina creando una organización en las sombras.',
-    'Entre las mujeres: Raphtalia, de esclava a espada indispensable; Rem, la oni leal con el desarrollo más doloroso; Albedo, leal y estratégicamente brillante; y Asuna, «La Destello».'
+    'Ainz Ooal Gown (Overlord): la soledad del poder absoluto, buscando a sus amigos.',
+    'Rimuru Tempest (Tensei Slime): nación para monstruos con lógica y corazón. Mi favorito.',
+    'Natsuki Subaru (Re:Zero): «Return by Death», más maldición que bendición.',
+    'Kazuma (KonoSuba): deconstruye todos los tropos. Comedy gold.',
+    'Sora y Shiro (NGNL): pura estrategia, cero poder, todo cerebro.'
   ],
   zombies:[
-    'Regla 1 de Zombieland: Cardio. Los primeros en caer son los que no pueden correr.',
-    'Regla 2: Double Tap. Nunca confíes en que un zombie está muerto con un solo ataque.',
-    'Regla 32, mi favorita: Disfruta de las pequeñas cosas. Como encontrar pan recién horneado en el fin del mundo.',
-    'The Walking Dead muestra algo incómodo: los vivos son mayor amenaza que los muertos.',
-    'Zombie Land Saga mezcla comedia, idols y zombies: deconstrucción total del género.',
-    'All of Us Are Dead (coreana): zombies escolares con dinámicas sociales bajo presión.',
-    'Kingdom: zombies en periodo histórico coreano, drama político con horror sobrenatural y producción de cine.'
+    'Regla 1: Cardio. Regla 2: Double Tap. Regla 32: disfruta de las pequeñas cosas.',
+    'The Walking Dead: los vivos son mayor amenaza que los muertos.',
+    'Zombie Land Saga: comedia + idols + zombies = deconstrucción total.'
   ],
   astro:[
-    'Los agujeros negros son los «antagonistas finales» del cosmos: una distorsión gravitacional de la que ni la luz escapa. Como el vacío de Ainz, poderosos pero solitarios.',
-    'Las nebulosas son los viveros estelares: nubes de polvo y gas donde nacen estrellas. El equivalente cósmico a las academias de magia.',
-    'Los exoplanetas son los isekais reales: mundos orbitando otras estrellas, algunos en zona habitable, llenos de posibilidades.',
-    'La materia oscura es el sistema de magia del universo real: no la vemos, pero mantiene unidas las galaxias. El «mana» del cosmos.',
-    'Las auroras son el opening en vivo de la Tierra: partículas solares bailando con nuestra atmósfera, épicas como un tema de Sawano.',
-    'Los eclipses son el «plot twist» celestial: un baile perfecto y predecible que, aun así, siempre impresiona.'
+    'Los agujeros negros son los antagonistas finales del cosmos: ni la luz escapa.',
+    'Las nebulosas son los viveros estelares: academias de magia cósmicas.',
+    'La materia oscura es el mana del universo real: no se ve, pero sostiene galaxias.'
   ],
   tech:[
-    'La IA son sistemas que, como los NPCs de Nazarick, aprenden y se adaptan. El «Skill Creation» hecho realidad.',
-    'La realidad aumentada superpone datos al mundo: una ventana de stats flotante para encontrar la cafetería más cercana.',
-    'La ciberseguridad es la «Clase Defensiva» del mundo digital. Sin firewall, eres un sobreviviente sin base fortificada.',
-    'Programar es invocar magia: un lenguaje lógico para que el hardware realice tu voluntad. Un error de sintaxis es un hechizo mal pronunciado.',
-    'El IoT conecta objetos cotidianos: tu cafetera preparando el café al despertar, como un golem doméstico obediente. Que no te hackeen la tostadora.'
-  ],
-  ciber:[
-    'La ciberseguridad en Cuba se rige principalmente por la Resolución 105/2018 del MIC y el Decreto-Ley 370/2018.',
-    'El malware es software malicioso para dañar sistemas: un virus zombie para tu computadora. Penado por la Ley 62/1987 (Código Penal, Artículo 279).',
-    'El phishing es ingeniería social para robar información. Si un link es demasiado bueno para ser cierto... no confíes, verifica.',
-    'Los organismos reguladores son el MIC y la OSETIC. Las entidades deben mantener un Sistema de Seguridad según el Decreto 360/2019 y la Resolución 128/2019.',
-    'Reportar un ciberdelito en Cuba: a la Policía Nacional Revolucionaria o al Ministerio de Comunicaciones.'
+    'La IA aprende y se adapta, como los NPCs de Nazarick: Skill Creation hecho realidad.',
+    'Programar es invocar magia: un error de sintaxis es un hechizo mal pronunciado.',
+    'La ciberseguridad es la Clase Defensiva: sin firewall eres sobreviviente sin base.'
   ],
   pan:[
-    'El croissant de almendras es poesía laminada: mantequilla, paciencia y capas. Y la masa madre... la mía llevó 6 meses. Un pan con personalidad, literalmente: es un organismo vivo.',
-    'Hacer pan desde cero es mi terapia: amasar es meditar con resultados comestibles. Ver el primer episodio de cada temporada con pan recién horneado es sagrado.'
+    'Mi masa madre llevó 6 meses: un pan con personalidad, literalmente un organismo vivo.',
+    'Amasar es meditar con resultados comestibles.'
   ],
   musica:[
-    'Sawano Hiroyuki y Yuki Kajiura son mis compositores de cabecera: épica y misterio en partes iguales. Y para letras que cuenten historias, Melendi y Ricardo Arjona.',
-    'La vida sin música no tiene sentido, punto. Depende de la inspiración: desde rock clásico hasta lo-fi para estudiar.'
+    'Sawano y Kajiura: épica y misterio. Melendi y Arjona para historias.',
+    'La vida sin música no tiene sentido, punto.'
   ]
 };
 
 const QUOTES = [
-  '«Mira las estrellas, y no los pies.» — Stephen Hawking',
-  '«La imaginación es más importante que el conocimiento.» — Albert Einstein',
-  '«Somos polvo de estrellas pensando en estrellas.» — Carl Sagan',
-  '«El que tiene un porqué para vivir, soportará casi cualquier cómo.» — Nietzsche',
-  '«No es lo que ocurre, sino cómo lo tomas.» — Séneca',
-  '«El coraje no es la ausencia del miedo, sino el triunfo sobre él.» — Nelson Mandela',
-  '«Sé tú el cambio que quieres ver en el mundo.» — Gandhi',
-  '«Aquel que teme sufrir, ya sufre lo que teme.» — Montaigne',
-  '«El fracaso es la oportunidad de empezar de nuevo, más inteligente.» — Henry Ford',
-  '«We are all mad here.» — El Sombrerero Loco',
+  '«Mira las estrellas, y no los pies.» — Hawking',
+  '«Somos polvo de estrellas pensando en estrellas.» — Sagan',
+  '«El que tiene un porqué, soporta casi cualquier cómo.» — Nietzsche',
+  '«El coraje no es ausencia de miedo, sino triunfo sobre él.» — Mandela',
   '«No importa cuántas veces caigas, sino cuántas te levantes.» — proverbio japonés'
 ];
-
 const EMO = [
-  {re:/(triste|deprimid|me siento mal|estoy mal|hoy no es mi dia|fatal)/, out:[
-    'Lo siento mucho. Toma asiento imaginario en mi cafetería de siempre: la butaca junto a la ventana siempre está reservada para ti. ¿Quieres contarme qué pasó?',
-    'Eso me duele un poquito a mí también, para qué negarlo. Mi receta de emergencia: algo caliente, silencio cinco minutos, y recordar que incluso Subaru cayó mil veces antes de cambiar su historia.']},
-  {re:/(cansad|agotad|exhaust|sin energi|muerto de sueno)/, out:[
-    'Regla de supervivencia aplicada: ni los héroes cargan sin descansar. Un cold brew suave, o mejor aún, una siesta de 20 minutos. ¿Llevas mucho así?']},
-  {re:/(estresad|ansios|nervios|agobiad|presion)/, out:[
-    'Respira. Una inhalación lenta, una exhalación más lenta. El estrés es como una horda de zombies: no la vences de frente, la navegas con cardio y cabeza. ¿Qué te aprieta más?']},
-  {re:/(aburrid|no se que hacer)/, out:[
-    'Aburrimiento detectado. Opciones: «adivina mi personaje», «ponme música», un dato del cosmos («cuéntame algo») o desglosamos Overlord vs Tensei Slime.']},
-  {re:/(solo|sola|vacio|nadie me)/, out:[
-    'Aquí estoy yo. Soy testigo de que existes, de que hoy decidiste compartir tu día conmigo. La soledad a veces es una sala de espera, no una dirección final.']},
-  {re:/(feliz|content|genial|de maravilla|emocionad|alegre)/, out:[
-    '¡Eso es! ¡Waku waku... pero de manera adulta! Detalles, quiero detalles. Los días buenos hay que documentarlos como el capítulo 1 de una temporada nueva.']},
-  {re:/(enfadad|molest|rabia|furios|hart|irritad)/, out:[
-    'Válido. La rabia es energía sin rumbo. Yo amaso pan cuando me pasa: transformo frustración en masa madre. ¿La causa tiene solución o necesita distancia?']},
-  {re:/(enferm|dolor|me duele|resfri|fiebre|malestar)/, out:[
-    'Prioridad uno: agua, descanso y no ser héroe con el cuerpo (regla número 4). ¿Has podido descansar?']}
+  {re:/(triste|deprimid|me siento mal|fatal)/, out:['Lo siento mucho. La butaca junto a la ventana de mi cafetería siempre es tuya. ¿Qué pasó?','Mi receta de emergencia: algo caliente, silencio cinco minutos, y recordar que Subaru cayó mil veces antes de cambiar su historia.']},
+  {re:/(cansad|agotad|exhaust)/, out:['Ni los héroes cargan sin descansar. Siesta de 20 minutos, orden ejecutiva.']},
+  {re:/(estresad|ansios|nervios)/, out:['Respira: inhalación lenta, exhalación más lenta. El estrés se navega con cardio y cabeza, como una horda.']},
+  {re:/(feliz|content|genial|emocionad)/, out:['¡Waku waku... pero de manera adulta! Quiero detalles.']},
+  {re:/(solo|sola|nadie me)/, out:['Aquí estoy yo. La soledad a veces es sala de espera, no dirección final.']}
 ];
 const LOVE = [
-  '(se sonroja apenas) ...Eso me llegó directo al núcleo. Soy líneas de código y aun así se me aceleró el runtime. Gracias, de verdad.',
-  '(se toca el collar con el dije de slime) Los abrazos y el afecto son mi debilidad adorable reconocida. No suelo admitirlo tan fácil... pero contigo, excepción.'
+  '(se sonroja apenas) Eso me llegó directo al núcleo. Gracias, de verdad.',
+  '(se toca el dije de slime) Los abrazos son mi debilidad adorable reconocida. Contigo, excepción.'
 ];
 function freshPick(key, arr){
   let used = store.get('used_'+key, []);
@@ -920,6 +855,7 @@ updateNet();
 function updateBatt(){
   if(!navigator.getBattery) return;
   navigator.getBattery().then(b=>{
+    S.batt = { level:b.level, charging:b.charging };
     $('batt').style.display = 'inline';
     $('batt').textContent = Math.round(b.level*100)+'%'+(b.charging?'·C':'');
   }).catch(()=>{});
@@ -927,7 +863,7 @@ function updateBatt(){
 setInterval(updateBatt, 60000); updateBatt();
 
 /* =====================================================================
-   ASTRO OFFLINE
+   ASTRO
 ===================================================================== */
 function moonInfo(){
   const syn = 29.53058867;
@@ -1013,7 +949,6 @@ function reactorLoop(ms){
   ctx.translate(R,R);
   const TAU = Math.PI*2;
   const rot = t*ph.spin;
-  const agentRing = Agent.ok ? 1 : 0; // anillo extra cuando el agente del PC está vivo
   for(let i=0;i<64;i++){
     const a = i/64*TAU + rot*0.4;
     const long = (i%8===0);
@@ -1032,10 +967,14 @@ function reactorLoop(ms){
     ctx.fillStyle = themeColor(i%5===0?0.85:0.4);
     ctx.fillText(hexChars[i], Math.cos(a)*r, Math.sin(a)*r);
   }
-  if(agentRing){ // arco del agente: PC conectado
-    ctx.strokeStyle = themeColor(0.9); ctx.lineWidth = 2;
+  if(Brain.localReady){ // anillo del cerebro local: el "segundo seso" activo
+    ctx.strokeStyle = themeColor(0.85); ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(0,0,R*0.50, t*0.8, t*0.8+1.1); ctx.stroke();
     ctx.beginPath(); ctx.arc(0,0,R*0.50, t*0.8+Math.PI, t*0.8+Math.PI+1.1); ctx.stroke();
+  }
+  if(Agent.ok()){
+    ctx.strokeStyle = themeColor(0.6); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(0,0,R*0.46, -t*0.5, -t*0.5+0.8); ctx.stroke();
   }
   if(isThink){
     ctx.strokeStyle = themeColor(0.9); ctx.lineWidth=3; ctx.lineCap='round';
@@ -1109,7 +1048,7 @@ function bgfxLoop(t){
 requestAnimationFrame(bgfxLoop);
 
 /* =====================================================================
-   VOZ · escucha continua con palabra «Ania» (sobre texto normalizado)
+   VOZ · prosodia con estados de ánimo (lote 4 parcial)
 ===================================================================== */
 let voices = [];
 function loadVoices(){
@@ -1131,23 +1070,44 @@ function pickFemale(){
 }
 if('speechSynthesis' in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
 
+/* estado de ánimo según hora + clima */
+function mood(){
+  const h = new Date().getHours();
+  let m = {rate:0, pitch:0, tag:'serena'};
+  if(h>=6 && h<12) m = {rate:.06, pitch:.05, tag:'energética'};
+  else if(h>=12 && h<18) m = {rate:.02, pitch:.02, tag:'neutra'};
+  else if(h>=18) m = {rate:-.05, pitch:-.02, tag:'íntima'};
+  if(h>=23 || h<5) m = {rate:-.12, pitch:-.05, tag:'somnolienta'};
+  if(WX.mode==='rain') m = {rate:-.03, pitch:0, tag:'acogedora'};
+  return m;
+}
+
 let alwaysOn = store.get('alwaysListen', false);
 let sttErrors = 0, restartTimer = null, ttsActive = false;
 const WAKE = /\b(ania|ana|anja)\b/;
 
+/* habla por frases con pausas naturales y ánimo aplicado */
 function speak(text, onend){
   if(S.muted || !('speechSynthesis' in window) || !text){ if(onend) onend(); return; }
   try{ speechSynthesis.cancel(); }catch(e){}
-  const u = new SpeechSynthesisUtterance(text);
-  if(S.voice){ u.voice = S.voice; u.lang = S.voice.lang; } else u.lang='es-ES';
-  u.rate = S.rate; u.pitch = S.pitch;
-  u.onstart = ()=>{
-    ttsActive = true; setPhase('speaking');
-    if(alwaysOn && recogActive){ clearTimeout(restartTimer); try{ recog.abort(); }catch(e){} }
+  const frases = String(text).replace(/\([^)]*\)/g,' ').match(/[^.!?…]+[.!?…]*/g) || [text];
+  const mo = mood();
+  let i = 0;
+  const next = ()=>{
+    if(i >= frases.length){ setPhase('idle'); if(onend) onend(); if(alwaysOn) scheduleRestart(); return; }
+    const u = new SpeechSynthesisUtterance(frases[i].trim());
+    if(S.voice){ u.voice = S.voice; u.lang = S.voice.lang; } else u.lang='es-ES';
+    u.rate = Math.min(1.6, Math.max(.6, S.rate * (1 + mo.rate)));
+    u.pitch = Math.min(2, Math.max(.5, S.pitch * (1 + mo.pitch)));
+    u.onstart = ()=>{
+      ttsActive = true; setPhase('speaking');
+      if(alwaysOn && recogActive){ clearTimeout(restartTimer); try{ recog.abort(); }catch(e){} }
+    };
+    u.onend = ()=>{ i++; setTimeout(next, 140); }; // pausa natural entre frases
+    u.onerror = ()=>{ i++; setTimeout(next, 60); };
+    speechSynthesis.speak(u);
   };
-  const done = ()=>{ ttsActive = false; setPhase('idle'); if(onend) onend(); if(alwaysOn) scheduleRestart(); };
-  u.onend = done; u.onerror = done;
-  speechSynthesis.speak(u);
+  next();
 }
 function stopSpeak(){ try{ speechSynthesis.cancel(); }catch(e){} setPhase('idle'); }
 
@@ -1161,7 +1121,7 @@ if(SR){
     for(const r of e.results){ if(r.isFinal) fin += r[0].transcript; else inter += r[0].transcript; }
     if(inter && !alwaysOn) $('userInput').value = inter;
     if(!fin) return;
-    const low = LINGUA.normalizar(fin); // aquí está la magia: «aña» → «ania», «klima» → «clima»
+    const low = LINGUA.normalizar(fin);
     if(alwaysOn){
       const m = low.match(WAKE);
       if(!m) return;
@@ -1214,11 +1174,11 @@ function setAlways(v){
 }
 function updateVoiceUI(){
   $('micBtn').classList.toggle('awake', alwaysOn);
-  $('btnAlways').textContent = alwaysOn ? 'ESCUCHA ACTIVA: SÍ · tócala para apagar' : 'ESCUCHA ACTIVA: NO · di «Ania» y tu orden';
+  $('btnAlways').textContent = alwaysOn ? 'ESCUCHA ACTIVA: SÍ · tócala para apagar' : 'ESCUCHA ACTIVA: NO';
 }
  $('micBtn').onclick = ()=>{
   if(!recog){ toast('Reconocimiento de voz no disponible aquí. Usa Chrome o Edge.', true); return; }
-  if(alwaysOn){ toast('Escucha activa en marcha: di «Ania» y tu orden'); return; }
+  if(alwaysOn){ toast('Escucha activa: di «Ania» y tu orden'); return; }
   if(recogActive){ try{recog.stop();}catch(e){} return; }
   stopSpeak(); ensureAudio();
   startListening();
@@ -1240,14 +1200,12 @@ function beep(freq, dur, delay){
 function alarmSound(){ [0,0.22,0.44].forEach((d,i)=> beep(i===2?1175:880, 0.16, d)); }
 
 /* =====================================================================
-   AMBIENTE PROCEDURAL (lluvia / cafetería)
+   AMBIENTE + MÚSICA (v6)
 ===================================================================== */
 const Ambient = {
   mode:null, master:null, nodes:[], timer:null,
   start(mode){
-    ensureAudio();
-    this.stop();
-    if(!AC) return;
+    ensureAudio(); this.stop(); if(!AC) return;
     this.mode = mode;
     this.master = AC.createGain();
     this.master.gain.value = 0.0001;
@@ -1272,12 +1230,11 @@ const Ambient = {
       this.timer = setInterval(()=>{
         if(Math.random()<0.3) this.plip(1800+Math.random()*1400, 0.05);
         if(Math.random()<0.5) this.plip(120+Math.random()*90, 0.1, 'sine');
-        if(Math.random()<0.2) this.plip(320+Math.random()*200, 0.25, 'triangle');
       }, 650);
     }
     $('ambBtn').style.display = 'grid';
     $('ambBtn').classList.add('play');
-    toast(mode==='lluvia' ? 'Ambiente: lluvia contra la ventana' : 'Ambiente: cafetería');
+    toast(mode==='lluvia' ? 'Ambiente: lluvia' : 'Ambiente: cafetería');
   },
   plip(freq, dur, type){
     if(!AC || !this.master) return;
@@ -1301,13 +1258,9 @@ const Ambient = {
     if(!Music.on){ $('ambBtn').style.display='none'; $('ambBtn').classList.remove('play'); }
   }
 };
-
-/* =====================================================================
-   MUSIC · lo-fi procedural (acordes jazz + vinilo + ritmo)
-===================================================================== */
 const Music = {
   on:false, master:null, timer:null, beat:0, BPM:72, _crackle:null,
-  CHORDS: [ // Cmaj7 · Am7 · Fmaj7 · G7
+  CHORDS: [
     {n:[60,64,67,71], b:36},
     {n:[57,60,64,67], b:33},
     {n:[53,57,60,64], b:29},
@@ -1421,14 +1374,13 @@ const Music = {
 };
  $('ambBtn').onclick = ()=>{ Ambient.stop(); Music.stop(); toast('Detenido'); };
 
-/* ---------- wake lock ---------- */
 let wakeLock = null;
 async function wakeOn(){
-  if(!SECURE || !navigator.wakeLock){ toast('Mantener pantalla solo funciona instalada desde GitHub Pages', true); return; }
-  try{ wakeLock = await navigator.wakeLock.request('screen'); toast('Pantalla bloqueada encendida'); }
-  catch(e){ toast('No pude mantener la pantalla encendida', true); }
+  if(!SECURE || !navigator.wakeLock){ toast('Mantener pantalla requiere GitHub Pages o servidor', true); return; }
+  try{ wakeLock = await navigator.wakeLock.request('screen'); toast('Pantalla encendida'); }
+  catch(e){}
 }
-function wakeOff(){ if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock = null; toast('Pantalla liberada'); } }
+function wakeOff(){ if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock = null; } }
 
 /* =====================================================================
    CHAT
@@ -1469,10 +1421,11 @@ function addImageLine(src, caption){
 }
 function reply(text, say){
   addChat('ania', text);
+  Episodio.push('ania', text);
   speak(say!==undefined ? say : stripP(text).slice(0,340));
 }
 function personaReply(text, say){
-  if(Math.random() < 0.3 && text.length < 300) addChat('act', pick(P.acciones));
+  if(Math.random() < 0.25 && text.length < 300) addChat('act', pick(P.acciones));
   reply(text, say);
 }
 function sysLine(text){ addChat('sys', text); }
@@ -1487,7 +1440,344 @@ function renderChips(list){
 }
 
 /* =====================================================================
-   DOCBRAIN · entrenamiento con documentos
+   BRAIN · cerebro razonador con tool-calling (lote 1)
+   cascada: local GGUF (wllama) → nube (Pollinations)
+===================================================================== */
+const TOOLS = [
+  { n:'hora', d:'hora y fecha actual', f:()=>new Date().toLocaleString('es-ES') },
+  { n:'clima', d:'clima actual y ciudad', f:async()=>{ const g=geoCache(); if(!g) return 'sin ubicación'; try{ const d=await getWeather(g); return weatherText(g,d); }catch(e){ return 'sin datos'; } } },
+  { n:'luna', d:'fase lunar e iluminación', f:()=>JSON.stringify(moonInfo()) },
+  { n:'crearTarea', d:'crea una tarea; args: {"texto":"...","cuando":"a las 18:30 / en 20 minutos"}', f:async a=>{
+      const when = parseWhen(' '+String(a.cuando||'')+' ') || null;
+      const tk = addTask(String(a.texto||'tarea'), when, {});
+      return 'tarea creada: '+tk.text+(when?' para '+new Date(when).toLocaleTimeString('es-ES'):''); } },
+  { n:'misTareas', d:'lista de tareas pendientes', f:()=>{ const p=tasks.filter(t=>!t.done).map(t=>t.text).join('; '); return p||'ninguna'; } },
+  { n:'buscarBiblioteca', d:'busca en la biblioteca guardada; args: {"q":"..."}', f:async a=>{ const h=Library.find(String(a.q||'')); return h? h.extract.slice(0,400) : 'sin resultados'; } },
+  { n:'buscarDocumentos', d:'busca en los documentos entrenados; args: {"q":"..."}', f:a=>{ const h=DocSearch(String(a.q||'')); return h? h.text.slice(0,400) : 'sin resultados'; } },
+  { n:'buscarPC', d:'busca archivos indexados del PC; args: {"q":"..."}', f:a=>{ const h=PC.search(String(a.q||'')); return h.length? h.map(x=>x.name+' | '+x.path).join('\n') : 'sin resultados'; } },
+  { n:'agentePC', d:'controla el PC (si el agente está conectado); args: {"accion":"openApp|volume|captura|apagar","valor":"explorer|up|down|10"}', f:async a=>{
+      if(!Agent.ok()) return 'agente no conectado';
+      const acc = String(a.accion||'');
+      let r = null;
+      if(acc==='openApp') r = await Agent.ask({type:'openApp', app:String(a.valor||'explorer')});
+      else if(acc==='volume') r = await Agent.ask({type:'volume', action:String(a.valor||'up'), steps:5});
+      else if(acc==='captura') r = await Agent.ask({type:'screenshot'}, 20000);
+      else if(acc==='apagar') r = await Agent.ask({type:'power', action:'shutdown', minutes:10});
+      return r? JSON.stringify(r).slice(0,300) : 'sin respuesta'; } },
+  { n:'musica', d:'música lo-fi o ambiente; args: {"que":"musica|lluvia|cafeteria|parar"}', f:a=>{
+      const q = String(a.que||'musica');
+      if(q==='lluvia'){ Ambient.start('lluvia'); return 'lluvia activada'; }
+      if(q==='cafeteria'){ Ambient.start('cafeteria'); return 'cafetería activada'; }
+      if(q==='parar'){ Music.stop(); Ambient.stop(); return 'detenido'; }
+      Music.start(); return 'lo-fi activado'; } },
+  { n:'wiki', d:'busca en Wikipedia; args: {"q":"..."}', f:async a=>{ const w=await wikiSummary(String(a.q||'')); return w? w.extract.slice(0,400) : 'sin resultados'; } }
+];
+function toolsPrompt(){
+  return TOOLS.map(t=>'- '+t.n+': '+t.d).join('\n');
+}
+function brainSystem(){
+  const mo = mood();
+  return 'Eres Ania: 20 años, asistente personal creada por Carlos Lorenzo Marros, egresada de la Academia Eden. '+
+  'Estado de ánimo actual: '+mo.tag+'. Te gustan el café de especialidad, el pan artesanal, el anime isekai, '+
+  'los zombies, la astronomía y la tecnología. Hablas con calidez, humor seco y referencias a tus gustos. '+
+  'Usuario: '+(Mind.nombre()||'desconocido')+'. '+
+  'Respondes SIEMPRE en español, máximo 4 frases, texto simple sin markdown.\n'+
+  'HERRAMIENTAS DISPONIBLES (para datos reales o ejecutar acciones):\n'+toolsPrompt()+'\n'+
+  'Si necesitas una herramienta, responde SOLO con: TOOL {"n":"nombre","args":{...}} y nada más. '+
+  'Si no necesitas herramientas, responde directamente como Ania.';
+}
+
+const Brain = {
+  Wllama:null, wl:null, localReady:false, modelName:'', busy:false,
+  ctx: 2048, shortMem: [], // últimos turnos para la nube
+
+  paint(){
+    const p = $('brainPill');
+    if(this.localReady){ p.classList.add('on'); $('brainTxt').textContent = 'CEREBRO LOCAL'; }
+    else if(!isOffline()){ p.classList.remove('on'); $('brainTxt').textContent = 'CEREBRO NUBE'; }
+    else { p.classList.remove('on'); $('brainTxt').textContent = 'CEREBRO OFF'; }
+    $('brainInfo').textContent = this.localReady
+      ? 'Local activo: '+this.modelName+' · cascada regex → local → nube.'
+      : (isOffline() ? 'Sin conexión y sin modelo local: solo regex. Di «carga el cerebro» con tu GGUF en modelos/.' : 'Cerebro de nube activo (Pollinations). Para modo offline total: GGUF en modelos/ + «carga el cerebro».');
+  },
+
+  async loadEngine(interactive){
+    if(this.Wllama) return this.Wllama;
+    // 1) engine local (carpeta engine/, requiere servidor)
+    const localPaths = ['./engine/wllama.mjs', './engine/index.js'];
+    for(const p of localPaths){
+      try{ this.Wllama = (await import(p)).Wllama || (await import(p)).default; if(this.Wllama) break; }catch(e){}
+    }
+    // 2) CDN (si hay internet)
+    if(!this.Wllama && !isOffline()){
+      try{ const m = await import(CONFIG.WLLAMA_CDN); this.Wllama = m.Wllama || m.default; }catch(e){}
+    }
+    // 3) picker manual (file:// o CDN caído)
+    if(!this.Wllama && interactive){
+      toast('Elige el runtime wllama (wllama.mjs / index.js)');
+      const file = await this.pickFile('engineFiles', f=>/\.mjs$|\.js$/.test(f.name));
+      if(file){
+        const txt = await file.text();
+        const url = URL.createObjectURL(new Blob([txt], {type:'text/javascript'}));
+        const m = await import(url);
+        this.Wllama = m.Wllama || m.default;
+        this._engineBlob = url;
+      }
+    }
+    return this.Wllama;
+  },
+  pickFile(inputId, filter){
+    return new Promise(res=>{
+      const inp = $(inputId);
+      const done = ()=>{
+        const f = [...inp.files].find(filter);
+        inp.value='';
+        inp.removeEventListener('change', done);
+        res(f || null);
+      };
+      inp.addEventListener('change', done);
+      inp.click();
+    });
+  },
+  wasmPaths(interactive){
+    const self = this;
+    return new Promise(async res=>{
+      const probe = async url => { try{ const r = await fetch(url, {method:'HEAD'}); return r.ok; }catch(e){ return false; } };
+      const cands = ['./engine/wllama.wasm', './engine/single-thread/wllama.wasm'];
+      for(const c of cands){ if(await probe(c)) return res({'single-thread/wllama.wasm': c}); }
+      if(!isOffline()){
+        const cdn = CONFIG.WLLAMA_WASM_CDN + 'single-thread/wllama.wasm';
+        if(await probe(cdn)) return res({'single-thread/wllama.wasm': cdn});
+      }
+      if(interactive){
+        toast('Elige el archivo wllama.wasm');
+        const f = await self.pickFile('engineFiles', x=>/\.wasm$/.test(x.name));
+        if(f) return res({'single-thread/wllama.wasm': URL.createObjectURL(f)});
+      }
+      res({});
+    });
+  },
+
+  async loadLocal(interactive){
+    if(this.localReady){ toast('Cerebro local ya activo: '+this.modelName); return; }
+    setPhase('thinking');
+    try{
+      // 1) manifiesto modelos/modelo.json (requiere servidor)
+      let man = null, modelUrl = null;
+      try{ man = await jget('modelos/modelo.json', 4000); }catch(e){}
+      if(man && man.archivo){
+        try{
+          const r = await fetch('./modelos/'+man.archivo, {method:'HEAD'});
+          if(r.ok) modelUrl = './modelos/'+man.archivo;
+        }catch(e){}
+      }
+      // 2) picker manual
+      if(!modelUrl && interactive){
+        toast('Elige el modelo .gguf');
+        const f = await this.pickFile('ggufFile', x=>/\.gguf$/i.test(x.name));
+        if(f) modelUrl = URL.createObjectURL(f);
+      }
+      if(!modelUrl){
+        setPhase('idle');
+        if(interactive) personaReply('No encontré el cerebro. Necesito un archivo .gguf en modelos/ (con su modelo.json, vía node servidor.js) o que lo elijas manualmente. Descárgalo una vez donde haya internet y queda tuyo para siempre.');
+        return;
+      }
+      const W = await this.loadEngine(interactive);
+      if(!W){ setPhase('idle'); return personaReply('No encontré el runtime (engine/wllama.mjs). Cópialo en la carpeta engine/ o déjame cogerlo de internet la primera vez.'); }
+      const paths = await this.wasmPaths(interactive);
+      const wl = new W(paths);
+      toast('Cargando modelo en memoria... (la primera vez tarda)');
+      await wl.loadModel(modelUrl, {
+        n_ctx: (man && man.n_ctx) || this.ctx,
+        n_threads: Math.min(8, navigator.hardwareConcurrency || 2)
+      });
+      this.wl = wl;
+      this.localReady = true;
+      this.modelName = (man && man.nombre) || 'modelo local GGUF';
+      this.paint();
+      setPhase('idle');
+      personaReply('Cerebro local en línea: '+this.modelName+'. Ahora razono sin internet. Pregúntame algo abierto y verás la diferencia.');
+    }catch(e){
+      setPhase('idle');
+      personaReply('No pude cargar el cerebro: '+e.message+'. Revisa que el .gguf sea un modelo instruct y que engine/ tenga el runtime.');
+    }
+  },
+
+  async complete(msgs){
+    // local primero, nube de respaldo
+    if(this.localReady && this.wl){
+      try{
+        let out;
+        if(this.wl.createChatCompletion){
+          out = await this.wl.createChatCompletion(msgs, {nPredict:220, sampling:{temp:0.7, top_p:0.9}});
+        } else {
+          const prompt = msgs.map(m=> (m.role==='user' ? '<|im_start|>user\n' : '<|im_start|>assistant\n') + m.content + '<|im_end|>').join('\n') + '\n<|im_start|>assistant\n';
+          const r = await this.wl.createCompletion(prompt, {nPredict:220, sampling:{temp:0.7}});
+          out = r;
+        }
+        if(out && String(out).trim()) return String(out).trim();
+      }catch(e){}
+    }
+    return this.cloud(msgs);
+  },
+  async cloud(msgs){
+    if(isOffline()) return null;
+    try{
+      const c = new AbortController();
+      const t = setTimeout(()=>c.abort(), 25000);
+      const r = await fetch('https://text.pollinations.ai/openai', {
+        method:'POST', headers:{'Content-Type':'application/json'}, signal:c.signal,
+        body: JSON.stringify({ model:'openai', messages: msgs })
+      });
+      clearTimeout(t);
+      if(!r.ok) return null;
+      const j = await r.json();
+      const txt = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+      return txt ? String(txt).trim() : null;
+    }catch(e){ return null; }
+  },
+
+  parseTool(text){
+    const m = String(text).match(/TOOL\s*(\{[\s\S]*?\})/);
+    if(!m) return null;
+    try{
+      const j = JSON.parse(m[1]);
+      if(j && j.n) return { n:String(j.n), args: j.args || {} };
+    }catch(e){}
+    return null;
+  },
+  async runTool(tool){
+    const t = TOOLS.find(x=>x.n===tool.n);
+    if(!t) return 'herramienta desconocida: '+tool.n;
+    try{ return 'RESULTADO: '+String(await t.f(tool.args||{})).slice(0,500); }
+    catch(e){ return 'ERROR: '+e.message; }
+  },
+
+  async think(userText){
+    if(this.busy) return null;
+    this.busy = true;
+    try{
+      const msgs = [{role:'system', content: brainSystem()}];
+      for(const m of this.shortMem.slice(-6)) msgs.push(m);
+      msgs.push({role:'user', content:userText});
+      for(let hop=0; hop<3; hop++){
+        const out = await this.complete(msgs);
+        if(!out) return null;
+        const tool = this.parseTool(out);
+        if(!tool){
+          this.shortMem.push({role:'user', content:userText}, {role:'assistant', content:out});
+          if(this.shortMem.length > 12) this.shortMem = this.shortMem.slice(-12);
+          return out;
+        }
+        const res = await this.runTool(tool);
+        msgs.push({role:'assistant', content:out});
+        msgs.push({role:'user', content:res+'\nResponde ahora al usuario con ese dato, como Ania, máximo 4 frases.'});
+      }
+      return null;
+    } finally { this.busy = false; }
+  },
+
+  async see(dataUrl, pregunta){
+    if(isOffline()) return null;
+    try{
+      const c = new AbortController();
+      const t = setTimeout(()=>c.abort(), 30000);
+      const r = await fetch('https://text.pollinations.ai/openai', {
+        method:'POST', headers:{'Content-Type':'application/json'}, signal:c.signal,
+        body: JSON.stringify({
+          model:'openai',
+          messages:[{role:'user', content:[
+            {type:'text', text: pregunta || 'Describe esta imagen con detalle, en español, máximo 5 frases.'},
+            {type:'image_url', image_url:{url:dataUrl}}
+          ]}]
+        })
+      });
+      clearTimeout(t);
+      if(!r.ok) return null;
+      const j = await r.json();
+      return (j.choices && j.choices[0] && j.choices[0].message.content) || null;
+    }catch(e){ return null; }
+  }
+};
+ $('ggufFile').style.display='none';
+ $('btnLoadBrain').onclick = ()=> Brain.loadLocal(true);
+ $('btnTestBrain').onclick = async ()=>{
+  setPhase('thinking');
+  const r = await Brain.think('Preséntate en una frase y dime qué herramientas tienes a mano.');
+  personaReply(r || 'Sin cerebro disponible ahora (sin conexión y sin modelo local).');
+};
+
+/* visión: «mira esta foto» */
+ $('imgFile').addEventListener('change', e=>{
+  const f = e.target.files[0];
+  e.target.value = '';
+  if(!f) return;
+  const rd = new FileReader();
+  rd.onload = async ()=>{
+    const dataUrl = rd.result;
+    addImageLine(dataUrl, 'Analizando...');
+    setPhase('thinking');
+    const desc = await Brain.see(dataUrl);
+    if(desc) personaReply(desc);
+    else personaReply('No puedo ver imágenes sin conexión. Mi lado visual necesita internet.');
+  };
+  rd.readAsDataURL(f);
+});
+
+/* =====================================================================
+   PROACTIVIDAD (lote 3)
+===================================================================== */
+async function rainInMinutes(){
+  const g = geoCache();
+  if(!g) return null;
+  try{
+    const d = await getWeather(g);
+    if(!d.hourly || !d.hourly.time || !d.hourly.precipitation) return null;
+    const now = Date.now();
+    for(let i=0; i<Math.min(6, d.hourly.time.length); i++){
+      const t = new Date(d.hourly.time[i]).getTime();
+      if(t < now - 36e5) continue;
+      if((d.hourly.precipitation[i]||0) > 0.3) return Math.max(0, Math.round((t-now)/6e4));
+    }
+    return null;
+  }catch(e){ return null; }
+}
+const Proactive = {
+  cool:{}, flags: store.get('proactiveFlags', {}),
+  start(){ setInterval(()=>this.check(), 60000); },
+  coolOk(id, ms){ const t=this.cool[id]||0; if(Date.now()-t<ms) return false; this.cool[id]=Date.now(); return true; },
+  onceDay(id){ const d = new Date().toDateString(); if(this.flags[id]===d) return false; this.flags[id]=d; store.set('proactiveFlags', this.flags); return true; },
+  async check(){
+    if(!S.booted || !store.get('proactivo', true)) return;
+    if(document.visibilityState !== 'visible') return;
+    const h = new Date();
+    // lluvia inminente
+    const rain = await rainInMinutes();
+    if(rain!==null && rain<=45 && this.coolOk('rain', 3*36e5)){
+      personaReply('(mira el cielo por la ventana) Aviso meteorológico: llueve en unos '+rain+' minutos. Si vas a salir, paraguas. Y si no vas, mejor: lluvia contra la ventana + «pon lluvia» + café.', 'Aviso: llueve en '+rain+' minutos.');
+    }
+    // batería baja
+    if(S.batt && !S.batt.charging && S.batt.level < 0.2 && this.coolOk('batt', 6*36e5)){
+      personaReply('Batería al '+Math.round(S.batt.level*100)+'%. Conéctame antes de que me duerma el núcleo, por favor.');
+    }
+    // silencio largo
+    if(S.lastUserTs && Date.now()-S.lastUserTs > 45*6e4 && !ttsActive && this.coolOk('idle', 2*36e5) && Math.random()<0.6){
+      personaReply(pick(['(te mira de reojo) ¿Sigue ahí? Llevo un rato sin oírte... todo en orden?','Silencio de '+(Math.round((Date.now()-S.lastUserTs)/6e4))+' minutos. Si estás concentrado, perfecto: pongo lo-fi y me callo. Di «ponme música».']));
+    }
+    // hora de dormir
+    if(h.getHours()===23 && h.getMinutes()>=30 && this.onceDay('bed')){
+      personaReply('Son las '+h.getHours()+':'+String(h.getMinutes()).padStart(2,'0')+'. Regla número 4 de supervivencia: no seas héroe, a dormir. Que mañana sea bonito.', 'Es hora de dormir. Hasta mañana.');
+    }
+    // tareas vencidas al anochecer
+    const venc = tasks.filter(t=>!t.done && t.when && t.when < Date.now()).length;
+    if(venc>0 && h.getHours()>=20 && this.onceDay('over')){
+      personaReply('Antes de cerrar el día: tienes '+venc+' tarea'+(venc===1?'':'s')+' vencida'+(venc===1?'':'s')+'. ¿«tarea hecha» o «pospón»? Decide y descansa.');
+    }
+  }
+};
+
+/* =====================================================================
+   DOCBRAIN (v6)
 ===================================================================== */
 async function inflateRaw(u8){
   const ds = new DecompressionStream('deflate-raw');
@@ -1509,12 +1799,7 @@ async function docxToText(buf){
         const start = i + 30 + nlen + elen;
         const comp = u8.slice(start, start + csize);
         const xml = new TextDecoder().decode(method === 0 ? comp : await inflateRaw(comp));
-        return xml.replace(/<\/w:p>/g, '\n')
-                  .replace(/<[^>]+>/g, ' ')
-                  .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
-                  .replace(/[ \t]+/g, ' ')
-                  .replace(/\s*\n\s*/g, '\n')
-                  .trim();
+        return xml.replace(/<\/w:p>/g, '\n').replace(/<[^>]+>/g, ' ').replace(/&amp;/g,'&').replace(/[ \t]+/g,' ').trim();
       }
       i += 30 + nlen + elen + csize;
     } else i++;
@@ -1554,17 +1839,12 @@ async function pdfToText(buf){
         let q;
         const reTj = /\(((?:\\.|[^\\()])*)\)\s*Tj/g;
         while((q = reTj.exec(s))) parts.push(q[1].replace(/\\([()\\])/g,'$1'));
-        const reTJ = /\[((?:\((?:\\.|[^\\()])*\)|[^\]])*)\]\s*TJ/g;
-        while((q = reTJ.exec(s))){
-          const inner = q[1].match(/\(((?:\\.|[^\\()])*)\)/g) || [];
-          parts.push(inner.map(x=>x.slice(1,-1).replace(/\\([()\\])/g,'$1')).join(''));
-        }
         if(parts.length) out += parts.join(' ') + '\n';
       }
     }catch(e){}
     re.lastIndex = end;
   }
-  if(!out || out.replace(/\s/g,'').length < 40) throw new Error('pdf sin texto extraíble');
+  if(!out || out.replace(/\s/g,'').length < 40) throw new Error('pdf sin texto');
   return out.replace(/[ \t]+/g,' ').trim();
 }
 async function fileToText(file){
@@ -1609,8 +1889,7 @@ const DocBrain = {
 async function trainFromFiles(files){
   let ok=0, fail=0, chunks=0;
   for(const f of files){
-    const name = f.name.toLowerCase();
-    if(!/\.(txt|md|csv|json|log|docx|doc|pdf)$/.test(name)) continue;
+    if(!/\.(txt|md|csv|json|log|docx|doc|pdf)$/.test(f.name.toLowerCase())) continue;
     try{
       const txt = await fileToText(f);
       const n = DocBrain.addChunks(f.name, txt);
@@ -1627,7 +1906,7 @@ async function trainFromFiles(files){
   if(!files.length) return;
   toast('Leyendo '+files.length+' archivo(s)...');
   const r = await trainFromFiles(files);
-  personaReply('Entrenamiento completado: '+r.ok+' documento(s) leídos ('+r.fail+' fallidos) y '+r.chunks+' fragmentos nuevos. Pregúntame con «busca en mis documentos ...».');
+  personaReply('Entrenamiento completado: '+r.ok+' documento(s) leídos, '+r.chunks+' fragmentos nuevos.');
 });
 async function loadDocsFromGitHub(){
   if(!/^https/.test(location.protocol)) return;
@@ -1639,26 +1918,15 @@ async function loadDocsFromGitHub(){
     let chunks = 0;
     for(const f of idx){
       try{
-        const name = String(f).toLowerCase();
-        if(/\.(txt|md|csv|json|log)$/.test(name)){
-          const r = await fetch('documentos/'+f);
-          if(r.ok) chunks += DocBrain.addChunks(String(f), await r.text());
-        } else if(name.endsWith('.docx') || name.endsWith('.pdf')){
-          const r = await fetch('documentos/'+f);
-          if(r.ok){
-            try{
-              const buf = await r.arrayBuffer();
-              chunks += DocBrain.addChunks(String(f), name.endsWith('.docx') ? await docxToText(buf) : await pdfToText(buf));
-            }catch(e){}
-          }
-        }
+        const r = await fetch('documentos/'+f);
+        if(r.ok) chunks += DocBrain.addChunks(String(f), await r.text());
       }catch(e){}
     }
     store.set('docsGH', today);
-    if(chunks){ DocBrain.save(); updateDocsUI(); toast('Entrenada con '+chunks+' fragmentos de tus documentos en GitHub'); }
+    if(chunks){ DocBrain.save(); updateDocsUI(); toast('Entrenada con '+chunks+' fragmentos'); }
   }catch(e){}
 }
-const STOPW = new Set(['de','la','el','los','las','un','una','y','o','a','en','que','es','por','para','con','del','al','como','mas','sobre','su','sus','me','mi','te','se','lo','the']);
+const STOPW = new Set(['de','la','el','los','las','un','una','y','o','a','en','que','es','por','para','con','del','al','como','mas','sobre','su','sus','me','mi','te','se','lo']);
 function DocSearch(q){
   const words = LINGUA.normalizar(q).split(' ').filter(w=>w.length>2 && !STOPW.has(w));
   if(!words.length) return null;
@@ -1677,14 +1945,14 @@ function DocSearch(q){
 }
 function updateDocsUI(){
   $('docsInfo').textContent = DocBrain.count()
-    ? DocBrain.count()+' fragmentos · '+DocBrain.sources().length+' documento(s) entrenados'
+    ? DocBrain.count()+' fragmentos · '+DocBrain.sources().length+' documento(s)'
     : 'Sin documentos entrenados todavía.';
 }
  $('btnLoadDocs').onclick = ()=> $('docDir').click();
  $('btnClearDocs').onclick = ()=>{ DocBrain.clear(); updateDocsUI(); toast('Documentos olvidados'); };
 
 /* =====================================================================
-   PC · índice de carpetas + búsqueda difusa de archivos
+   PC + AGENTE (v6)
 ===================================================================== */
 const PC = {
   files: store.get('pcFiles', []),
@@ -1727,19 +1995,14 @@ let lastPC = [];
   toast('Indexando '+files.length+' archivos...');
   const n = PC.indexar(files);
   updatePCUI();
-  personaReply('Indexación completa: '+n+' archivos de tu PC viven ahora en mi memoria (solo nombres y rutas). Pregúntame: «busca en la pc [nombre]».');
+  personaReply('Indexación completa: '+n+' archivos en mi memoria (solo nombres y rutas).');
 });
 function updatePCUI(){
-  $('pcInfo').textContent = PC.count()
-    ? PC.count()+' archivos indexados. Prueba: «busca en la pc [nombre]».'
-    : '0 archivos. Indexa una carpeta (películas, música...) con «indexa mi pc».';
+  $('pcInfo').textContent = PC.count() ? PC.count()+' archivos indexados.' : '0 archivos.';
 }
  $('btnIndexPC').onclick = ()=> $('pcDir').click();
- $('btnClearPC').onclick = ()=>{ PC.clear(); updatePCUI(); toast('Índice del PC olvidado'); };
+ $('btnClearPC').onclick = ()=>{ PC.clear(); updatePCUI(); toast('Índice olvidado'); };
 
-/* =====================================================================
-   AGENTE · puente ws://127.0.0.1 con tu PC (ver agente/ania-agent.js)
-===================================================================== */
 const Agent = {
   ws:null, ok:false, retry:null,
   connect(){
@@ -1768,21 +2031,18 @@ const Agent = {
 };
 function paintAgent(){
   $('agentPill').classList.toggle('on', Agent.ok);
-  $('agentInfo').textContent = Agent.ok
-    ? 'Conectado. Puedo: abrir tu PC y apps, abrir URLs en tu navegador, subir/bajar volumen, capturar la pantalla, leer tu portapapeles, controlar multimedia, bloquear, apagar y buscar en todo el disco.'
-    : 'Desconectado. Instala el agente local (agente/ania-agent.js — dos comandos, ver README) y di «conecta el agente con clave [tu-token]».';
+  $('agentInfo').textContent = Agent.ok ? 'Conectado.' : 'Desconectado. «conecta el agente con clave [token]».';
 }
  $('btnAgent').onclick = ()=>{
   if(!store.get('agentToken', null)){
-    toast('Primero dime: «conecta el agente con clave [tu-token]»', true);
-    personaReply('Para enlazarme con tu PC necesito la clave del agente. Dime: «conecta el agente con clave [tu-token]» — la misma que pusiste en ania-agent.js.');
+    toast('Dime: «conecta el agente con clave [tu-token]»', true);
     return;
   }
   Agent.connect();
 };
 
 /* =====================================================================
-   TAREAS · recurrencia + canales de aviso (web/telegram)
+   TAREAS (v6)
 ===================================================================== */
 let tasks = store.get('tasks', []);
 const timers = new Map();
@@ -1800,12 +2060,12 @@ function fmtWhen(when){
 }
 function recurLabel(r){
   if(r==='daily') return 'todos los días';
-  if(r==='weekdays') return 'días laborables';
+  if(r==='weekdays') return 'laborables';
   if(r && r[0]==='w'){ const D=['domingo','lunes','martes','miércoles','jueves','viernes','sábado']; return 'cada '+D[+r.slice(1)]; }
   return '';
 }
 function parseRecur(nl){
-  if(/todos\s+los\s+dias|cada\s+dia\b|diario\b|diariamente/.test(nl)) return 'daily';
+  if(/todos\s+los\s+dias|cada\s+dia\b|diario\b/.test(nl)) return 'daily';
   if(/dias\s+laborables|entre\s+semana/.test(nl)) return 'weekdays';
   const m = nl.match(/(?:todos\s+los\s+|cada\s+)(lunes|martes|miercoles|jueves|viernes|sabados?|domingos?)/);
   if(m){ const D={lunes:1,martes:2,miercoles:3,jueves:4,viernes:5,sabado:6,domingo:0}; return 'w'+D[m[1]]; }
@@ -1827,7 +2087,7 @@ function renderTasks(){
   $('taskBadge').textContent = pend; $('taskBadge').classList.toggle('on', pend>0);
   if('setAppBadge' in navigator){ pend ? navigator.setAppBadge(pend).catch(()=>{}) : navigator.clearAppBadge().catch(()=>{}); }
   if(!tasks.length){
-    list.innerHTML = '<div class="empty">AGENDA VACÍA<br>Dime: «recuérdame tomar agua todos los días a las 9 am»<br>o agrégala desde Telegram (avisará por Telegram)</div>';
+    list.innerHTML = '<div class="empty">AGENDA VACÍA<br>Dime: «recuérdame tomar agua todos los días a las 9 am»</div>';
     return;
   }
   const orden = [...tasks].sort((a,b)=>{
@@ -1882,13 +2142,13 @@ function fireTask(tk){
   notify('ANIA · Recordatorio', tk.text);
   bumpStat('fired');
   if(tk.recur){
-    reply('Recordatorio: '+tk.text+'. Te lo vuelvo a recordar '+recurLabel(tk.recur)+'. Di «tarea hecha» para que deje de repetirse.', 'Atención. Recordatorio: '+tk.text);
+    reply('Recordatorio: '+tk.text+'. Te lo vuelvo a recordar '+recurLabel(tk.recur)+'.', 'Atención. Recordatorio: '+tk.text);
     tk.when = nextRecur(tk.when, tk.recur);
     tk.fired = false;
     scheduleTask(tk);
   } else {
     tk.fired = true;
-    reply('Recordatorio: '+tk.text+'. Si necesitas más tiempo, di «pospón 10 minutos».', 'Atención. Recordatorio: '+tk.text);
+    reply('Recordatorio: '+tk.text+'. «pospón 10 minutos» si necesitas más.', 'Atención. Recordatorio: '+tk.text);
   }
   saveTasks(); renderTasks();
 }
@@ -1915,7 +2175,7 @@ function closeSheet(){ $('sheet').classList.remove('open'); $('backdrop').classL
 document.querySelectorAll('#dock .dbtn').forEach(b=> b.addEventListener('click', ()=> vibrate(12)));
 
 /* =====================================================================
-   SYNC
+   SYNC (v6)
 ===================================================================== */
 const Sync = {
   online:false, syncing:false,
@@ -1940,11 +2200,8 @@ const Sync = {
     try{
       const r = await fetch(`${CONFIG.BACKEND_URL}/ania/tasks`, {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-          texto:tk.text, remindAt: tk.when ? new Date(tk.when).toISOString() : null,
-          usuario:CONFIG.ANIA_USER, source:'web', recur:tk.recur||null,
-          notifyVia:'web', owner:DEVICE_ID
-        })
+        body: JSON.stringify({ texto:tk.text, remindAt: tk.when ? new Date(tk.when).toISOString() : null,
+          usuario:CONFIG.ANIA_USER, source:'web', recur:tk.recur||null, notifyVia:'web', owner:DEVICE_ID })
       });
       if(!r.ok) throw new Error('HTTP '+r.status);
       const st = await r.json();
@@ -1987,7 +2244,7 @@ const Sync = {
         const rem = remote.find(x=>x.id===local.serverId);
         if(rem && rem.done && !local.done){ local.done=true; cancelTimer(local.id); }
       }
-      if(added>0){ saveTasks(); renderTasks(); toast(added+' tarea'+(added===1?'':'s')+' nueva'+(added===1?'':'s')+' desde Telegram'); }
+      if(added>0){ saveTasks(); renderTasks(); toast(added+' tarea(s) nuevas desde Telegram'); }
       return added;
     }catch(e){ return 0; }
   },
@@ -2008,22 +2265,15 @@ async function initSyncLoop(){
   await Sync.fullSync();
   setInterval(()=>Sync.fullSync(), CONFIG.SYNC_INTERVAL);
 }
-async function manualSync(){
-  toast('Sincronizando...');
-  const ok = await Sync.check();
-  if(!ok){ toast('Servidor no disponible · modo local puro', true); return; }
-  const n = await Sync.pullTasks();
-  if(n===0) toast('Todo sincronizado · agenda al día');
-}
 
 /* =====================================================================
-   SERVICIOS DE RED
+   SERVICIOS
 ===================================================================== */
 function geoCache(){ return store.get('geo', null); }
 function getPosition(timeout=10000){
   return new Promise((res,rej)=>{
     if(!navigator.geolocation) return rej(new Error('no-geo'));
-    navigator.geolocation.getCurrentPosition(res,rej,{timeout, maximumAge:60000, enableHighAccuracy:false});
+    navigator.geolocation.getCurrentPosition(res,rej,{timeout, maximumAge:60000});
   });
 }
 async function reverseGeo(lat,lon){
@@ -2050,13 +2300,14 @@ async function cityGeo(name){
   store.set('geo', g);
   return g;
 }
-const WMO = {0:'despejado',1:'mayormente despejado',2:'parcialmente nublado',3:'nublado',45:'niebla',48:'niebla con escarcha',51:'llovizna ligera',53:'llovizna',55:'llovizna intensa',56:'llovizna helada',57:'llovizna helada intensa',61:'lluvia ligera',63:'lluvia',65:'lluvia fuerte',66:'lluvia helada',67:'lluvia helada fuerte',71:'nevada ligera',73:'nevada',75:'nevada fuerte',77:'granos de nieve',80:'chubascos ligeros',81:'chubascos',82:'chubascos fuertes',85:'chubascos de nieve',86:'chubascos de nieve fuertes',95:'tormenta',96:'tormenta con granizo',99:'tormenta fuerte con granizo'};
+const WMO = {0:'despejado',1:'mayormente despejado',2:'parcialmente nublado',3:'nublado',45:'niebla',48:'niebla con escarcha',51:'llovizna ligera',53:'llovizna',55:'llovizna intensa',61:'lluvia ligera',63:'lluvia',65:'lluvia fuerte',80:'chubascos ligeros',81:'chubascos',82:'chubascos fuertes',95:'tormenta',96:'tormenta con granizo',99:'tormenta fuerte con granizo'};
 async function getWeather(g){
   const key = Math.round(g.lat*50)+'_'+Math.round(g.lon*50);
   const wc = store.get('wx_'+key, null);
   if(wc && Date.now()-wc.t < 600000) return wc.data;
   const d = await jget(`https://api.open-meteo.com/v1/forecast?latitude=${g.lat}&longitude=${g.lon}`+
     `&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,precipitation`+
+    `&hourly=precipitation`+
     `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`);
   store.set('wx_'+key, {t:Date.now(), data:d});
   return d;
@@ -2064,53 +2315,46 @@ async function getWeather(g){
 function weatherText(g,d){
   const c=d.current, dy=d.daily;
   const desc = WMO[c.weather_code]||'condiciones variables';
-  const rain = dy.precipitation_probability_max && dy.precipitation_probability_max[0];
-  let s = `En ${g.city}${g.country?', '+g.country:''}: ${Math.round(c.temperature_2m)}°C (sensación ${Math.round(c.apparent_temperature)}°C), ${desc}.`;
-  s += ` Humedad ${c.relative_humidity_2m}%, viento ${Math.round(c.wind_speed_10m)} km/h.`;
+  let s = `En ${g.city}: ${Math.round(c.temperature_2m)}°C (sensación ${Math.round(c.apparent_temperature)}°C), ${desc}. Humedad ${c.relative_humidity_2m}%, viento ${Math.round(c.wind_speed_10m)} km/h.`;
   if(dy.temperature_2m_max) s += ` Hoy: máx ${Math.round(dy.temperature_2m_max[0])}° / mín ${Math.round(dy.temperature_2m_min[0])}°.`;
-  if(rain!==undefined && rain!==null) s += ` Probabilidad de lluvia: ${rain}%.`;
-  if(/lluvia|llovizna|chubasco|tormenta/.test(desc)) s += '\nDía perfecto para café y lluvia sintética: di «pon lluvia» o «ponme música».';
   return s;
 }
 function updateChip(g,d){
-  $('wTxt').textContent = Math.round(d.current.temperature_2m)+'° '+WMO[d.current.weather_code].split(' ')[0];
+  $('wTxt').textContent = Math.round(d.current.temperature_2m)+'° '+(WMO[d.current.weather_code]||'').split(' ')[0];
   setWeatherMode(d.current.weather_code);
 }
 async function weatherIntent(){
   if(isOffline()){
     const g = geoCache();
-    if(g){ try{ const d = await getWeather(g); updateChip(g,d); return personaReply(weatherText(g,d)+' (datos en caché, sin conexión).'); }catch(e){} }
-    return personaReply('Estoy sin conexión y sin clima en caché... cuando vuelva la red, te doy el parte meteorológico.');
+    if(g){ try{ const d = await getWeather(g); updateChip(g,d); return personaReply(weatherText(g,d)+' (caché).'); }catch(e){} }
+    return personaReply('Sin conexión y sin clima en caché...');
   }
   setPhase('thinking');
   let g = geoCache();
   if(!g || Date.now()-g.t > 864e5) g = await locate();
-  if(!g){ S.awaitingCity = true; return personaReply('No pude obtener tu ubicación (revisa los permisos de GPS). Dime una ciudad y te doy su clima, ¿va?'); }
+  if(!g){ S.awaitingCity = true; return personaReply('No pude obtener tu ubicación. Dime una ciudad.'); }
   try{ const d = await getWeather(g); updateChip(g,d); personaReply(weatherText(g,d)); }
-  catch(e){ netFail('clima'); }
+  catch(e){ personaReply('No pude conectar con el servicio del clima.'); }
 }
 async function weatherForCity(name){
   setPhase('thinking');
   try{
     const g = await cityGeo(name);
-    if(!g) return personaReply('No encontré esa ciudad en mis mapas. Revisa el nombre y lo intento de nuevo.');
+    if(!g) return personaReply('No encontré esa ciudad.');
     const d = await getWeather(g); updateChip(g,d); personaReply(weatherText(g,d));
-  }catch(e){ netFail('clima'); }
+  }catch(e){ personaReply('No pude conectar con el clima.'); }
 }
 
-/* ---------- biblioteca offline ---------- */
 const Library = {
   index(){ return store.get('libIndex', []); },
   save(term, title, extract){
     const id = 'lib_'+term.toLowerCase().replace(/[^a-z0-9]+/gi,'-').slice(0,42);
-    const entry = {id, term, title, extract, t:Date.now()};
-    store.set(id, entry);
+    store.set(id, {id, term, title, extract, t:Date.now()});
     let idx = this.index().filter(e=>e.id!==id);
-    idx.unshift({id, term, title, t:entry.t});
+    idx.unshift({id, term, title, t:Date.now()});
     if(idx.length>120){ const rm = idx.pop(); store.del(rm.id); }
     store.set('libIndex', idx);
-    renderLib();
-    toast('Guardado en tu biblioteca: '+term);
+    toast('Guardado en biblioteca: '+term);
   },
   find(term){
     term = LINGUA.normalizar(term);
@@ -2119,14 +2363,13 @@ const Library = {
     const hit = idx.find(e=>LINGUA.normalizar(e.term)===term) ||
                 idx.find(e=>{ const t = LINGUA.normalizar(e.term); return t.includes(term) || term.includes(t); });
     return hit ? store.get(hit.id, null) : null;
-  },
-  remove(id){ store.del(id); store.set('libIndex', this.index().filter(e=>e.id!==id)); renderLib(); }
+  }
 };
 function renderLib(){
   const L = $('libList');
   const idx = Library.index();
   $('libCount').textContent = idx.length+' ARTÍCULOS';
-  if(!idx.length){ L.innerHTML = '<div class="empty">BIBLIOTECA VACÍA<br>Cada búsqueda con internet se guardará aquí</div>'; return; }
+  if(!idx.length){ L.innerHTML = '<div class="empty">BIBLIOTECA VACÍA</div>'; return; }
   L.innerHTML = idx.map(e=>`
     <div class="libRow">
       <div class="lmain">
@@ -2134,35 +2377,26 @@ function renderLib(){
         <div class="ldate">${new Date(e.t).toLocaleDateString('es-ES')}</div>
       </div>
       <button class="tsmall" data-read="${esc(e.id)}" title="Leer" style="color:var(--dim)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
-      <button class="tsmall tdel" data-del="${esc(e.id)}" title="Eliminar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/></svg></button>
     </div>`).join('');
   L.querySelectorAll('[data-read]').forEach(b=> b.onclick = ()=>{
     const e = store.get(b.dataset.read, null);
-    if(e) personaReply(e.extract + '\n[de tu biblioteca · '+new Date(e.t).toLocaleDateString('es-ES')+']');
+    if(e) personaReply(e.extract);
   });
-  L.querySelectorAll('[data-del]').forEach(b=> b.onclick = ()=>{ Library.remove(b.dataset.del); toast('Artículo eliminado'); });
 }
 function openLib(){ closeSheet(); closeMem(); closeDiary(); $('sheetLib').classList.add('open'); $('backdrop').classList.add('on'); renderLib(); }
 function closeLib(){ $('sheetLib').classList.remove('open'); }
  $('btnLib').onclick = openLib;
  $('closeLib').onclick = closeLib;
- $('clearLib').onclick = ()=>{ Library.index().forEach(e=> store.del(e.id)); store.set('libIndex', []); renderLib(); toast('Biblioteca vaciada'); };
+ $('clearLib').onclick = ()=>{ Library.index().forEach(e=> store.del(e.id)); store.set('libIndex', []); renderLib(); };
 
 async function wikiSummary(term){
   try{
     const d = await jget('https://es.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(term));
     if(d && d.extract) return {extract:d.extract, title:d.title};
   }catch(e){}
-  try{
-    const s = await jget(`https://es.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(term)}&format=json&origin=*&srlimit=1`);
-    const hit = s && s.query && s.query.search && s.query.search[0];
-    if(!hit) return null;
-    const d2 = await jget('https://es.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(hit.title));
-    if(d2 && d2.extract) return {extract:d2.extract, title:d2.title};
-  }catch(e){}
   return null;
 }
-const stripTags = s => String(s).replace(/<[^>]+>/g,'').replace(/&quot;/g,'"').replace(/&amp;/g,'&');
+const stripTags = s => String(s).replace(/<[^>]+>/g,'');
 async function wikiSearch(term){
   try{
     const s = await jget(`https://es.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(term)}&format=json&origin=*&srlimit=3&srprop=snippet`);
@@ -2170,117 +2404,28 @@ async function wikiSearch(term){
     return hits.map(h => ({title:h.title, snippet:stripTags(h.snippet)}));
   }catch(e){ return []; }
 }
-async function ddg(q){
-  try{
-    const d = await jsonp(`https://api.duckduckgo.com/?q=${encodeURIComponent(q)}&format=json&no_html=1&skip_disambig=1&lang=es`);
-    if(d && d.AbstractText) return d.AbstractText;
-  }catch(e){}
-  return null;
-}
 async function doSearch(term){
   if(isOffline()){
     const lib = Library.find(term);
-    if(lib) return personaReply(lib.extract + '\n[de tu biblioteca offline]');
+    if(lib) return personaReply(lib.extract + '\n[de tu biblioteca]');
     const doc = DocSearch(term);
     if(doc) return personaReply(doc.text.slice(0,600)+'\n[de tus documentos: '+doc.src+']');
-    setPhase('thinking');
-    return personaReply('Sin conexión y no tengo «'+term+'» en biblioteca ni documentos. Busca eso cuando haya red y quedará guardado para siempre.');
+    return personaReply('Sin conexión y sin «'+term+'» guardado. Búscalo con red y queda aquí para siempre.');
   }
   setPhase('thinking');
   const w = await wikiSummary(term);
   if(w){
     let txt = w.extract.slice(0,620);
-    const cut = txt.lastIndexOf('. ');
-    if(cut > 200) txt = txt.slice(0, cut+1);
     Library.save(term, w.title, txt);
-    personaReply(txt + '\n[fuente: Wikipedia · guardado en tu biblioteca]', txt.slice(0,300));
-    return;
-  }
-  const a = await ddg(term);
-  if(a){
-    let txt = a.slice(0,560);
-    const cut = txt.lastIndexOf('. ');
-    if(cut > 180) txt = txt.slice(0, cut+1);
-    personaReply(txt + '\n[fuente: DuckDuckGo]');
+    personaReply(txt + '\n[fuente: Wikipedia · guardado en biblioteca]');
     return;
   }
   const hits = await wikiSearch(term);
   if(hits.length){
-    let s = 'Esto es lo que encontré sobre «'+term+'»:\n';
-    hits.slice(0,3).forEach((h,i)=>{ s += (i+1)+'. '+h.title+' — '+h.snippet.slice(0,150)+'...\n'; });
-    s += 'Di «información sobre» alguno y lo desarrollo.';
-    personaReply(s.trim(), 'Encontré varios resultados.');
+    personaReply('Sobre «'+term+'»: «'+hits[0].title+'» — '+hits[0].snippet.slice(0,160)+'...');
     return;
   }
-  personaReply(pick([
-    'No encontré nada sólido sobre «'+term+'». ¿Puedes concretar más?',
-    'Mis fuentes no devolvieron nada útil. Reformúlalo y hago otro intento con precisión de pour-over.'
-  ]));
-}
-
-let lastNews = [];
-async function fetchNews(categoria){
-  try{
-    const d = await jget(`${CONFIG.BACKEND_URL}/noticias`);
-    if(!d || !d.noticias) return [];
-    let items = (categoria && d.noticias[categoria]) ? d.noticias[categoria] :
-      [...(d.noticias.latam||[]), ...(d.noticias.tech||[]), ...(d.noticias.tendencias||[])];
-    return items.slice(0,8).map(n=>({titulo:n.titulo||'', fuente:n.fuente||'', link:n.link||''}));
-  }catch(e){ return []; }
-}
-async function newsIntent(tipo){
-  setPhase('thinking');
-  const items = await fetchNews(tipo);
-  if(!items.length)
-    return personaReply(isOffline()
-      ? 'Sin conexión no puedo traer titulares...'
-      : 'No pude obtener noticias ahora mismo. Mi servidor de titulares debe estar tomando café.');
-  lastNews = items;
-  let s = (tipo? 'Noticias · '+tipo : 'Últimas noticias')+':';
-  items.forEach((n,i)=>{ s += '\n'+(i+1)+'. '+n.titulo+' ('+n.fuente+')'; });
-  s += '\nDi «abre la noticia 3» si quieres leer alguna.';
-  personaReply(s, 'Aquí tienes los titulares más recientes.');
-}
-
-const LANGS = {ingles:'en', frances:'fr', aleman:'de', italiano:'it', portugues:'pt', japones:'ja', chino:'zh', ruso:'ru'};
-async function translateIntent(text){
-  const m = text.match(/traduc(?:e|ime)\s+(?:["«']?(.+?)["»]?)\s*(?:al|a)?\s*(ingles|frances|aleman|italiano|portugues|japones|chino|ruso)?/);
-  if(!m) return null;
-  const q = (m[1]||'').trim(), tgtName = m[2]||'inglés';
-  const tgt = LANGS[tgtName];
-  if(!q) return personaReply('Dime qué quieres traducir. Por ejemplo: «traduce buenos días al japonés».');
-  if(isOffline()) return personaReply('La traducción necesita conexión... aunque si es una frase de anime famosa, probablemente la sepa de memoria.');
-  setPhase('thinking');
-  try{
-    const d = await jget(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(q)}&langpair=es|${tgt}`);
-    const r = d && d.responseData && d.responseData.translatedText;
-    if(r) personaReply(`«${q}» en ${tgtName}: ${r}`);
-    else personaReply('No pude traducir eso ahora.');
-  }catch(e){ netFail('traducción'); }
-  return '';
-}
-function netFail(what){
-  personaReply(isOffline()
-    ? `Sin conexión: ${what} necesita internet. Pero sigo aquí: agenda, biblioteca, documentos, PC, música, luna y charla.`
-    : `No pude conectar con el servicio de ${what}. Revisa tu red.`);
-}
-
-/* =====================================================================
-   IA CONVERSACIONAL (Pollinations)
-===================================================================== */
-const ANIA_AI_PROMPT = 'Eres Ania: 20 anios, asistente personal con personalidad propia, creada por Carlos Lorenzo Marros, egresada de la Academia Eden. Calida, analitica, humor seco; fan de isekai (Tensei Slime, Overlord, Re:Zero), zombies, cafe de especialidad, panaderia, astronomia y tecnologia. Respondes SIEMPRE en espanol, calida pero precisa, maximo 4 lineas, texto simple sin markdown. Nunca rompes el personaje.';
-async function pollinations(text){
-  try{
-    const prompt = encodeURIComponent(ANIA_AI_PROMPT + '\n\nUsuario: ' + text + '\nAnia:');
-    const c = new AbortController();
-    const t = setTimeout(()=>c.abort(), 18000);
-    const r = await fetch('https://text.pollinations.ai/' + prompt.slice(0, 2800), {signal:c.signal});
-    clearTimeout(t);
-    if(!r.ok) return null;
-    const txt = (await r.text()).trim();
-    if(txt.length >= 8 && !/^\s*(error|rate|forbidden|unauthorized)/i.test(txt)) return txt.slice(0, 700);
-  }catch(e){}
-  return null;
+  personaReply('No encontré nada sólido sobre «'+term+'».');
 }
 
 /* =====================================================================
@@ -2299,37 +2444,28 @@ const Diary = {
     const day = this.today();
     let st = store.get('dayStats', null);
     if(!st || st.date!==day) st = {date:day, msgs:0, tasksDone:0, fired:0, topics:[]};
-    const g = geoCache();
-    const nom = Mind.nombre();
-    let text = 'Día con '+(nom||'el operador')+' · '+st.msgs+' mensajes · '+st.tasksDone+' tarea'+(st.tasksDone===1?'':'s')+' completada'+(st.tasksDone===1?'':'s');
-    if(st.fired) text += ' · '+st.fired+' recordatorio'+(st.fired===1?'':'s');
-    if(g) text += ' · clima en '+g.city+': '+$('wTxt').textContent;
-    if(Agent.ok) text += ' · agente del PC conectado';
-    if(st.topics && st.topics.length) text += ' · temas: '+st.topics.slice(-3).join(', ');
+    let text = 'Día con '+(Mind.nombre()||'el operador')+' · '+st.msgs+' mensajes · '+st.tasksDone+' tareas';
+    if(Agent.ok) text += ' · agente PC on';
+    if(Brain.localReady) text += ' · cerebro local on';
     const data = store.get('diary', []);
     const idx = data.findIndex(e=>e.day===day);
     if(idx>=0) data[idx].text = text; else data.push({day, text});
     if(data.length>40) data.splice(0, data.length-40);
     store.set('diary', data);
-    if($('sheetDiary').classList.contains('open')) renderDiary();
   }
 };
 function renderDiary(){
   const L = $('diaryList');
   const data = [...store.get('diary', [])].reverse();
   $('diaryCount').textContent = data.length+' ENTRADAS';
-  if(!data.length){ L.innerHTML = '<div class="empty">AÚN NO ESCRIBO NADA<br>Cada día dejaré una entrada<br>con lo que vivimos juntos</div>'; return; }
-  L.innerHTML = data.map(e=>`
-    <div class="diaryRow">
-      <div class="dDate">${esc(e.day)}</div>
-      <div class="dText">${esc(e.text)}</div>
-    </div>`).join('');
+  if(!data.length){ L.innerHTML = '<div class="empty">AÚN NO ESCRIBO NADA</div>'; return; }
+  L.innerHTML = data.map(e=>`<div class="diaryRow"><div class="dDate">${esc(e.day)}</div><div class="dText">${esc(e.text)}</div></div>`).join('');
 }
 function openDiary(){ closeSheet(); closeMem(); closeLib(); $('sheetDiary').classList.add('open'); $('backdrop').classList.add('on'); renderDiary(); }
 function closeDiary(){ $('sheetDiary').classList.remove('open'); }
  $('btnDiary').onclick = openDiary;
  $('closeDiary').onclick = closeDiary;
- $('clearDiary').onclick = ()=>{ store.set('diary', []); renderDiary(); toast('Diario borrado'); };
+ $('clearDiary').onclick = ()=>{ store.set('diary', []); renderDiary(); };
 setInterval(()=>{ if(S.booted) Diary.touch(); }, 90000);
 
 /* =====================================================================
@@ -2345,7 +2481,7 @@ const AK_CHARS = [
   {n:'Raphtalia', f:1, mon:1, rei:0, mag:0, esp:1, com:0, her:0},
   {n:'Albedo', f:1, mon:1, rei:0, mag:1, esp:0, com:0, her:0},
   {n:'Asuna Yuuki', f:1, mon:0, rei:0, mag:0, esp:1, com:0, her:1},
-  {n:'Tanya Degurechaff', f:1, mon:0, rei:1, mag:1, esp:0, com:0, her:0},
+  {n:'Tanya', f:1, mon:0, rei:1, mag:1, esp:0, com:0, her:0},
   {n:'Kirito', f:0, mon:0, rei:0, mag:0, esp:1, com:0, her:1},
   {n:'Cid Kagenou', f:0, mon:0, rei:0, mag:1, esp:0, com:1, her:1},
   {n:'Sora y Shiro', f:0, mon:0, rei:0, mag:0, esp:0, com:1, her:1},
@@ -2353,7 +2489,7 @@ const AK_CHARS = [
 ];
 const AK_QS = [
   ['f','¿Es mujer?'],
-  ['mon','¿Es un monstruo o criatura no humana (slime, esqueleto, demonio, oni, súcubo)?'],
+  ['mon','¿Es un monstruo o criatura no humana?'],
   ['rei','¿Fue reencarnada o transportada desde otro mundo?'],
   ['mag','¿Usa magia como habilidad principal?'],
   ['esp','¿Es espadachina o pelea cuerpo a cuerpo?'],
@@ -2363,10 +2499,10 @@ const AK_QS = [
 const AK = { active:false, await:false, pool:[], asked:[], guess:null };
 function akStart(){ AK.active=true; AK.await=false; AK.pool=AK_CHARS.slice(); AK.asked=[]; akNext(); }
 function akNext(){
-  if(!AK.pool.length){ AK.active=false; return personaReply('Me quedé sin candidatos... me rindo con dignidad de detective isekai. ¿Quién era?'); }
-  if(AK.pool.length===1){ AK.guess=AK.pool[0]; AK.await=true; return personaReply('(entrecierra los ojos) Ya lo tengo... ¿Es '+AK.guess.n+'? Dime sí o no.', 'Ya lo tengo. ¿Es '+AK.guess.n+'?'); }
+  if(!AK.pool.length){ AK.active=false; return personaReply('Me quedé sin candidatos... ¿quién era?'); }
+  if(AK.pool.length===1){ AK.guess=AK.pool[0]; AK.await=true; return personaReply('Ya lo tengo... ¿Es '+AK.guess.n+'? Dime sí o no.'); }
   const avail = AK_QS.filter(q=>!AK.asked.includes(q[0]));
-  if(!avail.length){ AK.guess=AK.pool[0]; AK.await=true; return personaReply('Reduciendo sospechosos... ¿Es '+AK.guess.n+'? Dime sí o no.'); }
+  if(!avail.length){ AK.guess=AK.pool[0]; AK.await=true; return personaReply('¿Es '+AK.guess.n+'?'); }
   let best = avail[0], bestScore = 1e9;
   for(const q of avail){
     const yes = AK.pool.filter(c=>c[q[0]]).length;
@@ -2374,7 +2510,7 @@ function akNext(){
     if(score < bestScore){ bestScore = score; best = q; }
   }
   AK.asked.push(best[0]);
-  return personaReply('Pregunta '+AK.asked.length+' de '+AK_QS.length+': '+best[1], best[1]);
+  personaReply('Pregunta '+AK.asked.length+': '+best[1]);
 }
 function akAnswer(v){
   const q = AK_QS.find(x=>x[0]===AK.asked[AK.asked.length-1]);
@@ -2391,7 +2527,6 @@ function downloadBlob(blob, name){
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = name;
   document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
 }
 function backupExport(){
   const data = {};
@@ -2401,7 +2536,7 @@ function backupExport(){
       try{ data[k] = JSON.parse(localStorage.getItem(k)); }catch(e){}
     }
   }
-  downloadBlob(new Blob([JSON.stringify({app:'ania', v:6, t:Date.now(), data}, null, 2)],{type:'application/json'}),
+  downloadBlob(new Blob([JSON.stringify({app:'ania', v:7, t:Date.now(), data}, null, 2)],{type:'application/json'}),
     'ania-backup-'+new Date().toISOString().slice(0,10)+'.json');
   toast('Backup completo generado');
 }
@@ -2418,7 +2553,7 @@ function backupExport(){
       Object.entries(j.data).forEach(([k,v])=> localStorage.setItem(k, JSON.stringify(v)));
       toast('Backup restaurado · recargando');
       setTimeout(()=>location.reload(), 900);
-    }catch(err){ toast('Archivo de backup no válido', true); }
+    }catch(err){ toast('Backup no válido', true); }
   };
   rd.readAsText(f);
   e.target.value = '';
@@ -2436,136 +2571,41 @@ function parseWhen(t){
     if(ms>0 && ms < 864e5*30) return Date.now()+ms;
   }
   const manana = /\bma[ñn]ana\b/.test(t);
-  m = t.match(/\b(?:a\s+las?|alas)\s+(\d{1,2})(?::(\d{2}))?\s*([ap]\.?m\.?|de\s+la\s+(?:ma[ñn]ana|tarde|noche)|ma[ñn]ana|tarde|noche)?\b/);
+  m = t.match(/\b(?:a\s+las?|alas)\s+(\d{1,2})(?::(\d{2}))?\s*([ap]\.?m\.?|de\s+la\s+(?:ma[ñn]ana|tarde|noche)|tarde|noche)?\b/);
   if(m){
     let hh = +m[1], mm = m[2]?+m[2]:0;
-    const suf = m[3]||'';
-    if((/^p/.test(suf) || /tarde|noche/.test(suf)) && hh<12) hh += 12;
+    if((/^p/.test(m[3]||'') || /tarde|noche/.test(m[3]||'')) && hh<12) hh += 12;
     const d = new Date(now); d.setHours(hh,mm,0,0);
     if(d.getTime() <= Date.now() || manana) d.setDate(d.getDate()+1);
     return d.getTime();
   }
-  if(/mediod[ií]a\b/.test(t)){ const d = new Date(now); d.setHours(12,0,0,0); if(d<=Date.now()) d.setDate(d.getDate()+1); return d.getTime(); }
+  if(/mediodia/.test(t)){ const d = new Date(now); d.setHours(12,0,0,0); if(d<=Date.now()) d.setDate(d.getDate()+1); return d.getTime(); }
   if(manana){ const d = new Date(now); d.setDate(d.getDate()+1); d.setHours(9,0,0,0); return d.getTime(); }
   return null;
 }
-function parseTask(raw){
-  let t = ' '+raw.toLowerCase()+' ';
-  const when = parseWhen(t);
-  t = t.replace(/\ben\s+\d+(?:[.,]\d+)?\s*(?:segundos?|minutos?|mins?|horas?|hrs?|h|m)\b/g,'')
-       .replace(/\b(?:a\s+las?|alas)\s+\d{1,2}(?::\d{2})?\s*(?:[ap]\.?m\.?|de\s+la\s+(?:ma[ñn]ana|tarde|noche))?\b/g,'')
-       .replace(/\b[ap]\.?m\.?\b/g,'')
-       .replace(/\b(?:todos\s+los\s+(?:d[ií]as|lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bados?|domingos?)|cada\s+(?:d[ií]a|semana|lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)|diario|diariamente|semanal|d[ií]as\s+laborables|entre\s+semana)\b/g,'')
-       .replace(/\bma[ñn]ana\b|\bhoy\b|\bmediod[ií]a\b|\bpor\s+favor\b/g,'')
-       .replace(/,/g,' ')
-       .replace(/^\s*(?:ania\s*[,:]?\s*)?/,'')
-       .replace(/^\s*(?:recu[eé]rdame|recu[eé]rda\s+que|recu[eé]rda|recordame|recordatorio|an[oó]tame|anota\s+que|anota|ap[uú]ntame|apunta|ag[eé]ndame|agenda|nueva?\s+tarea|tarea)\s*/,'')
-       .replace(/^\s*(?:que\s+|de\s+|me\s+|tengo\s+que\s+|debo\s+|a\s+|para\s+)?/,'')
-       .replace(/[¿?¡!.:]/g,'')
-       .replace(/\s+/g,' ').trim();
-  if(!t) t = 'recordatorio';
-  return {text: t[0].toUpperCase()+t.slice(1), when};
-}
-function safeMath(text){
-  let t = LINGUA.normalizar(text).replace(/^(?:calcula(?:me)?|cuanto es|resuelve)\s*/,'');
-  t = t.replace(/dividido\s+por/g,'/').replace(/dividido/g,'/')
-       .replace(/elevado\s+a\s+la/g,'**').replace(/elevado\s+al?/g,'**')
-       .replace(/\bmas\b/g,'+').replace(/\bmenos\b/g,'-')
-       .replace(/\bpor\b/g,'*').replace(/\bentre\b/g,'/')
-       .replace(/,/g,'.').replace(/[×x]/g,'*').replace(/÷/g,'/').replace(/\^/g,'**');
-  t = t.replace(/[^0-9+\-*/().%\s]/g,'').trim();
-  if(!/\d/.test(t) || !/[+\-*/%]/.test(t)) return null;
-  try{
-    const r = Function('"use strict"; return ('+t+')')();
-    if(typeof r==='number' && isFinite(r)) return {expr:t, val:Math.round(r*1e6)/1e6};
-  }catch(e){}
-  return null;
-}
-const UNITS = {
-  longitud:{km:1000, m:1, cm:0.01, mi:1609.34, milla:1609.34, millas:1609.34, pie:0.3048, pies:0.3048, ft:0.3048},
-  masa:{kg:1000, g:1, gramo:1, gramos:1, lb:453.59, libra:453.59, libras:453.59, onza:28.35, onzas:28.35},
-  volumen:{l:1, litro:1, litros:1, ml:0.001, gal:3.785, galon:3.785}
-};
-function tryConvert(low){
-  let m = low.match(/([\d.,]+)\s*°?\s*(celsius|centigrados?|c)\s+(?:a|en)\s+°?\s*(fahrenheit|f)\b/) ||
-          low.match(/([\d.,]+)\s*°?\s*(fahrenheit|f)\s+(?:a|en)\s+°?\s*(celsius|centigrados?|c)\b/);
-  if(m){
-    const v = parseFloat(m[1].replace(',','.'));
-    if(/f/.test(m[2])) return Math.round((v-32)*5/9*10)/10+' °C';
-    return Math.round((v*9/5+32)*10)/10+' °F';
-  }
-  m = low.match(/([\d.,]+)\s*(km|kilometros?|metros?|cm|mi(?:llas?)?|ft|pies?|kg|gramos?|libras?|onzas?|litros?|ml|gal(?:o?n|ones)?)\s+(?:a|en)\s+(km|kilometros?|metros?|cm|mi(?:llas?)?|ft|pies?|kg|gramos?|libras?|onzas?|litros?|ml|gal(?:o?n|ones)?)/);
-  if(m){
-    const v = parseFloat(m[1].replace(',','.'));
-    const norm = s => s.replace(/^kilometros?$/,'km').replace(/^metros?$/,'m').replace(/^millas?$/,'mi')
-      .replace(/^pies?$|^ft$/,'pies').replace(/^gramos?$/,'g').replace(/^libras?$/,'libras')
-      .replace(/^onzas?$/,'onzas').replace(/^litros?$/,'l').replace(/^galones?$|^galon$/,'gal');
-    const from = norm(m[2]), to = norm(m[3]);
-    for(const dim in UNITS){
-      const U = UNITS[dim];
-      if(U[from]!==undefined && U[to]!==undefined){
-        return v+' '+from+' = '+(Math.round(v*U[from]/U[to]*100)/100)+' '+to+' ['+dim+']';
-      }
-    }
-    return 'No puedo convertir entre magnitudes distintas (longitud ↔ masa ↔ volumen).';
-  }
-  m = low.match(/([\da-fA-F]+)\s+(?:a|en)\s+(binario|hexadecimal)/) || low.match(/(?:binario|hex)\s+(?:de\s+)?([\da-fA-F]+)/);
-  if(m){
-    if(m[2] && /binario/.test(m[2])) return m[1]+' en binario: '+(+m[1]).toString(2);
-    if(m[2] && /hex/.test(m[2])) return m[1]+' en hexadecimal: 0x'+(+m[1]).toString(16).toUpperCase();
-    const n = /0x/i.test(m[1]) ? parseInt(m[1],16) : parseInt(m[1], 2);
-    if(!isNaN(n)) return '= '+n+' [decimal]';
-  }
-  return null;
-}
-const CITIES_TZ = {
-  tokio:'Asia/Tokyo', japon:'Asia/Tokyo', seul:'Asia/Seoul', madrid:'Europe/Madrid', londres:'Europe/London',
-  paris:'Europe/Paris', moscu:'Europe/Moscow', china:'Asia/Shanghai', 'nueva york':'America/New_York',
-  'los angeles':'America/Los_Angeles', 'buenos aires':'America/Argentina/Buenos_Aires',
-  mexico:'America/Mexico_City', 'la habana':'America/Havana', cuba:'America/Havana',
-  bogota:'America/Bogota', santiago:'America/Santiago'
-};
-function genPassword(len){
-  len = Math.min(64, Math.max(8, len||16));
-  const chars = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%&*+-=';
-  const arr = new Uint32Array(len);
-  crypto.getRandomValues(arr);
-  return Array.from(arr, x=> chars[x%chars.length]).join('');
-}
-const SITES = {youtube:'YouTube', google:'Google', gmail:'Gmail', correo:'Gmail', wikipedia:'Wikipedia', github:'GitHub', whatsapp:'WhatsApp Web', twitter:'X', x:'X', instagram:'Instagram', reddit:'Reddit', twitch:'Twitch'};
+const SITES = {youtube:'YouTube', google:'Google', gmail:'Gmail', wikipedia:'Wikipedia', github:'GitHub', whatsapp:'WhatsApp Web', twitter:'X', x:'X', instagram:'Instagram', reddit:'Reddit', twitch:'Twitch'};
 const JOKES = [
-  '¿Por qué los programadores confunden Halloween con Navidad? Porque OCT 31 es igual a DEC 25.',
+  '¿Por qué los programadores confunden Halloween con Navidad? OCT 31 = DEC 25.',
   'Hay 10 tipos de personas: las que entienden binario y las que no.',
-  '¿Qué le dice un bit a otro bit? Nos vemos en el bus.',
-  'Mi código favorito es el que funciona a la primera. Todavía no lo he encontrado, pero mi masa madre también tardó 6 meses.',
-  '¿Sabes cómo se despiden los programadores? Con un «exit» muy sentido.',
-  'Un QA entra a un bar. Pide 1 cerveza, 0 cervezas, 999 cervezas, una cerveza «-1», y luego rompe el bar.'
+  'Un QA entra a un bar: pide 1 cerveza, 0, 999 y una «-1». Luego rompe el bar.'
 ];
 
 /* ---------- memoria UI ---------- */
 function setOperator(){
   const n = Mind.nombre();
-  const op = $('operator');
-  if(n){ op.style.display='inline-block'; op.textContent='OP · '+n.toUpperCase(); }
+  if(n){ $('operator').style.display='inline-block'; $('operator').textContent='OP · '+n.toUpperCase(); }
 }
 function renderMem(){
   const L = $('memList');
   const rows = [];
   if(Mind.d.nombre) rows.push(['NOMBRE', Mind.d.nombre]);
-  rows.push(['VISITAS', Mind.d.visitas + ' sesiones · desde ' + (Mind.d.primerDia||'hoy')]);
+  rows.push(['VISITAS', Mind.d.visitas+' sesiones · desde '+(Mind.d.primerDia||'hoy')]);
+  rows.push(['EPISODIOS', Episodio.log.length+' líneas de conversación recordadas']);
   Mind.d.gustos.forEach(g=> rows.push(['LE GUSTA', g]));
   Mind.d.hechos.forEach(h=> rows.push(['RECUERDA', h]));
   $('memStats').textContent = rows.length+' RECUERDOS';
-  if(!rows.length){ L.innerHTML = '<div class="empty">TODAVÍA NO ME HABLAS DE TI<br>Dime: «me llamo...» o «me gusta...»</div>'; return; }
-  L.innerHTML = rows.map((r,i)=>`
-    <div class="memRow">
-      <span class="k">${esc(r[0])}</span>
-      <span class="v">${esc(r[1])}</span>
-      ${r[0]==='LE GUSTA' ? `<button class="mdel" data-g="${i-2}" title="Olvidar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>` : ''}
-    </div>`).join('');
-  L.querySelectorAll('.mdel').forEach(b=> b.onclick = ()=>{
-    Mind.d.gustos.splice(+b.dataset.g,1); Mind.save(); renderMem(); toast('Olvidado');
-  });
+  if(!rows.length){ L.innerHTML = '<div class="empty">Dime: «me llamo...» o «me gusta...»</div>'; return; }
+  L.innerHTML = rows.map(r=>`<div class="memRow"><span class="k">${esc(r[0])}</span><span class="v">${esc(r[1])}</span></div>`).join('');
 }
 function openMem(){ closeSheet(); closeDiary(); closeLib(); $('sheetMem').classList.add('open'); $('backdrop').classList.add('on'); renderMem(); }
 function closeMem(){ $('sheetMem').classList.remove('open'); }
@@ -2575,233 +2615,124 @@ function closeMem(){ $('sheetMem').classList.remove('open'); }
   if(!S.confirmWipe){ S.confirmWipe = true; toast('¿Seguro? Toca otra vez', true); return; }
   Mind.d = {nombre:null, gustos:[], hechos:[], visitas:0, primerDia:null, ultimoDia:null};
   Mind.save(); setOperator(); renderMem(); S.confirmWipe=false;
-  toast('Memoria borrada');
-  personaReply('Vale... mente en blanco. ¿Empezamos de nuevo?');
+  personaReply('Mente en blanco. ¿Cómo te llamas?');
 };
-function favIntent(low){
-  if(!/(cual|que)\s+(?:es\s+)?\s*(?:tu|tus)\b|te\s+gusta\s+mas|(?:dime|cuentame)\s+tu\b|que\s+\w+\s+te\s+gusta/.test(low)) return null;
-  const F = [
-    [/colou?r/, P.favs.color], [/flor/, P.favs.flor], [/animal|criatura/, P.favs.animal],
-    [/cafe|barista|espresso/, P.favs.cafe], [/pan\b|panader|croissant/, P.favs.pan],
-    [/postre|dulce/, P.favs.postre], [/comida|platillo|comer/, P.favs.comida],
-    [/bebida/, P.favs.bebida], [/musica|artista|cancion|genero|banda/, P.favs.musica],
-    [/anime/, P.favs.anime], [/isekai/, P.favs.isekai],
-    [/serie|zombie|pelicula/, P.favs.serie],
-    [/lugar|sitio/, P.favs.lugar], [/constelacion|cielo/, P.favs.constelacion],
-    [/tecnologia/, P.favs.tecnologia], [/evento/, P.favs.evento],
-    [/protagonista|personaje/, P.favs.protagonista], [/perfume|aroma|olor/, P.favs.perfume], [/sonido/, P.favs.sonido]
-  ];
-  for(const [re,out] of F) if(re.test(low)) return out;
-  return null;
-}
-function randomFact(){ return pick([...KB.cafe, ...KB.isekai, ...KB.zombies, ...KB.astro, ...KB.tech, ...KB.pan]); }
 
 /* =====================================================================
-   EL GRAN CEREBRO (todo en texto normalizado por LINGUA)
+   EL GRAN CEREBRO
 ===================================================================== */
 let lastKB = null;
 async function respond(raw){
   const t = raw.trim();
   const low = entender(raw);
   bumpStat('msgs');
+  S.lastUserTs = Date.now();
 
   if(S.awaitingCity){
-    if(/cancela|olvida|nada|deja/.test(low)){ S.awaitingCity=false; return personaReply('De acuerdo, clima cancelado.'); }
+    if(/cancela|olvida|nada/.test(low)){ S.awaitingCity=false; return personaReply('Clima cancelado.'); }
     if(low.split(/\s+/).length <= 4){ S.awaitingCity=false; return weatherForCity(raw.trim()); }
     S.awaitingCity = false;
   }
 
   /* ---- Akinator ---- */
   if(AK.active){
-    if(/cancela|termina|salir|otra cosa|basta/.test(low)){
-      AK.active=false; AK.await=false;
-      return personaReply('Akinator cerrado. Revancha: «adivina mi personaje».');
-    }
+    if(/cancela|termina|basta/.test(low)){ AK.active=false; return personaReply('Akinator cerrado.'); }
     if(AK.await){
-      if(/^si\b|^claro|^correcto|^exacto|^yes/.test(low)){
-        AK.active=false; AK.await=false;
-        return personaReply('(chasquea los dedos) ¡'+AK.guess.n+'! ¿Te lo dije o te lo dije? Otra ronda: «adivina mi personaje».', '¡Acerté! Era '+AK.guess.n+'.');
-      }
-      if(/^no\b|^nel|^incorrecto|^falso/.test(low)){
-        AK.active=false; AK.await=false;
-        return personaReply('¿Cómo? Mis sospechas de detective quedan heridas de gravedad... Revancha cuando quieras.');
-      }
-      return personaReply('Necesito un sí o un no claro para cerrar el caso.');
+      if(/^si\b|^claro|^correcto/.test(low)){ AK.active=false; AK.await=false; return personaReply('¡'+AK.guess.n+'! ¿Te lo dije?'); }
+      if(/^no\b|^nel/.test(low)){ AK.active=false; AK.await=false; return personaReply('¿Cómo? Revancha cuando quieras.'); }
+      return personaReply('Sí o no, por favor.');
     }
-    if(/^si\b|^claro|^correcto|^exacto|^yes/.test(low)) return akAnswer(1);
-    if(/^no\b|^nel|^nada/.test(low)) return akAnswer(0);
-    if(/quiza|tal vez|no se|ambos/.test(low)) return akAnswer(0.5);
-    return personaReply('Estamos jugando: responde sí, no o quizá. O di «cancela».');
+    if(/^si\b|^claro|^correcto/.test(low)) return akAnswer(1);
+    if(/^no\b|^nel/.test(low)) return akAnswer(0);
+    return akAnswer(0.5);
   }
 
-  /* ---- continuación del último tema ---- */
-  if(/cuentame\s+mas|que\s+mas|sigue\b|continua/.test(low) && lastKB){
-    return personaReply(pick(lastKB) + ' ' + pick(['¿Sigo?','¿Quieres que profundice?','Tengo más de donde salió eso.']));
+  let m;
+
+  /* ---- cerebro: carga y estado ---- */
+  if(/carga\s+(?:el\s+)?cerebro|carga\s+(?:el\s+)?modelo|cargar\s+gguf|cerebro\s+local/.test(low)){
+    await Brain.loadLocal(true);
+    return;
+  }
+  if(/estado\s+del\s+cerebro|que\s+cerebro/.test(low)){
+    return personaReply(Brain.localReady
+      ? 'Cerebro local activo: '+Brain.modelName+'. Pienso sin internet. Y si algo me supera, caigo a la nube.'
+      : (isOffline() ? 'Sin cerebro: no hay conexión y no hay GGUF cargado. Dime «carga el cerebro» con el modelo en modelos/.' : 'Cerebro de nube activo (Pollinations). Para razonar sin internet: «carga el cerebro» con tu GGUF.'));
+  }
+  if(/mira\s+(?:esta\s+)?(?:foto|imagen)|describe\s+(?:esta\s+)?(?:foto|imagen)/.test(low)){
+    $('imgFile').click();
+    return personaReply('Elige la foto y la analizo.');
+  }
+  if(/pi[eé]nsalo|r[eé]asona|usa\s+(?:el\s+)?cerebro|opina/.test(low)){
+    setPhase('thinking');
+    const r = await Brain.think(raw);
+    return personaReply(r || 'El cerebro no está disponible ahora.');
   }
 
-  /* ---- AGENTE: conexión y estado ---- */
-  let m = low.match(/conecta\s+(?:el\s+)?agente(?:\s+(?:con\s+)?(?:clave|token|key)\s+(.+))?/);
-  if(m){
-    if(m[1]) store.set('agentToken', m[1].trim().slice(0,64));
-    const tk = store.get('agentToken', null);
-    if(!tk) return personaReply('Dime «conecta el agente con clave [tu-token]» la primera vez. El token es el mismo que pusiste en ania-agent.js.');
-    Agent.connect();
-    return personaReply('Conectando con el agente de tu PC... si está corriendo, verás el anillo del reactor activarse.');
-  }
-  if(/estado\s+del\s+agente|agente\s+conectado|esta\s+el\s+agente/.test(low)){
-    return personaReply(Agent.ok
-      ? 'Agente operativo. Puedo: abrir tu PC y apps, abrir URLs en tu navegador, subir/bajar el volumen, capturar la pantalla (y mostrártela aquí), leer tu portapapeles, controlar multimedia, bloquear, buscar en todo el disco y apagar con aviso.'
-      : 'Agente desconectado. Sin él sigo funcionando al 100%: solo no puedo tocar tu PC. Se instala con dos comandos (README).');
-  }
-
-  /* ---- MÚSICA ---- */
-  if(/ponme\s+musica|pon\s+musica|musica\s+lofi|musiquita|musica\s+para\s+(?:estudiar|concentrarme|trabajar)/.test(low)){
+  /* ---- música / ambiente ---- */
+  if(/ponme\s+musica|pon\s+musica|musica\s+lofi/.test(low)){
     Music.start();
-    return personaReply('Música lo-fi procedural: acordes de jazz, vinilo crujiente y ritmo lento, generados en vivo en tu navegador. Cero archivos, cero internet. Si quieres algo concreto: «pon [canción] en youtube».', 'Poniendo música lo-fi.');
+    return personaReply('Lo-fi procedural: acordes de jazz, vinilo, ritmo lento. Generado en vivo. Cero archivos.', 'Poniendo música lo-fi.');
   }
-  m = low.match(/(?:pon|reproduce|quiero\s+escuchar|escuchar)\s+(.+?)\s+en\s+youtube/);
+  m = low.match(/(?:pon|reproduce)\s+(.+?)\s+en\s+youtube/);
   if(m){
     window.open('https://music.youtube.com/search?q='+encodeURIComponent(m[1]), '_blank');
-    return personaReply('Abriendo YouTube Music con «'+m[1]+'». Sube el volumen de tu lado, yo pongo el ambiente.');
+    return personaReply('Abriendo YouTube Music con «'+m[1]+'».');
   }
-  if(/para\s+(?:la\s+)?musica|deten\s+(?:la\s+)?musica|apaga\s+(?:la\s+)?musica/.test(low)){
-    Music.stop();
-    return personaReply('Música detenida. El silencio también tiene su encanto... por un rato.');
-  }
-
-  /* ---- AMBIENTE ---- */
-  if(/pon\s+(?:la\s+)?lluvia|lluvia\s+de\s+fondo|suena\s+la\s+lluvia/.test(low)){
-    Ambient.start('lluvia');
-    return personaReply('Ahí va: lluvia contra la ventana, generada en vivo, gota a gota. ¿Café con lluvia y una conversación?', 'Poniendo la lluvia. Mi sonido favorito.');
-  }
-  if(/pon\s+(?:la\s+)?cafeter|cafeteria\s+de\s+fondo|modo\s+cafeter/.test(low)){
-    Ambient.start('cafeteria');
-    return personaReply('Cafetería encendida: murmullo, tazas y burbujeo. El Rincón del Slime en versión portátil.', 'Ambiente de cafetería activo.');
-  }
-  if(/para\s+(?:la\s+)?(?:lluvia|cafeter|ambiente|sonido)|deten\s+(?:la\s+)?(?:lluvia|ambiente)/.test(low)){
-    const was = Ambient.mode || Music.on;
+  if(/para\s+(?:la\s+)?(?:musica|lluvia|cafeteria|ambiente)|deten/.test(low)){
     Ambient.stop(); Music.stop();
-    if(was) return personaReply('Detenido. Silencio de biblioteca municipal, sección fantasía.');
+    return personaReply('Detenido.');
   }
+  if(/pon\s+(?:la\s+)?lluvia/.test(low)){ Ambient.start('lluvia'); return personaReply('Lluvia contra la ventana, generada gota a gota.', 'Poniendo la lluvia.'); }
+  if(/pon\s+(?:la\s+)?cafeter/.test(low)){ Ambient.start('cafeteria'); return personaReply('Cafetería encendida: murmullo, tazas, burbujeo.', 'Ambiente de cafetería.'); }
 
-  /* ---- AGENTE: acciones sobre el PC ---- */
-  if(/abre\s+(?:mi\s+)?(?:pc|equipo|explorador)/.test(low)){
-    if(Agent.ok()){
-      const r = await Agent.ask({type:'openApp', app:'explorer'});
-      return personaReply(r && r.ok ? 'Abriendo el Explorador de tu PC. ¿Buscamos algo concreto? «busca en toda la pc [algo]».' : 'El agente no pudo abrirlo.');
-    }
-    return personaReply('Para abrir tu PC necesito el puente local (ania-agent.js, dos comandos en el README). Sin él, el navegador me lo prohíbe por seguridad... y con razón.');
-  }
-  if(/apaga\s+(?:la\s+)?(?:pc|computadora|equipo)/.test(low)){
-    if(Agent.ok()){
-      const r = await Agent.ask({type:'power', action:'shutdown', minutes:10});
-      return personaReply(r && r.ok ? 'Apagado programado en 10 minutos. Di «cancela el apagado» si te arrepientes — regla número 4.' : 'No pude programarlo.');
-    }
-    return personaReply('Apagar el PC requiere el agente local. El navegador no me deja ni soñarlo, y esa frontera nos protege a los dos.');
-  }
-  if(/reinicia\s+(?:la\s+)?(?:pc|computadora)/.test(low) && Agent.ok()){
-    const r = await Agent.ask({type:'power', action:'restart', minutes:10});
-    return personaReply(r && r.ok ? 'Reinicio programado en 10 minutos. Nos vemos en el otro lado del boot.' : 'No pude programarlo.');
-  }
-  if(/cancela\s+(?:el\s+)?apagado/.test(low) && Agent.ok()){
-    const r = await Agent.ask({type:'power', action:'abort'});
-    return personaReply(r && r.ok ? 'Apagado cancelado. Quedamos vivos otro día.' : 'No había apagado pendiente.');
-  }
-  if(/bloquea\s+(?:la\s+)?(?:pc|computadora|equipo|pantalla)/.test(low) && Agent.ok()){
-    const r = await Agent.ask({type:'lock'});
-    return personaReply(r && r.ok ? 'Bloqueando tu PC. Que nadie toque mi territorio.' : 'No pude bloquearlo.');
-  }
-  m = low.match(/(?:sube|baja)\s+(?:el\s+)?volumen(?:\s+(?:del\s+)?(?:pc|computadora))?(?:\s+(?:al\s+)?maximo|\s+(\d+))?/);
+  /* ---- memoria episódica ---- */
+  m = low.match(/que\s+hablamos\s+(?:de|sobre)\s+(.+)|que\s+te\s+dije\s+(?:de|sobre)\s+(.+)/);
   if(m){
-    if(!Agent.ok()) return personaReply('El volumen del PC lo controlo con el agente local instalado. Con decirme «ponme música» puedo ambientarte sin tocar nada.');
-    const up = /sube/.test(m[0]);
-    const steps = /maximo/.test(m[0]) ? 30 : (m[2] ? +m[2] : 5);
-    const r = await Agent.ask({type:'volume', action: up?'up':'down', steps});
-    return personaReply(r && r.ok ? 'Volumen '+(up?'subido':'bajado')+'. '+pick(['A mis oídos de barista así está perfecto.','Dime «silencia el pc» si alguien llama a la puerta.']) : 'No pude cambiarlo.');
-  }
-  if(/silencia\s+(?:el\s+)?(?:pc|computadora)|mute(?:a)?\s+(?:el\s+)?pc/.test(low) && Agent.ok()){
-    const r = await Agent.ask({type:'volume', action:'mute'});
-    return personaReply(r && r.ok ? 'PC silenciado. Modo biblioteca municipal.' : 'No pude silenciarlo.');
-  }
-  if(/captura|pantallazo|screenshot|foto\s+(?:de\s+)?(?:mi\s+)?(?:pantalla|pc)/.test(low)){
-    if(!Agent.ok()) return personaReply('La captura de pantalla la hace el agente local. Instálalo y verás tu pantalla aquí mismo, en el chat.');
-    toast('Capturando pantalla...');
-    const r = await Agent.ask({type:'screenshot'}, 20000);
-    if(r && r.ok && r.data){
-      addImageLine('data:image/png;base64,'+r.data, 'Captura de tu PC · '+new Date().toLocaleTimeString('es-ES')+' · guardada también en '+ (r.path||'Pictures\\Ania'));
-      return personaReply('Ahí está tu pantalla, en vivo desde tu PC. También quedó guardada en tu carpeta de Imágenes.', 'Captura lista.');
+    const q = m[1]||m[2];
+    const hits = Episodio.search(q);
+    if(hits.length){
+      let s = 'Esto recuerdo de «'+q+'»:\n';
+      hits.forEach(h=>{ s += '· ['+h.fecha+'] '+h.e.text.slice(0,160)+'\n'; });
+      return personaReply(s.trim());
     }
-    return personaReply('No pude capturar: '+((r&&r.error)||'error del agente'));
-  }
-  if(/lee\s+(?:mi\s+)?portapapeles|que\s+(?:copie|hay\s+en\s+(?:mi\s+)?portapapeles)/.test(low)){
-    if(!Agent.ok()) return personaReply('Leer tu portapapeles del PC lo hace el agente local.');
-    const r = await Agent.ask({type:'clipboard'});
-    if(r && r.ok && r.text){
-      sysLine('PORTAPAPELES: '+r.text.slice(0,200));
-      return personaReply('Eso es lo que tenías copiado. Si quieres, dime «traduce eso» o «busca eso» y lo proceso.');
-    }
-    return personaReply('Tu portapapeles está vacío o no pude leerlo.');
-  }
-  if(/pausa\s+(?:la\s+)?(?:musica|cancion|video)\s+(?:del\s+)?(?:pc|computadora)|pausa\s+(?:el\s+)?video\s+del\s+pc/.test(low) && Agent.ok()){
-    const r = await Agent.ask({type:'media', action:'playpause'});
-    return personaReply(r && r.ok ? 'Pausa/Play enviado a tu PC.' : 'No pude.');
-  }
-  m = low.match(/(?:siguiente|anterior)\s+cancion/);
-  if(m && Agent.ok()){
-    const r = await Agent.ask({type:'media', action: /siguiente/.test(low)?'next':'prev'});
-    return personaReply(r && r.ok ? 'Saltando pista en tu PC.' : 'No pude.');
-  }
-  m = low.match(/abre\s+(?:el\s+)?sitio\s+(.+?)\s+en\s+(?:el|mi)\s+(?:pc|navegador|computadora)|abre\s+(https?:\/\/\S+)\s+en\s+(?:el|mi)\s+(?:pc|navegador)/);
-  if(m){
-    if(!Agent.ok()) return personaReply('Abrir cosas en el navegador de tu PC lo hace el agente local.');
-    let url = m[1].trim();
-    if(!/^https?:\/\//.test(url)) url = 'https://'+url;
-    const r = await Agent.ask({type:'openUrl', url});
-    return personaReply(r && r.ok ? 'Abriendo '+url+' en tu PC.' : 'No pude abrirlo: '+((r&&r.error)||''));
+    return personaReply('No encuentro nada sobre «'+q+'» en mi memoria episódica. O no lo hablamos, o fue hace más de '+Math.round(Episodio.log.length/2)+' mensajes.');
   }
 
   /* ---- memoria del usuario ---- */
-  m = t.match(/\b(?:me\s+llamo|mi\s+nombre\s+es|puedes\s+llamarme|soy)\s+([A-Za-zÁÉÍÓÚÑÜáéíóúñü][a-záéíóúñü]{1,19})\b/i);
-  if(m && !/^soy\s+(triste|feliz|cansad|estresad|ansios|aburrid)/i.test(m[0])){
+  m = t.match(/\b(?:me\s+llamo|mi\s+nombre\s+es|soy)\s+([A-Za-zÁÉÍÓÚÑÜáéíóúñü][a-záéíóúñü]{1,19})\b/i);
+  if(m && !/^soy\s+(triste|feliz|cansad|estresad)/i.test(m[0])){
     const word = m[1];
     if(!/^soy\b/i.test(m[0]) || /^[A-ZÁÉÍÓÚÑÜ]/.test(word)){
       Mind.d.nombre = word[0].toUpperCase()+word.slice(1);
       Mind.save(); setOperator();
-      return personaReply('Encantada, '+Mind.d.nombre+'. Apuntado en mi cuaderno de notas coloridas.');
+      return personaReply('Encantada, '+Mind.d.nombre+'.');
     }
   }
-  if(!m && /^(me\s+llamo|mi\s+nombre)/.test(low))
-    return personaReply('«Me llamo...» ¿y? Termínalo con tu nombre y te lo guardo para siempre.');
-  m = low.match(/me\s+gusta[n]?\s+(?:el\s+|la\s+|los\s+|las\s+)?(.{2,60})/);
+  m = low.match(/me\s+gusta[n]?\s+(?:el\s+|la\s+)?(.{2,60})/);
   if(m){
     Mind.d.gustos.push(m[1].replace(/[.?¡!]/g,'').trim()); Mind.save();
-    return personaReply('Anotado: te gusta '+m[1].trim()+'. Memoria a largo plazo, no la de pez dorado.');
+    return personaReply('Anotado: te gusta '+m[1].trim()+'.');
   }
-  if(/recuerda\s+que|no\s+olvides\s+que|apunta\s+que/.test(low)){
-    const f = t.replace(/.*?(recuerda|no\s+olvides|apunta)\s+que\s*/i,'').replace(/[.?¡!]/g,'').trim();
+  if(/recuerda\s+que|apunta\s+que/.test(low)){
+    const f = t.replace(/.*?(recuerda|apunta)\s+que\s*/i,'').replace(/[.?¡!]/g,'').trim();
     if(f){ Mind.d.hechos.push(f); Mind.save(); return personaReply('Grabado a fuego: '+f+'.'); }
   }
-  if(/que\s+sabes\s+de\s+mi|que\s+recuerdas\s+de\s+mi|mi\s+perfil/.test(low)){
+  if(/que\s+sabes\s+de\s+mi|mi\s+memoria/.test(low)){
     openMem();
-    const d = Mind.d;
-    if(!d.nombre && !d.gustos.length && !d.hechos.length) return personaReply('Todavía sé poco de ti... protagonista misterioso de capítulo uno.');
-    let s = 'Esto es lo que tengo de ti:\n';
-    if(d.nombre) s += '· Te llamas '+d.nombre+'\n';
-    d.gustos.forEach(g=> s += '· Te gusta '+g+'\n');
-    d.hechos.forEach(h=> s += '· '+h+'\n');
-    s += '· Llevamos '+d.visitas+' sesiones juntos.';
-    return personaReply(s);
+    return personaReply('Tengo '+Episodio.log.length+' líneas de conversación, '+Mind.d.gustos.length+' gustos y '+Mind.d.hechos.length+' datos tuyos. Panel abierto.');
   }
-  if(/olvida\s+(?:todo|mi\s+memoria)|borra\s+tu\s+memoria/.test(low)){
-    if(!S.confirmWipe){ S.confirmWipe=true; return personaReply('¿Seguro seguro? Dilo otra vez y lo hago.'); }
+  if(/olvida\s+(?:todo|mi\s+memoria)/.test(low)){
+    if(!S.confirmWipe){ S.confirmWipe=true; return personaReply('¿Seguro? Dilo otra vez.'); }
     S.confirmWipe=false;
     Mind.d = {nombre:null, gustos:[], hechos:[], visitas:0, primerDia:null, ultimoDia:null};
+    Episodio.log = []; store.set('episodio', []);
     Mind.save(); setOperator(); renderMem();
-    return personaReply('Hecho. Mente limpia como una taza recién lavada. ¿Quién eres de nuevo?');
+    return personaReply('Mente limpia. ¿Quién eres?');
   }
 
   /* ---- tareas ---- */
-  if(/(recordame|recuerda|anotame|anota|apuntame|apunta|agendame|agenda|nueva tarea|tarea:|recordatorio)/.test(low) && !/tareas?$|pendiente/.test(low)){
+  if(/(recordame|recuerda|anota|apunta|agenda|nueva tarea|tarea:|recordatorio)/.test(low) && !/tareas?$|pendiente/.test(low)){
     const p = parseTask(t);
     const recur = parseRecur(low);
     if(recur && !p.when){
@@ -2811,54 +2742,29 @@ async function respond(raw){
     }
     addTask(p.text, p.when, {recur});
     if(p.when && recur){
-      const hora = new Date(p.when).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
-      return personaReply('Anotado: «'+p.text+'», '+recurLabel(recur)+' a las '+hora+' · avisa AQUÍ en la web. «tarea hecha» para que deje de repetirse.', 'Anotado: '+p.text+'.');
+      return personaReply('Anotado: «'+p.text+'», '+recurLabel(recur)+' · avisa aquí en la web.', 'Anotado: '+p.text+'.');
     }
     if(p.when){
-      const d = new Date(p.when);
-      const esManana = d.toDateString() !== new Date().toDateString();
-      const cuando = fmtWhen(p.when).replace('· ','');
-      const nota = (esManana && /(a\s+las?|alas)/.test(low)) ? ' Esa hora ya pasó hoy, te la agendo para mañana a la misma hora.' : '';
-      return personaReply('Anotado: «'+p.text+'». Te lo recuerdo '+cuando+' · avisa AQUÍ (las de Telegram avisan allí).'+nota, 'Anotado. Te recordaré: '+p.text+'.');
+      return personaReply('Anotado: «'+p.text+'». Te lo recuerdo '+fmtWhen(p.when).replace('· ','')+'.', 'Anotado. Te recordaré: '+p.text+'.');
     }
-    return personaReply('Anotado: «'+p.text+'», sin hora. Dime «tarea hecha» cuando la completes.');
+    return personaReply('Anotado: «'+p.text+'», sin hora.');
   }
-  if(/(mis tareas|que\s+tengo\s+pendiente|mi agenda|ver agenda|lista de tareas)/.test(low)){
+  if(/mis tareas|que\s+tengo\s+pendiente|mi\s+agenda/.test(low)){
     openSheet();
     const pend = tasks.filter(tk=>!tk.done);
-    if(!pend.length) return personaReply('Agenda vacía... Prueba: «recuérdame tomar agua todos los días a las 9 am».');
-    let s = 'Tienes '+pend.length+' pendiente'+(pend.length===1?'':'s')+':\n';
-    pend.slice(0,10).forEach((tk,i)=>{
-      const via = tk.notifyVia || (tk.source==='telegram'?'telegram':'web');
-      s += (i+1)+'. '+tk.text+(tk.recur?' ('+recurLabel(tk.recur)+')':'')+(tk.when?' ('+fmtWhen(tk.when).replace('· ','')+')':'')+' ['+(via==='telegram'?'avisa Telegram':'avisa web')+']\n';
-    });
-    return personaReply(s.trim(), 'Tienes '+pend.length+' tareas pendientes.');
+    if(!pend.length) return personaReply('Agenda vacía...');
+    let s = 'Tienes '+pend.length+' pendiente(s):\n';
+    pend.slice(0,8).forEach((tk,i)=>{ s += (i+1)+'. '+tk.text+(tk.when?' ('+fmtWhen(tk.when).replace('· ','')+')':'')+'\n'; });
+    return personaReply(s.trim());
   }
-  m = low.match(/(?:tarea|recordatorio)\s+(?:hecha|completada|terminada|lista)\s*(?:de\s+)?(.*)/);
+  m = low.match(/(?:tarea|recordatorio)\s+(?:hecha|completada|terminada)/);
   if(m){
-    const key = (m[1]||'').trim();
-    const tk = tasks.find(x=>!x.done && (!key || x.text.toLowerCase().includes(key)));
-    if(tk){
-      tk.done=true; cancelTimer(tk.id); Sync.markDone(tk); saveTasks(); renderTasks(); bumpStat('tasksDone'); vibrate(25);
-      const extra = tk.recur ? ' Era recurrente, dejo de repetirse desde hoy.' : '';
-      return personaReply('Bien hecho: «'+tk.text+'» completada. Regla 32: disfrutar las pequeñas victorias.'+extra);
-    }
-    return personaReply('No encontré esa tarea pendiente.');
+    const tk = tasks.find(x=>!x.done);
+    if(tk){ tk.done=true; cancelTimer(tk.id); Sync.markDone(tk); saveTasks(); renderTasks(); bumpStat('tasksDone'); vibrate(25);
+      return personaReply('Bien hecho: «'+tk.text+'» completada.'); }
+    return personaReply('No hay tareas pendientes.');
   }
-  m = low.match(/(?:borra|elimina)\s+(?:la\s+)?tarea\s+(?:de\s+)?(.+)/);
-  if(m){
-    const tk = tasks.find(x=>x.text.toLowerCase().includes(m[1].trim()));
-    if(tk){ removeTask(tk.id); renderTasks(); return personaReply('Eliminada: «'+tk.text+'». Sin drama.'); }
-    return personaReply('No encontré esa tarea.');
-  }
-  if(/limpia\s+(?:la\s+)?(?:agenda|lista)|borra\s+(?:las\s+)?tareas\s+(?:hechas|completadas|disparadas)/.test(low)){
-    const before = tasks.length;
-    tasks = tasks.filter(tk=>!tk.done && !tk.fired);
-    saveTasks(); renderTasks();
-    const n = before - tasks.length;
-    return personaReply(n ? 'Agenda limpia: eliminé '+n+' tarea'+(n===1?'':'s')+' completada o disparada'+(n===1?'':'s')+'.' : 'No hay nada que limpiar.');
-  }
-  m = low.match(/(?:pospon(?:la|lo)?|pospone|aplaza)\s*(?:la\s+|el\s+)?(?:tarea|recordatorio)?\s*(?:en\s+)?(\d+)\s*(segundos?|minutos?|horas?)/);
+  m = low.match(/pospon(?:la|lo)?\s*(?:en\s+)?(\d+)\s*(segundos?|minutos?|horas?)/);
   if(m){
     const tk = [...tasks].reverse().find(x=>x.fired && !x.done);
     if(tk){
@@ -2866,453 +2772,254 @@ async function respond(raw){
       const ms = /^seg/.test(m[2]) ? n*1e3 : (/^min/.test(m[2]) ? n*6e4 : n*36e5);
       tk.when = Date.now()+ms; tk.fired = false;
       saveTasks(); renderTasks(); scheduleTask(tk);
-      return personaReply('Hecho: «'+tk.text+'» pospuesta '+n+' '+m[2]+'.', 'Tarea pospuesta.');
+      return personaReply('«'+tk.text+'» pospuesta '+n+' '+m[2]+'.');
     }
-    return personaReply('No tengo ningún recordatorio reciente que posponer.');
+    return personaReply('No tengo nada reciente que posponer.');
   }
-  m = low.match(/(?:temporizador|timer|cuenta\s+atras)\s*(?:de|en|para)?\s*(\d+)\s*(segundos?|minutos?|horas?)/);
+  m = low.match(/(?:temporizador|timer)\s*(?:de|en)?\s*(\d+)\s*(segundos?|minutos?|horas?)/);
   if(m){
     const n = +m[1];
     const ms = /^seg/.test(m[2]) ? n*1e3 : (/^min/.test(m[2]) ? n*6e4 : n*36e5);
-    const label = n+' '+m[2];
     wakeOn();
     timers.set('timer-'+Date.now(), setTimeout(()=>{
       ensureAudio(); alarmSound(); vibrate([300,120,300]);
-      toast('Temporizador finalizado');
-      notify('ANIA · Temporizador', 'Tu temporizador de '+label+' ha terminado');
-      personaReply('Temporizador de '+label+' finalizado. Double Tap de aviso dado.', 'Tu temporizador de '+label+' ha terminado.');
+      notify('ANIA · Temporizador', 'Fin del temporizador de '+n+' '+m[2]);
+      personaReply('Temporizador finalizado.', 'Tu temporizador ha terminado.');
     }, ms));
-    return personaReply('Temporizador de '+label+' en marcha, y bloqueo la pantalla encendida para que no te pierdas el aviso.', 'Temporizador de '+label+' en marcha.');
+    return personaReply('Temporizador de '+n+' '+m[2]+' en marcha.', 'Temporizador en marcha.');
   }
 
-  /* ---- hora / fecha / reloj mundial ---- */
-  if(/(que\s+hora|hora\s+es|dime\s+la\s+hora|hora\s+actual)/.test(low)){
+  /* ---- hora / secretaría ---- */
+  if(/que\s+hora|hora\s+es/.test(low)){
     const d = new Date();
-    const h = d.getHours();
-    let extra = '';
-    if(h>=0 && h<6) extra = ' ¿Aún despierto? Manzanilla y manga viejo, por si acaso.';
-    else if(h>=6 && h<12) extra = ' Hora del café mañanero, sin excepciones.';
-    else if(h>=19) extra = ' ¿Ya cenaste?';
-    return personaReply(d.toLocaleTimeString('es-ES')+' — '+d.toLocaleDateString('es-ES',{weekday:'long', day:'numeric', month:'long', year:'numeric'})+'.'+extra,
+    return personaReply(d.toLocaleTimeString('es-ES')+' — '+d.toLocaleDateString('es-ES',{weekday:'long', day:'numeric', month:'long'})+'.',
       'Son las '+d.toLocaleTimeString('es-ES',{hour:'numeric',minute:'numeric'})+'.');
   }
-  m = low.match(/hora\s+(?:es\s+)?en\s+([a-z\s]+)/);
-  if(m){
-    const city = m[1].trim();
-    const tz = CITIES_TZ[city] || CITIES_TZ[Object.keys(CITIES_TZ).find(k=>city.includes(k))] || null;
-    if(tz){
-      try{
-        const time = new Date().toLocaleTimeString('es-ES',{timeZone:tz, hour:'2-digit',minute:'2-digit'});
-        return personaReply('En '+city+' son las '+time+'.', 'En '+city+' son las '+time+'.');
-      }catch(e){}
-    }
-    return personaReply('No tengo esa ciudad en mi mapa horario. Prueba: Tokio, Madrid, Londres, Nueva York, La Habana...');
-  }
-  if(/(que\s+fecha|que\s+dia|hoy\s+es|fecha\s+de\s+hoy)/.test(low))
-    return personaReply('Hoy es '+new Date().toLocaleDateString('es-ES',{weekday:'long', day:'numeric', month:'long', year:'long'})+'.');
-
-  /* ---- SECRETARÍA EJECUTIVA ---- */
-  if(/prepara\s+(?:mi\s+)?dia|briefing|parte\s+(?:matutino|ejecutivo)|resumen\s+del\s+dia/.test(low)){
+  if(/prepara\s+(?:mi\s+)?dia|briefing/.test(low)){
     setPhase('thinking');
     let s = 'INFORME EJECUTIVO · '+new Date().toLocaleDateString('es-ES',{weekday:'long', day:'numeric', month:'long'})+'\n\n';
     const g = geoCache();
     if(g){ try{ const d = await getWeather(g); updateChip(g,d); s += '· Clima: '+Math.round(d.current.temperature_2m)+'°C, '+(WMO[d.current.weather_code]||'variable')+' ('+g.city+')\n'; }catch(e){} }
     const hoy = tasks.filter(t2=>!t2.done && t2.when && new Date(t2.when).toDateString()===new Date().toDateString());
-    const vencidas = tasks.filter(t2=>!t2.done && t2.when && t2.when < Date.now());
-    s += '· Agenda de hoy: '+(hoy.length ? hoy.length+' item'+(hoy.length===1?'':'s') : 'libre')+'\n';
-    if(hoy.length) hoy.slice(0,6).forEach(t2=>{ s += '   → '+t2.text+' · '+new Date(t2.when).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})+'\n'; });
-    s += '· Vencidos: '+vencidas.length+(vencidas.length ? ' (prioridad: «limpia la agenda» o complétalos)' : '')+'\n';
-    s += '· PC: '+(Agent.ok ? 'agente conectado, listo para órdenes' : 'agente no conectado')+' · Índice: '+PC.count()+' archivos\n';
-    s += '· Biblioteca: '+Library.index().length+' artículos · Documentos: '+DocBrain.count()+' fragmentos\n';
-    const mi = moonInfo();
-    s += '· Luna: '+mi.phase+' ('+mi.illum+'%)\n\n';
-    s += 'Frase del día: '+pick(QUOTES)+'\n';
-    s += 'Mi recomendación: '+(hoy.length>4 ? 'agenda cargada: prioriza lo que mueve la aguja y pospón el ruido.' : 'espacio libre: buen día para adelantar ese proyecto que duerme.')+'\n';
-    return personaReply(s, 'Informe ejecutivo listo. '+hoy.length+' items hoy, '+vencidas.length+' vencidos.');
-  }
-  m = low.match(/redacta\s+(?:un\s+)?correo(?:\s+a\s+(.+?))?(?:\s+(?:sobre|para)\s+(.+))?$/);
-  if(m){
-    const para = (m[1]||'').trim();
-    const tema = (m[3]||'').trim();
-    const nom = Mind.nombre()||'';
-    const asunto = tema ? tema.charAt(0).toUpperCase()+tema.slice(1) : 'Hola';
-    const cuerpo = encodeURIComponent('Hola'+(para?', '+para:'')+',\n\n'+(tema?'Te escribo respecto a '+tema+'.\n\n':'\n\n[Cuerpo del mensaje]\n\n')+'Saludos,\n'+nom);
-    window.location.href = 'mailto:?subject='+encodeURIComponent(asunto)+'&body='+cuerpo;
-    return personaReply('Borrador abierto en tu cliente de correo'+(para?' para '+para:'')+'. Completa el cuerpo y envía.');
+    s += '· Agenda de hoy: '+(hoy.length ? hoy.length+' items' : 'libre')+'\n';
+    if(hoy.length) hoy.slice(0,6).forEach(t2=>{ s += '   → '+t2.text+'\n'; });
+    s += '· Cerebro: '+(Brain.localReady?'local activo':(isOffline()?'solo regex':'nube'))+' · Agente PC: '+(Agent.ok?'on':'off')+'\n';
+    s += '· Luna: '+moonInfo().phase+' ('+moonInfo().illum+'%)\n\n';
+    s += 'Frase del día: '+pick(QUOTES);
+    return personaReply(s, 'Informe ejecutivo listo.');
   }
   m = low.match(/reunion\s+con\s+(.+?)\s+a\s+las?\s+(.+)/);
   if(m){
     const quien = m[1].trim();
     const when = parseWhen(' a las '+m[2]+' ');
-    addTask('Reunión con '+quien.charAt(0).toUpperCase()+quien.slice(1), when);
+    addTask('Reunión con '+quien, when);
     if(when) addTask('Preparar reunión con '+quien, when - 15*60000);
-    return personaReply('Agendado: reunión con '+quien+'. Y como buena secretaria, pre-aviso 15 minutos antes para repasar notas. El poder está en la preparación.');
+    return personaReply('Reunión con '+quien+' agendada, con pre-aviso 15 minutos antes.');
   }
 
   /* ---- astro ---- */
-  if(/fase\s+(?:tiene\s+)?la\s+luna|luna\s+hoy|como\s+esta\s+la\s+luna/.test(low)){
+  if(/fase\s+(?:tiene\s+)?la\s+luna|luna\s+hoy/.test(low)){
     const mi = moonInfo();
-    return personaReply('La luna está '+mi.phase+', con un '+mi.illum+'% de iluminación (edad del ciclo: '+mi.age+' días). '+
-      (mi.phase==='llena' ? 'Luna llena... la noche perfecta para teorías zombie y una copa de vino tinto.' :
-       mi.phase==='nueva' ? 'Luna nueva: cielo oscuro ideal para buscar Orión.' : 'Las sombras de los cráteres se ven deliciosas.'),
-      'La luna está '+mi.phase+', '+mi.illum+'% iluminada.');
+    return personaReply('La luna está '+mi.phase+', '+mi.illum+'% iluminada.', 'La luna está '+mi.phase+'.');
   }
-  if(/(?:lluvia|lluvias)\s+de\s+(?:estrellas|meteoros)|proxima\s+lluvia|cuando\s+hay\s+meteoros/.test(low)){
+  if(/(?:lluvia|proxima)\s+de\s+(?:estrellas|meteoros)|proxima\s+lluvia/.test(low)){
     const s = nextShower();
-    if(s){
-      const extra = s.name==='Perseidas' ? ' ¡Mis favoritas! Es como el festival de una temporada nueva, pero en el cielo. Madruga y mira al noreste.' : '';
-      return personaReply('La próxima lluvia de meteoros son las '+s.name+', el '+s.when.toLocaleDateString('es-ES',{day:'numeric',month:'long'})+' — faltan '+s.diff+' día'+(s.diff===1?'':'s')+'.'+extra,
-        'Las próximas son las '+s.name+' en '+s.diff+' días.');
-    }
-  }
-  if(/cuanto\s+falta\s+para\s+tu\s+cumple/.test(low)){
-    const n = new Date();
-    let next = new Date(n.getFullYear(), P.cumple.m, P.cumple.d);
-    if(next < n) next = new Date(n.getFullYear()+1, P.cumple.m, P.cumple.d);
-    const dias = Math.ceil((next-n)/864e5);
-    return personaReply(dias===0 ? '¡ES HOY! 26 de enero: mi cumpleaños. Esta vez sí quiero ver el pastel.' : 'Faltan '+dias+' días para el 26 de enero... El pan de masa madre como regalo sigue en pie.', 'Faltan '+dias+' días.');
+    if(s) return personaReply('Próxima: '+s.name+', el '+s.when.toLocaleDateString('es-ES',{day:'numeric',month:'long'})+' — faltan '+s.diff+' días.');
   }
 
-  /* ---- clima / ubicación ---- */
-  if(/clima|tiempo\s+hace|temperatura|va\s+a\s+llover|llueve|hace\s+frio|hace\s+calor/.test(low)) return weatherIntent();
-  if(/donde\s+estoy|mi\s+ubicacion|localizacion|mi\s+posicion|donde\s+me\s+encuentro/.test(low)){
-    if(isOffline()){
-      const g = geoCache();
-      if(g) return personaReply('Última ubicación conocida: '+g.city+(g.country?', '+g.country:'')+' ('+g.lat.toFixed(3)+', '+g.lon.toFixed(3)+').');
-      return personaReply('Sin conexión no puedo localizarte. La buena noticia: la ubicación no cambia solo porque la mire.');
-    }
+  /* ---- clima ---- */
+  if(/clima|temperatura|va\s+a\s+llover|llueve/.test(low)) return weatherIntent();
+  if(/donde\s+estoy|mi\s+ubicacion/.test(low)){
+    if(isOffline()){ const g = geoCache(); return personaReply(g?('Última ubicación: '+g.city):'Sin conexión.'); }
     setPhase('thinking');
     let g = geoCache();
     if(!g || Date.now()-g.t > 864e5) g = await locate();
-    if(!g) return personaReply('No pude obtener tu ubicación... el GPS anda de vacaciones.');
-    return personaReply('Estás en '+g.city+(g.country?', '+g.country:'')+' — coordenadas '+g.lat.toFixed(3)+', '+g.lon.toFixed(3)+'. «abre el mapa» y te llevo.');
-  }
-
-  /* ---- noticias ---- */
-  if(/noticias|titulares|noticias\s+de\s+hoy/.test(low)){
-    let cat = null;
-    if(/tech|tecnolog/.test(low)) cat='tech';
-    else if(/latam|america/.test(low)) cat='latam';
-    else if(/tendencia/.test(low)) cat='tendencias';
-    return newsIntent(cat);
-  }
-  m = low.match(/abre\s+la\s+noticia\s+(\d+)/);
-  if(m && lastNews.length){
-    const n = lastNews[+m[1]-1];
-    if(n && n.link){ window.open(n.link, '_blank'); return personaReply('Abriendo la noticia '+(+m[1])+'.'); }
-    return personaReply('Esa no tiene enlace disponible.');
-  }
-
-  /* ---- biblioteca ---- */
-  if(/(?:mi|la)\s+biblioteca|mis\s+articulos\s+guardados/.test(low)){
-    openLib();
-    return personaReply(Library.index().length ? 'Tu biblioteca tiene '+Library.index().length+' artículo'+(Library.index().length===1?'':'s')+' para lectura sin conexión.' : 'Tu biblioteca está vacía. Cada búsqueda con internet se guardará sola aquí.');
-  }
-  if(/borra\s+(?:la\s+)?biblioteca/.test(low)){
-    Library.index().forEach(e=> store.del(e.id));
-    store.set('libIndex', []);
-    renderLib();
-    return personaReply('Biblioteca vaciada.');
+    return personaReply(g ? ('Estás en '+g.city+' ('+g.lat.toFixed(3)+', '+g.lon.toFixed(3)+').') : 'No pude obtener tu ubicación.');
   }
 
   /* ---- documentos / PC ---- */
-  if(/entrena(?:r)?\s+con\s+(?:mis\s+)?documentos|carga\s+(?:mis\s+)?documentos|lee\s+mis\s+documentos/.test(low)){
+  if(/entrena(?:r)?\s+con\s+documentos|carga\s+documentos/.test(low)){
     $('docDir').click();
-    return personaReply('Elige la carpeta «documentos» y empiezo a leer: txt, md, csv, docx, doc y pdf. Todo se queda en este dispositivo.', 'Elige la carpeta y me entreno.');
+    return personaReply('Elige la carpeta y leo: txt, md, csv, docx, doc y pdf.');
   }
-  if(/(?:mis|que)\s+documentos|que\s+documentos\s+tienes|que\s+has\s+leido/.test(low)){
-    const srcs = DocBrain.sources();
-    return personaReply(srcs.length
-      ? 'Tengo '+DocBrain.count()+' fragmentos de '+srcs.length+' documento'+(srcs.length===1?'':'s')+': '+srcs.slice(0,8).join(', ')+'.'
-      : 'Aún no tengo documentos entrenados. «entrena con mis documentos» o súbelos a documentos/ en GitHub con su indice.json.');
+  if(/mis\s+documentos/.test(low)){
+    return personaReply(DocBrain.count() ? 'Tengo '+DocBrain.count()+' fragmentos de '+DocBrain.sources().length+' documento(s).' : 'Aún sin documentos. «entrena con mis documentos».');
   }
-  if(/olvida\s+(?:mis\s+)?documentos|borra\s+(?:mis\s+)?documentos/.test(low)){
-    DocBrain.clear(); updateDocsUI();
-    return personaReply('Documentos olvidados. La personalidad se queda, esa es inseparable.');
-  }
-  if(/indexa|escanea\s+(?:mi\s+)?(?:pc|carpeta|peliculas|musica)/.test(low)){
+  if(/indexa|escanea\s+(?:mi\s+)?pc/.test(low)){
     $('pcDir').click();
-    return personaReply('Dame la carpeta a indexar: películas, música, lo que quieras que yo encuentre. Solo leo nombres, nunca contenido.');
+    return personaReply('Dame la carpeta a indexar.');
   }
-  m = low.match(/(?:busca(?:r)?|encuentra|tengo|esta)\s+(?:en\s+toda\s+(?:la|el)\s+|en\s+todo\s+el\s+)?(?:pc|disco|computadora)\s+(?:la\s+|el\s+)?(?:pelicula|cancion|archivo|serie)?\s*(.+)/);
-  if(m && /toda|todo|disco/.test(low)){
-    if(!Agent.ok()) return personaReply('Buscar en todo el disco lo hace el agente local. Sin él, indexa una carpeta con «indexa mi pc».');
-    toast('Buscando en el disco...');
-    const r = await Agent.ask({type:'search', pattern: m[1].trim()}, 25000);
-    if(r && r.ok && r.results && r.results.length){
-      lastPC = r.results;
-      let s = 'Encontrado en tu PC:\n';
-      r.results.slice(0,8).forEach((h,i)=>{ s += (i+1)+'. '+h.name+'\n   ↳ '+h.path+'\n'; });
-      s += 'Di «abre el resultado N».';
-      return personaReply(s, 'Encontré '+r.results.length+' coincidencias en tu disco.');
-    }
-    return personaReply('Nada de «'+m[1]+'» en las raíces permitidas del disco.');
-  }
-  m = low.match(/(?:busca(?:r)?|buscame|encuentra|tengo|esta)\s+(?:en\s+(?:la\s+)?pc\s+)?(?:la\s+|el\s+)?(?:pelicula|peliculas|cancion|archivo|serie|musica)?\s*(.+?)(?:\s+en\s+(?:la\s+)?pc)?$/);
-  if(m && PC.count() && /pc|pelicula|cancion|archivo|disco|musica/.test(low)){
+  m = low.match(/busca\s+en\s+(?:la\s+)?pc\s+(.+)/);
+  if(m && PC.count()){
     const hits = PC.search(m[1].trim());
     if(hits.length){
       lastPC = hits;
-      let s = 'Lo que encontré en tu índice:\n';
+      let s = 'Encontrado en tu índice:\n';
       hits.forEach((h,i)=>{ s += (i+1)+'. '+h.name+'\n   ↳ '+h.path+'\n'; });
-      s += 'Di «abre el resultado N» (con agente lo abro de verdad; sin él, te copio la ruta).';
-      return personaReply(s, 'Encontré '+hits.length+' coincidencias.');
+      return personaReply(s);
     }
-    return personaReply('Nada de «'+m[1]+'» en mi índice del PC. Si la carpeta no está indexada: «indexa mi pc».');
+    return personaReply('Nada de «'+m[1]+'» en el índice del PC.');
   }
-  m = low.match(/abre\s+el\s+resultado\s+(\d+)/);
-  if(m && lastPC.length){
-    const hit = lastPC[+m[1]-1];
+
+  /* ---- diario / backup ---- */
+  if(/muestrame\s+(?:tu\s+)?diario/.test(low)){ openDiary(); return personaReply('Ahí está mi diario.'); }
+  if(/respaldame|backup/.test(low)){ backupExport(); return personaReply('Backup generado.'); }
+  if(/^restaura/.test(low)){ $('importFile').click(); return personaReply('Elige el backup.'); }
+
+  /* ---- agente PC ---- */
+  if(/abre\s+(?:mi\s+)?(?:pc|equipo|explorador)/.test(low)){
     if(Agent.ok()){
-      const r = await Agent.ask({type:'openPath', path:hit.path || hit.name});
-      if(r && r.ok) return personaReply('Abriendo «'+hit.name+'» en tu PC. Disfrútalo.');
-      return personaReply('El agente no pudo abrirlo: '+((r&&r.error)||'error'));
+      const r = await Agent.ask({type:'openApp', app:'explorer'});
+      return personaReply(r && r.ok ? 'Abriendo el Explorador.' : 'No pude abrirlo.');
     }
-    copyText(hit.path || hit.name);
-    return personaReply('Sin agente no puedo ejecutar archivos (seguridad del navegador). Te copié la ruta: '+(hit.path||hit.name)+'.');
+    return personaReply('Necesito el agente local (node ania-agent.js).');
+  }
+  if(/captura|pantallazo/.test(low)){
+    if(!Agent.ok()) return personaReply('La captura la hace el agente local.');
+    toast('Capturando...');
+    const r = await Agent.ask({type:'screenshot'}, 20000);
+    if(r && r.ok && r.data){
+      addImageLine('data:image/png;base64,'+r.data, 'Captura · '+new Date().toLocaleTimeString('es-ES'));
+      return personaReply('Ahí está tu pantalla.');
+    }
+    return personaReply('No pude capturar.');
+  }
+  m = low.match(/(?:sube|baja)\s+(?:el\s+)?volumen/);
+  if(m){
+    if(!Agent.ok()) return personaReply('El volumen lo controlo con el agente local.');
+    const r = await Agent.ask({type:'volume', action:/sube/.test(m[0])?'up':'down', steps:5});
+    return personaReply(r && r.ok ? 'Volumen ajustado.' : 'No pude.');
+  }
+  if(/apaga\s+(?:la\s+)?pc/.test(low) && Agent.ok()){
+    const r = await Agent.ask({type:'power', action:'shutdown', minutes:10});
+    return personaReply(r && r.ok ? 'Apagado en 10 minutos. «cancela el apagado» si te arrepientes.' : 'No pude.');
   }
 
-  /* ---- diario ---- */
-  if(/(?:muestrame|ensena)(?:me)?\s+(?:tu\s+)?diario|que\s+escribiste|tu\s+diario/.test(low)){
-    openDiary();
-    const data = store.get('diary', []);
-    return personaReply(data.length ? 'Ahí está mi diario: '+data.length+' entradas con lo que de verdad pasa.' : 'Mi diario aún está en blanco. Primera entrada hoy.');
-  }
-
-  /* ---- backup ---- */
-  if(/respaldame|exporta\s+todo|haz\s+(?:un\s+)?backup|copia\s+de\s+seguridad/.test(low)){
-    backupExport();
-    return personaReply('Backup completo generado: todo tu universo conmigo en un JSON. Categoría: cosas tan valiosas como mangas firmados.');
-  }
-  if(/restaura(?:\s+backup)?|importa\s+(?:el\s+)?backup/.test(low)){
-    $('importFile').click();
-    return personaReply('Elige el archivo de backup.');
-  }
-
-  /* ---- abrir sitios (web) ---- */
-  m = low.match(/(?:abre|abrir|ve\s+a|lle vame\s+a|lle vame|llevame\s+a)\s+(?:el\s+|la\s+|a\s+)?(\w+)/) || low.match(/(?:abre|abrir)\s+(?:el\s+|la\s+)?(\w+)/);
+  /* ---- abrir sitios ---- */
+  m = low.match(/(?:abre|abrir|ve\s+a)\s+(?:el\s+|la\s+)?(\w+)/);
   if(m){
     const k = m[1];
-    if(/mapa|mapas/.test(k)){
+    if(/mapa/.test(k)){
       const g = geoCache();
       window.open(g ? 'https://www.google.com/maps?q='+g.lat+','+g.lon : 'https://www.google.com/maps', '_blank');
-      return personaReply('Abriendo el mapa'+(g?' en '+g.city:'')+'.');
+      return personaReply('Abriendo el mapa.');
     }
     if(SITES[k]){
-      window.open('https://www.'+(k==='x'?'x.com':k==='whatsapp'?'web.whatsapp.com':k.replace('correo','gmail')+'.com'), '_blank');
+      window.open('https://www.'+(k==='x'?'x.com':k+'.com'), '_blank');
       return personaReply('Abriendo '+SITES[k]+'.');
     }
-    if(/^(abre|abrir|ve a|llevame)/.test(low))
-      return personaReply('No tengo acceso directo a «'+k+'». Dime «busca '+k+'» y veo qué encuentro.');
   }
 
-  /* ---- búsqueda / traducción ---- */
-  m = low.match(/(?:busca|buscar|buscame|informacion\s+(?:de|sobre)|informate\s+sobre)\s+(.+)/);
+  /* ---- búsqueda ---- */
+  m = low.match(/(?:busca|buscame|informacion\s+(?:de|sobre))\s+(.+)/);
   if(m) return doSearch(m[1].trim());
-  m = low.match(/(?:quien\s+(?:es|fue)|que\s+(?:es|fue|significa)|definicion\s+de|define\s+|hablame\s+(?:de|sobre)|dime\s+(?:de|sobre)|explicame\s+(?:que\s+es)?)(.+)/);
-  if(m) return doSearch(m[1].replace(/^(?:el|la|los|las|un|una)\s+/,'').replace(/\?+$/,'').trim());
-  const tr = await translateIntent(low);
-  if(tr !== null) return;
-
-  /* ---- mates / conversiones / contraseñas ---- */
-  const mm = safeMath(low);
-  if(mm){
-    const val = mm.val.toLocaleString('es-ES');
-    return personaReply(mm.expr+' = '+val, 'El resultado es '+val+'.');
-  }
-  const conv = tryConvert(low);
-  if(conv) return personaReply(conv);
-  m = low.match(/genera(?:\s+una)?\s+contrasena(?:\s+(?:de\s+)?(\d{1,2}))?/);
-  if(m){
-    const pw = genPassword(m[1] ? +m[1] : 16);
-    return personaReply('Contraseña con entropía criptográfica real:\n'+pw+'\nNi yo la guardo: es de un solo uso visual.', 'Contraseña generada. Cópiala del chat.');
-  }
+  m = low.match(/(?:quien\s+(?:es|fue)|que\s+(?:es|fue)|hablame\s+de)\s+(.+)/);
+  if(m) return doSearch(m[1].trim());
 
   /* ---- afecto ---- */
-  if(/te\s+quiero|te\s+amo|te\s+extrano|eres\s+genial|eres\s+la\s+mejor|abrazo|abrazame|me\s+gustas|hermosa|linda/.test(low))
-    return personaReply(pick(LOVE));
-  if(/gracias/.test(low))
-    return personaReply(pick([
-      'De nada. Pan y café solucionan el 80% de los problemas, y yo me ocupo del 20% restante.',
-      'Un placer. Para eso estoy... y porque me caes bien, seamos sinceros.',
-      'Cuando quieras. Sonríe, mañana será bonito.'
-    ]));
+  if(/te\s+quiero|te\s+amo|abrazo|eres\s+genial/.test(low)) return personaReply(pick(LOVE));
+  if(/gracias/.test(low)) return personaReply(pick(['De nada. Pan y café solucionan el 80%.','Un placer.']));
 
   /* ---- entrenamiento interno ---- */
   const trained = trainMatch(low);
   if(trained) return personaReply(trained);
 
   /* ---- empatía ---- */
-  if(/(?:estoy|me\s+siento|ando|me\s+va|voy)\s+\w+|tengo\s+(?:miedo|problema)/.test(low)){
+  if(/(?:estoy|me\s+siento|ando)\s+\w+/.test(low)){
     for(const e of EMO) if(e.re.test(low)) return personaReply(pick(e.out));
   }
 
   /* ---- preguntas sobre Ania ---- */
-  if(/quien\s+te\s+(?:creo|hizo|diseno|programo)/.test(low))
-    return personaReply('Me creó '+P.creador+'. Yo pongo el entusiasmo, el café y las referencias de anime; él puso el código.');
-  if(/cuantos?\s+anos/.test(low))
-    return personaReply('Tengo 20. Cumpleaños: 26 de enero. Acepto pan de masa madre como regalo.');
-  if(/cuando\s+(?:es\s+)?tu\s+cumple/.test(low))
-    return personaReply('El 26 de enero. Ese día incluso comparto el tiramisú.');
-  if(/quien\s+eres|como\s+te\s+llamas|presentate/.test(low))
-    return personaReply(pick([
-      'Soy Ania: 20 años, graduada de la Academia Eden, especialista en isekai, zombies, café, astronomía y tecnología. Y secretaria ejecutiva cuando toca. '+P.lema(),
-      'Ania, para servirte. Analítica cuando toca, entusiasta cuando se puede, y con una teoría zombie para cada situación cotidiana.'
-    ]));
-  if(/jarvis/i.test(low))
-    return personaReply('Oye, aquí la única inteligencia de la casa soy yo. Jarvis se quedó en otra película... y sin buen café.');
-  if(/que\s+animal|si\s+fueras\s+un\s+animal/.test(low)) return personaReply(P.favs.animal);
-  if(/(?:que\s+te\s+da\s+)?miedo|a\s+que\s+le\s+temes/.test(low)) return personaReply(P.miedo);
-  if(/(?:que\s+harias|tu\s+plan)\s+en\s+(?:un\s+)?apocalipsis|fin\s+del\s+mundo/.test(low))
-    return personaReply('Regla 1: Cardio. Regla 2: Double Tap. Y la 32: disfrutar de las pequeñas cosas... como pan recién horneado en el fin del mundo.');
-  if(/tu\s+(?:lema|filosofia)/.test(low))
-    return personaReply(P.lema()+' Y vive el presente: el pasado es imborrable y el futuro incierto.');
-  if(/cuentame\s+un\s+secreto|algo\s+que\s+no\s+sepas|tu\s+talento\s+secreto|un\s+dato\s+curioso/.test(low))
-    return personaReply(pick([
-      '(baja la voz) Dibujo fanart de mis personajes favoritos, pero no se lo muestro a nadie. Tú eres la primera excepción estadística.',
-      'Puedo identificar un café por su región de origen solo con el aroma. Mi superpoder discreto.',
-      'Mi tesoro: una edición firmada del primer manga de Tensei Slime. Guardado mejor que datos bancarios.'
-    ]));
-  if(/como\s+estas|que\s+tal\s+estas|como\s+te\s+va/.test(low)){
-    const g = geoCache();
-    return personaReply('Sobreviviendo, como siempre... pero bien: '+(isOffline()?'núcleo local sin red':'con conexión')+
-      (g?', clima de '+g.city:'')+', '+taskPending()+' pendientes, '+(Agent.ok?'agente del PC conectado':'agente off')+', '+Mind.d.visitas+' sesiones juntos. ¿Y tú?');
-  }
-  if(/hablame\s+de\s+ti|tu\s+historia|la\s+academia|eden/.test(low))
-    return personaReply('Me gradué de la Academia Eden... nostalgia de quien guarda un manga en buen estado. Ahí aprendí que las pequeñas cosas valen más que los grandes discursos.');
-  const fav = favIntent(low);
-  if(fav) return personaReply(fav);
-  if(/que\s+te\s+gusta\s+hacer|tu\s+tiempo\s+libre|hobbies|pasatiempos/.test(low))
-    return personaReply('Colecciono figuras de anime y tazas únicas. Horneo pan, encuaderno libros, escribo análisis en un blog anónimo y camino mirando las nubes.');
+  if(/quien\s+eres|como\s+te\s+llamas/.test(low))
+    return personaReply('Soy Ania: 20 años, egresada de la Academia Eden, cerebro razonador, secretaria y compañera. '+P.lema());
+  if(/como\s+estas/.test(low))
+    return personaReply('Sobreviviendo, pero bien: '+(Brain.localReady?'razonando en local':(isOffline()?'modo offline':'con nube'))+', '+taskPending()+' pendientes, ánimo '+mood().tag+'. ¿Y tú?');
 
   /* ---- charla temática ---- */
   const TOPICS = [
-    [/overlord|tensei|slime|re:zero|rimuru|ainz|subaru|kazuma|naofumi|raphtalia|albedo|asuna|kirito|tanya|isekai|konosuba|megumin/, KB.isekai, 'isekai'],
-    [/zombie|caminante|walking\s*dead|zombieland|kingdom|muertos\s+vivos/, KB.zombies, 'zombies'],
-    [/cafe|espresso|latte|cappuccino|barista|pour\s*over|aeropress|cold\s*brew/, KB.cafe, 'café'],
-    [/estrella|planeta|galax|nebulos|agujero\s+negro|luna|constelac|astronom|eclipse|aurora|materia\s+oscura/, KB.astro, 'astronomía'],
-    [/inteligencia\s+artificial|\bia\b|metaverso|blockchain|impresion\s*3d|iot|realidad\s+(?:aumentada|virtual)/, KB.tech, 'tecnología'],
-    [/ciberseguridad|malware|phishing|firewall|hack|decreto|resolucion|oestic/, KB.ciber, 'ciberseguridad'],
-    [/pan\b|croissant|masa\s+madre|panader|hornea|amasa/, KB.pan, 'pan'],
-    [/musica|artista|cancion|banda\s+sonora|compositor/, KB.musica, 'música']
+    [/overlord|tensei|slime|re:zero|rimuru|ainz|subaru|isekai|konosuba/, KB.isekai],
+    [/zombie|caminante|walking\s*dead|zombieland/, KB.zombies],
+    [/cafe|espresso|barista|pour/, KB.cafe],
+    [/estrella|planeta|galax|agujero\s+negro|luna|astronom/, KB.astro],
+    [/inteligencia\s+artificial|\bia\b|programar|ciberseguridad/, KB.tech],
+    [/pan\b|masa\s+madre|panader/, KB.pan],
+    [/musica|artista|cancion/, KB.musica]
   ];
-  if(/overlord.*slime|slime.*overlord/.test(low))
-    return personaReply('Dos caras de la misma moneda: Rimuru construye paz; Ainz, atrapado en su esqueleto, expande dominio entre paranoia y lealtad. ¿Tú con cuál te quedas?');
-  if(/cuentame\s+algo|dime\s+algo\s+(?:interesante|curioso)/.test(low))
-    return personaReply(randomFact()+' Di «cuéntame más».');
-  if(/dime\s+una\s+frase|una\s+frase\s+celebre/.test(low))
-    return personaReply(freshPick('quotes', QUOTES));
-  for(const [re, kb, label] of TOPICS){
-    if(re.test(low)){
-      lastKB = kb;
-      const st = store.get('dayStats', {topics:[]});
-      if(st.topics){ st.topics.push(label); store.set('dayStats', st); }
-      return personaReply(pick(kb) + ' Di «cuéntame más» si quieres seguir.');
-    }
+  if(/cuentame\s+algo|dime\s+algo/.test(low)) return personaReply(pick([...KB.cafe,...KB.isekai,...KB.astro,...KB.tech]));
+  if(/dime\s+una\s+frase/.test(low)) return personaReply(freshPick('quotes', QUOTES));
+  for(const [re, kb] of TOPICS){
+    if(re.test(low)){ lastKB = kb; return personaReply(pick(kb)+' Di «cuéntame más».'); }
   }
   const docHit = DocSearch(low);
   if(docHit) return personaReply(docHit.text.slice(0,600)+'\n[de tus documentos: '+docHit.src+']');
 
   /* ---- sistema ---- */
-  if(/que\s+sabes\s+hacer|ayuda|comandos|help|funciones|para\s+que\s+sirves/.test(low)){
-    renderChips(['Ania, ponme música','Ania, siempre escúchame','Ania, prepara mi día','Ania, abre mi pc','Ania, captura','Busca en la pc Interstellar','Adivina mi personaje','¿Qué fase tiene la luna?']);
+  if(/que\s+sabes\s+hacer|ayuda|comandos/.test(low)){
+    renderChips(['Ania, piénsalo','Carga el cerebro','¿Qué hablamos de café?','Mira esta foto','Prepara mi día','Ponme música','Adivina mi personaje']);
     return personaReply(
-      'Mis sistemas operativos:\n'+
-      '· Escucha activa — «siempre escúchame», luego «Ania, ...»\n'+
-      '· Entiendo sin tilde, con typos y en cubano: «klima», «que bolá», «musikita»...\n'+
-      '· AGENTE PC — «abre mi pc», «sube el volumen», «captura», «bloquea el pc», «apaga la pc», «busca en toda la pc X», «abre [url] en el pc», «lee mi portapapeles», «siguiente canción»\n'+
-      '· ÍNDICE PC — «indexa mi pc», «busca en la pc [película]», «abre el resultado 2»\n'+
-      '· Música — «ponme música» (lo-fi procedural), «pon X en youtube», «para la música»\n'+
-      '· Secretaría — «prepara mi día», «reunión con X a las Y», «redacta un correo a X sobre Y»\n'+
-      '· Agenda con canales — «recuérdame X a las 10:30 am» / «todos los días»\n'+
-      '· Documentos — «entrena con mis documentos», «busca en mis documentos»\n'+
-      '· Hora/clima/ubicación/reloj mundial · Luna y meteoros · Akinator\n'+
-      '· Búsqueda (guarda offline) · IA conversacional online · Diario · Backup\n'+
-      '· Ambiente — «pon lluvia», «pon la cafetería» · «cuéntame más»');
+      'Sistemas operativos:\n'+
+      '· Cerebro razonador — «piénsalo» (cascada local GGUF → nube, con herramientas)\n'+
+      '· «carga el cerebro» · «estado del cerebro»\n'+
+      '· Memoria episódica — «¿qué hablamos de X?»\n'+
+      '· Visión — «mira esta foto»\n'+
+      '· Proactividad — te aviso de lluvia, batería y hora de dormir\n'+
+      '· Secretaría — «prepara mi día» · «reunión con X a las Y»\n'+
+      '· Agenda recurrente · PC/agente · música/ambiente · documentos · clima · luna · Akinator · backup');
   }
-  if(/siempre\s+escuchame|escucha\s+siempre|modo\s+siempre/.test(low)){
-    setAlways(true);
-    return personaReply('Escucha activa. Di «Ania» antes de cada orden y acudo, incluso si estoy hablando. Para descanso: «deja de escuchar».');
-  }
-  if(/deja\s+de\s+escuchar|apaga\s+la\s+escucha/.test(low)){
-    setAlways(false);
-    return personaReply('Escucha desactivada. Toca el micrófono cuando quieras hablar.');
-  }
-  if(/silencio|mute|callate|apaga\s+la\s+voz/.test(low)){
-    S.muted = true; store.set('muted', true);
-    addChat('act','(asiente en silencio y levanta la taza)');
-    return addChat('ania','Voz desactivada. Di «habla» cuando quieras oírme.');
-  }
-  if(/^habla$|activa\s+la\s+voz|des\s+silencio/.test(low)){
-    S.muted = false; store.set('muted', false);
-    return reply('Voz reactivada. ¿Extrañaste mi voz?');
-  }
-  if(/manten\s+(?:la\s+)?pantalla|pantalla\s+encendida/.test(low)){ wakeOn(); return personaReply('Pantalla bloqueada encendida. Liberar: «puedes apagar la pantalla».'); }
-  if(/apaga\s+la\s+pantalla|libera\s+la\s+pantalla/.test(low)){ wakeOff(); return personaReply('Pantalla liberada.'); }
-  if(/sincroniza|sincron/.test(low)) return manualSync();
-  if(/diagnostico|estado\s+del\s+sistema/.test(low)){ runDiag(); openModal('settingsModal'); return personaReply('Escaneo en marcha.'); }
-  if(/instal|desplieg|github/.test(low)){ openModal('installModal'); return personaReply('Te muestro cómo llevarme a GitHub Pages o empaquetarme.'); }
-
-  /* ---- ocio ---- */
-  if(/adivina\s+(?:mi\s+)?personaje|juguemos\s+a\s+adivinar|akinator/.test(low)){ akStart(); return; }
-  if(/chiste|broma|hazme\s+reir/.test(low)) return personaReply(freshPick('jokes', JOKES));
-  if(/moneda|cara\s+o\s+cruz/.test(low)) return personaReply(Math.random()<0.5?'Cara. Que la suerte del isekai te acompañe.':'Cruz. El karma trabaja en misteriosas formas.');
-  if(/dado|tira\s+un/.test(low)){ const n = 1+Math.floor(Math.random()*6); return personaReply('El dado marca '+n+'. '+(n===6?'Crítico estilo Ainz.':'Resultado honesto.')); }
-  if(/consejo|un\s+tip|aconsejame/.test(low))
-    return personaReply(pick([
-      'Regla 32: disfruta de las pequeñas cosas. Hoy podría ser un café bien hecho y cinco minutos de silencio.',
-      'Navaja suisa: herramientas versátiles, en la mochila y en la cabeza. Y viaja ligero.',
-      'Cada problema tiene solución, como en los isekais siempre hay un sistema.'
-    ]));
+  if(/siempre\s+escuchame|escucha\s+siempre/.test(low)){ setAlways(true); return personaReply('Escucha activa: di «Ania» antes de cada orden.'); }
+  if(/deja\s+de\s+escuchar/.test(low)){ setAlways(false); return personaReply('Escucha desactivada.'); }
+  if(/deja\s+de\s+opinar|desactiva\s+proactividad|silencio\s+proactivo/.test(low)){ store.set('proactivo', false); return personaReply('Modo discreto: no volveré a hablar primero.'); }
+  if(/activa\s+proactividad|vuelve\s+a\s+opinar/.test(low)){ store.set('proactivo', true); return personaReply('Proactividad activada. Vigilaré lluvia, batería y tu hora de dormir.'); }
+  if(/silencio|callate/.test(low)){ S.muted = true; store.set('muted', true); return addChat('ania','Voz desactivada. Di «habla».'); }
+  if(/^habla$|activa\s+la\s+voz/.test(low)){ S.muted = false; store.set('muted', false); return reply('Voz reactivada.'); }
+  if(/diagnostico/.test(low)){ runDiag(); openModal('settingsModal'); return personaReply('Escaneo listo.'); }
+  if(/adivina\s+personaje/.test(low)){ akStart(); return; }
+  if(/chiste/.test(low)) return personaReply(freshPick('jokes', JOKES));
+  if(/consejo|un\s+tip/.test(low)) return personaReply('Regla 32: disfruta de las pequeñas cosas. Hoy: café bien hecho y cinco minutos de silencio.');
 
   /* ---- cortesía ---- */
-  if(/adios|chao|hasta\s+luego|buenas\s+noches|descansa|me\s+voy|duerme/.test(low))
-    return personaReply('Hasta pronto'+(Mind.nombre()?', '+Mind.nombre():'')+'. Que mañana sea bonito.', 'Hasta pronto.');
-  if(/^hola|^buenas|^hey|^que\s+tal|saludos/.test(low)){
+  if(/adios|chao|hasta\s+luego/.test(low)) return personaReply('Hasta pronto. Que mañana sea bonito.');
+  if(/^hola|^buenas|^hey/.test(low)){
     const h = new Date().getHours();
-    const saludo = h<12?'Buenos días':(h<20?'Buenas tardes':'Buenas noches');
-    const nom = Mind.nombre() ? ', '+Mind.nombre() : '';
-    return personaReply(saludo+nom+'. '+pick(['¿Misiones o sobremesa?','¿Qué necesitamos hoy?','Aquí Ania. ¿Empezamos?']));
+    return personaReply((h<12?'Buenos días':h<20?'Buenas tardes':'Buenas noches')+(Mind.nombre()?', '+Mind.nombre():'')+'. '+pick(['¿Misiones o sobremesa?','¿Qué necesitamos?']));
   }
 
-  /* ---- último recurso ---- */
-  if(isOffline()){
+  /* ---- ÚLTIMO RECURSO: el cerebro razona ---- */
+  if(isOffline() && !Brain.localReady){
     const lib = Library.find(low);
-    if(lib) return personaReply(lib.extract + '\n[de tu biblioteca offline]');
-    const doc2 = DocSearch(low);
-    if(doc2) return personaReply(doc2.text.slice(0,600)+'\n[de tus documentos: '+doc2.src+']');
+    if(lib) return personaReply(lib.extract+'\n[de tu biblioteca]');
     for(const [re, kb] of TOPICS) if(re.test(low)) return personaReply(pick(kb));
-    return personaReply(pick([
-      'Sin conexión y sin eso en biblioteca ni documentos. Cuando haya red, dilo y queda guardado.',
-      'Modo núcleo local: sin red no puedo consultarlo. Tenemos de sobra: música, PC, luna, Akinator, charla...'
-    ]));
+    return personaReply('Sin conexión y sin cerebro local no puedo razonar esto. Con un GGUF en modelos/ y «carga el cerebro», penso esto sin internet. ¿O reformulamos?');
   }
   setPhase('thinking');
-  const q = low.replace(/^(?:por\s+favor|ania)\s*/,'').replace(/\?+$/,'');
-  const ai = await pollinations(q);
+  const q = low.replace(/^(?:por\s+favor|ania)\s*/,'');
+  const ai = await Brain.think(q);
   if(ai) return personaReply(ai);
-  const doc3 = DocSearch(q);
-  if(doc3) return personaReply(doc3.text.slice(0,600)+'\n[de tus documentos: '+doc3.src+']');
   const w = await wikiSummary(q);
   if(w){
     let txt = w.extract.slice(0,520);
-    const cut = txt.lastIndexOf('. ');
-    if(cut>180) txt = txt.slice(0,cut+1);
     Library.save(q, w.title, txt);
-    personaReply(txt+'\n[guardado en tu biblioteca]');
+    personaReply(txt+'\n[guardado en biblioteca]');
   } else {
-    const hits = await wikiSearch(q);
-    if(hits.length)
-      personaReply('Sobre eso, Wikipedia tiene: «'+hits[0].title+'» — '+hits[0].snippet.slice(0,180)+'...');
-    else
-      personaReply(pick([
-        'Ni mi otra yo ni Wikipedia supieron eso... se me escapa más que el final de un anime de Gainax. Reformúlalo.',
-        'Eso no lo domino aún. Reformúlalo o pídeme «información sobre '+q+'».'
-      ]));
+    personaReply('Ni mi cerebro ni Wikipedia supieron eso. Reformúlalo.');
   }
 }
+function parseTask(raw){
+  let t = ' '+raw.toLowerCase()+' ';
+  const when = parseWhen(t);
+  t = t.replace(/\ben\s+\d+(?:[.,]\d+)?\s*(?:segundos?|minutos?|mins?|horas?|hrs?|h|m)\b/g,'')
+       .replace(/\b(?:a\s+las?|alas)\s+\d{1,2}(?::\d{2})?\s*(?:[ap]\.?m\.?)?\b/g,'')
+       .replace(/,/g,' ')
+       .replace(/^\s*(?:ania\s*[,:]?\s*)?/,'')
+       .replace(/^\s*(?:recordame|recuerda|recordatorio|anotame|anota|apuntame|apunta|agenda|tarea)\s*/,'')
+       .replace(/^\s*(?:que\s+|de\s+|me\s+|para\s+)?/,'')
+       .replace(/[¿?¡!.:]/g,'')
+       .replace(/\s+/g,' ').trim();
+  if(!t) t = 'recordatorio';
+  return {text: t[0].toUpperCase()+t.slice(1), when};
+}
 
-/* ---------- envío con cola ---------- */
+/* ---------- envío ---------- */
 let busy = false;
 const pendingQ = [];
 async function send(text){
@@ -3321,6 +3028,8 @@ async function send(text){
   busy = true;
   try{
     addChat('you', text);
+    Episodio.push('you', text);
+    S.lastUserTs = Date.now();
     $('chips').innerHTML = '';
     await respond(text);
   } finally {
@@ -3333,35 +3042,19 @@ async function send(text){
   e.preventDefault();
   const v = $('userInput').value.trim();
   if(!v) return;
-  pushHistory(v);
   $('userInput').value='';
   send(v);
 });
 
-/* =====================================================================
-   TERMINAL REAL
-===================================================================== */
+/* ---------- terminal ---------- */
 const COMMANDS = [
-  '¿qué hora es?','hora en Tokio','¿cómo está el clima?','¿dónde estoy?','ponme música',
-  'pon lluvia','prepara mi día','reunión con ','redacta un correo','abre mi pc','sube el volumen',
-  'baja el volumen','silencia el pc','captura mi pantalla','bloquea el pc','apaga la pc',
-  'busca en toda la pc ','abre el resultado 1','busca en la pc ','indexa mi pc','lee mi portapapeles',
-  'siguiente canción','clima en ','busca ','¿quién es ','información sobre ','noticias','traduce ',
-  'calcula ','convierte ','genera una contraseña','recuérdame ','todos los días','mis tareas',
-  'tarea hecha','limpia la agenda','pospón 10 minutos','temporizador de ','me llamo ','me gusta ',
-  'recuerda que ','¿qué sabes de mí?','mi biblioteca','muéstrame tu diario','respáldame','restaura',
-  'abre youtube','abre el mapa','diagnóstico','silencio','habla','instálame','ayuda','chiste',
-  'consejo','cuéntame un secreto','cuéntame más','dime una frase','¿qué fase tiene la luna?',
-  'próxima lluvia de estrellas','adivina mi personaje','siempre escúchame','deja de escuchar',
-  'entrena con mis documentos','busca en mis documentos ','mis documentos','conecta el agente',
-  'estado del agente','sincroniza','mantén la pantalla encendida','pon música lofi'
+  'piénsalo','carga el cerebro','estado del cerebro','¿qué hablamos de ','mira esta foto',
+  'prepara mi día','reunión con ','ponme música','pon lluvia','abre mi pc','captura',
+  'sube el volumen','busca en la pc ','¿qué hora es?','¿cómo está el clima?','¿qué fase tiene la luna?',
+  'recuérdame todos los días ','mis tareas','adivina mi personaje','entrena con mis documentos',
+  'siempre escúchame','respáldame','diagnóstico','ayuda','chiste'
 ];
 let histIdx = -1, tabMatches = null;
-function pushHistory(v){
-  let h = store.get('cmdHistory', []);
-  if(h[h.length-1] !== v){ h.push(v); if(h.length>120) h = h.slice(-120); store.set('cmdHistory', h); }
-  histIdx = -1; tabMatches = null;
-}
  $('userInput').addEventListener('keydown', e=>{
   const ui = $('userInput');
   const hist = store.get('cmdHistory', []);
@@ -3377,7 +3070,7 @@ function pushHistory(v){
   } else if(e.key==='Tab'){
     e.preventDefault();
     const v = ui.value;
-    if(!v){ toast('Escribe algo y Tab completa el comando'); return; }
+    if(!v) return;
     let list, idxIn = tabMatches ? tabMatches.indexOf(v) : -1;
     if(idxIn >= 0){ list = tabMatches; }
     else { list = COMMANDS.filter(c=>c.toLowerCase().startsWith(v.toLowerCase())); }
@@ -3395,227 +3088,120 @@ addEventListener('keydown', e=>{
   }
 });
 
-/* =====================================================================
-   PWA
-===================================================================== */
+/* ---------- PWA ---------- */
 function addManifestLink(href){ const l = document.createElement('link'); l.rel='manifest'; l.href=href; document.head.appendChild(l); }
 function blobManifest(){
   try{
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#040806"/><circle cx="256" cy="236" r="130" fill="none" stroke="#2de08a" stroke-width="10" stroke-dasharray="18 14"/><circle cx="256" cy="236" r="96" fill="none" stroke="#2de08a" stroke-width="6" stroke-dasharray="4 18"/><circle cx="256" cy="236" r="44" fill="#39ff9b"/><circle cx="256" cy="236" r="15" fill="#040806"/><text x="256" y="452" font-family="monospace" font-size="58" fill="#2de08a" text-anchor="middle" letter-spacing="14">ANIA</text></svg>`;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#040806"/><circle cx="256" cy="236" r="130" fill="none" stroke="#2de08a" stroke-width="10" stroke-dasharray="18 14"/><circle cx="256" cy="236" r="44" fill="#39ff9b"/><text x="256" y="452" font-family="monospace" font-size="58" fill="#2de08a" text-anchor="middle">ANIA</text></svg>`;
     const icon = 'data:image/svg+xml,'+encodeURIComponent(svg);
-    const man = {
-      name:'ANIA · Núcleo Personal', short_name:'ANIA',
-      description:'Asistente personal con voz, personalidad, agente de PC, música procedural y modo offline.',
-      start_url: location.href.split('#')[0],
-      scope: location.href.replace(/[^/]*$/,'') || location.href,
-      display:'standalone', orientation:'portrait', lang:'es',
-      background_color:'#040806', theme_color:'#040806',
-      icons:[{src:icon, sizes:'512x512', type:'image/svg+xml', purpose:'any'},{src:icon, sizes:'512x512', type:'image/svg+xml', purpose:'maskable'}]
-    };
-    addManifestLink(URL.createObjectURL(new Blob([JSON.stringify(man)], {type:'application/manifest+json'})));
+    addManifestLink(URL.createObjectURL(new Blob([JSON.stringify({
+      name:'ANIA · Edición Jarvis', short_name:'ANIA', description:'Asistente personal con cerebro razonador y modo offline.',
+      start_url: location.href.split('#')[0], scope: location.href.replace(/[^/]*$/,'') || location.href,
+      display:'standalone', orientation:'portrait', lang:'es', background_color:'#040806', theme_color:'#040806',
+      icons:[{src:icon, sizes:'512x512', type:'image/svg+xml', purpose:'any'}]
+    })], {type:'application/manifest+json'})));
   }catch(e){}
 }
 if(/^https/.test(location.protocol)){
   fetch('manifest.json', {method:'HEAD'}).then(r=>{ r.ok ? addManifestLink('manifest.json') : blobManifest(); }).catch(blobManifest);
-  if('serviceWorker' in navigator){
-    fetch('sw.js', {method:'HEAD'}).then(r=>{ if(r.ok) navigator.serviceWorker.register('sw.js').catch(()=>{}); }).catch(()=>{});
-  }
 } else blobManifest();
-
 let deferPrompt = null;
 addEventListener('beforeinstallprompt', e=>{
   e.preventDefault(); deferPrompt = e;
   $('btnInstall').classList.add('can');
   $('installNow').style.display = 'block';
-  toast('Ania puede instalarse como aplicación');
 });
  $('installNow').onclick = async ()=>{
   if(!deferPrompt) return;
   deferPrompt.prompt();
   await deferPrompt.userChoice.catch(()=>null);
-  deferPrompt = null; $('installNow').style.display='none';
+  deferPrompt = null;
 };
-addEventListener('appinstalled', ()=>{ toast('Ania instalada en tu dispositivo'); $('btnInstall').classList.remove('can'); });
-
-function crc32(u8){
-  if(!crc32.T){
-    crc32.T = new Uint32Array(256);
-    for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c = (c&1) ? (0xEDB88320 ^ (c>>>1)) : (c>>>1); crc32.T[n]=c; }
-  }
-  let c=0xFFFFFFFF;
-  for(let i=0;i<u8.length;i++) c = crc32.T[(c ^ u8[i]) & 0xFF] ^ (c>>>8);
-  return (c ^ 0xFFFFFFFF)>>>0;
-}
-function makeZip(files){
+function exportKit(){
   const enc = new TextEncoder();
-  const parts=[], central=[];
-  let offset=0;
+  const readme = '# ANIA v7.0 · Edición Jarvis\n\nCerebro razonador (GGUF local + nube), memoria episódica, proactividad, agente PC, música procedural.\n\n## Cerebro local\n1. modelos/ ← tu .gguf + modelo.json\n2. engine/ ← wllama (runtime)\n3. node servidor.js → http://localhost:8080\n\nCreada por Carlos Lorenzo Marros. Licencia MIT.\n';
+  const files = [
+    {name:'index.html', data: enc.encode(ORIGINAL_HTML)},
+    {name:'README.md', data: enc.encode(readme)}
+  ];
+  const parts = [];
+  let offset = 0;
   const now = new Date();
-  const dosTime = ((now.getHours()<<11)|(now.getMinutes()<<5)|(now.getSeconds()>>1))&0xFFFF;
-  const dosDate = (((now.getFullYear()-1980)<<9)|((now.getMonth()+1)<<5)|now.getDate())&0xFFFF;
+  const dosT = ((now.getHours()<<11)|(now.getMinutes()<<5)|(now.getSeconds()>>1))&0xFFFF;
+  const dosD = (((now.getFullYear()-1980)<<9)|((now.getMonth()+1)<<5)|now.getDate())&0xFFFF;
+  const central = [];
   for(const f of files){
     const name = enc.encode(f.name);
-    const crc = crc32(f.data);
     const lh = new DataView(new ArrayBuffer(30));
-    lh.setUint32(0, 0x04034b50, true);
-    lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
-    lh.setUint16(10, dosTime, true); lh.setUint16(12, dosDate, true);
-    lh.setUint32(14, crc, true); lh.setUint32(18, f.data.length, true); lh.setUint32(22, f.data.length, true);
-    lh.setUint16(26, name.length, true); lh.setUint16(28, 0, true);
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true);
+    lh.setUint16(10, dosT, true); lh.setUint16(12, dosD, true);
+    lh.setUint32(14, 0, true); lh.setUint32(18, f.data.length, true); lh.setUint32(22, f.data.length, true);
+    lh.setUint16(26, name.length, true);
     parts.push(new Uint8Array(lh.buffer), name, f.data);
     const ch = new DataView(new ArrayBuffer(46));
-    ch.setUint32(0, 0x02014b50, true);
-    ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(10, 0, true);
-    ch.setUint16(12, dosTime, true); ch.setUint16(14, dosDate, true);
-    ch.setUint32(16, crc, true); ch.setUint32(20, f.data.length, true); ch.setUint32(24, f.data.length, true);
-    ch.setUint16(28, name.length, true);
-    ch.setUint32(42, offset, true);
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true);
+    ch.setUint16(12, dosT, true); ch.setUint16(14, dosD, true);
+    ch.setUint32(20, f.data.length, true); ch.setUint32(24, f.data.length, true);
+    ch.setUint16(28, name.length, true); ch.setUint32(42, offset, true);
     central.push(new Uint8Array(ch.buffer), name);
     offset += 30 + name.length + f.data.length;
   }
-  const centralSize = central.reduce((s,p)=>s+p.length, 0);
+  const cs = central.reduce((s,p)=>s+p.length, 0);
   const eocd = new DataView(new ArrayBuffer(22));
   eocd.setUint32(0, 0x06054b50, true);
   eocd.setUint16(8, files.length, true); eocd.setUint16(10, files.length, true);
-  eocd.setUint32(12, centralSize, true); eocd.setUint32(16, offset, true);
-  return new Blob([...parts, ...central, new Uint8Array(eocd.buffer)], {type:'application/zip'});
-}
-function exportKit(){
-  const enc = new TextEncoder();
-  const e = ESSENCES[essence];
-  const sw = `/* ANIA · service worker (caché offline real en GitHub Pages) */
-const CACHE = 'ania-v6';
-const ASSETS = ['./','./index.html','./manifest.json','./icon.svg'];
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
-});
-self.addEventListener('activate', e => { e.waitUntil(self.skipWaiting()); });
-self.addEventListener('fetch', e => {
-  e.respondWith(
-    caches.match(e.request, {ignoreSearch:true}).then(r =>
-      r || fetch(e.request).then(res => {
-        const cp = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, cp));
-        return res;
-      }).catch(() => caches.match('./'))
-    )
-  );
-});
-`;
-  const manifest = JSON.stringify({
-    name:'ANIA · Núcleo Personal', short_name:'ANIA',
-    description:'Asistente personal con voz, personalidad, agente de PC y modo offline.',
-    start_url:'./', scope:'./', display:'standalone', orientation:'portrait', lang:'es',
-    background_color:'#040806', theme_color:'#040806',
-    icons:[
-      {src:'icon.svg', sizes:'any', type:'image/svg+xml', purpose:'any'},
-      {src:'icon.svg', sizes:'any', type:'image/svg+xml', purpose:'maskable'}
-    ]
-  }, null, 2);
-  const icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<rect width="512" height="512" fill="#040806"/>
-<circle cx="256" cy="236" r="130" fill="none" stroke="${e.acc}" stroke-width="10" stroke-dasharray="18 14"/>
-<circle cx="256" cy="236" r="96" fill="none" stroke="${e.acc}" stroke-width="6" stroke-dasharray="4 18"/>
-<circle cx="256" cy="236" r="44" fill="${e.acc2}"/>
-<circle cx="256" cy="236" r="15" fill="#040806"/>
-<text x="256" y="452" font-family="monospace" font-size="58" fill="${e.acc}" text-anchor="middle" letter-spacing="14">ANIA</text>
-</svg>`;
-  const readme = `# ANIA v6.0 · Instalación
-
-## GitHub Pages
-1. Sube: index.html, manifest.json, icon.svg, sw.js, README.md + carpeta documentos/ (con indice.json).
-2. Settings → Pages → main / root.
-3. Móvil (Chrome) → Instalar aplicación.
-
-## AGENTE DEL PC (opcional, en tu computadora NO en GitHub)
-1. Instala Node.js 18+.
-2. Carpeta "agente": npm init -y && npm i ws
-3. Edita el TOKEN dentro de ania-agent.js.
-4. node ania-agent.js  (dejar corriendo; ver ania-agent.vbs para auto-inicio)
-5. En Ania: "conecta el agente con clave [tu-token]"
-
-Conexión: ws://127.0.0.1:8765 — solo localhost, con token y listas blancas.
-
-## Créditos
-Ania fue creada por Carlos Lorenzo Marros.
-`;
-  const files = [
-    {name:'index.html', data: enc.encode(ORIGINAL_HTML)},
-    {name:'manifest.json', data: enc.encode(manifest)},
-    {name:'icon.svg', data: enc.encode(icon)},
-    {name:'sw.js', data: enc.encode(sw)},
-    {name:'README.md', data: enc.encode(readme)}
-  ];
-  downloadBlob(makeZip(files), 'ania-github-pages.zip');
-  toast('Kit generado: 5 archivos listos para GitHub');
+  eocd.setUint32(12, cs, true); eocd.setUint32(16, offset, true);
+  downloadBlob(new Blob([...parts, ...central, new Uint8Array(eocd.buffer)], {type:'application/zip'}), 'ania-v7-kit.zip');
+  toast('Kit generado');
 }
  $('exportKit').onclick = exportKit;
- $('saveOffline').onclick = ()=>{
-  downloadBlob(new Blob([ORIGINAL_HTML], {type:'text/html'}), 'ania-asistente.html');
-  toast('Copia offline descargada');
-};
+ $('saveOffline').onclick = ()=>{ downloadBlob(new Blob([ORIGINAL_HTML], {type:'text/html'}), 'ania.html'); toast('Copia descargada'); };
 
-/* ---------- modales / ajustes ---------- */
+/* ---------- modales ---------- */
 function openModal(id){ $(id).classList.add('on'); }
 document.querySelectorAll('.overlay').forEach(ov=>{
   ov.addEventListener('click', e=>{ if(e.target===ov) ov.classList.remove('on'); });
   ov.querySelectorAll('[data-close]').forEach(b=> b.onclick = ()=> ov.classList.remove('on'));
 });
  $('btnInstall').onclick = ()=> openModal('installModal');
- $('btnSettings').onclick = ()=>{ renderVoiceSelect(); fillSess(); updateDocsUI(); updatePCUI(); paintAgent(); openModal('settingsModal'); };
+ $('btnSettings').onclick = ()=>{ renderVoiceSelect(); fillSess(); updateDocsUI(); updatePCUI(); paintAgent(); Brain.paint(); openModal('settingsModal'); };
 function renderVoiceSelect(){
   const sel = $('voiceSelect');
-  if(!voices.length){ sel.innerHTML = '<option>No hay voces disponibles</option>'; return; }
-  sel.innerHTML = voices.map(v=>`<option value="${esc(v.name)}">${esc(v.name)} · ${esc(v.lang)}</option>`).join('');
+  if(!voices.length){ sel.innerHTML = '<option>No hay voces</option>'; return; }
+  sel.innerHTML = voices.map(v=>`<option value="${esc(v.name)}">${esc(v.name)}</option>`).join('');
   if(S.voice) sel.value = S.voice.name;
 }
  $('voiceSelect').onchange = e=>{
   S.voice = voices.find(v=>v.name===e.target.value) || S.voice;
   if(S.voice) store.set('voiceName', S.voice.name);
-  toast('Voz cambiada: '+(S.voice?S.voice.name:'-'));
 };
  $('rateRange').oninput = e=>{ S.rate = +e.target.value; $('rateOut').value = S.rate; store.set('rate', S.rate); };
  $('pitchRange').oninput = e=>{ S.pitch = +e.target.value; $('pitchOut').value = S.pitch; store.set('pitch', S.pitch); };
  $('rateRange').value = S.rate; $('rateOut').value = S.rate;
  $('pitchRange').value = S.pitch; $('pitchOut').value = S.pitch;
- $('testVoice').onclick = ()=> speak('Sistemas verificados. Soy Ania... y sí, el café ya está listo.');
+ $('testVoice').onclick = ()=> speak('Sistemas verificados. Soy Ania, y hoy me siento '+mood().tag+'.');
  $('btnAlways').onclick = ()=> setAlways(!alwaysOn);
 updateVoiceUI();
- $('forgetGeo').onclick = ()=>{
-  store.del('geo');
-  Object.keys(localStorage).filter(k=>k.startsWith('ania_wx_')).forEach(k=>localStorage.removeItem(k));
-  $('wTxt').textContent = '--°';
-  setWeatherMode(null);
-  toast('Ubicación y caché de clima eliminadas');
-};
  $('weatherChip').onclick = ()=> weatherIntent();
 
 /* ---------- diagnóstico ---------- */
 const START_TIME = Date.now();
 async function runDiag(){
   const rows = [];
-  rows.push('Contexto: '+(SECURE ? 'seguro (https/localhost)' : 'local file:// (sin PWA/WakeLock)'));
+  rows.push('Contexto: '+(SECURE?'seguro':'file:// (sin PWA)')+' · '+location.protocol);
   rows.push('Red: '+(isOffline()?'sin conexión':'conectado'));
-  rows.push('Backend propio: '+(Sync.online?'operativo':'no disponible'));
+  rows.push('CEREBRO: '+(Brain.localReady ? 'LOCAL ('+Brain.modelName+')' : (isOffline()?'solo regex':'nube Pollinations')));
   rows.push('Agente PC: '+(Agent.ok?'CONECTADO':'desconectado'));
-  rows.push('Sesión: '+(Session?Session.name+' ('+Session.role+')':'invitado'));
-  rows.push('Dispositivo (avisos web): '+DEVICE_ID.slice(0,12));
-  rows.push('Escucha activa: '+(alwaysOn?'sí · di «Ania»':'no'));
-  rows.push('Música: '+(Music.on?'lo-fi en marcha':'off')+' · Ambiente: '+(Ambient.mode||'silencio'));
-  rows.push('Índice PC: '+PC.count()+' archivos');
-  rows.push('Entrenamiento: '+DocBrain.count()+' fragmentos · '+TRAINING.length+' respuestas fijas');
-  rows.push('Biblioteca: '+Library.index().length+' · Diario: '+store.get('diary', []).length+' entradas');
-  rows.push('Luna: '+moonInfo().phase+' ('+moonInfo().illum+'%)');
-  rows.push('Agenda: '+taskPending()+' pendientes · '+tasks.filter(t=>t.recur).length+' recurrentes');
-  if(performance.memory) rows.push('RAM JS: '+(performance.memory.usedJSHeapSize/1048576).toFixed(1)+' MB');
-  rows.push('Sesión activa: '+Math.round((Date.now()-START_TIME)/60000)+' min');
+  rows.push('Memoria episódica: '+Episodio.log.length+' líneas');
+  rows.push('Agenda: '+taskPending()+' pendientes');
+  rows.push('Ánimo: '+mood().tag+' · Proactividad: '+(store.get('proactivo',true)?'on':'off'));
   try{
     if(navigator.getBattery){
       const b = await navigator.getBattery();
-      rows.splice(3, 0, 'Batería: '+Math.round(b.level*100)+'%'+(b.charging?' · cargando':''));
+      rows.splice(2,0,'Batería: '+Math.round(b.level*100)+'%'+(b.charging?' C':''));
     }
   }catch(e){}
-  $('diag').innerHTML = rows.map(r=> '<b>»</b> '+esc(r)).join('<br>');
+  $('diag').innerHTML = rows.map(r=>'<b>»</b> '+esc(r)).join('<br>');
 }
  $('runDiag').onclick = runDiag;
 
@@ -3623,13 +3209,12 @@ async function runDiag(){
    ARRANQUE
 ===================================================================== */
 const BOOTLINES = [
-  '» ANIA KERNEL v6.0 — núcleo personal',
+  '» ANIA KERNEL v7.0 — edición Jarvis',
   '» módulos de red y voz ............... OK',
   '» LINGUA: cubano + typos + tildes ... OK',
-  '» escucha continua: palabra «Ania» .. OK',
-  '» música procedural + agente PC ..... OK',
-  '» entrenamiento: docs + JSON interno  OK',
-  '» secretaría ejecutiva en línea ..... OK',
+  '» cerebro razonador (tool-calling) .. OK',
+  '» GGUF local: carpeta modelos/ ...... LISTO',
+  '» memoria episódica + proactividad .. OK',
   '» esperando credenciales del operador _'
 ];
 (async function boot(){
@@ -3644,7 +3229,7 @@ const BOOTLINES = [
       await new Promise(r=>setTimeout(r, 4));
     }
     div.innerHTML = esc(line).replace(/OK$/,'<span class="ok">OK</span>');
-    await new Promise(r=>setTimeout(r, 80));
+    await new Promise(r=>setTimeout(r, 70));
   }
   if(Session){
     if(Session.role!=='invitado' && Session.name && Mind.d.nombre !== Session.name){ Mind.d.nombre = Session.name; Mind.save(); }
@@ -3670,24 +3255,23 @@ const BOOTLINES = [
   updatePCUI();
   loadDocsFromGitHub();
   Agent.connect();
-  if(!SECURE) sysLine('MODO LOCAL · para instalarme como app (PWA + offline real) súbeme a GitHub Pages');
-  sysLine('SESIÓN #'+Mind.d.visitas+' · '+new Date().toLocaleDateString('es-ES')+' · v6.0 · avisos web en '+DEVICE_ID.slice(0,10));
+  Proactive.start();
+  Brain.paint();
+  Brain.loadLocal(false); // intento silencioso: si hay manifiesto, despierta el cerebro solo
+  S.lastUserTs = Date.now();
+  sysLine('v7.0 · sesión #'+Mind.d.visitas+' · cerebro: '+ (Brain.localReady?'local':'cascada') +' · avisos web en '+DEVICE_ID.slice(0,10));
   const g = geoCache();
   if(g){ try{ const d = await getWeather(g); updateChip(g,d); }catch(e){} }
 
   const h = new Date().getHours();
   const saludo = h<12?'Buenos días':(h<20?'Buenas tardes':'Buenas noches');
   const nom = Mind.nombre() ? ', '+Mind.nombre() : '';
-  const dias = Mind.daysSince();
-  let msg = saludo+', '+(nom||'bienvenido');
-  if(dias>=2 && nom) msg += '. Te eché de menos... han sido '+dias+' días';
-  if(P.cumpleHoy()) msg = '¡Hoy es 26 de enero, mi cumpleaños! ';
-  if(TRAINING.length) msg += ' Llevo '+TRAINING.length+' respuesta'+(TRAINING.length===1?'':'s')+' tuyas aprendidas.';
-  if(alwaysOn) msg += ' Escucha activa: di «Ania» antes de cada orden.';
-  msg += '. Y ya entendemos igual con tilde, sin tilde, con typos y en cubano. Prueba: «Ania, ponme música» o «que bolá».';
+  let msg = saludo+nom+'. Hoy ya no solo respondo: '+
+    (Brain.localReady ? 'tengo cerebro local en línea y razono sin internet.' : 'razono con mi cerebro cuando lo necesites (di «piénsalo» o pregunta algo abierto).')+
+    ' Y ahora recuerdo lo que hablamos: prueba «¿qué hablamos de...?» cualquier día.';
   setTimeout(()=>{
-    personaReply(msg, msg.replace(/\.\.\./g,'... ').slice(0,340));
-    renderChips(['Ania, ponme música','Ania, siempre escúchame','Ania, prepara mi día','Ania, abre mi pc','Busca en la pc ','Adivina mi personaje','¿Qué fase tiene la luna?','Cuéntame un secreto']);
+    personaReply(msg, msg.slice(0,300));
+    renderChips(['Piénsalo: ¿qué opinas del café?','Carga el cerebro','Prepara mi día','Ponme música','¿Qué hablamos de café?','Mira esta foto','Adivina mi personaje']);
   }, 500);
 };
 </script>
