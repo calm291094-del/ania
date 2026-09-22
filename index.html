@@ -3976,11 +3976,11 @@ function drawBG(ctx, W, H, style, t){
     }
   }
   else if(style.anim === 'rain'){
-    ctx.strokeStyle = 'rgba(95,201,255,.2';
+    ctx.strokeStyle = 'rgba(95,201,255,.2)';
     ctx.lineWidth = 1;
     for(let i=0; i<40; i++){
       const x = (i*73)%W;
-      const y = ((t/5+i*31)%H);
+      const y = (t/5+i*31)%H;
       ctx.beginPath();
       ctx.moveTo(x, y);
       ctx.lineTo(x-2, y+12);
@@ -3991,7 +3991,8 @@ function drawBG(ctx, W, H, style, t){
     for(let i=0; i<30; i++){
       const x = (i*97)%W;
       const y = H - ((t/8+i*40)%H);
-      ctx.fillStyle = `rgba(255,${120+((i*13)%120},60,.3)`;
+      const r = 120+((i*13)%120);
+      ctx.fillStyle = `rgba(255,${r},60,.3)`;
       ctx.fillRect(x, y, 2, 2);
     }
   }
