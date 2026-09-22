@@ -3935,285 +3935,93 @@ const _bootStart = $('bootStart').onclick;
      · «video logo» — presentación del reactor de Ania
 ==================================================================== -->
 <script>
-'use strict';
-(function(){
+(function() {
+  var rec = false;
+  var ch = [];
+  var VC = null;
 
-var VC = null;
-var recording = false;
-var recorder = null;
-var chunks = [];
-
-function ensureCanvas(w, h) {
-  if (!VC) {
+  function makeVideo(frase, seg) {
+    if (rec) { return; }
+    rec = true;
+    toast('Grabando...');
+    var W = 1280;
+    var H = 720;
     VC = document.createElement('canvas');
+    VC.width = W;
+    VC.height = H;
     VC.style.cssText = 'position:fixed;left:-9999px';
     document.body.appendChild(VC);
-  }
-  VC.width = w;
-  VC.height = h;
-  return VC.getContext('2d');
-}
-
-var STYLES = {
-  estrella: { bg: '#040806', fg: '#39ff9b', accent: '#2de08a', anim: 'stars' },
-  lluvia: { bg: '#0a0f14', fg: '#9fdcff', accent: '#5fc9ff', anim: 'rain' },
-  fuego: { bg: '#0a0400', fg: '#ffb547', accent: '#ff7590', anim: 'particles' },
-  terminal: { bg: '#040806', fg: '#39ff9b', accent: '#2de08a', anim: 'scanline' }
-};
-
-function drawBG(ctx, W, H, style, t) {
-  ctx.fillStyle = style.bg;
-  ctx.fillRect(0, 0, W, H);
-
-  if (style.anim === 'stars') {
-    for (var i = 0; i < 80; i++) {
-      var x = (i * 137.5) % W;
-      var y = (i * 89.3) % H;
-      var s = 1 + ((i * 7) % 3);
-      var a = 0.2 + 0.5 * Math.abs(Math.sin(t / 800 + i));
-      ctx.fillStyle = 'rgba(45,224,138,' + a + ')';
-      ctx.fillRect(x, y, s, s);
-    }
-  } else if (style.anim === 'rain') {
-    ctx.strokeStyle = 'rgba(95,201,255,.2)';
-    ctx.lineWidth = 1;
-    for (var i = 0; i < 40; i++) {
-      var x = (i * 73) % W;
-      var y = (t / 5 + i * 31) % H;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x - 2, y + 12);
-      ctx.stroke();
-    }
-  } else if (style.anim === 'particles') {
-    for (var i = 0; i < 30; i++) {
-      var x = (i * 97) % W;
-      var y = H - ((t / 8 + i * 40) % H);
-      var r = 120 + ((i * 13) % 120);
-      ctx.fillStyle = 'rgba(255,' + r + ',60,.3)';
-      ctx.fillRect(x, y, 2, 2);
-    }
-  } else if (style.anim === 'scanline') {
-    var sy = (t / 3) % H;
-    ctx.strokeStyle = 'rgba(45,224,138,.15)';
-    ctx.beginPath();
-    ctx.moveTo(0, sy);
-    ctx.lineTo(W, sy);
-    ctx.stroke();
-  }
-}
-
-function drawText(ctx, W, H, style, frase, t, progress) {
-  var fs = Math.min(H / 8, 28);
-  ctx.font = fs + 'px "Share Tech Mono", monospace';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  var words = frase.split(' ');
-  var maxW = W * 0.8;
-  var lines = [];
-  var cur = '';
-  for (var i = 0; i < words.length; i++) {
-    var test = cur + ' ' + words[i];
-    if (ctx.measureText(test).width > maxW) {
-      lines.push(cur);
-      cur = words[i];
-    } else {
-      cur = test;
-    }
-  }
-  lines.push(cur);
-  var lh = fs * 1.5;
-  var startY = H / 2 - (lines.length - 1) * lh / 2;
-  var chars = Math.floor(progress * frase.length);
-  var drawn = 0;
-  for (var i = 0; i < lines.length; i++) {
-    var line = lines[i];
-    var take = Math.max(0, Math.min(line.length, chars - drawn));
-    if (take > 0) {
-      var y = startY + i * lh;
-      ctx.fillStyle = style.fg;
-      ctx.fillText(line.slice(0, take), W / 2, y);
-    }
-    drawn += line.length + 1;
-  }
-  ctx.font = (fs * 0.35) + 'px "Share Tech Mono", monospace';
-  ctx.fillStyle = style.accent;
-  ctx.fillText('- ANIA -', W / 2, H - fs * 1.5);
-}
-
-function drawLogo(ctx, W, H, t, progress) {
-  var cx = W / 2;
-  var cy = H / 2 - 20;
-  var outer = W * 0.2;
-  var inner = W * 0.13;
-  var rot = t / 800;
-  ctx.strokeStyle = '#2de08a';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc(cx, cy, outer, rot, rot + 1.2);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(cx, cy, outer, rot + Math.PI, rot + Math.PI + 1.2);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(cx, cy, inner, -rot * 2, -rot * 2 + 6.28);
-  ctx.stroke();
-  ctx.fillStyle = '#39ff9b';
-  ctx.beginPath();
-  ctx.arc(cx, cy, inner * 0.35, 0, 6.28);
-  ctx.fill();
-  ctx.font = (W * 0.05) + 'px "Share Tech Mono", monospace';
-  ctx.fillStyle = '#39ff9b';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  var show = Math.floor(progress * 3);
-  if (show >= 1) {
-    ctx.fillText('A N I A', cx, H * 0.72);
-  }
-  if (show >= 2) {
-    ctx.font = (W * 0.025) + 'px "Share Tech Mono", monospace';
-    ctx.fillStyle = '#79a88f';
-    ctx.fillText('ASISTENTE PERSONAL', cx, H * 0.80);
-  }
-}
-
-async function createVideo(opts) {
-  if (recording) { toast('Ya estoy creando un video, espera...'); return; }
-  if (typeof MediaRecorder === 'undefined') { return personaReply('Tu navegador no soporta grabacion. Prueba Chrome.'); }
-
-  var isVertical = opts.format === 'vertical';
-  var W = isVertical ? 720 : 1280;
-  var H = isVertical ? 1280 : 720;
-  var dur = Math.min(30, Math.max(5, opts.dur || 10));
-  var style = STYLES[opts.style || 'terminal'] || STYLES.terminal;
-  var phrase = opts.frase || '';
-  var imgData = opts.image || null;
-
-  recording = true;
-  toast('Grabando video de ' + dur + 's...');
-
-  var ctx = ensureCanvas(W, H);
-  var stream = VC.captureStream(30);
-  chunks = [];
-  recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 3500000 });
-  recorder.ondataavailable = function(e) { if (e.data.size > 0) { chunks.push(e.data); } };
-  var done = new Promise(function(res) { recorder.onstop = res; });
-  recorder.start();
-
-  var start = performance.now();
-  var imgObj = null;
-  if (imgData) {
-    imgObj = new Image();
-    imgObj.src = imgData;
-    try { await imgObj.decode(); } catch(e) {}
-  }
-
-  var playing = true;
-  function animate() {
-    if (!playing) { return; }
-    var t = performance.now() - start;
-    var progress = Math.min(1, t / (dur * 1000));
-    drawBG(ctx, W, H, style, t);
-
-    if (imgObj) {
-      var scale = Math.max(W / imgObj.width, H / imgObj.height);
-      ctx.globalAlpha = Math.min(1, progress * 2);
-      ctx.drawImage(imgObj, (W - imgObj.width * scale) / 2, (H - imgObj.height * scale) / 2, imgObj.width * scale, imgObj.height * scale);
-      ctx.globalAlpha = 1;
-      if (phrase) {
-        ctx.font = (W * 0.03) + 'px "Share Tech Mono", monospace';
-        ctx.fillStyle = style.fg;
-        ctx.textAlign = 'center';
-        ctx.fillText(phrase, W / 2, H * 0.85);
+    var ctx = VC.getContext('2d');
+    var stream = VC.captureStream(30);
+    ch = [];
+    var recorder = new MediaRecorder(stream, {mimeType: 'video/webm'});
+    recorder.ondataavailable = function(e) {
+      if (e.data.size > 0) {
+        ch.push(e.data);
       }
-    } else if (phrase) {
-      drawText(ctx, W, H, style, phrase, t, progress);
-    } else if (opts.type === 'logo') {
-      drawLogo(ctx, W, H, t, progress);
+    };
+    var whenDone = new Promise(function(resolve) {
+      recorder.onstop = resolve;
+    });
+    recorder.start();
+
+    var start = performance.now();
+    var dur = (seg || 10) * 1000;
+    var running = true;
+
+    function draw() {
+      if (!running) { return; }
+      var t = performance.now() - start;
+      var progress = Math.min(1, t / dur);
+
+      ctx.fillStyle = '#040806';
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.font = '28px "Share Tech Mono", monospace';
+      ctx.fillStyle = '#39ff9b';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      var n = Math.floor(progress * frase.length);
+      ctx.fillText(frase.slice(0, n), W / 2, H / 2);
+
+      if (t >= dur) {
+        running = false;
+        setTimeout(function() { recorder.stop(); }, 200);
+        return;
+      }
+      requestAnimationFrame(draw);
     }
 
-    if (t >= dur * 1000) {
-      playing = false;
-      setTimeout(function() { recorder.stop(); }, 200);
-      return;
-    }
-    requestAnimationFrame(animate);
+    draw();
+
+    whenDone.then(function() {
+      rec = false;
+      var blob = new Blob(ch, {type: 'video/webm'});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'ania-video-' + Date.now() + '.webm';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toast('Video creado: ' + frase);
+    });
   }
 
-  animate();
-  await done;
-  recording = false;
-  if (!chunks.length) { toast('No pude grabar', true); return; }
-
-  var blob = new Blob(chunks, { type: 'video/webm' });
-  var url = URL.createObjectURL(blob);
-  addImageLine(url, 'Video .webm ' + dur + 's');
-  var a = document.createElement('a');
-  a.href = url;
-  a.download = 'ania-video-' + Date.now() + '.webm';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-
-  personaReply('Video creado y descargado. Listo para tu pagina.');
-}
-
-var _send_v = send;
-send = async function(text) {
-  var low = LINGUA.normalizar(text);
-
-  var vM = low.match(/(?:crea|genera|haz)\s+(?:un\s+)?video\s+(?:de\s+|con\s+|sobre\s+)?(.+)?/);
-
-  if (vM) {
-    var frase = (vM[1] || '').trim();
-    var style = 'terminal';
-    var format = 'horizontal';
-    var dur = 10;
-
-    if (/estrella|star|noche|cosmos/.test(low)) {
-      style = 'estrella';
-    }
-    if (/lluvia|rain/.test(low)) {
-      style = 'lluvia';
-    }
-    if (/fuego|neon/.test(low)) {
-      style = 'fuego';
-    }
-    if (/vertical|reel|tiktok/.test(low)) {
-      format = 'vertical';
-    }
-    if (/(\d+)\s*seg/.test(low)) {
-      dur = Math.min(30, Math.max(5, parseInt(low.match(/(\d+)\s*seg/)[1]));
-    }
-
-    if (!frase && /logo|marca|presentacion/.test(low)) {
-      return createVideo({ type: 'logo', dur: dur, format: format, style: style });
-    }
-
-    if (/imagen|dibujo|foto|slideshow/.test(low)) {
-      var imgs = document.querySelectorAll('#chat .line img');
-      if (imgs.length > 0) {
-        return createVideo({ frase: frase, dur: dur, format: format, style: style, image: imgs[imgs.length - 1].src });
+  var _send = send;
+  send = function(text) {
+    var low = LINGUA.normalizar(text);
+    var vM = low.match(/video\s+(?:de\s+|con\s+)?(.+)/;
+    if (vM) {
+      var frase = (vM[1] || '').trim();
+      if (frase) {
+        makeVideo(frase, 10);
+        return;
       }
-      return personaReply('No encontré imagen. Dibujame algo primero.');
+      return personaReply('Dime que frase quieres en el video. Ej: crea un video con Sonrie manana sera bonito');
     }
-
-    if (frase) {
-      frase = frase.replace(/^que\s+/, '');
-      frase = frase.replace(/^con\s+/, '');
-      frase = frase.replace(/vertical|horizontal|reel|tiktok|estrella|lluvia|fuego|terminal|minimal|sencillo|futurista|\d+\s*seg/g, '');
-      frase = frase.trim();
-      if (frase.length > 0) {
-        return createVideo({ frase: frase, dur: dur, format: format, style: style });
-      }
-    }
-
-    return personaReply('Dime que frase quieres en el video. Ej: crea un video con Sonrie, manana sera bonito');
-  }
-
-  return _send_v(text);
-};
-
+    return _send(text);
+  };
 })();
 </script>
   
