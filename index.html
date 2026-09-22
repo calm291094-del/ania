@@ -4078,18 +4078,13 @@ function drawLogo(ctx, W, H, t, progress) {
 }
 
 async function createVideo(opts) {
-  if (recording) {
-    toast('Ya estoy creando un video, espera...');
-    return;
-  }
-  if (typeof MediaRecorder === 'undefined') {
-    return personaReply('Tu navegador no soporta grabacion de video. Prueba Chrome.');
-  }
+  if (recording) { toast('Ya estoy creando un video, espera...'); return; }
+  if (typeof MediaRecorder === 'undefined') { return personaReply('Tu navegador no soporta grabacion. Prueba Chrome.'); }
 
   var isVertical = opts.format === 'vertical';
   var W = isVertical ? 720 : 1280;
   var H = isVertical ? 1280 : 720;
-  var dur = Math.min(30, Math.max(5, opts.dur || 10);
+  var dur = Math.min(30, Math.max(5, opts.dur || 10));
   var style = STYLES[opts.style || 'terminal'] || STYLES.terminal;
   var phrase = opts.frase || '';
   var imgData = opts.image || null;
@@ -4100,13 +4095,8 @@ async function createVideo(opts) {
   var ctx = ensureCanvas(W, H);
   var stream = VC.captureStream(30);
   chunks = [];
-  var mime = 'video/webm;codecs=vp9';
-  recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 3500000 });
-  recorder.ondataavailable = function(e) {
-    if (e.data.size > 0) {
-      chunks.push(e.data);
-    }
-  };
+  recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 3500000 });
+  recorder.ondataavailable = function(e) { if (e.data.size > 0) { chunks.push(e.data); } };
   var done = new Promise(function(res) { recorder.onstop = res; });
   recorder.start();
 
@@ -4120,22 +4110,15 @@ async function createVideo(opts) {
 
   var playing = true;
   function animate() {
-    if (!playing) {
-      return;
-    }
+    if (!playing) { return; }
     var t = performance.now() - start;
     var progress = Math.min(1, t / (dur * 1000));
     drawBG(ctx, W, H, style, t);
 
     if (imgObj) {
       var scale = Math.max(W / imgObj.width, H / imgObj.height);
-      var iw = imgObj.width * scale;
-      var ih = imgObj.height * scale;
-      var ix = (W - iw) / 2;
-      var iy = (H - ih) / 2;
-      var alpha = Math.min(1, progress * 2);
-      ctx.globalAlpha = alpha;
-      ctx.drawImage(imgObj, ix, iy, iw, ih);
+      ctx.globalAlpha = Math.min(1, progress * 2);
+      ctx.drawImage(imgObj, (W - imgObj.width * scale) / 2, (H - imgObj.height * scale) / 2, imgObj.width * scale, imgObj.height * scale);
       ctx.globalAlpha = 1;
       if (phrase) {
         ctx.font = (W * 0.03) + 'px "Share Tech Mono", monospace';
@@ -4158,19 +4141,13 @@ async function createVideo(opts) {
   }
 
   animate();
-
   await done;
-
   recording = false;
-
-  if (!chunks.length) {
-    toast('No pude grabar', true);
-    return;
-  }
+  if (!chunks.length) { toast('No pude grabar', true); return; }
 
   var blob = new Blob(chunks, { type: 'video/webm' });
   var url = URL.createObjectURL(blob);
-  addImageLine(url, 'Video .webm ' + dur + 's';
+  addImageLine(url, 'Video .webm ' + dur + 's');
   var a = document.createElement('a');
   a.href = url;
   a.download = 'ania-video-' + Date.now() + '.webm';
