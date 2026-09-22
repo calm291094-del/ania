@@ -3935,94 +3935,113 @@ const _bootStart = $('bootStart').onclick;
      · «video logo» — presentación del reactor de Ania
 ==================================================================== -->
 <script>
-(function() {
-  var rec = false;
-  var ch = [];
-  var VC = null;
+var rec = false;
+var ch = [];
+var oldSend = send;
 
-  function makeVideo(frase, seg) {
-    if (rec) { return; }
-    rec = true;
-    toast('Grabando...');
-    var W = 1280;
-    var H = 720;
-    VC = document.createElement('canvas');
-    VC.width = W;
-    VC.height = H;
-    VC.style.cssText = 'position:fixed;left:-9999px';
-    document.body.appendChild(VC);
-    var ctx = VC.getContext('2d');
-    var stream = VC.captureStream(30);
-    ch = [];
-    var recorder = new MediaRecorder(stream, {mimeType: 'video/webm'});
-    recorder.ondataavailable = function(e) {
-      if (e.data.size > 0) {
-        ch.push(e.data);
-      }
-    };
-    var whenDone = new Promise(function(resolve) {
-      recorder.onstop = resolve;
-    });
-    recorder.start();
+function makeVideo(frase) {
+  if (rec) { return; }
+  rec = true;
+  ch = [];
+  toast('Grabando 10 segundos...');
 
-    var start = performance.now();
-    var dur = (seg || 10) * 1000;
-    var running = true;
+  var W = 1280;
+  var H = 720;
+  var VC = document.createElement('canvas');
+  VC.width = W;
+  VC.height = H;
+  VC.style.cssText = 'position:fixed;left:-9999px';
+  document.body.appendChild(VC);
 
-    function draw() {
-      if (!running) { return; }
-      var t = performance.now() - start;
-      var progress = Math.min(1, t / dur);
+  var ctx = VC.getContext('2d');
+  var stream = VC.captureStream(30);
+  var recorder = new MediaRecorder(stream, {mimeType: 'video/webm'});
 
-      ctx.fillStyle = '#040806';
-      ctx.fillRect(0, 0, W, H);
+  recorder.ondataavailable = function(e) {
+    if (e.data.size > 0) {
+      ch.push(e.data);
+    }
+  };
 
-      ctx.font = '28px "Share Tech Mono", monospace';
-      ctx.fillStyle = '#39ff9b';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      var n = Math.floor(progress * frase.length);
-      ctx.fillText(frase.slice(0, n), W / 2, H / 2);
+  var done = new Promise(function(resolve) {
+    recorder.onstop = resolve;
+  });
 
-      if (t >= dur) {
-        running = false;
-        setTimeout(function() { recorder.stop(); }, 200);
-        return;
-      }
-      requestAnimationFrame(draw);
+  recorder.start();
+
+  var startTime = performance.now();
+  var dur = 10000;
+
+  function draw() {
+    if (!recording) {
+      return;
     }
 
-    draw();
+    var t = performance.now() - startTime;
+    var p = Math.min(1, t / dur);
 
-    whenDone.then(function() {
-      rec = false;
-      var blob = new Blob(ch, {type: 'video/webm'});
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url;
-      a.download = 'ania-video-' + Date.now() + '.webm';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      toast('Video creado: ' + frase);
-    });
+    ctx.fillStyle = '#040806';
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.font = '28px "Share Tech Mono", monospace';
+    ctx.fillStyle = '#39ff9b';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    var n = Math.floor(p * frase.length);
+    ctx.fillText(frase.slice(0, n), W / 2, H / 2);
+
+    ctx.font = '14px "Share Tech Mono", monospace';
+    ctx.fillStyle = '#2de08a';
+    ctx.fillText('— ANIA —', W / 2, H - 50);
+
+    if (t >= dur) {
+      recording = false;
+      recorder.stop();
+      return;
+    }
+
+    requestAnimationFrame(draw);
   }
 
-  var _send = send;
-  send = function(text) {
-    var low = LINGUA.normalizar(text);
-    var vM = low.match(/video\s+(?:de\s+|con\s+)?(.+)/;
-    if (vM) {
-      var frase = (vM[1] || '').trim();
-      if (frase) {
-        makeVideo(frase, 10);
-        return;
-      }
-      return personaReply('Dime que frase quieres en el video. Ej: crea un video con Sonrie manana sera bonito');
+  recording = true;
+  draw();
+
+  done.then(function() {
+    rec = false;
+    var blob = new Blob(ch, {type: 'video/webm'});
+    var url = URL.createObjectURL(blob);
+
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'ania-video.webm';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    toast('Video creado y descargado');
+
+    recording = false;
+    rec = false;
+    personaReply('Video creado: ' + frase);
+  });
+}
+
+send = function(text) {
+  var low = LINGUA.normalizar(text);
+
+  var vM = low.match(/video\s+(?:de\s+|con\s+)?(.+)/);
+
+  if (vM) {
+    var frase = (vM[1] || '').trim();
+    if (frase) {
+      makeVideo(frase);
+      return;
     }
-    return _send(text);
-  };
-})();
+    return personaReply('Dime que frase quieres en el video.');
+  }
+
+  return oldSend(text);
+};
 </script>
   
 </body>
