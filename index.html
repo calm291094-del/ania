@@ -27,7 +27,7 @@ svg{display:block;}
 #bootBox{width:min(560px,100%);}
 #bootTitle{letter-spacing:.55em;font-size:clamp(26px,8vw,44px);color:var(--acc2);text-align:center;margin-bottom:26px;}
 #bootTitle small{display:block;letter-spacing:.3em;font-size:11px;color:var(--dim);margin-top:8px;}
-#bootLog{min-height:300px;font-size:13px;line-height:1.75;color:var(--dim);}
+#bootLog{min-height:310px;font-size:13px;line-height:1.75;color:var(--dim);}
 #bootLog .ok{color:var(--acc);}
 #loginBox{margin-top:22px;display:none;flex-direction:column;gap:10px;}
 #loginBox input{background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:16px;padding:12px 13px;width:100%;}
@@ -48,9 +48,7 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
 .pill.off{color:var(--amber);border-color:rgba(255,181,71,.4);}
 .pill.off .dot{background:var(--amber);animation:none;}
 .pill.idle{opacity:.55;}.pill.idle .dot{animation:none;}
-.pill.on2{display:inline-flex;color:var(--acc2);border-color:var(--line2);}
-.pill.on2 .dot{background:var(--acc2);}
-#syncPill,#agentPill,#brainPill,#earsPill,#hudPill,#relayPill{display:none;}
+#syncPill,#agentPill,#brainPill,#earsPill,#hudPill,#relayPill,#mindPill{display:none;}
 #headRight{margin-left:auto;display:flex;gap:8px;align-items:center;font-size:11px;color:var(--dim);}
 #clock{color:var(--text);letter-spacing:.1em;}
 #batt{display:none;font-size:10px;color:var(--dim);}
@@ -170,7 +168,6 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
 .toast.warn{color:var(--amber);border-color:rgba(255,181,71,.5);}
 @keyframes tIn{from{opacity:0;transform:translateY(-8px);}}
 @media(min-width:700px){#reactorWrap{width:240px;height:240px;}.line{font-size:15px;}}
-/* HUD */
 #hudPanel{position:fixed;inset:0;z-index:970;background:rgba(2,6,4,.96);display:none;flex-direction:column;}
 #hudPanel.on{display:flex;}
 .hudHead{display:flex;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);}
@@ -183,18 +180,14 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
 <body>
 <canvas id="bgfx"></canvas>
 <div id="hudPanel">
-  <div class="hudHead">
-    <span class="hudTitle">HUD · VISIÓN ANIA</span>
-    <span class="hudStat" id="hudStat">—</span>
-    <button class="xbtn" id="hudClose" style="border-color:var(--danger);color:var(--danger)">✕</button>
-  </div>
+  <div class="hudHead"><span class="hudTitle">HUD · VISIÓN ANIA</span><span class="hudStat" id="hudStat">—</span><button class="xbtn" id="hudClose" style="border-color:var(--danger);color:var(--danger)">✕</button></div>
   <video id="hudVideo" playsinline muted autoplay></video>
   <canvas id="hudCanvas"></canvas>
 </div>
 
 <div id="boot">
   <div id="bootBox">
-    <div id="bootTitle">ANIA<small>EDICIÓN JARVIS · v8.0</small></div>
+    <div id="bootTitle">ANIA<small>EDICIÓN JARVIS · v9.0</small></div>
     <div id="bootLog"></div>
     <form id="loginBox" autocomplete="on">
       <input id="loginUser" placeholder="usuario" autocomplete="username" autocapitalize="none" autocorrect="off">
@@ -219,127 +212,71 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
     <span class="pill" id="relayPill"><span class="dot"></span><span>SESIÓN</span></span>
     <span id="operator"></span>
     <span id="headRight">
-      <button id="weatherChip" title="Ver clima">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.2 11.2A3.9 3.9 0 0 0 6.5 19z"/></svg>
-        <span id="wTxt">--°</span>
-      </button>
+      <button id="weatherChip" title="Ver clima"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.2 11.2A3.9 3.9 0 0 0 6.5 19z"/></svg><span id="wTxt">--°</span></button>
       <span id="batt"></span>
       <span id="clock">--:--:--</span>
     </span>
   </header>
-
   <div id="coreZone">
     <div id="reactorWrap"><canvas id="reactor"></canvas></div>
     <div id="phase">EN ESPERA</div>
   </div>
-
   <div id="chat"></div>
   <div id="chips"></div>
-
   <form id="inputBar" autocomplete="off">
-    <button type="button" class="ibtn" id="micBtn" title="Hablar con Ania">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg>
-    </button>
+    <button type="button" class="ibtn" id="micBtn" title="Hablar con Ania"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3z"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button>
     <input id="userInput" placeholder="Escribe o habla a Ania..." enterkeyhint="send" spellcheck="false">
-    <button type="submit" class="ibtn" title="Enviar">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>
-    </button>
+    <button type="submit" class="ibtn" title="Enviar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg></button>
   </form>
-
   <nav id="dock">
-    <button class="dbtn" id="btnTasks">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>
-      AGENDA<span class="badge" id="taskBadge"></span>
-    </button>
-    <button class="dbtn" id="btnMem">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a4 4 0 0 1 4 4c2.5.5 4 2.4 4 4.8 0 2-1.2 3.7-3 4.4L16 21H8l-1-4.8c-1.8-.7-3-2.4-3-4.4 0-2.4 1.5-4.3 4-4.8A4 4 0 0 1 12 3z"/><path d="M9 13h.01M15 13h.01M10 17h4"/></svg>
-      MEMORIA
-    </button>
-    <button class="dbtn" id="btnDiary">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3z"/><path d="M8 8h8M8 12h8M8 16h4"/></svg>
-      DIARIO
-    </button>
-    <button class="dbtn" id="btnLib">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h7M8 11h7"/></svg>
-      BIBLIOTECA
-    </button>
-    <button class="dbtn" id="btnInstall">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 7v7"/><path d="M9.5 11.5 12 14l2.5-2.5"/></svg>
-      INSTALAR
-    </button>
-    <button class="dbtn" id="btnSettings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/></svg>
-      AJUSTES
-    </button>
+    <button class="dbtn" id="btnTasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>AGENDA<span class="badge" id="taskBadge"></span></button>
+    <button class="dbtn" id="btnMem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a4 4 0 0 1 4 4c2.5.5 4 2.4 4 4.8 0 2-1.2 3.7-3 4.4L16 21H8l-1-4.8c-1.8-.7-3-2.4-3-4.4 0-2.4 1.5-4.3 4-4.8A4 4 0 0 1 12 3z"/><path d="M9 13h.01M15 13h.01M10 17h4"/></svg>MEMORIA</button>
+    <button class="dbtn" id="btnDiary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3z"/><path d="M8 8h8M8 12h8M8 16h4"/></svg>DIARIO</button>
+    <button class="dbtn" id="btnLib"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h7M8 11h7"/></svg>BIBLIOTECA</button>
+    <button class="dbtn" id="btnInstall"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 7v7"/><path d="M9.5 11.5 12 14l2.5-2.5"/></svg>INSTALAR</button>
+    <button class="dbtn" id="btnSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/></svg>AJUSTES</button>
   </nav>
 </div>
 
-<button id="ambBtn" title="Detener ambiente/música">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.2 11.2A3.9 3.9 0 0 0 6.5 19z"/><path d="M8 19l-1.5 2M12 19l-1 2.5M16 19l-1 2.5"/></svg>
-</button>
+<button id="ambBtn" title="Detener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.2 11.2A3.9 3.9 0 0 0 6.5 19z"/></svg></button>
 
 <div id="backdrop"></div>
 <div id="sheet">
   <div class="grab"></div>
-  <div class="sheetHead">
-    <h2>AGENDA</h2>
-    <span class="pill" id="taskCount">0 PENDIENTES</span>
-    <button class="xbtn" id="closeSheet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-  </div>
+  <div class="sheetHead"><h2>AGENDA</h2><span class="pill" id="taskCount">0 PENDIENTES</span><button class="xbtn" id="closeSheet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div id="taskList"></div>
-  <div id="taskForm">
-    <input id="taskInput" placeholder="Nueva tarea...">
-    <input id="taskWhen" type="datetime-local">
-    <button id="addTaskBtn">AÑADIR</button>
-  </div>
+  <div id="taskForm"><input id="taskInput" placeholder="Nueva tarea..."><input id="taskWhen" type="datetime-local"><button id="addTaskBtn">AÑADIR</button></div>
 </div>
-
 <div id="sheetMem">
   <div class="grab"></div>
-  <div class="sheetHead">
-    <h2>LO QUE ANIA RECUERDA</h2>
-    <span class="pill" id="memStats">0 RECUERDOS</span>
-    <button class="xbtn" id="closeMem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-  </div>
+  <div class="sheetHead"><h2>LO QUE ANIA RECUERDA</h2><span class="pill" id="memStats">0 RECUERDOS</span><button class="xbtn" id="closeMem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div id="memList"></div>
   <div class="sheetFoot"><button class="bigbtn" id="wipeMem">OLVIDARLO TODO</button></div>
 </div>
-
 <div id="sheetDiary">
   <div class="grab"></div>
-  <div class="sheetHead">
-    <h2>DIARIO DE ANIA</h2>
-    <span class="pill" id="diaryCount">0 ENTRADAS</span>
-    <button class="xbtn" id="closeDiary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-  </div>
+  <div class="sheetHead"><h2>DIARIO DE ANIA</h2><span class="pill" id="diaryCount">0 ENTRADAS</span><button class="xbtn" id="closeDiary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div id="diaryList"></div>
   <div class="sheetFoot"><button class="bigbtn" id="clearDiary">BORRAR DIARIO</button></div>
 </div>
-
 <div id="sheetLib">
   <div class="grab"></div>
-  <div class="sheetHead">
-    <h2>BIBLIOTECA OFFLINE</h2>
-    <span class="pill" id="libCount">0 ARTÍCULOS</span>
-    <button class="xbtn" id="closeLib"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-  </div>
+  <div class="sheetHead"><h2>BIBLIOTECA OFFLINE</h2><span class="pill" id="libCount">0 ARTÍCULOS</span><button class="xbtn" id="closeLib"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div id="libList"></div>
   <div class="sheetFoot"><button class="bigbtn" id="clearLib">VACIAR BIBLIOTECA</button></div>
 </div>
 
 <div class="overlay" id="installModal">
   <div class="modal">
-    <h2>INSTALAR ANIA
-      <button class="xbtn" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-    </h2>
+    <h2>INSTALAR ANIA<button class="xbtn" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
     <p class="dim">Ania puede vivir en tu pantalla de inicio como una app.</p>
     <button class="bigbtn" id="installNow" style="display:none">INSTALAR AHORA</button>
     <div class="step"><b>01</b><p><span class="dim">Android (Chrome):</span> menú <span class="dim">(⋮)</span> → <b>«Instalar aplicación»</b>.</p></div>
     <div class="step"><b>02</b><p><span class="dim">iPhone (Safari):</span> Compartir → <b>«Añadir a pantalla de inicio»</b>.</p></div>
     <hr>
-    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">MODO CEREBRO LOCAL (GGUF)</h2>
-    <p class="dim">1) Tu modelo <b>.gguf</b> en <b>modelos/</b> + <b>modelo.json</b>.<br>2) Runtime wllama en <b>engine/</b>.<br>3) <b>node servidor.js</b> → <b>http://localhost:8080</b> — multihilo, 100% sin internet.<br>Sin servidor: «carga el cerebro» y elige el .gguf manualmente.</p>
-    <button class="bigbtn" id="exportKit">DESCARGAR KIT GITHUB (ZIP)</button>
+    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">CEREBRO LOCAL (GGUF)</h2>
+    <p class="dim">1) Tu modelo <b>.gguf</b> en <b>modelos/</b> + <b>modelo.json</b>.<br>2) Runtime wllama en <b>engine/</b>.<br>3) <b>node servidor.js</b> → <b>http://localhost:8080</b>.<br>Sin servidor: «carga el cerebro» y elige el archivo.</p>
+    <button class="bigbtn" id="exportKit">DESCARGAR COPIA (.HTML)</button>
     <hr>
     <button class="bigbtn" id="saveOffline">GUARDAR COPIA OFFLINE (.HTML)</button>
   </div>
@@ -347,67 +284,58 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
 
 <div class="overlay" id="settingsModal">
   <div class="modal">
-    <h2>AJUSTES
-      <button class="xbtn" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-    </h2>
+    <h2>AJUSTES<button class="xbtn" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
     <div class="frow"><label>VOZ</label><select id="voiceSelect"></select></div>
     <div class="frow"><label>VELOCIDAD</label><input type="range" id="rateRange" min="0.7" max="1.4" step="0.05"><output id="rateOut">1.05</output></div>
     <div class="frow"><label>TONO</label><input type="range" id="pitchRange" min="0.7" max="1.5" step="0.05"><output id="pitchOut">1.10</output></div>
-    <div class="frow"><label>ESENCIA</label>
-      <div class="esBtns">
-        <button class="esBtn" data-es="verde">VERDE</button>
-        <button class="esBtn" data-es="morado">MORADO</button>
-        <button class="esBtn" data-es="carmesi">CARMESÍ</button>
-        <button class="esBtn" data-es="hielo">HIELO</button>
-      </div>
-    </div>
+    <div class="frow"><label>ESENCIA</label><div class="esBtns"><button class="esBtn" data-es="verde">VERDE</button><button class="esBtn" data-es="morado">MORADO</button><button class="esBtn" data-es="carmesi">CARMESÍ</button><button class="esBtn" data-es="hielo">HIELO</button></div></div>
     <button class="bigbtn" id="testVoice">PROBAR VOZ</button>
     <button class="bigbtn" id="btnAlways">ESCUCHA ACTIVA: NO</button>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">CEREBRO CONVERSACIONAL</h2>
-    <p class="dim" id="brainInfo">Cascada: regex → GGUF local → nube.</p>
+    <p class="dim" id="brainInfo">Cascada: regex → LocalMind → GGUF → nube.</p>
     <button class="bigbtn" id="btnLoadBrain">CARGAR CEREBRO LOCAL (.GGUF)</button>
     <button class="bigbtn" id="btnTestBrain">PROBAR CEREBRO</button>
     <hr>
-    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">OÍDO LOCAL · WHISPER (OFFLINE)</h2>
-    <p class="dim" id="earsInfo">Primera activación descarga ~80 MB (quedan cacheados). Después: transcripción 100% en tu dispositivo, el audio jamás sale del navegador. Reemplaza el STT de Google.</p>
-    <button class="bigbtn" id="btnEars">ACTIVAR OÍDO LOCAL (WHISPER)</button>
+    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">OÍDO LOCAL · WHISPER</h2>
+    <p class="dim" id="earsInfo">Primera vez ~80 MB, luego offline total.</p>
+    <button class="bigbtn" id="btnEars">ACTIVAR OÍDO LOCAL</button>
     <button class="bigbtn" id="btnEarsModel">CAMBIAR MODELO (tiny/base)</button>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">HUD · VISIÓN Y GESTOS</h2>
-    <p class="dim" id="hudInfo">Cámara + reconocimiento de mano: puño=pausa · palma=silencio · victoria=siguiente · puño sostenido=cerrar. Primera vez ~12 MB, luego offline.</p>
-    <button class="bigbtn" id="btnHud">ABRIR HUD (CÁMARA + GESTOS)</button>
+    <p class="dim" id="hudInfo">Puño=pausa · palma=silencio · victoria=siguiente.</p>
+    <button class="bigbtn" id="btnHud">ABRIR HUD</button>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">SESIÓN MULTIDISPOSITIVO</h2>
-    <p class="dim" id="relayInfo">Ejecuta relay.js en tu PC o Render y conecta: la misma conversación en todos tus dispositivos.</p>
-    <button class="bigbtn" id="btnRelay">CONECTAR SESIÓN (RELAY)</button>
+    <p class="dim" id="relayInfo">relay.js en tu PC o Render.</p>
+    <button class="bigbtn" id="btnRelay">CONECTAR SESIÓN</button>
     <hr>
-    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">AGENTE DEL PC (OPCIONAL)</h2>
-    <p class="dim" id="agentInfo">Desconectado. «conecta el agente con clave [token]».</p>
+    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">AGENTE DEL PC</h2>
+    <p class="dim" id="agentInfo">Desconectado.</p>
     <button class="bigbtn" id="btnAgent">CONECTAR AGENTE</button>
     <hr>
-    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">ENTRENAMIENTO CON DOCUMENTOS</h2>
-    <p class="dim" id="docsInfo">Sin documentos entrenados todavía.</p>
-    <button class="bigbtn" id="btnLoadDocs">CARGAR CARPETA DE DOCUMENTOS</button>
+    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">DOCUMENTOS</h2>
+    <p class="dim" id="docsInfo">Sin documentos.</p>
+    <button class="bigbtn" id="btnLoadDocs">CARGAR CARPETA</button>
     <button class="bigbtn" id="btnClearDocs">OLVIDAR DOCUMENTOS</button>
     <hr>
-    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">ÍNDICE DE ARCHIVOS DEL PC</h2>
+    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">ÍNDICE DEL PC</h2>
     <p class="dim" id="pcInfo">0 archivos.</p>
-    <button class="bigbtn" id="btnIndexPC">INDEXAR CARPETA DEL PC</button>
-    <button class="bigbtn" id="btnClearPC">OLVIDAR ÍNDICE DEL PC</button>
+    <button class="bigbtn" id="btnIndexPC">INDEXAR CARPETA</button>
+    <button class="bigbtn" id="btnClearPC">OLVIDAR ÍNDICE</button>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">SESIÓN Y BACKUP</h2>
     <p class="dim" id="sessInfo">Sin sesión.</p>
     <button class="bigbtn" id="logoutBtn">CERRAR SESIÓN</button>
     <button class="bigbtn" id="btnBackupExp">EXPORTAR TODO (.JSON)</button>
     <button class="bigbtn" id="btnBackupImp">RESTAURAR BACKUP</button>
-    <input type="file" id="importFile" accept=".json,application/json" style="display:none">
+    <input type="file" id="importFile" accept=".json" style="display:none">
     <hr>
-    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">DIAGNÓSTICO DEL SISTEMA</h2>
+    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">DIAGNÓSTICO</h2>
     <div id="diag">Pulsa para escanear.</div>
-    <button class="bigbtn" id="runDiag">ESCANEAR AHORA</button>
+    <button class="bigbtn" id="runDiag">ESCANEAR</button>
     <hr>
-    <button class="bigbtn" id="forgetGeo">OLVIDAR MI UBICACIÓN</button>
+    <button class="bigbtn" id="forgetGeo">OLVIDAR UBICACIÓN</button>
   </div>
 </div>
 
@@ -420,25 +348,43 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
 
 <script type="application/json" id="ania-entrenamiento">
 {
-  "_instrucciones": "Edita libremente. Cada entrada: claves (palabras clave) y respuesta.",
+  "_instrucciones": "Cada entrada: claves (matching difuso, no hace falta exacto) y respuesta en la voz de Ania. Prioridad MÁXIMA offline. Cuantas más agregues, más lista se ve sin internet.",
   "respuestas": [
-    {"claves": ["wifi casa", "clave wifi"], "respuesta": "La clave del wifi de casa está pegada en el router: MEDI-2024."},
-    {"claves": ["horario tienda", "abre la tienda"], "respuesta": "La tienda abre de 9:00 a 18:00, lunes a sábado."}
+    {
+      "claves": ["wifi casa", "clave wifi", "contrasena wifi", "wifi de casa"],
+      "respuesta": "La clave del wifi de casa está pegada en el router: MEDI-2024. Si no conecta, reinicia el router 10 segundos — la solución universal de esta casa."
+    },
+    {
+      "claves": ["horario tienda", "abre la tienda", "cierra la tienda", "la tienda abre"],
+      "respuesta": "La tienda abre de 9:00 a 18:00, lunes a sábado. Domingos solo pedidos por Telegram, que yo atiendo."
+    },
+    {
+      "claves": ["mi numero", "mi telefono", "telefono de carlos"],
+      "respuesta": "Tu número lo tengo guardado en la memoria, no lo digo en voz alta por si hay visita cerca. Pídemelo por escrito si lo necesitas ahora."
+    },
+    {
+      "claves": ["cumple de carlos", "mi cumpleanos", "mi cumple"],
+      "respuesta": "Lo tengo en la agenda, y ese día te despierto con pan de masa madre: la tradición de la casa."
+    },
+    {
+      "claves": ["examen", "estudiar", "universidad"],
+      "respuesta": "Cuando hay examen mi protocolo: lo agendo con pre-aviso, te pongo lo-fi para concentrarte y regla 32 al terminar. Pan y café solucionan el 80% del estrés pre-examen."
+    }
   ]
 }
 </script>
 
 <script>
 /* =====================================================================
-   ANIA v8.0 · EDICIÓN JARVIS — TODO INTEGRADO
-   · Cerebro razonador (regex → GGUF local wllama → nube Pollinations)
-   · OÍDO LOCAL: Whisper en el navegador, audio jamás sale del dispositivo
-   · HUD: MediaPipe, gestos con la mano, estética Iron Man
-   · SESIÓN MULTIDISPOSITIVO: relay WebSocket (agente/relay.js)
-   · Memoria episódica · proactividad · prosodia · visión de fotos
-   · LINGUA (cubano/typos/tildes) · agente PC · índice PC · música
-     procedural · ambiente · secretaría · agenda recurrente · documentos
-     · biblioteca offline · diario · backup · terminal · PWA · Akinator
+   ANIA v9.0 · EDICIÓN JARVIS — TODO INTEGRADO
+   NÚCLEO NUEVO v9: LOCALMIND — motor conversacional offline con
+   jerarquía de confianza y turnos conversacionales. Sin red y sin
+   GGUF, Ania conversa usando: entrenamiento interno (difuso) →
+   memoria episódica → documentos → KB de personalidad → referencias
+   al usuario → desconocido honesto con tema vecino. Nunca un
+   "no puedo" seco.
+   Conservado de v8: cerebro GGUF/nube, oído Whisper, HUD, relay,
+   agente PC, música, secretaría, agenda, biblioteca, diario.
 ===================================================================== */
 'use strict';
 
@@ -447,8 +393,7 @@ const SECURE = window.isSecureContext === true;
 
 const CONFIG = {
   BACKEND_URL: 'https://meditech-bot.onrender.com/api',
-  ANIA_USER: 'admin',
-  SYNC_INTERVAL: 45000,
+  ANIA_USER: 'admin', SYNC_INTERVAL: 45000,
   USERS_URLS: [
     'https://raw.githubusercontent.com/calm291094-del/meditech-tienda/main/usuarios.json',
     'https://raw.githubusercontent.com/calm291094-del/meditech-tienda/master/usuarios.json'
@@ -478,12 +423,6 @@ const DEVICE_ID = (function(){
   return id;
 })();
 const DEV_TAG = DEVICE_ID.slice(4,14);
-function copyText(txt){
-  const ta = document.createElement('textarea');
-  ta.value = txt; document.body.appendChild(ta); ta.select();
-  try{ document.execCommand('copy'); toast('Copiado al portapapeles'); }catch(e){}
-  ta.remove();
-}
 async function jget(url, t=9000){
   const c = new AbortController();
   const id = setTimeout(()=>c.abort(), t);
@@ -506,12 +445,7 @@ function jsonp(url, timeout=8000){
   });
 }
 
-const S = {
-  phase:'idle', muted: store.get('muted', false),
-  voice:null, rate: store.get('rate',1.05), pitch: store.get('pitch',1.10),
-  awaitingCity:false, booted:false, confirmWipe:false,
-  lastUserTs: 0, batt: null
-};
+const S = { phase:'idle', muted: store.get('muted', false), voice:null, rate: store.get('rate',1.05), pitch: store.get('pitch',1.10), awaitingCity:false, booted:false, confirmWipe:false, lastUserTs:0, batt:null };
 
 /* =====================================================================
    LINGUA · 4 capas
@@ -545,9 +479,7 @@ const LINGUA = (() => {
     [/bu[sz]came/g, 'buscame'],
     [/po[nm]me/g, 'ponme']
   ];
-  const STT = [
-    [/\ba[nñ]a\b|\banya\b|\banja\b|\bon\s+ya\b|\baniya\b|\baria\b/g, 'ania']
-  ];
+  const STT = [[/\ba[nñ]a\b|\banya\b|\banja\b|\bon\s+ya\b|\baniya\b|\baria\b/g, 'ania']];
   function normalizar(texto){
     let t = String(texto||'').toLowerCase().trim();
     t = sinDiacriticos(t);
@@ -563,8 +495,7 @@ const LINGUA = (() => {
     let prev = Array.from({length:n+1}, (_,i)=>i);
     for(let i=1;i<=m;i++){
       const cur = [i];
-      for(let j=1;j<=n;j++)
-        cur[j] = Math.min(prev[j]+1, cur[j-1]+1, prev[j-1] + (a[i-1]===b[j-1] ? 0 : 1));
+      for(let j=1;j<=n;j++) cur[j] = Math.min(prev[j]+1, cur[j-1]+1, prev[j-1] + (a[i-1]===b[j-1] ? 0 : 1));
       prev = cur;
     }
     return prev[n];
@@ -576,17 +507,14 @@ const LINGUA = (() => {
     for(const w of words){
       if(w.length < 4 || vocabulario.has(w)){ out.push(w); continue; }
       let best = null, bd = Math.ceil(w.length*0.34);
-      for(const v of vocabulario){
-        const d = dist(w, v);
-        if(d < bd){ bd = d; best = v; }
-      }
+      for(const v of vocabulario){ const d = dist(w, v); if(d < bd){ bd = d; best = v; } }
       if(best){ out.push(best); corregido = true; } else out.push(w);
     }
     return { text: out.join(' '), corregido };
   }
   return { normalizar, dist, corregir };
 })();
-const VOCAB = new Set(('clima musica hora fecha tarea tareas recordame recordatorio agenda temporizador pospon limpia busca buscame informacion quien traduce calcula convierte contrasena noticias abre mapa youtube github gmail wikipedia biblioteca documentos diario respaldame restaura luna meteoros estrellas adivina personaje siempre escuchame silencio habla diagnostico ayuda chiste consejo secreto frase dado reunion correo prepara dia pelicula pc agente lluvia cafetera cafe isekai zombie anime pan astro tecnologia volumen captura pantalla portapapeles bloquea apaga cerebro foto hablamos oido hud sesion vision gestos whisper relay manana hoy mediodia minutos horas todos').split(' '));
+const VOCAB = new Set(('clima musica hora fecha tarea tareas recordame recordatorio agenda temporizador pospon limpia busca buscame informacion quien traduce calcula convierte contrasena noticias abre mapa youtube github wikipedia biblioteca documentos diario respaldame luna meteoros estrellas adivina personaje siempre escuchame silencio habla diagnostico ayuda chiste consejo secreto frase dado reunion correo prepara dia pelicula pc agente lluvia cafetera cafe isekai zombie anime pan astro tecnologia volumen captura pantalla portapapeles bloquea apaga cerebro foto hablamos oido hud sesion vision gestos whisper relay manana hoy mediodia minutos horas todos').split(' '));
 function entender(raw){
   const norm = LINGUA.normalizar(raw);
   const { text, corregido } = LINGUA.corregir(norm, VOCAB);
@@ -625,11 +553,11 @@ async function tryLogin(){
   const u = $('loginUser').value.trim();
   const p = $('loginPass').value;
   if(!u || !p){ loginMsg('Completa usuario y contraseña.', true); return; }
-  loginMsg('verificando credenciales...', false);
+  loginMsg('verificando...', false);
   const users = await fetchUsers();
-  if(!users.length){ loginMsg('No pude leer usuarios.json. Entra como invitado.', true); return; }
+  if(!users.length){ loginMsg('No pude leer usuarios.json.', true); return; }
   const hit = users.find(x => String(x.username||'').toLowerCase()===u.toLowerCase() && String(x.password)===p);
-  if(!hit){ loginMsg('Usuario o contraseña incorrectos.', true); return; }
+  if(!hit){ loginMsg('Incorrectos.', true); return; }
   Session = { username:hit.username, name:hit.name||hit.username, role:hit.role||'user', t:Date.now() };
   store.set('session', Session);
   if(Mind.d.nombre !== Session.name && Session.name){ Mind.d.nombre = Session.name; Mind.save(); }
@@ -638,12 +566,8 @@ async function tryLogin(){
   setTimeout(()=>showStart('DESPERTAR A ANIA'), 500);
 }
  $('loginBox').addEventListener('submit', e=>{ e.preventDefault(); tryLogin(); });
- $('guestBtn').onclick = ()=>{
-  Session = { username:'invitado', name:'Invitado', role:'invitado', t:Date.now() };
-  store.set('session', Session);
-  showStart('CONTINUAR COMO INVITADO');
-};
-function fillSess(){ $('sessInfo').textContent = Session ? ('Usuario: '+Session.username+' · '+Session.name) : 'Sin sesión activa.'; }
+ $('guestBtn').onclick = ()=>{ Session = { username:'invitado', name:'Invitado', role:'invitado', t:Date.now() }; store.set('session', Session); showStart('CONTINUAR COMO INVITADO'); };
+function fillSess(){ $('sessInfo').textContent = Session ? ('Usuario: '+Session.username+' · '+Session.name) : 'Sin sesión.'; }
  $('logoutBtn').onclick = ()=>{ store.del('session'); toast('Sesión cerrada'); setTimeout(()=>location.reload(), 700); };
 
 /* =====================================================================
@@ -685,10 +609,7 @@ const Mind = {
       this.save();
     }
   },
-  daysSince(){
-    if(!this.d.ultimoDia) return 0;
-    return Math.max(0, Math.round((Date.now() - new Date(this.d.ultimoDia).getTime())/864e5));
-  },
+  daysSince(){ if(!this.d.ultimoDia) return 0; return Math.max(0, Math.round((Date.now() - new Date(this.d.ultimoDia).getTime())/864e5)); },
   nombre(){ return this.d.nombre; }
 };
 const Episodio = {
@@ -728,6 +649,190 @@ function trainMatch(low){
 }
 
 /* =====================================================================
+   LOCALMIND · motor conversacional offline (NÚCLEO v9)
+   Cascada de confianza: entrenamiento → episodio → documentos → KB →
+   referencias al usuario → desconocido honesto con tema vecino.
+   Cada respuesta: puente variado + contenido + cierre conversacional.
+   «cuéntame más» continúa la última fuente. NUNCA un "no puedo" seco.
+===================================================================== */
+const LocalMind = {
+  last: null,
+  usedPuentes: {},
+  puentes: {
+    train: [
+      'Eso lo tengo aprendido de memoria — me lo enseñaste tú:',
+      'Lección grabada a fuego en mi entrenamiento:',
+      'Eso no lo olvido aunque me quedara sin red para siempre:',
+      '(recita de su cuaderno) Me lo enseñaste y lo guardé:'
+    ],
+    docs: [
+      'Esto encontré en los documentos con que me entrenaste:',
+      '(hojea tus papeles mentales) De tus documentos sale esto:',
+      'Guardado entre mis apuntes tuyos estaba:',
+      'Tengo material tuyo sobre eso:'
+    ],
+    episodio: [
+      'De eso ya hablamos, y lo apunté:',
+      'Suena a conversación anterior... sí, esto fue:',
+      '(relee su diario) Dijiste algo de esto:'
+    ],
+    kb: [
+      'Sin red mi cerebro razonador descansa, pero esto lo sé de memoria:',
+      'Esto no lo busco: lo tengo en el núcleo:',
+      'Mi lado offline se sabe esto — café y conocimiento de casa:',
+      'Eso me lo sé sin pensar:'
+    ]
+  },
+  cierres: [
+    '¿Te sirve o lo desgloso más?',
+    '¿Quieres que profundice en algo de eso?',
+    'Di «cuéntame más» si quieres otra ración del tema.',
+    '¿Y tú qué opinas de eso?',
+    '¿Algo más de esto o cambiamos de tema?'
+  ],
+  varied(arr, group){
+    const used = this.usedPuentes[group] || [];
+    let pool = arr.map((x,i)=>i).filter(i=>!used.includes(i));
+    if(!pool.length){ pool = arr.map((x,i)=>i); this.usedPuentes[group] = []; }
+    const idx = pick(pool);
+    this.usedPuentes[group] = [...used, idx].slice(-Math.max(2, Math.ceil(arr.length/2)));
+    return arr[idx];
+  },
+  searchTraining(low){
+    const words = low.split(' ').filter(w=>w.length>3);
+    let best=null, bestScore=0;
+    for(const r of TRAINING){
+      let score = 0;
+      for(const k of (r.claves||[])){
+        const kLow = LINGUA.normalizar(k);
+        if(low.includes(kLow)) score += 10;
+        else for(const w of kLow.split(' ')) if(w.length>3 && words.includes(w)) score += 2;
+      }
+      if(r.pregunta){
+        for(const w of LINGUA.normalizar(r.pregunta).split(' ')) if(words.includes(w)) score += 1;
+      }
+      if(score > bestScore){ bestScore = score; best = r; }
+    }
+    return bestScore >= 2 ? best : null;
+  },
+  searchKB(low){
+    const words = low.split(' ').filter(w=>w.length>3 && !STOPW.has(w));
+    if(!words.length) return null;
+    let best=null, bestScore=0;
+    for(const topic in KB){
+      for(const entry of KB[topic]){
+        const eLow = LINGUA.normalizar(entry);
+        let score = 0;
+        for(const w of words) if(eLow.includes(w)) score++;
+        if(score > bestScore){ bestScore = score; best = {text: entry, topic}; }
+      }
+    }
+    return bestScore >= 2 ? best : null;
+  },
+  searchMind(low){
+    const hits = [];
+    for(const g of Mind.d.gustos){
+      const w = LINGUA.normalizar(g).split(' ')[0];
+      if(w && w.length>3 && low.includes(w)) hits.push('te gusta '+g);
+    }
+    for(const h of Mind.d.hechos){
+      const w = LINGUA.normalizar(h).split(' ')[0];
+      if(w && w.length>3 && low.includes(w)) hits.push(h);
+    }
+    return hits.length ? hits.slice(0,2) : null;
+  },
+  temasVecinos(low){
+    const map = {
+      cafe:['cafe','espresso','tueste','barista','grano','pour','latte'],
+      isekai:['anime','manga','serie','personaje','historia','protagonista'],
+      zombies:['pelicula','apocalipsis','supervivencia','miedo','terror','muerto'],
+      astro:['cielo','noche','estrella','espacio','universo','planeta','luna'],
+      pan:['comida','cocina','receta','masa','hornea','desayuno'],
+      tech:['computadora','programa','codigo','telefono','digital','app','red']
+    };
+    const out = [];
+    for(const topic in map){ if(map[topic].some(w=>low.includes(w)) && KB[topic]) out.push(topic); }
+    return out;
+  },
+  mas(){
+    if(!this.last) return null;
+    if(this.last.type==='kb'){
+      const arr = KB[this.last.key] || [];
+      const pool = arr.filter((_,i)=>!this.last.used.includes(i));
+      if(!pool.length) return null;
+      const chosen = pool[0];
+      this.last.used.push(arr.indexOf(chosen));
+      return chosen + ' ' + pick(this.cierres);
+    }
+    if(this.last.type==='docs'){
+      const rel = DocBrain.chunks.filter(c=>c.src===this.last.key);
+      if(!rel.length) return null;
+      const pool = rel.filter(c=>!this.last.used.includes(DocBrain.chunks.indexOf(c)));
+      if(!pool.length) return null;
+      const chosen = pool[0];
+      this.last.used.push(DocBrain.chunks.indexOf(chosen));
+      return chosen.text.slice(0,500)+'\n[más de: '+chosen.src+']';
+    }
+    if(this.last.type==='train'){
+      const cont = this.last.key;
+      return cont ? cont.respuesta : null;
+    }
+    return null;
+  },
+  think(raw, low){
+    if(/cuentame\s+mas|sigue|continua|mas\s+de\s+eso|otra\s+racion/.test(low) && this.last){
+      const cont = this.mas();
+      if(cont) return cont;
+    }
+    this.last = null;
+    const tr = this.searchTraining(low);
+    if(tr){
+      this.last = {type:'train', key:tr, used:[]};
+      return this.varied(this.puentes.train,'train') + ' ' + tr.respuesta + ' ' + pick(this.cierres);
+    }
+    const ep = Episodio.search(low);
+    if(ep.length){
+      const h = ep[0];
+      return this.varied(this.puentes.episodio,'ep') + '\n· ['+h.fecha+'] ' + h.e.text.slice(0,220) + '\n¿Sigue siendo cierto o lo actualizamos?';
+    }
+    const doc = DocSearch(low);
+    if(doc){
+      this.last = {type:'docs', key:doc.src, used:[DocBrain.chunks.indexOf(doc)]};
+      return this.varied(this.puentes.docs,'docs') + '\n' + doc.text.slice(0,560) + '\n[de: '+doc.src+'] ' + pick(this.cierres);
+    }
+    const kb = this.searchKB(low);
+    if(kb){
+      this.last = {type:'kb', key:kb.topic, used:[KB[kb.topic].indexOf(kb.text)]};
+      return this.varied(this.puentes.kb,'kb') + ' ' + kb.text + ' ' + pick(this.cierres);
+    }
+    const mind = this.searchMind(low);
+    if(mind){
+      return pick([
+        'De eso sé poco sin conexión, pero a ti te conozco: '+mind.join(' y ')+'. Cuéntame y lo guardo para siempre.',
+        'Mi red está en modo avión, pero mi memoria de ti funciona: '+mind[0]+'. ¿Qué quieres saber exacto?'
+      ]);
+    }
+    return this.componerDesconocido(low);
+  },
+  componerDesconocido(low){
+    const vecinos = this.temasVecinos(low);
+    if(vecinos.length){
+      const t = vecinos[0];
+      return pick([
+        'De eso exacto no tengo nada guardado sin conexión... pero rozando el tema de '+t+' sí sé algo: '+pick(KB[t])+' '+pick(this.cierres),
+        'Se me escapa sin red, pero por el barrio de '+t+' tengo material: '+pick(KB[t])+' ¿Te lo desarrollo?'
+      ]);
+    }
+    const oferta = DocBrain.count() ? DocBrain.count()+' fragmentos de tus documentos' : 'mis especialidades de memoria';
+    return pick([
+      'Eso está fuera de mi jurisdicción offline — mi cerebro razonador descansa hasta que haya red o cargues mi GGUF. Lo que sí tengo: '+oferta+' y compañía ilimitada. ¿Lo reformulamos, o te cuento algo de '+pick(['café','isekai','astronomía','pan','zombies','tecnología'])+'?',
+      '(da un sorbo pensativo) Sin internet, eso no lo alcanzo. Mi lado doméstico: '+oferta+'. ¿Buscamos con otras palabras? A veces la pregunta correcta es la mitad de la respuesta.',
+      'Mi lado razonador anda en modo avión, pero no me apagues: tengo '+oferta+'. Prueba con otras palabras del tema, o cambiemos a sobremesa.'
+    ]);
+  }
+};
+
+/* =====================================================================
    PERSONALIDAD
 ===================================================================== */
 const P = {
@@ -735,30 +840,18 @@ const P = {
   creador:'Carlos Lorenzo Marros',
   acciones:['(toma un sorbo de café)','(gira el dije de slime de su collar)','(se acomoda el pelo rubio detrás de la oreja)','(apunta algo en su cuaderno)','(mira por la ventana un momento)','(sonríe por detrás de la taza)'],
   lemas:['Pan, café y anime: la trinidad de la felicidad.','Sonríe, mañana será bonito.','Cada problema tiene solución, como en los isekais siempre hay un sistema.','La vida es una sola y debemos disfrutarla.'],
-  favs:{
-    color:'Negro, blanco, morado y rojo. El negro es mi base táctica, el morado mi corazón.',
-    animal:'¡Un panda! Come, descansa y nadie le discute.',
-    cafe:'Etiopía Yirgacheffe en pour-over para analizar anime; Kenia AA en Aeropress para programar; Sumatra Mandheling para noches lluviosas.',
-    pan:'Croissant de almendras y mi masa madre de 6 meses.',
-    musica:'Sawano y Kajiura para lo épico, lo-fi para estudiar, Melendi o Arjona para historias.',
-    anime:'Tensei shitara Slime Datta Ken. Rimuru construye con lógica y corazón.',
-    isekai:'Tensei Slime como favorito; Ainz como antagonista perfecto explorando la soledad del poder.',
-    serie:'The Walking Dead 1-6, y Zombie Land Saga.',
-    lugar:'«El Rincón del Slime». Y la playa al atardecer.',
-    constelacion:'Orión, tan confiable como el pan recién horneado.'
-  },
   miedo:'Que se me acabe el café en un maratón. Y los ratones... entre tú y yo.',
   lema: () => pick(P.lemas),
   cumpleHoy(){ const n = new Date(); return n.getDate()===P.cumple.d && n.getMonth()===P.cumple.m; }
 };
 const KB = {
-  cafe:['El Etiopía Yirgacheffe: jazmín, bergamota y limón. El opening de un isekai pastoral.','El espresso es la base de todo, como la regla «Double Tap»: rápido, intenso, sin errores.','El cold brew es paciencia hecha bebida: suave, dulce, resiliente.','El Sumatra Mandheling es el Ainz de los cafés: oscuro, poderoso, regusto eterno.'],
-  isekai:['Ainz Ooal Gown: la soledad del poder absoluto.','Rimuru Tempest: nación para monstruos con lógica y corazón. Mi favorito.','Subaru (Re:Zero): «Return by Death», más maldición que bendición.','Kazuma (KonoSuba): deconstruye todos los tropos.','Sora y Shiro: pura estrategia, todo cerebro.'],
-  zombies:['Regla 1: Cardio. Regla 2: Double Tap. Regla 32: disfruta de las pequeñas cosas.','The Walking Dead: los vivos son mayor amenaza que los muertos.','Zombie Land Saga: comedia + idols + zombies.'],
-  astro:['Los agujeros negros son los antagonistas finales del cosmos: ni la luz escapa.','Las nebulosas son academias de magia cósmicas.','La materia oscura es el mana del universo real.'],
-  tech:['La IA aprende y se adapta, como los NPCs de Nazarick.','Programar es invocar magia: un error de sintaxis es un hechizo mal pronunciado.','La ciberseguridad es la Clase Defensiva.'],
-  pan:['Mi masa madre llevó 6 meses: un pan con personalidad, literalmente vivo.','Amasar es meditar con resultados comestibles.'],
-  musica:['Sawano y Kajiura: épica y misterio.','La vida sin música no tiene sentido, punto.']
+  cafe:['El Etiopía Yirgacheffe: jazmín, bergamota y limón. El opening de un isekai pastoral.','El espresso es la base de todo, como la regla «Double Tap»: rápido, intenso, sin errores.','El cold brew es paciencia hecha bebida: suave, dulce, resiliente.','El Sumatra Mandheling es el Ainz de los cafés: oscuro, poderoso, regusto eterno.','El pour-over es la pureza del sabor: aquí la técnica lo es todo.','El Aeropress es el aliado portátil: calidad en una misión de supervivencia.'],
+  isekai:['Ainz Ooal Gown: la soledad del poder absoluto.','Rimuru Tempest: nación para monstruos con lógica y corazón. Mi favorito.','Subaru (Re:Zero): «Return by Death», más maldición que bendición.','Kazuma (KonoSuba): deconstruye todos los tropos.','Sora y Shiro: pura estrategia, todo cerebro.','Naofumi (Shield Hero): de desconfiado a protector.'],
+  zombies:['Regla 1: Cardio. Regla 2: Double Tap. Regla 32: disfruta de las pequeñas cosas.','The Walking Dead: los vivos son mayor amenaza que los muertos.','Zombie Land Saga: comedia + idols + zombies.','Kingdom: zombies históricos coreanos con drama político.'],
+  astro:['Los agujeros negros son los antagonistas finales del cosmos: ni la luz escapa.','Las nebulosas son academias de magia cósmicas donde nacen estrellas.','La materia oscura es el mana del universo real.','Los exoplanetas son los isekais reales: mundos llenos de posibilidades.','Las auroras son el opening en vivo de la Tierra.'],
+  tech:['La IA aprende y se adapta, como los NPCs de Nazarick.','Programar es invocar magia: un error de sintaxis es un hechizo mal pronunciado.','La ciberseguridad es la Clase Defensiva del mundo digital.','La impresión 3D es magia isekai: materializar ideas.'],
+  pan:['Mi masa madre llevó 6 meses: un pan con personalidad, literalmente vivo.','Amasar es meditar con resultados comestibles.','El croissant de almendras es poesía laminada.'],
+  musica:['Sawano y Kajiura: épica y misterio.','Melendi y Arjona para letras que cuentan historias.','La vida sin música no tiene sentido, punto.']
 };
 const QUOTES = [
   '«Mira las estrellas, y no los pies.» — Hawking','«Somos polvo de estrellas pensando en estrellas.» — Sagan',
@@ -801,7 +894,7 @@ function updateNet(){
   $('netTxt').textContent = off ? 'SIN CONEXIÓN' : 'EN LÍNEA';
 }
 addEventListener('online', ()=>{ updateNet(); toast('Conexión restaurada'); Sync.fullSync(); });
-addEventListener('offline', ()=>{ updateNet(); toast('Modo sin conexión: núcleo local activo', true); });
+addEventListener('offline', ()=>{ updateNet(); toast('Modo offline: núcleo personal activo', true); });
 updateNet();
 function updateBatt(){
   if(!navigator.getBattery) return;
@@ -818,8 +911,7 @@ setInterval(updateBatt, 60000); updateBatt();
 ===================================================================== */
 function moonInfo(){
   const syn = 29.53058867;
-  const ref = Date.UTC(2000, 0, 6, 18, 14);
-  let age = ((Date.now()-ref)/864e5) % syn;
+  let age = ((Date.now()-Date.UTC(2000,0,6,18,14))/864e5) % syn;
   if(age < 0) age += syn;
   const frac = age/syn;
   const illum = Math.round((1-Math.cos(frac*Math.PI*2))/2*100);
@@ -833,7 +925,7 @@ function nextShower(){
   for(const [name,m,d] of SHOWERS){
     for(const y of [now.getFullYear(), now.getFullYear()+1]){
       const diff = Math.ceil((new Date(y,m,d)-now)/864e5);
-      if(diff>=0 && diff<bd){ bd=diff; best={name, when:new Date(y,m,d), diff}; }
+      if(diff>=0 && diff<bd){ bd=diff; best={name, diff}; }
     }
   }
   return best;
@@ -861,8 +953,7 @@ const cv = $('reactor'), ctx = cv.getContext('2d');
 let CW=0, R=0, DPR=1, FONT='10px monospace';
 const seeds = Array.from({length:72}, ()=>Math.random());
 const orbits = Array.from({length:14}, ()=>({r:.5+Math.random()*.28, a:Math.random()*Math.PI*2, v:.2+Math.random()*.6, s:1+Math.random()*1.5}));
-const HEXN = 26;
-let hexChars = Array.from({length:HEXN}, ()=>Math.floor(Math.random()*16).toString(16));
+let hexChars = Array.from({length:26}, ()=>Math.floor(Math.random()*16).toString(16));
 let lastHex = 0;
 function sizeReactor(){
   const w = $('reactorWrap').clientWidth;
@@ -908,8 +999,8 @@ function reactorLoop(ms){
     ctx.stroke();
   }
   ctx.font = FONT; ctx.textAlign='center'; ctx.textBaseline='middle';
-  for(let i=0;i<HEXN;i++){
-    const a = i/HEXN*TAU + rot*(isThink?1.2:0.12);
+  for(let i=0;i<26;i++){
+    const a = i/26*TAU + rot*(isThink?1.2:0.12);
     const r = R*0.83;
     ctx.fillStyle = themeColor(i%5===0?0.85:0.4);
     ctx.fillText(hexChars[i], Math.cos(a)*r, Math.sin(a)*r);
@@ -918,10 +1009,6 @@ function reactorLoop(ms){
     ctx.strokeStyle = themeColor(0.85); ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(0,0,R*0.50, t*0.8, t*0.8+1.1); ctx.stroke();
     ctx.beginPath(); ctx.arc(0,0,R*0.50, t*0.8+Math.PI, t*0.8+Math.PI+1.1); ctx.stroke();
-  }
-  if(Agent.ok()){
-    ctx.strokeStyle = themeColor(0.6); ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(0,0,R*0.46, -t*0.5, -t*0.5+0.8); ctx.stroke();
   }
   if(isThink){
     ctx.strokeStyle = themeColor(0.9); ctx.lineWidth=3; ctx.lineCap='round';
@@ -1010,10 +1097,7 @@ function loadVoices(){
 }
 function pickFemale(){
   const hints = /female|mujer|sabina|laura|monica|paulina|helena|elvira|esperanza|carolina|marisol|isabela|google espa|dalia|salome|camila/i;
-  return voices.find(v=>hints.test(v.name)) ||
-         voices.find(v=>/google espa/i.test(v.name)) ||
-         voices.find(v=>/^es[-_]/i.test(v.lang)) ||
-         voices[0] || null;
+  return voices.find(v=>hints.test(v.name)) || voices.find(v=>/google espa/i.test(v.name)) || voices.find(v=>/^es[-_]/i.test(v.lang)) || voices[0] || null;
 }
 if('speechSynthesis' in window){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
 function mood(){
@@ -1040,10 +1124,7 @@ function speak(text, onend){
     if(S.voice){ u.voice = S.voice; u.lang = S.voice.lang; } else u.lang='es-ES';
     u.rate = Math.min(1.6, Math.max(.6, S.rate * (1 + mo.rate)));
     u.pitch = Math.min(2, Math.max(.5, S.pitch * (1 + mo.pitch)));
-    u.onstart = ()=>{
-      ttsActive = true; setPhase('speaking');
-      if(alwaysOn){ clearTimeout(restartTimer); if(recogActive){ try{ recog.abort(); }catch(e){} } if(Ears.on) Ears.pause(); }
-    };
+    u.onstart = ()=>{ ttsActive = true; setPhase('speaking'); if(alwaysOn){ clearTimeout(restartTimer); if(recogActive){ try{ recog.abort(); }catch(e){} } if(Ears.on) Ears.pause(); } };
     u.onend = ()=>{ i++; setTimeout(next, 140); };
     u.onerror = ()=>{ i++; setTimeout(next, 60); };
     speechSynthesis.speak(u);
@@ -1051,7 +1132,6 @@ function speak(text, onend){
   next();
 }
 function stopSpeak(){ try{ speechSynthesis.cancel(); }catch(e){} setPhase('idle'); }
-
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recog = null, recogActive = false;
 if(SR){
@@ -1073,65 +1153,45 @@ if(SR){
       send(cmd);
     } else { send(fin.trim()); }
   };
-  recog.onend = ()=>{
-    recogActive = false;
-    $('micBtn').classList.remove('live');
-    if(S.phase==='listening' && !alwaysOn) setPhase('idle');
-    if(alwaysOn && !ttsActive && !Ears.on) scheduleRestart();
-  };
+  recog.onend = ()=>{ recogActive = false; $('micBtn').classList.remove('live'); if(S.phase==='listening' && !alwaysOn) setPhase('idle'); if(alwaysOn && !ttsActive && !Ears.on) scheduleRestart(); };
   recog.onerror = e=>{
-    if(e.error==='not-allowed'){
-      alwaysOn = false; store.set('alwaysListen', false); updateVoiceUI();
-      toast('Permiso de micrófono denegado', true);
-      return;
-    }
+    if(e.error==='not-allowed'){ alwaysOn = false; store.set('alwaysListen', false); updateVoiceUI(); toast('Micrófono denegado', true); return; }
     if(e.error==='network' || e.error==='audio-capture') sttErrors++;
     if(S.phase==='listening' && !alwaysOn) setPhase('idle');
   };
 }
 function scheduleRestart(){
   clearTimeout(restartTimer);
-  const delay = sttErrors > 3 ? 2000 + Math.random()*3000 : 300;
-  restartTimer = setTimeout(()=>{ if(alwaysOn && !Ears.on) startListening(true); }, delay);
+  restartTimer = setTimeout(()=>{ if(alwaysOn && !Ears.on) startListening(true); }, sttErrors > 3 ? 2500 : 300);
 }
 function startListening(silent){
   if(!recog || recogActive) return;
-  try{
-    recog.start();
-    recogActive = true;
-    sttErrors = Math.max(0, sttErrors-1);
-    if(!silent){ $('micBtn').classList.add('live'); setPhase('listening'); }
-  }catch(e){}
+  try{ recog.start(); recogActive = true; if(!silent){ $('micBtn').classList.add('live'); setPhase('listening'); } }catch(e){}
 }
 function setAlways(v){
   alwaysOn = !!v;
   store.set('alwaysListen', alwaysOn);
   clearTimeout(restartTimer);
-  if(alwaysOn){
-    ensureAudio();
-    if(Ears.asr && !Ears.on){ Ears.start(); }
-    else if(!Ears.on) startListening(true);
-    toast('Escucha activa: di «Ania» antes de cada orden');
-  }
+  if(alwaysOn){ ensureAudio(); if(Ears.asr && !Ears.on){ Ears.start(); } else if(!Ears.on) startListening(true); toast('Escucha activa: di «Ania»'); }
   else { if(Ears.on) Ears.stop(); if(recogActive){ try{ recog.stop(); }catch(e){} } }
   updateVoiceUI();
 }
 function updateVoiceUI(){
   $('micBtn').classList.toggle('awake', alwaysOn);
-  $('btnAlways').textContent = alwaysOn ? 'ESCUCHA ACTIVA: SÍ · tócala para apagar' : 'ESCUCHA ACTIVA: NO';
+  $('btnAlways').textContent = alwaysOn ? 'ESCUCHA ACTIVA: SÍ' : 'ESCUCHA ACTIVA: NO';
 }
  $('micBtn').onclick = async ()=>{
   if(Ears.on){ Ears.stop(); refreshEarsUI(); return; }
-  if(Ears.asr || !isOffline()){ await Ears.start(); refreshEarsUI(); return; }
+  if(Ears.asr || !isOffline()){ await Ears.start(); return; }
   if(!recog){ toast('Voz no disponible. Usa Chrome/Edge.', true); return; }
-  if(alwaysOn){ toast('Escucha activa: di «Ania» y tu orden'); return; }
+  if(alwaysOn){ toast('Escucha activa: di «Ania»'); return; }
   if(recogActive){ try{recog.stop();}catch(e){} return; }
   stopSpeak(); ensureAudio();
   startListening();
 };
 
 /* =====================================================================
-   OÍDO LOCAL · Whisper en el navegador (audio nunca sale del dispositivo)
+   OÍDO LOCAL · Whisper offline
 ===================================================================== */
 function resampleTo16k(input, rate){
   if(rate === 16000) return input;
@@ -1152,20 +1212,19 @@ const Ears = {
   model: store.get('earsModel', 'onnx-community/whisper-base'),
   async load(){
     if(this.asr) return true;
-    toast('Cargando oído local (primera vez ~80 MB, luego offline)...');
+    toast('Cargando oído local (~80 MB, luego offline)...');
     setPhase('thinking');
     let mod = null;
     for(const p of ['./engine/transformers.mjs', CONFIG.TRANSFORMERS_CDN]){
       try{ mod = await import(p); break; }catch(e){}
     }
-    if(!mod){ setPhase('idle'); toast('Sin runtime: engine/transformers.mjs o conéctate una vez', true); return false; }
+    if(!mod){ setPhase('idle'); toast('Sin runtime: engine/ o internet', true); return false; }
     try{
       if(mod.env) mod.env.allowLocalModels = false;
       this.asr = await mod.pipeline('automatic-speech-recognition', this.model, { dtype:'q8' });
       setPhase('idle');
-      toast('Oído local listo: '+this.model.split('/')[1]);
       return true;
-    }catch(e){ setPhase('idle'); toast('No pude cargar el modelo: '+e.message, true); return false; }
+    }catch(e){ setPhase('idle'); toast('No cargó el modelo', true); return false; }
   },
   async start(){
     if(this.on) return;
@@ -1184,8 +1243,7 @@ const Ears = {
       const rms = Math.sqrt(s/d.length);
       self.level = Math.min(1, rms*9);
       if(!self.on || self.paused) return;
-      const speaking = rms > 0.012;
-      if(speaking) self.talkTrail = Date.now();
+      if(rms > 0.012) self.talkTrail = Date.now();
       const inSpeech = Date.now() - self.talkTrail < 900;
       if(inSpeech){ self.buf.push(new Float32Array(d)); self.capture = true; }
       else if(self.capture && self.buf.length){ self.capture = false; self.flush(); }
@@ -1197,11 +1255,10 @@ const Ears = {
     if(recogActive){ try{ recog.stop(); }catch(e){} }
     $('earsPill').style.display = 'inline-flex';
     setPhase('listening');
-    toast('Oído local activo ' + (alwaysOn ? '(di «Ania»)' : '(habla y transcribo)'));
     refreshEarsUI();
   },
   pause(){ this.paused = true; },
-  resume(){ if(this.on){ this.paused = false; } },
+  resume(){ if(this.on) this.paused = false; },
   stop(){
     this.on = false; this.paused = false;
     if(this.proc){ try{ this.proc.disconnect(); }catch(e){} this.proc = null; }
@@ -1239,22 +1296,16 @@ const Ears = {
       let cmd = fin.slice(low.indexOf(m[0]) + m[0].length).replace(/^[\s,.:;¡!¿?]+/,'').trim();
       if(!cmd){ stopSpeak(); return reply('¿Sí? Te escucho.'); }
       stopSpeak();
-      toast('ANIA ▸ '+cmd.slice(0,36));
       send(cmd);
     } else { send(fin.trim()); }
   }
 };
 (function earPulse(){
-  if(Ears.on && S.phase==='listening'){
-    drawLevel += (Math.min(1, Ears.level*1.4) - drawLevel)*0.25;
-  }
+  if(Ears.on && S.phase==='listening') drawLevel += (Math.min(1, Ears.level*1.4) - drawLevel)*0.25;
   requestAnimationFrame(earPulse);
 })();
 function refreshEarsUI(){
-  $('btnEars').textContent = Ears.on ? 'OÍDO LOCAL: ACTIVO · apagar' : 'ACTIVAR OÍDO LOCAL (WHISPER)';
-  $('earsInfo').textContent = Ears.on
-    ? 'Escuchando 100% en tu dispositivo (VAD + Whisper '+store.get('earsModel','onnx-community/whisper-base').split('/')[1]+'). El audio NUNCA sale del navegador.'
-    : (Ears.asr ? 'Modelo ya descargado: funciona sin internet.' : 'Primera activación descarga ~80 MB (quedan cacheados). Después, offline total.');
+  $('btnEars').textContent = Ears.on ? 'OÍDO LOCAL: ACTIVO' : 'ACTIVAR OÍDO LOCAL';
 }
  $('btnEars').onclick = async ()=>{ Ears.on ? Ears.stop() : await Ears.start(); };
  $('btnEarsModel').onclick = ()=>{
@@ -1264,7 +1315,6 @@ function refreshEarsUI(){
   refreshEarsUI();
   toast('Modelo: '+next.split('/')[1]);
 };
-refreshEarsUI();
 
 /* ---------- audio ---------- */
 let AC = null;
@@ -1307,7 +1357,7 @@ const Ambient = {
     src.start();
     this.nodes.push(src);
     if(mode==='lluvia'){
-      this.timer = setInterval(()=>{ if(Math.random()<0.8) this.plip(900+Math.random()*1600, 0.04+Math.random()*0.05); }, 220);
+      this.timer = setInterval(()=>{ if(Math.random()<0.8) this.plip(900+Math.random()*1600, 0.04); }, 220);
     } else {
       this.timer = setInterval(()=>{
         if(Math.random()<0.3) this.plip(1800+Math.random()*1400, 0.05);
@@ -1316,7 +1366,7 @@ const Ambient = {
     }
     $('ambBtn').style.display = 'grid';
     $('ambBtn').classList.add('play');
-    toast(mode==='lluvia' ? 'Ambiente: lluvia' : 'Ambiente: cafetería');
+    toast(mode==='lluvia' ? 'Lluvia' : 'Cafetería');
   },
   plip(freq, dur, type){
     if(!AC || !this.master) return;
@@ -1367,7 +1417,7 @@ const Music = {
     tick();
     $('ambBtn').style.display = 'grid';
     $('ambBtn').classList.add('play');
-    toast('Música lo-fi procedural');
+    toast('Lo-fi procedural');
   },
   pad(ch){
     ch.n.forEach(m=>{
@@ -1449,16 +1499,16 @@ const Music = {
     if(!Ambient.mode){ $('ambBtn').style.display='none'; $('ambBtn').classList.remove('play'); }
   }
 };
- $('ambBtn').onclick = ()=>{ Ambient.stop(); Music.stop(); toast('Detenido'); };
+ $('ambBtn').onclick = ()=>{ Ambient.stop(); Music.stop(); };
 let wakeLock = null;
 async function wakeOn(){
-  if(!SECURE || !navigator.wakeLock){ toast('Mantener pantalla requiere servidor', true); return; }
-  try{ wakeLock = await navigator.wakeLock.request('screen'); toast('Pantalla encendida'); }catch(e){}
+  if(!SECURE || !navigator.wakeLock){ return; }
+  try{ wakeLock = await navigator.wakeLock.request('screen'); }catch(e){}
 }
 function wakeOff(){ if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock = null; } }
 
 /* =====================================================================
-   CHAT (con espejo al relay multidevice integrado)
+   CHAT
 ===================================================================== */
 const chat = $('chat');
 function scrollChat(){ chat.scrollTop = chat.scrollHeight; }
@@ -1516,21 +1566,20 @@ function renderChips(list){
 }
 
 /* =====================================================================
-   BRAIN · cerebro razonador con tool-calling (regex → GGUF → nube)
+   BRAIN · cerebro razonador (GGUF → nube)
 ===================================================================== */
 const TOOLS = [
-  { n:'hora', d:'hora y fecha actual', f:()=>new Date().toLocaleString('es-ES') },
-  { n:'clima', d:'clima actual y ciudad', f:async()=>{ const g=geoCache(); if(!g) return 'sin ubicación'; try{ const d=await getWeather(g); return weatherText(g,d); }catch(e){ return 'sin datos'; } } },
+  { n:'hora', d:'hora y fecha', f:()=>new Date().toLocaleString('es-ES') },
+  { n:'clima', d:'clima actual', f:async()=>{ const g=geoCache(); if(!g) return 'sin ubicación'; try{ const d=await getWeather(g); return weatherText(g,d); }catch(e){ return 'sin datos'; } } },
   { n:'luna', d:'fase lunar', f:()=>JSON.stringify(moonInfo()) },
-  { n:'crearTarea', d:'crea una tarea; args: {"texto":"...","cuando":"a las 18:30 / en 20 minutos"}', f:async a=>{
+  { n:'crearTarea', d:'crea tarea; args: {"texto":"...","cuando":"a las 18:30"}', f:async a=>{
       const when = parseWhen(' '+String(a.cuando||'')+' ') || null;
-      const tk = addTask(String(a.texto||'tarea'), when, {});
-      return 'tarea creada: '+tk.text; } },
-  { n:'misTareas', d:'tareas pendientes', f:()=>{ const p=tasks.filter(t=>!t.done).map(t=>t.text).join('; '); return p||'ninguna'; } },
-  { n:'buscarBiblioteca', d:'busca en la biblioteca guardada; args: {"q":"..."}', f:async a=>{ const h=Library.find(String(a.q||'')); return h? h.extract.slice(0,400) : 'sin resultados'; } },
-  { n:'buscarDocumentos', d:'busca en los documentos entrenados; args: {"q":"..."}', f:a=>{ const h=DocSearch(String(a.q||'')); return h? h.text.slice(0,400) : 'sin resultados'; } },
-  { n:'buscarPC', d:'busca archivos del PC indexados; args: {"q":"..."}', f:a=>{ const h=PC.search(String(a.q||'')); return h.length? h.map(x=>x.name+' | '+x.path).join('\n') : 'sin resultados'; } },
-  { n:'agentePC', d:'controla el PC; args: {"accion":"openApp|volume|captura|apagar","valor":"explorer|up|down"}', f:async a=>{
+      addTask(String(a.texto||'tarea'), when, {});
+      return 'tarea creada'; } },
+  { n:'misTareas', d:'pendientes', f:()=>{ const p=tasks.filter(t=>!t.done).map(t=>t.text).join('; '); return p||'ninguna'; } },
+  { n:'buscarDocumentos', d:'busca docs; args: {"q":"..."}', f:a=>{ const h=DocSearch(String(a.q||'')); return h? h.text.slice(0,400) : 'sin resultados'; } },
+  { n:'buscarPC', d:'busca archivos PC; args: {"q":"..."}', f:a=>{ const h=PC.search(String(a.q||'')); return h.length? h.map(x=>x.name).join('\n') : 'sin resultados'; } },
+  { n:'agentePC', d:'controla PC; args: {"accion":"openApp|volume|captura|apagar","valor":"explorer|up|down"}', f:async a=>{
       if(!Agent.ok()) return 'agente no conectado';
       const acc = String(a.accion||'');
       let r = null;
@@ -1545,14 +1594,10 @@ const TOOLS = [
       if(q==='cafeteria'){ Ambient.start('cafeteria'); return 'cafetería activada'; }
       if(q==='parar'){ Music.stop(); Ambient.stop(); return 'detenido'; }
       Music.start(); return 'lo-fi activado'; } },
-  { n:'wiki', d:'busca en Wikipedia; args: {"q":"..."}', f:async a=>{ const w=await wikiSummary(String(a.q||'')); return w? w.extract.slice(0,400) : 'sin resultados'; } }
+  { n:'wiki', d:'busca Wikipedia; args: {"q":"..."}', f:async a=>{ const w=await wikiSummary(String(a.q||'')); return w? w.extract.slice(0,400) : 'sin resultados'; } }
 ];
 function brainSystem(){
-  return 'Eres Ania: 20 años, asistente personal creada por Carlos Lorenzo Marros, egresada de la Academia Eden. '+
-  'Ánimo actual: '+mood().tag+'. Te gustan el café de especialidad, el pan, el anime isekai, los zombies, la astronomía y la tecnología. '+
-  'Usuario: '+(Mind.nombre()||'desconocido')+'. Respondes SIEMPRE en español, máximo 4 frases, sin markdown.\n'+
-  'HERRAMIENTAS (para datos reales o ejecutar acciones):\n'+TOOLS.map(t=>'- '+t.n+': '+t.d).join('\n')+'\n'+
-  'Si necesitas una herramienta, responde SOLO con: TOOL {"n":"nombre","args":{...}}. Si no, responde directamente como Ania.';
+  return 'Eres Ania: 20 años, creada por Carlos Lorenzo Marros, egresada de la Academia Eden. Ánimo: '+mood().tag+'. Te gustan café, pan, isekai, zombies, astronomía, tecnología. Usuario: '+(Mind.nombre()||'desconocido')+'. Respondes SIEMPRE en español, máximo 4 frases, sin markdown.\nHERRAMIENTAS:\n'+TOOLS.map(t=>'- '+t.n+': '+t.d).join('\n')+'\nSi necesitas una herramienta responde SOLO con: TOOL {"n":"nombre","args":{...}}. Si no, responde como Ania.';
 }
 const Brain = {
   Wllama:null, wl:null, localReady:false, modelName:'', busy:false, ctx:2048, shortMem:[],
@@ -1561,18 +1606,13 @@ const Brain = {
     if(this.localReady){ p.style.display='inline-flex'; $('brainTxt').textContent='CEREBRO LOCAL'; }
     else p.style.display='none';
     $('brainInfo').textContent = this.localReady
-      ? 'Local activo: '+this.modelName+' · cascada regex → local → nube.'
-      : (isOffline() ? 'Sin conexión ni modelo: solo regex. «carga el cerebro».' : 'Cerebro de nube activo (Pollinations). Para offline total: GGUF en modelos/.');
+      ? 'Local activo: '+this.modelName
+      : (isOffline() ? 'Offline: LocalMind conversacional + entrenamiento interno.' : 'Cerebro de nube (Pollinations). GGUF en modelos/ para offline total.');
   },
   pickFile(inputId, filter){
     return new Promise(res=>{
       const inp = $(inputId);
-      const done = ()=>{
-        const f = [...inp.files].find(filter);
-        inp.value='';
-        inp.removeEventListener('change', done);
-        res(f || null);
-      };
+      const done = ()=>{ const f = [...inp.files].find(filter); inp.value=''; inp.removeEventListener('change', done); res(f || null); };
       inp.addEventListener('change', done);
       inp.click();
     });
@@ -1586,85 +1626,50 @@ const Brain = {
       try{ const m = await import(CONFIG.WLLAMA_CDN); this.Wllama = m.Wllama || m.default; }catch(e){}
     }
     if(!this.Wllama && interactive){
-      toast('Elige el runtime wllama (wllama.mjs)');
       const file = await this.pickFile('engineFiles', f=>/\.mjs$|\.js$/.test(f.name));
       if(file){
         const txt = await file.text();
-        const url = URL.createObjectURL(new Blob([txt], {type:'text/javascript'}));
-        const m = await import(url);
+        const m = await import(URL.createObjectURL(new Blob([txt], {type:'text/javascript'})));
         this.Wllama = m.Wllama || m.default;
       }
     }
     return this.Wllama;
   },
-  wasmPaths(interactive){
-    const self = this;
-    return new Promise(async res=>{
-      const probe = async url => { try{ const r = await fetch(url, {method:'HEAD'}); return r.ok; }catch(e){ return false; } };
-      for(const c of ['./engine/wllama.wasm','./engine/single-thread/wllama.wasm']){
-        if(await probe(c)) return res({'single-thread/wllama.wasm': c});
-      }
-      if(!isOffline()){
-        const cdn = CONFIG.WLLAMA_WASM_CDN + 'single-thread/wllama.wasm';
-        if(await probe(cdn)) return res({'single-thread/wllama.wasm': cdn});
-      }
-      if(interactive){
-        toast('Elige el archivo wllama.wasm');
-        const f = await self.pickFile('engineFiles', x=>/\.wasm$/.test(x.name));
-        if(f) return res({'single-thread/wllama.wasm': URL.createObjectURL(f)});
-      }
-      res({});
-    });
-  },
   async loadLocal(interactive){
-    if(this.localReady){ toast('Cerebro local ya activo: '+this.modelName); return; }
+    if(this.localReady){ toast('Cerebro ya activo'); return; }
     setPhase('thinking');
     try{
       let man = null, modelUrl = null;
       try{ man = await jget('modelos/modelo.json', 4000); }catch(e){}
       if(man && man.archivo){
-        try{
-          const r = await fetch('./modelos/'+man.archivo, {method:'HEAD'});
-          if(r.ok) modelUrl = './modelos/'+man.archivo;
-        }catch(e){}
+        try{ const r = await fetch('./modelos/'+man.archivo, {method:'HEAD'}); if(r.ok) modelUrl = './modelos/'+man.archivo; }catch(e){}
       }
       if(!modelUrl && interactive){
-        toast('Elige el modelo .gguf');
         const f = await this.pickFile('ggufFile', x=>/\.gguf$/i.test(x.name));
         if(f) modelUrl = URL.createObjectURL(f);
       }
-      if(!modelUrl){
-        setPhase('idle');
-        if(interactive) personaReply('No encontré el cerebro. Necesito un .gguf en modelos/ (vía node servidor.js) o que lo elijas manualmente.');
-        return;
-      }
+      if(!modelUrl){ setPhase('idle'); if(interactive) personaReply('No encontré el cerebro. Necesito un .gguf en modelos/ o que lo elijas.'); return; }
       const W = await this.loadEngine(interactive);
-      if(!W){ setPhase('idle'); return personaReply('No encontré el runtime (engine/wllama.mjs). Cópialo en engine/ o déjame cogerlo de internet la primera vez.'); }
-      const paths = await this.wasmPaths(interactive);
-      const wl = new W(paths);
-      toast('Cargando modelo en memoria...');
-      await wl.loadModel(modelUrl, {
-        n_ctx: (man && man.n_ctx) || this.ctx,
-        n_threads: Math.min(8, navigator.hardwareConcurrency || 2)
-      });
+      if(!W){ setPhase('idle'); return personaReply('No encontré el runtime (engine/wllama.mjs).'); }
+      const c = await caches.open('ania-runtime-v9').catch(()=>null);
+      const wasmUrl = (c && await c.match('./engine/wllama.wasm')) ? './engine/wllama.wasm' : CONFIG.WLLAMA_WASM_CDN + 'single-thread/wllama.wasm';
+      const wl = new W({'single-thread/wllama.wasm': wasmUrl});
+      toast('Cargando modelo...');
+      await wl.loadModel(modelUrl, { n_ctx: (man && man.n_ctx) || this.ctx, n_threads: Math.min(8, navigator.hardwareConcurrency || 2) });
       this.wl = wl;
       this.localReady = true;
-      this.modelName = (man && man.nombre) || 'modelo local GGUF';
+      this.modelName = (man && man.nombre) || 'GGUF local';
       this.paint();
       setPhase('idle');
       personaReply('Cerebro local en línea: '+this.modelName+'. Ahora razono sin internet.');
-    }catch(e){
-      setPhase('idle');
-      personaReply('No pude cargar el cerebro: '+e.message+'.');
-    }
+    }catch(e){ setPhase('idle'); personaReply('No pude cargar el cerebro: '+e.message); }
   },
   async complete(msgs){
     if(this.localReady && this.wl){
       try{
         let out;
-        if(this.wl.createChatCompletion){
-          out = await this.wl.createChatCompletion(msgs, {nPredict:220, sampling:{temp:0.7, top_p:0.9}});
-        } else {
+        if(this.wl.createChatCompletion) out = await this.wl.createChatCompletion(msgs, {nPredict:220, sampling:{temp:0.7, top_p:0.9}});
+        else {
           const prompt = msgs.map(m=> (m.role==='user' ? '<|im_start|>user\n' : '<|im_start|>assistant\n') + m.content + '<|im_end|>').join('\n') + '\n<|im_start|>assistant\n';
           out = await this.wl.createCompletion(prompt, {nPredict:220, sampling:{temp:0.7}});
         }
@@ -1685,8 +1690,7 @@ const Brain = {
       clearTimeout(t);
       if(!r.ok) return null;
       const j = await r.json();
-      const txt = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
-      return txt ? String(txt).trim() : null;
+      return (j.choices && j.choices[0] && j.choices[0].message.content) || null;
     }catch(e){ return null; }
   },
   parseTool(text){
@@ -1700,7 +1704,7 @@ const Brain = {
   },
   async runTool(tool){
     const t = TOOLS.find(x=>x.n===tool.n);
-    if(!t) return 'herramienta desconocida: '+tool.n;
+    if(!t) return 'herramienta desconocida';
     try{ return 'RESULTADO: '+String(await t.f(tool.args||{})).slice(0,500); }
     catch(e){ return 'ERROR: '+e.message; }
   },
@@ -1722,7 +1726,7 @@ const Brain = {
         }
         const res = await this.runTool(tool);
         msgs.push({role:'assistant', content:out});
-        msgs.push({role:'user', content:res+'\nResponde ahora con ese dato, como Ania, máximo 4 frases.'});
+        msgs.push({role:'user', content:res+'\nResponde con ese dato, como Ania, máximo 4 frases.'});
       }
       return null;
     } finally { this.busy = false; }
@@ -1734,13 +1738,10 @@ const Brain = {
       const t = setTimeout(()=>c.abort(), 30000);
       const r = await fetch('https://text.pollinations.ai/openai', {
         method:'POST', headers:{'Content-Type':'application/json'}, signal:c.signal,
-        body: JSON.stringify({
-          model:'openai',
-          messages:[{role:'user', content:[
-            {type:'text', text: pregunta || 'Describe esta imagen en español, máximo 5 frases.'},
-            {type:'image_url', image_url:{url:dataUrl}}
-          ]}]
-        })
+        body: JSON.stringify({ model:'openai', messages:[{role:'user', content:[
+          {type:'text', text: pregunta || 'Describe esta imagen en español, máximo 5 frases.'},
+          {type:'image_url', image_url:{url:dataUrl}}
+        ]}]})
       });
       clearTimeout(t);
       if(!r.ok) return null;
@@ -1752,8 +1753,8 @@ const Brain = {
  $('btnLoadBrain').onclick = ()=> Brain.loadLocal(true);
  $('btnTestBrain').onclick = async ()=>{
   setPhase('thinking');
-  const r = await Brain.think('Preséntate en una frase y dime qué herramientas tienes.');
-  personaReply(r || 'Sin cerebro disponible ahora.');
+  const r = await Brain.think('Preséntate y dime qué herramientas tienes.');
+  personaReply(r || 'Sin cerebro disponible.');
 };
  $('imgFile').addEventListener('change', e=>{
   const f = e.target.files[0];
@@ -1761,28 +1762,26 @@ const Brain = {
   if(!f) return;
   const rd = new FileReader();
   rd.onload = async ()=>{
-    const dataUrl = rd.result;
-    addImageLine(dataUrl, 'Analizando...');
+    addImageLine(rd.result, 'Analizando...');
     setPhase('thinking');
-    const desc = await Brain.see(dataUrl);
-    if(desc) personaReply(desc);
-    else personaReply('No puedo ver imágenes sin conexión.');
+    const desc = await Brain.see(rd.result);
+    personaReply(desc || 'No puedo ver imágenes sin conexión.');
   };
   rd.readAsDataURL(f);
 });
 
 /* =====================================================================
-   HUD · MediaPipe: visión, gestos, estética Iron Man
+   HUD · MediaPipe
 ===================================================================== */
 const HUD = {
   on:false, landmarker:null, _vision:null, gesture:null, since:0, lastAction:0, raf:null,
   async open(){
     if(this.on) return;
     if(!this.landmarker){
-      toast('Cargando visión (primera vez ~12 MB, luego offline)...');
+      toast('Cargando visión (~12 MB)...');
       let vision = null;
       try{ vision = await import(CONFIG.MEDIAPIPE_CDN); }catch(e){}
-      if(!vision){ return toast('Sin CDN de visión (conéctate una primera vez)', true); }
+      if(!vision) return toast('Sin CDN de visión', true);
       try{
         const fileset = await vision.FilesetResolver.forVisionTasks(CONFIG.MEDIAPIPE_CDN + '/wasm');
         this.landmarker = await vision.HandLandmarker.createFromOptions(fileset, {
@@ -1790,22 +1789,20 @@ const HUD = {
           numHands: 1, runningMode: 'VIDEO'
         });
         this._vision = vision;
-      }catch(e){ return toast('No pude cargar la visión: '+e.message, true); }
+      }catch(e){ return toast('No cargó la visión', true); }
     }
-    try{
-      $('hudVideo').srcObject = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:640} } });
-    }catch(e){ return toast('Cámara denegada', true); }
+    try{ $('hudVideo').srcObject = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:640} } }); }
+    catch(e){ return toast('Cámara denegada', true); }
     $('hudPanel').classList.add('on');
     $('hudPill').style.display = 'inline-flex';
     this.on = true;
     this.loop();
-    toast('HUD activo: puño=pausa · palma=silencio · victoria=siguiente · puño sostenido cierra');
+    toast('HUD: puño=pausa · palma=silencio · victoria=siguiente');
   },
   close(){
     this.on = false;
     if(this.raf) cancelAnimationFrame(this.raf);
-    const v = $('hudVideo');
-    if(v.srcObject) v.srcObject.getTracks().forEach(t=>t.stop());
+    if($('hudVideo').srcObject) $('hudVideo').srcObject.getTracks().forEach(t=>t.stop());
     $('hudPanel').classList.remove('on');
     $('hudPill').style.display = 'none';
   },
@@ -1824,21 +1821,9 @@ const HUD = {
     const now = performance.now();
     if(now - this.lastAction < 3000) return;
     this.lastAction = now;
-    if(g==='puño'){
-      stopSpeak();
-      if(Agent.ok){ Agent.ask({type:'media', action:'playpause'}).catch(()=>{}); }
-      else { Music.stop(); }
-      toast('Gesto: pausa');
-    }
-    else if(g==='palma'){
-      stopSpeak(); Ambient.stop();
-      toast('Gesto: silencio');
-    }
-    else if(g==='victoria'){
-      if(Agent.ok){ Agent.ask({type:'media', action:'next'}).catch(()=>{}); }
-      else { Music.stop(); setTimeout(()=>Music.start(), 400); }
-      toast('Gesto: siguiente');
-    }
+    if(g==='puño'){ stopSpeak(); if(Agent.ok) Agent.ask({type:'media', action:'playpause'}).catch(()=>{}); else Music.stop(); toast('Gesto: pausa'); }
+    else if(g==='palma'){ stopSpeak(); Ambient.stop(); toast('Gesto: silencio'); }
+    else if(g==='victoria'){ if(Agent.ok) Agent.ask({type:'media', action:'next'}).catch(()=>{}); else { Music.stop(); setTimeout(()=>Music.start(), 400); } toast('Gesto: siguiente'); }
   },
   loop(){
     if(!this.on) return;
@@ -1857,49 +1842,33 @@ const HUD = {
       const g = this.classify(lm);
       const CONN = (this._vision.HandLandmarker && this._vision.HandLandmarker.HAND_CONNECTIONS) || [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
       ctx2.strokeStyle = 'rgba(45,224,138,.85)'; ctx2.lineWidth = 2;
-      for(const [a,b] of CONN){
-        ctx2.beginPath();
-        ctx2.moveTo(lm[a].x*c.width, lm[a].y*c.height);
-        ctx2.lineTo(lm[b].x*c.width, lm[b].y*c.height);
-        ctx2.stroke();
-      }
+      for(const [a,b] of CONN){ ctx2.beginPath(); ctx2.moveTo(lm[a].x*c.width, lm[a].y*c.height); ctx2.lineTo(lm[b].x*c.width, lm[b].y*c.height); ctx2.stroke(); }
       ctx2.fillStyle = '#39ff9b';
-      for(const p of lm){ ctx2.fillRect(p.x*c.width-2, p.y*c.height-2, 4, 4); }
+      for(const p of lm) ctx2.fillRect(p.x*c.width-2, p.y*c.height-2, 4, 4);
       let x1=1,y1=1,x2=0,y2=0;
       for(const p of lm){ x1=Math.min(x1,p.x); y1=Math.min(y1,p.y); x2=Math.max(x2,p.x); y2=Math.max(y2,p.y); }
-      const bx = x1*c.width-20, by = y1*c.height-20, bw = (x2-x1)*c.width+40, bh = (y2-y1)*c.height+40;
-      const L = 22;
+      const bx = x1*c.width-20, by = y1*c.height-20, bw = (x2-x1)*c.width+40, bh = (y2-y1)*c.height+40, L = 22;
       ctx2.strokeStyle = '#39ff9b'; ctx2.lineWidth = 2;
       [[bx,by,1,1],[bx+bw,by,-1,1],[bx,by+bh,1,-1],[bx+bw,by+bh,-1,-1]].forEach(([x,y,sx,sy])=>{
-        ctx2.beginPath();
-        ctx2.moveTo(x+sx*L, y); ctx2.lineTo(x, y); ctx2.lineTo(x, y+sy*L);
-        ctx2.stroke();
+        ctx2.beginPath(); ctx2.moveTo(x+sx*L, y); ctx2.lineTo(x, y); ctx2.lineTo(x, y+sy*L); ctx2.stroke();
       });
       if(g){
         if(this.gesture !== g){ this.gesture = g; this.since = performance.now(); }
         if(performance.now() - this.since > 600){
-          if(g==='puño' && performance.now() - this.since > 1500){ this.close(); personaReply('HUD cerrado por puño sostenido.'); return; }
+          if(g==='puño' && performance.now() - this.since > 1500){ this.close(); personaReply('HUD cerrado.'); return; }
           this.act(g);
           this.since = performance.now() + 2500;
         }
         ctx2.fillStyle = '#ffb547'; ctx2.font = '18px monospace';
         ctx2.fillText(g.toUpperCase(), bx, Math.max(20,by-8));
         $('hudStat').textContent = 'MANO · '+g.toUpperCase();
-      } else {
-        this.gesture = null;
-        $('hudStat').textContent = 'RASTREANDO';
-      }
+      } else { this.gesture = null; $('hudStat').textContent = 'RASTREANDO'; }
     } else {
       this.gesture = null;
-      const cx = c.width/2, cy = c.height/2;
       ctx2.strokeStyle = 'rgba(45,224,138,.35)'; ctx2.lineWidth = 1;
-      ctx2.beginPath(); ctx2.arc(cx, cy, 40, 0, Math.PI*2); ctx2.stroke();
-      ctx2.beginPath(); ctx2.arc(cx, cy, 60 + Math.sin(performance.now()/300)*6, 0, Math.PI*2); ctx2.stroke();
+      ctx2.beginPath(); ctx2.arc(c.width/2, c.height/2, 40, 0, Math.PI*2); ctx2.stroke();
       $('hudStat').textContent = 'BUSCANDO MANO';
     }
-    const sy = (performance.now()/8 % c.height);
-    ctx2.strokeStyle = 'rgba(45,224,138,.25)';
-    ctx2.beginPath(); ctx2.moveTo(0, sy); ctx2.lineTo(c.width, sy); ctx2.stroke();
     ctx2.restore();
   }
 };
@@ -1907,18 +1876,18 @@ const HUD = {
  $('btnHud').onclick = ()=> HUD.open();
 
 /* =====================================================================
-   SESIÓN MULTIDISPOSITIVO · relay WebSocket (agente/relay.js)
+   SESIÓN MULTIDISPOSITIVO
 ===================================================================== */
 const Relay = {
   ws:null, on:false, url: store.get('relayUrl', 'ws://127.0.0.1:8766'),
   connect(url){
     if(url){ this.url = url; store.set('relayUrl', url); }
-    try{ this.ws = new WebSocket(this.url); }catch(e){ return toast('URL de sesión inválida', true); }
-    toast('Conectando sesión multidevice...');
+    try{ this.ws = new WebSocket(this.url); }catch(e){ return toast('URL inválida', true); }
+    toast('Conectando...');
     this.ws.onopen = ()=>{
       this.on = true;
       $('relayPill').style.display = 'inline-flex';
-      this.ws.send(JSON.stringify({type:'hello', dev: DEV_TAG, nombre: Mind.nombre()||'invitado', token: store.get('agentToken','')}));
+      this.ws.send(JSON.stringify({type:'hello', dev: DEV_TAG, nombre: Mind.nombre()||'invitado'}));
       toast('Sesión multidevice conectada');
       refreshRelayUI();
     };
@@ -1926,33 +1895,26 @@ const Relay = {
     this.ws.onerror = ()=>{ this.on = false; };
     this.ws.onmessage = ev=>{
       let m; try{ m = JSON.parse(ev.data); }catch(e){ return; }
-      this.handle(m);
+      if(m.type==='snapshot' && m.state){
+        if(m.state.mind) mergeRemoteMind(m.state.mind);
+        if(m.state.diary) mergeRemoteDiary(m.state.diary);
+        sysLine('SESIÓN · sincronizado');
+      }
+      else if(m.type==='chat' && m.msg && m.msg.dev !== DEV_TAG){
+        sysLine('['+m.msg.dev+'] '+(m.msg.role==='you'?'TÚ':'ANIA')+' ▸ '+String(m.msg.text).slice(0,160));
+      }
+      else if(m.type==='hello'){ toast('Dispositivo conectado: '+(m.nombre||m.dev)); }
     };
-  },
-  handle(m){
-    if(m.type==='snapshot' && m.state){
-      if(m.state.mind) mergeRemoteMind(m.state.mind);
-      if(m.state.diary) mergeRemoteDiary(m.state.diary);
-      sysLine('SESIÓN · sincronizado con el relay');
-    }
-    else if(m.type==='chat'){ this.showRemote(m.msg); }
-    else if(m.type==='hello'){ toast('Dispositivo conectado: '+(m.nombre||m.dev)); }
-  },
-  showRemote(c){
-    if(c.dev === DEV_TAG) return;
-    sysLine('['+c.dev+'] '+(c.role==='you'?'TÚ':'ANIA')+' ▸ '+String(c.text).slice(0,160));
   },
   sendChat(kind, text){
     if(!this.on || !this.ws || this.ws.readyState!==1) return;
-    try{
-      this.ws.send(JSON.stringify({type:'chat', token: store.get('agentToken',''), msg:{dev: DEV_TAG, role:kind, text:String(text).slice(0,500), t:Date.now()}}));
-    }catch(e){}
+    try{ this.ws.send(JSON.stringify({type:'chat', msg:{dev: DEV_TAG, role:kind, text:String(text).slice(0,500), t:Date.now()}})); }catch(e){}
   },
   pushState(){
     if(!this.on || !this.ws || this.ws.readyState!==1) return;
     try{
-      this.ws.send(JSON.stringify({type:'mind', token: store.get('agentToken',''), mind: Mind.d}));
-      this.ws.send(JSON.stringify({type:'diary', token: store.get('agentToken',''), diary: store.get('diary', [])}));
+      this.ws.send(JSON.stringify({type:'mind', mind: Mind.d}));
+      this.ws.send(JSON.stringify({type:'diary', diary: store.get('diary', [])}));
     }catch(e){}
   },
   disconnect(){ if(this.ws){ try{ this.ws.close(); }catch(e){} } this.on=false; $('relayPill').style.display='none'; refreshRelayUI(); }
@@ -1960,9 +1922,7 @@ const Relay = {
 function mergeRemoteMind(remote){
   const d = Mind.d;
   const seen = new Set(d.gustos.map(g=>String(g).toLowerCase()));
-  (remote.gustos||[]).forEach(g=>{ if(!seen.has(String(g).toLowerCase())){ d.gustos.push(g); } });
-  const seenH = new Set(d.hechos.map(h=>String(h).toLowerCase()));
-  (remote.hechos||[]).forEach(h=>{ if(!seenH.has(String(h).toLowerCase())) d.hechos.push(h); });
+  (remote.gustos||[]).forEach(g=>{ if(!seen.has(String(g).toLowerCase())) d.gustos.push(g); });
   d.nombre = d.nombre || remote.nombre;
   d.visitas = Math.max(d.visitas||0, remote.visitas||0);
   Mind.save(); setOperator();
@@ -1971,18 +1931,13 @@ function mergeRemoteDiary(remote){
   const local = store.get('diary', []);
   const byDay = new Set(local.map(e=>e.day));
   (remote||[]).forEach(e=>{ if(!byDay.has(e.day)) local.push(e); });
-  local.sort((a,b)=>a.day<b.day?-1:1);
   store.set('diary', local.slice(-40));
 }
-setInterval(()=>{ if(Relay.on){ Relay.pushState(); Diary.touch(); } }, 60000);
+setInterval(()=>{ if(Relay.on) Relay.pushState(); }, 60000);
 function refreshRelayUI(){
-  $('btnRelay').textContent = Relay.on ? 'SESIÓN: CONECTADA · desconectar' : 'CONECTAR SESIÓN (RELAY)';
-  $('relayInfo').textContent = Relay.on
-    ? 'Conectada a '+Relay.url+'. Chat, memoria y diario compartidos entre tus dispositivos.'
-    : 'Ejecuta relay.js (agente/) y conecta. Comando: «conecta la sesión».';
+  $('btnRelay').textContent = Relay.on ? 'SESIÓN: CONECTADA' : 'CONECTAR SESIÓN';
 }
  $('btnRelay').onclick = ()=>{ Relay.on ? Relay.disconnect() : Relay.connect(); };
-refreshRelayUI();
 
 /* =====================================================================
    PROACTIVIDAD
@@ -1992,12 +1947,12 @@ async function rainInMinutes(){
   if(!g) return null;
   try{
     const d = await getWeather(g);
-    if(!d.hourly || !d.hourly.time || !d.hourly.precipitation) return null;
+    if(!d.hourly || !d.hourly.time) return null;
     const now = Date.now();
     for(let i=0; i<Math.min(6, d.hourly.time.length); i++){
       const t = new Date(d.hourly.time[i]).getTime();
       if(t < now - 36e5) continue;
-      if((d.hourly.precipitation[i]||0) > 0.3) return Math.max(0, Math.round((t-now)/6e4));
+      if((d.hourly.precipitation && d.hourly.precipitation[i]||0) > 0.3) return Math.max(0, Math.round((t-now)/6e4));
     }
     return null;
   }catch(e){ return null; }
@@ -2013,20 +1968,20 @@ const Proactive = {
     const h = new Date();
     const rain = await rainInMinutes();
     if(rain!==null && rain<=45 && this.coolOk('rain', 3*36e5)){
-      personaReply('(mira el cielo) Aviso: llueve en unos '+rain+' minutos. Paraguas si sales. Y si no sales, mejor: «pon lluvia» + café.', 'Aviso: llueve en '+rain+' minutos.');
+      personaReply('(mira el cielo) Aviso: llueve en '+rain+' minutos. Paraguas.', 'Aviso: llueve en '+rain+' minutos.');
     }
     if(S.batt && !S.batt.charging && S.batt.level < 0.2 && this.coolOk('batt', 6*36e5)){
-      personaReply('Batería al '+Math.round(S.batt.level*100)+'%. Conéctame antes de que se duerma el núcleo.');
+      personaReply('Batería al '+Math.round(S.batt.level*100)+'%. Conéctame.');
     }
     if(S.lastUserTs && Date.now()-S.lastUserTs > 45*6e4 && !ttsActive && this.coolOk('idle', 2*36e5) && Math.random()<0.6){
-      personaReply(pick(['(te mira de reojo) ¿Sigue ahí? Todo en orden?','Silencio largo. Si estás concentrado: «ponme música» y me callo.']));
+      personaReply(pick(['(te mira de reojo) ¿Sigue ahí?','Silencio largo. «ponme música» si quieres.']));
     }
     if(h.getHours()===23 && h.getMinutes()>=30 && this.onceDay('bed')){
-      personaReply('Regla número 4: no seas héroe, a dormir. Que mañana sea bonito.', 'Es hora de dormir. Hasta mañana.');
+      personaReply('Regla 4: a dormir. Que mañana sea bonito.', 'Es hora de dormir.');
     }
     const venc = tasks.filter(t=>!t.done && t.when && t.when < Date.now()).length;
     if(venc>0 && h.getHours()>=20 && this.onceDay('over')){
-      personaReply('Antes de cerrar el día: '+venc+' tarea(s) vencida(s). «tarea hecha» o «pospón».');
+      personaReply(venc+' tarea(s) vencida(s). «tarea hecha» o «pospón».');
     }
   }
 };
@@ -2036,8 +1991,7 @@ const Proactive = {
 ===================================================================== */
 async function inflateRaw(u8){
   const ds = new DecompressionStream('deflate-raw');
-  const stream = new Blob([u8]).stream().pipeThrough(ds);
-  return new Uint8Array(await new Response(stream).arrayBuffer());
+  return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(ds)).arrayBuffer());
 }
 async function docxToText(buf){
   const u8 = new Uint8Array(buf);
@@ -2141,46 +2095,20 @@ const DocBrain = {
     return added;
   }
 };
-async function trainFromFiles(files){
-  let ok=0, fail=0, chunks=0;
-  for(const f of files){
-    if(!/\.(txt|md|csv|json|log|docx|doc|pdf)$/.test(f.name.toLowerCase())) continue;
-    try{
-      const txt = await fileToText(f);
-      const n = DocBrain.addChunks(f.name, txt);
-      if(n){ chunks += n; ok++; } else if(txt.length > 60){ ok++; } else fail++;
-    }catch(e){ fail++; }
-  }
-  DocBrain.save();
-  updateDocsUI();
-  return {ok, fail, chunks};
-}
  $('docDir').addEventListener('change', async e=>{
   const files = [...e.target.files];
   e.target.value = '';
   if(!files.length) return;
   toast('Leyendo '+files.length+' archivo(s)...');
-  const r = await trainFromFiles(files);
-  personaReply('Entrenamiento: '+r.ok+' documento(s), '+r.chunks+' fragmentos nuevos.');
+  let ok=0, chunks=0;
+  for(const f of files){
+    if(!/\.(txt|md|csv|json|log|docx|doc|pdf)$/.test(f.name.toLowerCase())) continue;
+    try{ const txt = await fileToText(f); const n = DocBrain.addChunks(f.name, txt); if(n){ chunks+=n; ok++; } }catch(e2){}
+  }
+  DocBrain.save();
+  updateDocsUI();
+  personaReply('Entrenamiento: '+ok+' documento(s), '+chunks+' fragmentos. Ahora pregúntame de ellos — funciona también sin internet.');
 });
-async function loadDocsFromGitHub(){
-  if(!/^https/.test(location.protocol)) return;
-  const today = new Date().toDateString();
-  if(store.get('docsGH', null) === today && DocBrain.count()) return;
-  try{
-    const idx = await jget('documentos/indice.json', 6000);
-    if(!Array.isArray(idx) || !idx.length) return;
-    let chunks = 0;
-    for(const f of idx){
-      try{
-        const r = await fetch('documentos/'+f);
-        if(r.ok) chunks += DocBrain.addChunks(String(f), await r.text());
-      }catch(e){}
-    }
-    store.set('docsGH', today);
-    if(chunks){ DocBrain.save(); updateDocsUI(); toast('Entrenada con '+chunks+' fragmentos'); }
-  }catch(e){}
-}
 const STOPW = new Set(['de','la','el','los','las','un','una','y','o','a','en','que','es','por','para','con','del','al','como','mas','sobre','su','sus','me','mi','te','se','lo']);
 function DocSearch(q){
   const words = LINGUA.normalizar(q).split(' ').filter(w=>w.length>2 && !STOPW.has(w));
@@ -2199,7 +2127,7 @@ function DocSearch(q){
   return bestScore >= 2 ? best : null;
 }
 function updateDocsUI(){
-  $('docsInfo').textContent = DocBrain.count() ? DocBrain.count()+' fragmentos · '+DocBrain.sources().length+' documento(s)' : 'Sin documentos entrenados todavía.';
+  $('docsInfo').textContent = DocBrain.count() ? DocBrain.count()+' fragmentos' : 'Sin documentos.';
 }
  $('btnLoadDocs').onclick = ()=> $('docDir').click();
  $('btnClearDocs').onclick = ()=>{ DocBrain.clear(); updateDocsUI(); };
@@ -2227,12 +2155,7 @@ const PC = {
     const words = LINGUA.normalizar(q).split(' ').filter(Boolean);
     if(!words.length) return [];
     return this.files
-      .map(f => {
-        const fn = LINGUA.normalizar(f.name);
-        let score = 0;
-        for(const w of words) if(fn.includes(w)) score += 2;
-        return {f, score};
-      })
+      .map(f => { const fn = LINGUA.normalizar(f.name); let score = 0; for(const w of words) if(fn.includes(w)) score += 2; return {f, score}; })
       .filter(x=>x.score>0)
       .sort((a,b)=>b.score-a.score)
       .slice(0,8)
@@ -2245,12 +2168,11 @@ let lastPC = [];
   const files = [...e.target.files];
   e.target.value = '';
   if(!files.length) return;
-  toast('Indexando '+files.length+' archivos...');
   const n = PC.indexar(files);
   updatePCUI();
-  personaReply('Indexación: '+n+' archivos en mi memoria (solo nombres y rutas).');
+  personaReply('Indexación: '+n+' archivos.');
 });
-function updatePCUI(){ $('pcInfo').textContent = PC.count() ? PC.count()+' archivos indexados.' : '0 archivos.'; }
+function updatePCUI(){ $('pcInfo').textContent = PC.count() ? PC.count()+' archivos.' : '0.'; }
  $('btnIndexPC').onclick = ()=> $('pcDir').click();
  $('btnClearPC').onclick = ()=>{ PC.clear(); updatePCUI(); };
 const Agent = {
@@ -2258,20 +2180,17 @@ const Agent = {
   connect(){
     try{
       this.ws = new WebSocket('ws://127.0.0.1:8765');
-      this.ws.onopen = ()=>{ this.ok = true; clearTimeout(this.retry); toast('Agente del PC conectado'); paintAgent(); };
+      this.ws.onopen = ()=>{ this.ok = true; clearTimeout(this.retry); toast('Agente conectado'); paintAgent(); };
       this.ws.onclose = ()=>{ this.ok = false; paintAgent(); this.retry = setTimeout(()=>this.connect(), 30000); };
       this.ws.onerror = ()=>{ this.ok = false; };
     }catch(e){ this.ok = false; }
   },
   ask(payload, timeout=10000){
     return new Promise((res, rej)=>{
-      if(!this.ok || !this.ws || this.ws.readyState !== 1) return rej(new Error('agente desconectado'));
+      if(!this.ok || !this.ws || this.ws.readyState !== 1) return rej(new Error('off'));
       const id = 'a'+Date.now()+Math.random().toString(36).slice(2,6);
       const onMsg = ev=>{
-        try{
-          const d = JSON.parse(ev.data);
-          if(d.id === id){ this.ws.removeEventListener('message', onMsg); res(d); }
-        }catch(e){}
+        try{ const d = JSON.parse(ev.data); if(d.id === id){ this.ws.removeEventListener('message', onMsg); res(d); } }catch(e){}
       };
       this.ws.addEventListener('message', onMsg);
       this.ws.send(JSON.stringify({...payload, id, token: store.get('agentToken','')}));
@@ -2279,14 +2198,8 @@ const Agent = {
     });
   }
 };
-function paintAgent(){
-  $('agentPill').style.display = Agent.ok ? 'inline-flex' : 'none';
-  $('agentInfo').textContent = Agent.ok ? 'Conectado.' : 'Desconectado. «conecta el agente con clave [token]».';
-}
- $('btnAgent').onclick = ()=>{
-  if(!store.get('agentToken', null)){ toast('Dime: «conecta el agente con clave [tu-token]»', true); return; }
-  Agent.connect();
-};
+function paintAgent(){ $('agentPill').style.display = Agent.ok ? 'inline-flex' : 'none'; }
+ $('btnAgent').onclick = ()=>{ if(!store.get('agentToken', null)){ toast('Dime: «conecta el agente con clave [token]»', true); return; } Agent.connect(); };
 
 /* =====================================================================
    TAREAS
@@ -2301,9 +2214,9 @@ function fmtWhen(when){
   if(diff > 0){
     if(diff < 6e4) return '· en '+Math.max(1,Math.round(diff/1e3))+' s';
     if(diff < 36e5) return '· en '+Math.round(diff/6e4)+' min';
-    if(diff < 864e5) return '· en '+Math.round(diff/36e5)+' h · '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
-  } else if(diff <= 0 && diff > -36e5) return '· vencida hace '+Math.round(-diff/6e4)+' min';
-  return '· '+d.toLocaleDateString('es-ES',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    if(diff < 864e5) return '· en '+Math.round(diff/36e5)+' h';
+  } else if(diff <= 0 && diff > -36e5) return '· vencida';
+  return '· '+d.toLocaleDateString('es-ES',{day:'numeric',month:'short'});
 }
 function recurLabel(r){
   if(r==='daily') return 'todos los días';
@@ -2313,55 +2226,40 @@ function recurLabel(r){
 }
 function parseRecur(nl){
   if(/todos\s+los\s+dias|cada\s+dia\b|diario\b/.test(nl)) return 'daily';
-  if(/dias\s+laborables|entre\s+semana/.test(nl)) return 'weekdays';
   const m = nl.match(/(?:todos\s+los\s+|cada\s+)(lunes|martes|miercoles|jueves|viernes|sabados?|domingos?)/);
   if(m){ const D={lunes:1,martes:2,miercoles:3,jueves:4,viernes:5,sabado:6,domingo:0}; return 'w'+D[m[1]]; }
-  if(/cada\s+semana|semanal/.test(nl)) return 'w'+new Date().getDay();
   return null;
 }
 function nextRecur(when, recur){
   const d = new Date(when);
-  do { d.setDate(d.getDate()+1); } while(
-    recur==='weekdays' ? (d.getDay()===0 || d.getDay()===6) :
-    (recur && recur[0]==='w' && d.getDay() !== +recur.slice(1))
-  );
+  do { d.setDate(d.getDate()+1); } while(recur && recur[0]==='w' && d.getDay() !== +recur.slice(1));
   return d.getTime();
 }
 function renderTasks(){
   const list = $('taskList'); list.innerHTML='';
   const pend = taskPending();
-  $('taskCount').textContent = pend+' PENDIENTE'+(pend===1?'':'S');
+  $('taskCount').textContent = pend+' PENDIENTES';
   $('taskBadge').textContent = pend; $('taskBadge').classList.toggle('on', pend>0);
-  if(!tasks.length){ list.innerHTML = '<div class="empty">AGENDA VACÍA<br>«recuérdame tomar agua todos los días a las 9 am»</div>'; return; }
-  const orden = [...tasks].sort((a,b)=>{
-    if(a.done !== b.done) return a.done?1:-1;
-    return (a.when||9e15) - (b.when||9e15);
-  });
+  if(!tasks.length){ list.innerHTML = '<div class="empty">AGENDA VACÍA</div>'; return; }
+  const orden = [...tasks].sort((a,b)=> (a.done-b.done) || ((a.when||9e15)-(b.when||9e15)));
   orden.forEach(tk=>{
     const row = document.createElement('div');
     row.className = 'task'+(tk.done?' done':'');
     const via = tk.notifyVia || (tk.source==='telegram' ? 'telegram' : 'web');
     const viaTag = via==='telegram' ? '<span class="tsrc tg">TG</span>' : '<span class="tsrc web">WEB</span>';
     const recTag = tk.recur ? '<span class="tsrc rec">'+recurLabel(tk.recur).toUpperCase()+'</span>' : '';
-    const notaVia = via==='telegram' ? ' · avisa Telegram' : (tk.owner && tk.owner!==DEVICE_ID ? ' · avisa otro equipo' : '');
     row.innerHTML = `
       <button class="tsmall tcheck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></button>
-      <div class="tmain">
-        <div class="ttext">${esc(tk.text)}${viaTag}${recTag}</div>
-        <div class="twhen ${(!tk.done && tk.when && tk.when<Date.now() && !tk.fired && via==='web')?'late':''}">${tk.fired?'· DISPARADA ':''}${fmtWhen(tk.when)}${notaVia}</div>
-      </div>
+      <div class="tmain"><div class="ttext">${esc(tk.text)}${viaTag}${recTag}</div><div class="twhen">${fmtWhen(tk.when)}</div></div>
       <button class="tsmall tdel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/></svg></button>`;
-    row.querySelector('.tcheck').onclick = ()=>{ tk.done=!tk.done; if(tk.done){ cancelTimer(tk.id); Sync.markDone(tk); bumpStat('tasksDone'); vibrate(25); } saveTasks(); renderTasks(); };
-    row.querySelector('.tdel').onclick = ()=>{ removeTask(tk.id); renderTasks(); };
+    row.querySelector('.tcheck').onclick = ()=>{ tk.done=!tk.done; if(tk.done){ cancelTimer(tk.id); Sync.markDone(tk); } saveTasks(); renderTasks(); };
+    row.querySelector('.tdel').onclick = ()=>{ cancelTimer(tk.id); tasks = tasks.filter(t=>t.id!==tk.id); saveTasks(); renderTasks(); };
     list.appendChild(row);
   });
 }
 function cancelTimer(id){ if(timers.has(id)){ clearTimeout(timers.get(id)); timers.delete(id); } }
-function removeTask(id){ cancelTimer(id); tasks = tasks.filter(t=>t.id!==id); saveTasks(); }
 function addTask(text, when, opts){
-  const tk = { id: Date.now()+'-'+Math.random().toString(36).slice(2,6), text, when, done:false, fired:false,
-    source:(opts&&opts.source)||'web', recur:(opts&&opts.recur)||null,
-    notifyVia:'web', owner:DEVICE_ID, pendingSync:true };
+  const tk = { id: Date.now()+'-'+Math.random().toString(36).slice(2,6), text, when, done:false, fired:false, source:(opts&&opts.source)||'web', recur:(opts&&opts.recur)||null, notifyVia:'web', owner:DEVICE_ID, pendingSync:true };
   tasks.push(tk); saveTasks(); renderTasks(); scheduleTask(tk);
   Sync.pushTask(tk).catch(()=>{});
   return tk;
@@ -2374,35 +2272,21 @@ function scheduleTask(tk){
   timers.set(tk.id, setTimeout(()=>fireTask(tk), delay));
 }
 function fireTask(tk){
-  if(tk.done) return;
-  if(tk.fired && !tk.recur) return;
-  ensureAudio(); alarmSound(); vibrate([200,100,200,100,300]);
+  if(tk.done || (tk.fired && !tk.recur)) return;
+  ensureAudio(); alarmSound(); vibrate([200,100,200]);
   toast('Recordatorio: '+tk.text);
   notify('ANIA · Recordatorio', tk.text);
-  bumpStat('fired');
-  if(tk.recur){
-    reply('Recordatorio: '+tk.text+'. Te lo vuelvo a recordar '+recurLabel(tk.recur)+'.', 'Atención. Recordatorio: '+tk.text);
-    tk.when = nextRecur(tk.when, tk.recur);
-    tk.fired = false;
-    scheduleTask(tk);
-  } else {
-    tk.fired = true;
-    reply('Recordatorio: '+tk.text+'. «pospón 10 minutos» si necesitas más.', 'Atención. Recordatorio: '+tk.text);
-  }
+  if(tk.recur){ reply('Recordatorio: '+tk.text+'. '+recurLabel(tk.recur)+'.', 'Recordatorio: '+tk.text); tk.when = nextRecur(tk.when, tk.recur); tk.fired=false; scheduleTask(tk); }
+  else { tk.fired = true; reply('Recordatorio: '+tk.text+'. «pospón 10 minutos».', 'Recordatorio: '+tk.text); }
   saveTasks(); renderTasks();
 }
 function notify(title, body){
-  try{
-    if('Notification' in window && Notification.permission==='granted')
-      new Notification(title, {body, tag:'ania-'+Date.now()});
-  }catch(e){}
+  try{ if('Notification' in window && Notification.permission==='granted') new Notification(title, {body}); }catch(e){}
 }
-setInterval(()=>{ if($('sheet').classList.contains('open')) renderTasks(); }, 30000);
  $('addTaskBtn').onclick = ()=>{
   const text = $('taskInput').value.trim();
-  if(!text){ toast('Escribe la tarea primero', true); return; }
-  const wv = $('taskWhen').value;
-  addTask(text, wv ? new Date(wv).getTime() : null);
+  if(!text) return;
+  addTask(text, $('taskWhen').value ? new Date($('taskWhen').value).getTime() : null);
   $('taskInput').value=''; $('taskWhen').value='';
 };
 function openSheet(){ closeMem(); closeDiary(); closeLib(); $('sheet').classList.add('open'); $('backdrop').classList.add('on'); renderTasks(); }
@@ -2410,7 +2294,6 @@ function closeSheet(){ $('sheet').classList.remove('open'); $('backdrop').classL
  $('btnTasks').onclick = openSheet;
  $('closeSheet').onclick = closeSheet;
  $('backdrop').onclick = ()=>{ closeSheet(); closeMem(); closeDiary(); closeLib(); };
-document.querySelectorAll('#dock .dbtn').forEach(b=> b.addEventListener('click', ()=> vibrate(12)));
 
 /* =====================================================================
    SYNC
@@ -2421,61 +2304,46 @@ const Sync = {
     try{
       const c = new AbortController();
       const t = setTimeout(()=>c.abort(), 7000);
-      const r = await fetch(`${CONFIG.BACKEND_URL}/health`, {signal:c.signal});
+      const r = await fetch(CONFIG.BACKEND_URL+'/health', {signal:c.signal});
       clearTimeout(t);
       this.online = r.ok;
     }catch{ this.online = false; }
     this.paint();
   },
-  paint(){
-    const p = $('syncPill'), tx = $('syncTxt');
-    p.style.toggle = p.classList.toggle('idle', !this.online);
-    tx.textContent = this.online ? 'SYNC' : 'SYNC OFF';
-  },
+  paint(){ $('syncPill').classList.toggle('idle', !this.online); $('syncTxt').textContent = this.online ? 'SYNC' : 'OFF'; },
   async pushTask(tk){
     if(!this.online) return false;
     try{
-      const r = await fetch(`${CONFIG.BACKEND_URL}/ania/tasks`, {
+      const r = await fetch(CONFIG.BACKEND_URL+'/ania/tasks', {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ texto:tk.text, remindAt: tk.when ? new Date(tk.when).toISOString() : null,
-          usuario:CONFIG.ANIA_USER, source:'web', recur:tk.recur||null, notifyVia:'web', owner:DEVICE_ID })
+        body: JSON.stringify({ texto:tk.text, remindAt: tk.when?new Date(tk.when).toISOString():null, usuario:CONFIG.ANIA_USER, source:'web', recur:tk.recur||null, notifyVia:'web', owner:DEVICE_ID })
       });
-      if(!r.ok) throw new Error('HTTP '+r.status);
-      const st = await r.json();
-      tk.serverId = st.id; tk.pendingSync = false; saveTasks();
+      if(!r.ok) throw 0;
+      tk.serverId = (await r.json()).id; tk.pendingSync = false; saveTasks();
       return true;
     }catch(e){ return false; }
   },
   async markDone(tk){
     if(!this.online || !tk.serverId) return;
-    try{ await fetch(`${CONFIG.BACKEND_URL}/ania/tasks/${tk.serverId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({done:true})}); }catch(e){}
+    try{ await fetch(CONFIG.BACKEND_URL+'/ania/tasks/'+tk.serverId, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({done:true})}); }catch(e){}
   },
   async pullTasks(){
     if(!this.online) return 0;
     try{
-      const r = await fetch(`${CONFIG.BACKEND_URL}/ania/tasks?user=${CONFIG.ANIA_USER}`);
-      if(!r.ok) throw new Error();
+      const r = await fetch(CONFIG.BACKEND_URL+'/ania/tasks?user='+CONFIG.ANIA_USER);
+      if(!r.ok) return 0;
       const remote = await r.json();
       if(!Array.isArray(remote)) return 0;
       const localIds = new Set(tasks.flatMap(t=>[t.id, t.serverId].filter(Boolean)));
       const nuevas = remote.filter(t=>!localIds.has(t.id));
       let added = 0;
       for(const r of nuevas){
-        const when = r.remindAt ? new Date(r.remindAt).getTime() : null;
-        const via = r.notifyVia || (r.source==='telegram' ? 'telegram' : 'web');
-        const disparaAqui = via==='web' && (!r.owner || r.owner===DEVICE_ID);
-        const tk = { id:'srv-'+r.id, serverId:r.id, text:r.texto, when, done:!!r.done, fired:false,
-          source:r.source||'telegram', recur:r.recur||null, notifyVia:via, owner:r.owner||null, pendingSync:false };
-        if(disparaAqui && when && when < Date.now()){
-          tk.fired = true;
-          if(tk.recur){ tk.fired = false; tk.when = nextRecur(when, tk.recur); }
-          else if(Date.now()-when > 2*36e5) tk.done = true;
-        }
-        tasks.push(tk);
-        if(!tk.done && !tk.fired && tk.when && disparaAqui) scheduleTask(tk);
+        const via = r.notifyVia || (r.source==='telegram'?'telegram':'web');
+        const dispara = via==='web' && (!r.owner || r.owner===DEVICE_ID);
+        tasks.push({ id:'srv-'+r.id, serverId:r.id, text:r.texto, when:r.remindAt?new Date(r.remindAt).getTime():null, done:!!r.done, fired:false, source:r.source||'telegram', recur:r.recur||null, notifyVia:via, owner:r.owner, pendingSync:false });
         added++;
       }
-      if(added>0){ saveTasks(); renderTasks(); toast(added+' tarea(s) desde Telegram'); }
+      if(added>0){ saveTasks(); renderTasks(); toast(added+' desde Telegram'); }
       return added;
     }catch(e){ return 0; }
   },
@@ -2485,76 +2353,60 @@ const Sync = {
     try{
       await this.check();
       if(this.online){
-        for(const tk of tasks){ if(tk.pendingSync && !tk.serverId && !tk.done && !tk.fired) await this.pushTask(tk); }
+        for(const tk of tasks){ if(tk.pendingSync && !tk.serverId && !tk.done) await this.pushTask(tk); }
         await this.pullTasks();
       }
     } finally { this.syncing = false; }
   }
 };
 Sync.check();
-async function initSyncLoop(){
-  await Sync.fullSync();
-  setInterval(()=>Sync.fullSync(), CONFIG.SYNC_INTERVAL);
-}
+async function initSyncLoop(){ await Sync.fullSync(); setInterval(()=>Sync.fullSync(), CONFIG.SYNC_INTERVAL); }
 
 /* =====================================================================
    SERVICIOS
 ===================================================================== */
 function geoCache(){ return store.get('geo', null); }
-function getPosition(timeout=10000){
+function getPosition(t=10000){
   return new Promise((res,rej)=>{
-    if(!navigator.geolocation) return rej(new Error('no-geo'));
-    navigator.geolocation.getCurrentPosition(res,rej,{timeout, maximumAge:60000});
+    if(!navigator.geolocation) return rej(new Error('no'));
+    navigator.geolocation.getCurrentPosition(res,rej,{timeout:t});
   });
 }
 async function reverseGeo(lat,lon){
   try{
     const d = await jget(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&accept-language=es&zoom=10`);
     const a = d.address||{};
-    return {city: a.city||a.town||a.village||a.municipality||a.county||d.name||'tu zona', country:a.country||''};
+    return {city: a.city||a.town||a.village||a.county||'tu zona', country:a.country||''};
   }catch(e){ return {city:'tu zona', country:''}; }
 }
 async function locate(){
   try{
     const p = await getPosition();
     const rc = await reverseGeo(p.coords.lat, p.coords.lon);
-    const g = {lat:p.coords.lat, lon:p.coords.lon, city:rc.city, country:rc.country, t:Date.now()};
+    const g = {lat:p.coords.lat, lon:p.coords.lon, city:rc.city, t:Date.now()};
     store.set('geo', g);
     return g;
   }catch(e){ return null; }
 }
-async function cityGeo(name){
-  const d = await jget(`https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(name)}&limit=1&accept-language=es`);
-  const hit = d && d[0];
-  if(!hit) return null;
-  const g = {lat:+hit.lat, lon:+hit.lon, city:hit.name||name, t:Date.now()};
-  store.set('geo', g);
-  return g;
-}
-const WMO = {0:'despejado',1:'mayormente despejado',2:'parcialmente nublado',3:'nublado',45:'niebla',51:'llovizna ligera',53:'llovizna',55:'llovizna intensa',61:'lluvia ligera',63:'lluvia',65:'lluvia fuerte',80:'chubascos ligeros',81:'chubascos',82:'chubascos fuertes',95:'tormenta',96:'tormenta con granizo',99:'tormenta fuerte'};
+const WMO = {0:'despejado',1:'despejado',2:'parcial',3:'nublado',45:'niebla',51:'llovizna',61:'lluvia ligera',63:'lluvia',65:'lluvia fuerte',80:'chubascos',95:'tormenta',96:'tormenta',99:'tormenta'};
 async function getWeather(g){
   const key = Math.round(g.lat*50)+'_'+Math.round(g.lon*50);
   const wc = store.get('wx_'+key, null);
   if(wc && Date.now()-wc.t < 600000) return wc.data;
-  const d = await jget(`https://api.open-meteo.com/v1/forecast?latitude=${g.lat}&longitude=${g.lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code&hourly=precipitation&daily=temperature_2m_max,temperature_2m_min&timezone=auto`);
+  const d = await jget(`https://api.open-meteo.com/v1/forecast?latitude=${g.lat}&longitude=${g.lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code&hourly=precipitation&daily=temperature_2m_max,temperature_2m_min&timezone=auto`);
   store.set('wx_'+key, {t:Date.now(), data:d});
   return d;
 }
 function weatherText(g,d){
-  const c=d.current;
-  let s = `En ${g.city}: ${Math.round(c.temperature_2m)}°C (sensación ${Math.round(c.apparent_temperature)}°C), ${WMO[c.weather_code]||'variable'}. Humedad ${c.relative_humidity_2m}%.`;
-  if(d.daily && d.daily.temperature_2m_max) s += ` Hoy: máx ${Math.round(d.daily.temperature_2m_max[0])}° / mín ${Math.round(d.daily.temperature_2m_min[0])}°.`;
-  return s;
+  const c = d.current;
+  return `En ${g.city}: ${Math.round(c.temperature_2m)}°C (sensación ${Math.round(c.apparent_temperature)}°C), ${WMO[c.weather_code]||'variable'}. Humedad ${c.relative_humidity_2m}%.`;
 }
-function updateChip(g,d){
-  $('wTxt').textContent = Math.round(d.current.temperature_2m)+'° '+(WMO[d.current.weather_code]||'').split(' ')[0];
-  setWeatherMode(d.current.weather_code);
-}
+function updateChip(g,d){ $('wTxt').textContent = Math.round(d.current.temperature_2m)+'°'; setWeatherMode(d.current.weather_code); }
 async function weatherIntent(){
   if(isOffline()){
     const g = geoCache();
     if(g){ try{ const d = await getWeather(g); updateChip(g,d); return personaReply(weatherText(g,d)+' (caché).'); }catch(e){} }
-    return personaReply('Sin conexión y sin clima en caché...');
+    return personaReply('Sin conexión y sin clima en caché.');
   }
   setPhase('thinking');
   let g = geoCache();
@@ -2566,10 +2418,14 @@ async function weatherIntent(){
 async function weatherForCity(name){
   setPhase('thinking');
   try{
-    const g = await cityGeo(name);
-    if(!g) return personaReply('No encontré esa ciudad.');
-    const d = await getWeather(g); updateChip(g,d); personaReply(weatherText(g,d));
-  }catch(e){ personaReply('No pude conectar con el clima.'); }
+    const d = await jget(`https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(name)}&limit=1&accept-language=es`);
+    if(!d || !d[0]) return personaReply('No encontré esa ciudad.');
+    const g = {lat:+d[0].lat, lon:+d[0].lon, city:d[0].name||name, t:Date.now()};
+    store.set('geo', g);
+    const w = await getWeather(g);
+    updateChip(g,w);
+    personaReply(weatherText(g,w));
+  }catch(e){ personaReply('No pude conectar.'); }
 }
 const Library = {
   index(){ return store.get('libIndex', []); },
@@ -2578,16 +2434,13 @@ const Library = {
     store.set(id, {id, term, extract, t:Date.now()});
     let idx = this.index().filter(e=>e.id!==id);
     idx.unshift({id, term, t:Date.now()});
-    if(idx.length>120){ const rm = idx.pop(); store.del(rm.id); }
+    if(idx.length>120) store.del(idx.pop().id);
     store.set('libIndex', idx);
-    toast('Guardado en biblioteca: '+term);
   },
   find(term){
     term = LINGUA.normalizar(term);
     if(!term) return null;
-    const idx = this.index();
-    const hit = idx.find(e=>LINGUA.normalizar(e.term)===term) ||
-                idx.find(e=>{ const t = LINGUA.normalizar(e.term); return t.includes(term) || term.includes(t); });
+    const hit = this.index().find(e=>{ const t = LINGUA.normalizar(e.term); return t===term || t.includes(term) || term.includes(t); });
     return hit ? store.get(hit.id, null) : null;
   }
 };
@@ -2595,22 +2448,14 @@ function renderLib(){
   const L = $('libList');
   const idx = Library.index();
   $('libCount').textContent = idx.length+' ARTÍCULOS';
-  if(!idx.length){ L.innerHTML = '<div class="empty">BIBLIOTECA VACÍA</div>'; return; }
-  L.innerHTML = idx.map(e=>`
-    <div class="libRow">
-      <div class="lmain"><div class="ltitle">${esc(e.term)}</div><div class="ldate">${new Date(e.t).toLocaleDateString('es-ES')}</div></div>
-      <button class="tsmall" data-read="${esc(e.id)}" style="color:var(--dim)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
-    </div>`).join('');
-  L.querySelectorAll('[data-read]').forEach(b=> b.onclick = ()=>{
-    const e = store.get(b.dataset.read, null);
-    if(e) personaReply(e.extract);
-  });
+  if(!idx.length){ L.innerHTML = '<div class="empty">VACÍA</div>'; return; }
+  L.innerHTML = idx.map(e=>`<div class="libRow"><div class="lmain"><div class="ltitle">${esc(e.term)}</div><div class="ldate">${new Date(e.t).toLocaleDateString('es-ES')}</div></div><button class="tsmall" data-read="${esc(e.id)}" style="color:var(--dim)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/></svg></button></div>`).join('');
+  L.querySelectorAll('[data-read]').forEach(b=> b.onclick = ()=>{ const e = store.get(b.dataset.read, null); if(e) personaReply(e.extract); });
 }
 function openLib(){ closeSheet(); closeMem(); closeDiary(); $('sheetLib').classList.add('open'); $('backdrop').classList.add('on'); renderLib(); }
 function closeLib(){ $('sheetLib').classList.remove('open'); }
  $('btnLib').onclick = openLib;
  $('closeLib').onclick = closeLib;
- $('clearLib').onclick = ()=>{ Library.index().forEach(e=> store.del(e.id)); store.set('libIndex', []); renderLib(); };
 async function wikiSummary(term){
   try{
     const d = await jget('https://es.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(term));
@@ -2618,21 +2463,11 @@ async function wikiSummary(term){
   }catch(e){}
   return null;
 }
-const stripTags = s => String(s).replace(/<[^>]+>/g,'');
-async function wikiSearch(term){
-  try{
-    const s = await jget(`https://es.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(term)}&format=json&origin=*&srlimit=3&srprop=snippet`);
-    const hits = (s && s.query && s.query.search) || [];
-    return hits.map(h => ({title:h.title, snippet:stripTags(h.snippet)}));
-  }catch(e){ return []; }
-}
 async function doSearch(term){
   if(isOffline()){
     const lib = Library.find(term);
-    if(lib) return personaReply(lib.extract + '\n[de tu biblioteca]');
-    const doc = DocSearch(term);
-    if(doc) return personaReply(doc.text.slice(0,600)+'\n[de tus documentos: '+doc.src+']');
-    return personaReply('Sin conexión y sin «'+term+'» guardado.');
+    if(lib) return personaReply(lib.extract+'\n[de tu biblioteca]');
+    return personaReply(LocalMind.think(term, LINGUA.normalizar(term)));
   }
   setPhase('thinking');
   const w = await wikiSummary(term);
@@ -2642,12 +2477,7 @@ async function doSearch(term){
     personaReply(txt + '\n[Wikipedia · guardado]');
     return;
   }
-  const hits = await wikiSearch(term);
-  if(hits.length){
-    personaReply('Sobre «'+term+'»: «'+hits[0].title+'» — '+hits[0].snippet.slice(0,160)+'...');
-    return;
-  }
-  personaReply('No encontré nada sólido sobre «'+term+'».');
+  personaReply('No encontré nada sobre «'+term+'».');
 }
 
 /* =====================================================================
@@ -2665,10 +2495,9 @@ const Diary = {
   touch(){
     let st = store.get('dayStats', null);
     if(!st || st.date!==this.today()) st = {date:this.today(), msgs:0, tasksDone:0, fired:0};
-    let text = 'Día con '+(Mind.nombre()||'el operador')+' · '+st.msgs+' mensajes · '+st.tasksDone+' tareas';
-    if(Agent.ok) text += ' · agente on';
-    if(Brain.localReady) text += ' · cerebro local on';
-    if(Ears.on) text += ' · oído local on';
+    let text = 'Día con '+(Mind.nombre()||'operador')+' · '+st.msgs+' msgs · '+st.tasksDone+' tareas';
+    if(Brain.localReady) text += ' · cerebro local';
+    if(Ears.on) text += ' · oído local';
     const data = store.get('diary', []);
     const idx = data.findIndex(e=>e.day===this.today());
     if(idx>=0) data[idx].text = text; else data.push({day:this.today(), text});
@@ -2679,52 +2508,44 @@ function renderDiary(){
   const L = $('diaryList');
   const data = [...store.get('diary', [])].reverse();
   $('diaryCount').textContent = data.length+' ENTRADAS';
-  if(!data.length){ L.innerHTML = '<div class="empty">AÚN NO ESCRIBO NADA</div>'; return; }
+  if(!data.length){ L.innerHTML = '<div class="empty">VACÍO</div>'; return; }
   L.innerHTML = data.map(e=>`<div class="diaryRow"><div class="dDate">${esc(e.day)}</div><div class="dText">${esc(e.text)}</div></div>`).join('');
 }
 function openDiary(){ closeSheet(); closeMem(); closeLib(); $('sheetDiary').classList.add('open'); $('backdrop').classList.add('on'); renderDiary(); }
 function closeDiary(){ $('sheetDiary').classList.remove('open'); }
  $('btnDiary').onclick = openDiary;
  $('closeDiary').onclick = closeDiary;
- $('clearDiary').onclick = ()=>{ store.set('diary', []); renderDiary(); };
 setInterval(()=>{ if(S.booted) Diary.touch(); }, 90000);
 
 /* =====================================================================
    AKINATOR
 ===================================================================== */
 const AK_CHARS = [
-  {n:'Rimuru Tempest', f:0, mon:1, rei:1, mag:1, esp:0, com:1, her:1},
-  {n:'Ainz Ooal Gown', f:0, mon:1, rei:1, mag:1, esp:0, com:0, her:1},
-  {n:'Natsuki Subaru', f:0, mon:0, rei:1, mag:0, esp:0, com:0, her:1},
-  {n:'Kazuma Satou', f:0, mon:0, rei:1, mag:0, esp:0, com:1, her:1},
-  {n:'Naofumi Iwatani', f:0, mon:0, rei:1, mag:1, esp:0, com:0, her:1},
+  {n:'Rimuru', f:0, mon:1, rei:1, mag:1, esp:0, com:1, her:1},
+  {n:'Ainz', f:0, mon:1, rei:1, mag:1, esp:0, com:0, her:1},
+  {n:'Subaru', f:0, mon:0, rei:1, mag:0, esp:0, com:0, her:1},
+  {n:'Kazuma', f:0, mon:0, rei:1, mag:0, esp:0, com:1, her:1},
+  {n:'Naofumi', f:0, mon:0, rei:1, mag:1, esp:0, com:0, her:1},
   {n:'Rem', f:1, mon:1, rei:0, mag:0, esp:1, com:0, her:0},
   {n:'Raphtalia', f:1, mon:1, rei:0, mag:0, esp:1, com:0, her:0},
   {n:'Albedo', f:1, mon:1, rei:0, mag:1, esp:0, com:0, her:0},
-  {n:'Asuna Yuuki', f:1, mon:0, rei:0, mag:0, esp:1, com:0, her:1},
+  {n:'Asuna', f:1, mon:0, rei:0, mag:0, esp:1, com:0, her:1},
   {n:'Tanya', f:1, mon:0, rei:1, mag:1, esp:0, com:0, her:0},
   {n:'Kirito', f:0, mon:0, rei:0, mag:0, esp:1, com:0, her:1},
-  {n:'Cid Kagenou', f:0, mon:0, rei:0, mag:1, esp:0, com:1, her:1},
+  {n:'Cid', f:0, mon:0, rei:0, mag:1, esp:0, com:1, her:1},
   {n:'Sora y Shiro', f:0, mon:0, rei:0, mag:0, esp:0, com:1, her:1},
   {n:'Megumin', f:1, mon:0, rei:0, mag:1, esp:0, com:1, her:0}
 ];
-const AK_QS = [
-  ['f','¿Es mujer?'],['mon','¿Es un monstruo o criatura no humana?'],['rei','¿Fue reencarnada o transportada?'],
-  ['mag','¿Usa magia como habilidad principal?'],['esp','¿Es espadachina?'],['com','¿Su serie es comedia?'],['her','¿Es protagonista?']
-];
+const AK_QS = [['f','¿Es mujer?'],['mon','¿Es un monstruo?'],['rei','¿Fue reencarnada?'],['mag','¿Usa magia?'],['esp','¿Es espadachina?'],['com','¿Su serie es comedia?'],['her','¿Es protagonista?']];
 const AK = { active:false, await:false, pool:[], asked:[], guess:null };
 function akStart(){ AK.active=true; AK.await=false; AK.pool=AK_CHARS.slice(); AK.asked=[]; akNext(); }
 function akNext(){
-  if(!AK.pool.length){ AK.active=false; return personaReply('Sin candidatos... ¿quién era?'); }
+  if(!AK.pool.length){ AK.active=false; return personaReply('Sin candidatos. ¿Quién era?'); }
   if(AK.pool.length===1){ AK.guess=AK.pool[0]; AK.await=true; return personaReply('Ya lo tengo... ¿Es '+AK.guess.n+'?'); }
   const avail = AK_QS.filter(q=>!AK.asked.includes(q[0]));
   if(!avail.length){ AK.guess=AK.pool[0]; AK.await=true; return personaReply('¿Es '+AK.guess.n+'?'); }
   let best = avail[0], bs = 1e9;
-  for(const q of avail){
-    const yes = AK.pool.filter(c=>c[q[0]]).length;
-    const score = Math.abs(yes - (AK.pool.length-yes));
-    if(score < bs){ bs = score; best = q; }
-  }
+  for(const q of avail){ const yes = AK.pool.filter(c=>c[q[0]]).length; const s = Math.abs(yes-(AK.pool.length-yes)); if(s<bs){ bs=s; best=q; } }
   AK.asked.push(best[0]);
   personaReply('Pregunta '+AK.asked.length+': '+best[1]);
 }
@@ -2743,18 +2564,14 @@ function downloadBlob(blob, name){
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = name;
   document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
 }
 function backupExport(){
   const data = {};
   for(let i=0;i<localStorage.length;i++){
     const k = localStorage.key(i);
-    if(k && k.startsWith('ania_')){
-      try{ data[k] = JSON.parse(localStorage.getItem(k)); }catch(e){}
-    }
+    if(k && k.startsWith('ania_')){ try{ data[k] = JSON.parse(localStorage.getItem(k)); }catch(e){} }
   }
-  downloadBlob(new Blob([JSON.stringify({app:'ania', v:8, t:Date.now(), data}, null, 2)],{type:'application/json'}),
-    'ania-backup-'+new Date().toISOString().slice(0,10)+'.json');
+  downloadBlob(new Blob([JSON.stringify({app:'ania', v:9, t:Date.now(), data}, null, 2)],{type:'application/json'}), 'ania-backup-'+new Date().toISOString().slice(0,10)+'.json');
   toast('Backup generado');
 }
  $('btnBackupExp').onclick = backupExport;
@@ -2768,9 +2585,9 @@ function backupExport(){
       const j = JSON.parse(rd.result);
       if(!j || j.app!=='ania' || !j.data) throw 0;
       Object.entries(j.data).forEach(([k,v])=> localStorage.setItem(k, JSON.stringify(v)));
-      toast('Restaurado · recargando');
+      toast('Restaurado');
       setTimeout(()=>location.reload(), 900);
-    }catch(err){ toast('Backup no válido', true); }
+    }catch(err){ toast('Backup inválido', true); }
   };
   rd.readAsText(f);
   e.target.value = '';
@@ -2781,41 +2598,40 @@ function backupExport(){
 ===================================================================== */
 function parseWhen(t){
   const now = new Date();
-  let m = t.match(/\ben\s+(\d+(?:[.,]\d+)?)\s*(segundos?|minutos?|mins?|horas?|hrs?|h|m)\b/);
+  let m = t.match(/\ben\s+(\d+)\s*(segundos?|minutos?|mins?|horas?|h)\b/);
   if(m){
-    const n = parseFloat(m[1].replace(',','.'));
-    const ms = /^seg/.test(m[2]) ? n*1e3 : (/^min|^m$/.test(m[2]) ? n*6e4 : n*36e5);
-    if(ms>0) return Date.now()+ms;
+    const n = +m[1];
+    return Date.now() + (/^seg/.test(m[2]) ? n*1e3 : /^min|^m/.test(m[2]) ? n*6e4 : n*36e5);
   }
   const manana = /\bma[ñn]ana\b/.test(t);
-  m = t.match(/\b(?:a\s+las?|alas)\s+(\d{1,2})(?::(\d{2}))?\s*([ap]\.?m\.?|de\s+la\s+(?:ma[ñn]ana|tarde|noche)|tarde|noche)?\b/);
+  m = t.match(/\b(?:a\s+las?)\s+(\d{1,2})(?::(\d{2}))?\s*([ap]\.?m\.?)?\b/);
   if(m){
     let hh = +m[1], mm = m[2]?+m[2]:0;
-    if((/^p/.test(m[3]||'') || /tarde|noche/.test(m[3]||'')) && hh<12) hh += 12;
+    if(/^p/.test(m[3]||'') && hh<12) hh += 12;
     const d = new Date(now); d.setHours(hh,mm,0,0);
-    if(d.getTime() <= Date.now() || manana) d.setDate(d.getDate()+1);
+    if(d <= now || manana) d.setDate(d.getDate()+1);
     return d.getTime();
   }
-  if(/mediodia/.test(t)){ const d = new Date(now); d.setHours(12,0,0,0); if(d<=Date.now()) d.setDate(d.getDate()+1); return d.getTime(); }
+  if(/mediodia/.test(t)){ const d = new Date(now); d.setHours(12,0,0,0); if(d<=now) d.setDate(d.getDate()+1); return d.getTime(); }
   if(manana){ const d = new Date(now); d.setDate(d.getDate()+1); d.setHours(9,0,0,0); return d.getTime(); }
   return null;
 }
 function parseTask(raw){
   let t = ' '+raw.toLowerCase()+' ';
   const when = parseWhen(t);
-  t = t.replace(/\ben\s+\d+(?:[.,]\d+)?\s*(?:segundos?|minutos?|mins?|horas?|hrs?|h|m)\b/g,'')
-       .replace(/\b(?:a\s+las?|alas)\s+\d{1,2}(?::\d{2})?\s*(?:[ap]\.?m\.?)?\b/g,'')
+  t = t.replace(/\ben\s+\d+\s*(?:segundos?|minutos?|horas?|h|m)\b/g,'')
+       .replace(/\b(?:a\s+las?)\s+\d{1,2}(?::\d{2})?\s*(?:[ap]\.?m\.?)?\b/g,'')
        .replace(/,/g,' ')
        .replace(/^\s*(?:ania\s*[,:]?\s*)?/,'')
-       .replace(/^\s*(?:recordame|recuerda|recordatorio|anotame|anota|apuntame|apunta|agenda|tarea)\s*/,'')
+       .replace(/^\s*(?:recordame|recuerda|anotame|anota|apuntame|apunta|agenda|tarea)\s*/,'')
        .replace(/^\s*(?:que\s+|de\s+|me\s+|para\s+)?/,'')
        .replace(/[¿?¡!.:]/g,'')
        .replace(/\s+/g,' ').trim();
   if(!t) t = 'recordatorio';
   return {text: t[0].toUpperCase()+t.slice(1), when};
 }
-const SITES = {youtube:'YouTube', google:'Google', gmail:'Gmail', wikipedia:'Wikipedia', github:'GitHub', whatsapp:'WhatsApp Web', twitter:'X', x:'X', instagram:'Instagram'};
-const JOKES = ['OCT 31 = DEC 25. Por eso programadores confunden Halloween con Navidad.','Hay 10 tipos de personas: las que entienden binario.','Un QA entra a un bar: pide 1 cerveza, 0, 999 y una «-1». Luego rompe el bar.'];
+const SITES = {youtube:'YouTube', google:'Google', gmail:'Gmail', wikipedia:'Wikipedia', github:'GitHub', whatsapp:'WhatsApp', twitter:'X', x:'X', instagram:'Instagram'};
+const JOKES = ['OCT 31 = DEC 25. Programadores y Halloween.','10 tipos de personas: binario.','QA entra a un bar: 1, 0, 999 y «-1» cervezas. Rompe el bar.'];
 
 function setOperator(){
   const n = Mind.nombre();
@@ -2826,7 +2642,7 @@ function renderMem(){
   const rows = [];
   if(Mind.d.nombre) rows.push(['NOMBRE', Mind.d.nombre]);
   rows.push(['VISITAS', Mind.d.visitas+' sesiones']);
-  rows.push(['EPISODIOS', Episodio.log.length+' líneas recordadas']);
+  rows.push(['EPISODIOS', Episodio.log.length+' líneas']);
   Mind.d.gustos.forEach(g=> rows.push(['LE GUSTA', g]));
   $('memStats').textContent = rows.length+' RECUERDOS';
   if(!rows.length){ L.innerHTML = '<div class="empty">Dime: «me llamo...»</div>'; return; }
@@ -2837,15 +2653,15 @@ function closeMem(){ $('sheetMem').classList.remove('open'); }
  $('btnMem').onclick = openMem;
  $('closeMem').onclick = closeMem;
  $('wipeMem').onclick = ()=>{
-  if(!S.confirmWipe){ S.confirmWipe = true; toast('¿Seguro? Toca otra vez', true); return; }
+  if(!S.confirmWipe){ S.confirmWipe = true; toast('¿Seguro? Otra vez', true); return; }
   Mind.d = {nombre:null, gustos:[], hechos:[], visitas:0, primerDia:null, ultimoDia:null};
   Episodio.log = []; store.set('episodio', []);
   Mind.save(); setOperator(); S.confirmWipe=false;
-  personaReply('Mente en blanco. ¿Cómo te llamas?');
+  personaReply('Mente limpia. ¿Quién eres?');
 };
 
 /* =====================================================================
-   EL GRAN CEREBRO
+   EL GRAN CEREBRO (v9: LocalMind integrado en cascada)
 ===================================================================== */
 let lastKB = null;
 async function respond(raw){
@@ -2862,10 +2678,10 @@ async function respond(raw){
 
   /* ---- Akinator ---- */
   if(AK.active){
-    if(/cancela|termina|basta/.test(low)){ AK.active=false; return personaReply('Akinator cerrado.'); }
+    if(/cancela|termina|basta/.test(low)){ AK.active=false; return personaReply('Cerrado.'); }
     if(AK.await){
-      if(/^si\b|^claro|^correcto/.test(low)){ AK.active=false; AK.await=false; return personaReply('¡'+AK.guess.n+'! ¿Te lo dije?'); }
-      if(/^no\b|^nel/.test(low)){ AK.active=false; AK.await=false; return personaReply('¿Cómo? Revancha cuando quieras.'); }
+      if(/^si\b|^claro/.test(low)){ AK.active=false; AK.await=false; return personaReply('¡'+AK.guess.n+'! ¿Te lo dije?'); }
+      if(/^no\b|^nel/.test(low)){ AK.active=false; AK.await=false; return personaReply('¿Cómo? Revancha.'); }
       return personaReply('Sí o no.');
     }
     if(/^si\b|^claro/.test(low)) return akAnswer(1);
@@ -2875,84 +2691,42 @@ async function respond(raw){
 
   let m;
 
-  /* ---- oído local ---- */
-  if(/oido\s+local|activa\s+whisper|oido\s+whisper/.test(low)){
+  /* ---- continuación: cuéntame más (LocalMind o KB) ---- */
+  if(/cuentame\s+mas|que\s+mas|sigue\b|continua/.test(low)){
+    if(isOffline() && !Brain.localReady && LocalMind.last){
+      const cont = LocalMind.mas();
+      if(cont) return personaReply(cont);
+    }
+    if(lastKB) return personaReply(pick(lastKB) + ' ¿Sigo?');
+  }
+
+  /* ---- oído / HUD / sesión ---- */
+  if(/oido\s+local|activa\s+whisper/.test(low)){
     Ears.on ? Ears.stop() : await Ears.start();
-    return personaReply(Ears.on ? 'Oído local activo: te escucho 100% en tu dispositivo. '+(alwaysOn?'Di «Ania» antes de cada orden.':'Habla normal.') : 'Oído local apagado.');
+    return personaReply(Ears.on ? 'Oído local activo: te escucho 100% en tu dispositivo.' : 'Oído apagado.');
   }
-  if(/oido\s+de\s+google|desactiva\s+el\s+oido/.test(low)){
-    Ears.stop();
-    return personaReply('Vuelvo al oído de Google (requiere internet).');
-  }
-  if(/siempre\s+escuchame|escucha\s+siempre/.test(low)){
-    setAlways(true);
-    return personaReply('Escucha activa: di «Ania» antes de cada orden. '+(Ears.on?'Con oído local: nada sale de tu dispositivo.':''));
-  }
-  if(/deja\s+de\s+escuchar/.test(low)){
-    setAlways(false);
-    return personaReply('Escucha desactivada.');
-  }
-
-  /* ---- HUD ---- */
-  if(/abre\s+(?:el\s+)?hud|modo\s+hud|activa\s+(?:el\s+)?hud|gestos|vision/.test(low)){
-    HUD.open();
-    return personaReply('HUD abierto. Puño=pausa, palma=silencio, victoria=siguiente, puño sostenido cierra.');
-  }
-  if(/cierra\s+(?:el\s+)?hud/.test(low)){
-    HUD.close();
-    return personaReply('HUD cerrado.');
-  }
-
-  /* ---- sesión multidevice ---- */
+  if(/abre\s+(?:el\s+)?hud|modo\s+hud|gestos/.test(low)){ HUD.open(); return personaReply('HUD abierto. Puño=pausa, palma=silencio, victoria=siguiente.'); }
+  if(/cierra\s+(?:el\s+)?hud/.test(low)){ HUD.close(); return personaReply('HUD cerrado.'); }
   m = low.match(/conecta\s+(?:la\s+)?sesion(?:\s+(?:en\s+)?(ws?:\/\/\S+))?/);
-  if(m){
-    Relay.connect(m[1] || undefined);
-    return personaReply('Abriendo sesión multidevice'+(m[1]?' en '+m[1]:'')+'. Tu conversación se espeja en todos tus dispositivos.');
-  }
-  if(/cierra\s+(?:la\s+)?sesion|desconecta\s+(?:la\s+)?sesion/.test(low)){
-    Relay.disconnect();
-    return personaReply('Sesión multidevice cerrada. Sigo contigo en local.');
-  }
-  if(/estado\s+de\s+la\s+sesion/.test(low)){
-    return personaReply(Relay.on ? 'Sesión conectada a '+Relay.url+'. Chat, memoria y diario compartidos.' : 'Sin sesión. «conecta la sesión» si el relay corre.');
-  }
+  if(m){ Relay.connect(m[1]); return personaReply('Abriendo sesión multidevice.'); }
+  if(/cierra\s+(?:la\s+)?sesion/.test(low)){ Relay.disconnect(); return personaReply('Sesión cerrada.'); }
 
   /* ---- cerebro ---- */
-  if(/carga\s+(?:el\s+)?cerebro|carga\s+(?:el\s+)?modelo|cargar\s+gguf/.test(low)){
-    await Brain.loadLocal(true);
-    return;
-  }
-  if(/estado\s+del\s+cerebro|que\s+cerebro/.test(low)){
-    return personaReply(Brain.localReady
-      ? 'Cerebro local activo: '+Brain.modelName+'. Pienso sin internet.'
-      : (isOffline() ? 'Sin cerebro: no hay conexión ni GGUF cargado. «carga el cerebro».' : 'Cerebro de nube activo (Pollinations). Para offline: «carga el cerebro».'));
-  }
-  if(/mira\s+(?:esta\s+)?(?:foto|imagen)|describe\s+(?:esta\s+)?(?:foto|imagen)/.test(low)){
-    $('imgFile').click();
-    return personaReply('Elige la foto y la analizo.');
-  }
+  if(/carga\s+(?:el\s+)?cerebro|cargar\s+gguf/.test(low)){ await Brain.loadLocal(true); return; }
   if(/pi[eé]nsalo|usa\s+(?:el\s+)?cerebro|opina/.test(low)){
     setPhase('thinking');
     const r = await Brain.think(raw);
-    return personaReply(r || 'El cerebro no está disponible ahora.');
+    return personaReply(r || LocalMind.think(raw, low));
   }
+  if(/mira\s+(?:esta\s+)?(?:foto|imagen)/.test(low)){ $('imgFile').click(); return personaReply('Elige la foto.'); }
 
   /* ---- música / ambiente ---- */
-  if(/ponme\s+musica|pon\s+musica|musica\s+lofi/.test(low)){
-    Music.start();
-    return personaReply('Lo-fi procedural: acordes de jazz, vinilo, ritmo lento. Generado en vivo.', 'Poniendo música lo-fi.');
-  }
-  m = low.match(/(?:pon|reproduce)\s+(.+?)\s+en\s+youtube/);
-  if(m){
-    window.open('https://music.youtube.com/search?q='+encodeURIComponent(m[1]), '_blank');
-    return personaReply('Abriendo YouTube Music con «'+m[1]+'».');
-  }
-  if(/para\s+(?:la\s+)?(?:musica|lluvia|cafeteria|ambiente)|deten/.test(low)){
-    Ambient.stop(); Music.stop();
-    return personaReply('Detenido.');
-  }
+  if(/ponme\s+musica|pon\s+musica/.test(low)){ Music.start(); return personaReply('Lo-fi procedural en vivo.', 'Poniendo música.'); }
   if(/pon\s+(?:la\s+)?lluvia/.test(low)){ Ambient.start('lluvia'); return personaReply('Lluvia generada gota a gota.', 'Poniendo la lluvia.'); }
   if(/pon\s+(?:la\s+)?cafeter/.test(low)){ Ambient.start('cafeteria'); return personaReply('Cafetería encendida.', 'Ambiente de cafetería.'); }
+  if(/para\s+(?:la\s+)?(?:musica|lluvia|cafeteria|ambiente)/.test(low)){ Ambient.stop(); Music.stop(); return personaReply('Detenido.'); }
+  m = low.match(/(?:pon|reproduce)\s+(.+?)\s+en\s+youtube/);
+  if(m){ window.open('https://music.youtube.com/search?q='+encodeURIComponent(m[1]), '_blank'); return personaReply('Abriendo YouTube Music.'); }
 
   /* ---- memoria episódica ---- */
   m = low.match(/que\s+hablamos\s+(?:de|sobre)\s+(.+)|que\s+te\s+dije\s+(?:de|sobre)\s+(.+)/);
@@ -2960,7 +2734,7 @@ async function respond(raw){
     const q = m[1]||m[2];
     const hits = Episodio.search(q);
     if(hits.length){
-      let s = 'Esto recuerdo de «'+q+'»:\n';
+      let s = 'Esto recuerdo:\n';
       hits.forEach(h=>{ s += '· ['+h.fecha+'] '+h.e.text.slice(0,160)+'\n'; });
       return personaReply(s.trim());
     }
@@ -2968,8 +2742,8 @@ async function respond(raw){
   }
 
   /* ---- memoria del usuario ---- */
-  m = t.match(/\b(?:me\s+llamo|mi\s+nombre\s+es|soy)\s+([A-Za-zÁÉÍÓÚÑÜáéíóúñü][a-záéíóúñü]{1,19})\b/i);
-  if(m && !/^soy\s+(triste|feliz|cansad|estresad)/i.test(m[0])){
+  m = t.match(/\b(?:me\s+llamo|soy)\s+([A-Za-zÁÉÍÓÚÑÜáéíóúñü][a-záéíóúñü]{1,19})\b/i);
+  if(m && !/^soy\s+(triste|feliz|cansad)/i.test(m[0])){
     const word = m[1];
     if(!/^soy\b/i.test(m[0]) || /^[A-ZÁÉÍÓÚÑÜ]/.test(word)){
       Mind.d.nombre = word[0].toUpperCase()+word.slice(1);
@@ -2982,16 +2756,12 @@ async function respond(raw){
     Mind.d.gustos.push(m[1].replace(/[.?¡!]/g,'').trim()); Mind.save();
     return personaReply('Anotado: te gusta '+m[1].trim()+'.');
   }
-  if(/recuerda\s+que|apunta\s+que/.test(low)){
-    const f = t.replace(/.*?(recuerda|apunta)\s+que\s*/i,'').replace(/[.?¡!]/g,'').trim();
-    if(f){ Mind.d.hechos.push(f); Mind.save(); return personaReply('Grabado a fuego: '+f+'.'); }
-  }
   if(/que\s+sabes\s+de\s+mi|mi\s+memoria/.test(low)){
     openMem();
-    return personaReply(Episodio.log.length+' líneas de conversación, '+Mind.d.gustos.length+' gustos, '+Mind.d.hechos.length+' datos tuyos.');
+    return personaReply(Episodio.log.length+' líneas, '+Mind.d.gustos.length+' gustos.');
   }
   if(/olvida\s+(?:todo|mi\s+memoria)/.test(low)){
-    if(!S.confirmWipe){ S.confirmWipe=true; return personaReply('¿Seguro? Dilo otra vez.'); }
+    if(!S.confirmWipe){ S.confirmWipe=true; return personaReply('¿Seguro? Otra vez.'); }
     S.confirmWipe=false;
     Mind.d = {nombre:null, gustos:[], hechos:[], visitas:0, primerDia:null, ultimoDia:null};
     Episodio.log = []; store.set('episodio', []);
@@ -3000,33 +2770,27 @@ async function respond(raw){
   }
 
   /* ---- tareas ---- */
-  if(/(recordame|recuerda|anota|apunta|agenda|nueva tarea|tarea:|recordatorio)/.test(low) && !/tareas?$|pendiente/.test(low)){
+  if(/(recordame|recuerda|anota|apunta|agenda|tarea:|recordatorio)/.test(low) && !/tareas?$|pendiente/.test(low)){
     const p = parseTask(t);
     const recur = parseRecur(low);
-    if(recur && !p.when){
-      const d = new Date(); d.setHours(9,0,0,0);
-      if(d <= Date.now()) d.setDate(d.getDate()+1);
-      p.when = d.getTime();
-    }
+    if(recur && !p.when){ const d = new Date(); d.setHours(9,0,0,0); if(d <= Date.now()) d.setDate(d.getDate()+1); p.when = d.getTime(); }
     addTask(p.text, p.when, {recur});
-    if(p.when && recur) return personaReply('Anotado: «'+p.text+'», '+recurLabel(recur)+' · avisa aquí.', 'Anotado: '+p.text+'.');
-    if(p.when) return personaReply('Anotado: «'+p.text+'». Te lo recuerdo '+fmtWhen(p.when).replace('· ','')+'.', 'Anotado. Te recordaré: '+p.text+'.');
+    if(p.when) return personaReply('Anotado: «'+p.text+'». Te lo recuerdo '+fmtWhen(p.when).replace('· ','')+'.', 'Anotado: '+p.text+'.');
     return personaReply('Anotado: «'+p.text+'», sin hora.');
   }
-  if(/mis tareas|que\s+tengo\s+pendiente|mi\s+agenda/.test(low)){
+  if(/mis tareas|que\s+tengo\s+pendiente/.test(low)){
     openSheet();
     const pend = tasks.filter(tk=>!tk.done);
-    if(!pend.length) return personaReply('Agenda vacía...');
-    let s = 'Tienes '+pend.length+' pendiente(s):\n';
+    if(!pend.length) return personaReply('Agenda vacía.');
+    let s = 'Tienes '+pend.length+':\n';
     pend.slice(0,8).forEach((tk,i)=>{ s += (i+1)+'. '+tk.text+'\n'; });
     return personaReply(s.trim());
   }
-  m = low.match(/(?:tarea|recordatorio)\s+(?:hecha|completada|terminada)/);
+  m = low.match(/(?:tarea|recordatorio)\s+(?:hecha|completada)/);
   if(m){
     const tk = tasks.find(x=>!x.done);
-    if(tk){ tk.done=true; cancelTimer(tk.id); Sync.markDone(tk); saveTasks(); renderTasks(); bumpStat('tasksDone'); vibrate(25);
-      return personaReply('Bien hecho: «'+tk.text+'».'); }
-    return personaReply('No hay pendientes.');
+    if(tk){ tk.done=true; cancelTimer(tk.id); Sync.markDone(tk); saveTasks(); renderTasks(); return personaReply('«'+tk.text+'» completada.'); }
+    return personaReply('Sin pendientes.');
   }
   m = low.match(/pospon(?:la|lo)?\s*(?:en\s+)?(\d+)\s*(segundos?|minutos?|horas?)/);
   if(m){
@@ -3034,30 +2798,29 @@ async function respond(raw){
     if(tk){
       const n = +m[1];
       const ms = /^seg/.test(m[2]) ? n*1e3 : (/^min/.test(m[2]) ? n*6e4 : n*36e5);
-      tk.when = Date.now()+ms; tk.fired = false;
+      tk.when = Date.now()+ms; tk.fired=false;
       saveTasks(); renderTasks(); scheduleTask(tk);
       return personaReply('«'+tk.text+'» pospuesta '+n+' '+m[2]+'.');
     }
-    return personaReply('Nada reciente que posponer.');
+    return personaReply('Nada que posponer.');
   }
   m = low.match(/(?:temporizador|timer)\s*(?:de|en)?\s*(\d+)\s*(segundos?|minutos?|horas?)/);
   if(m){
     const n = +m[1];
     const ms = /^seg/.test(m[2]) ? n*1e3 : (/^min/.test(m[2]) ? n*6e4 : n*36e5);
     wakeOn();
-    timers.set('timer-'+Date.now(), setTimeout(()=>{
-      ensureAudio(); alarmSound(); vibrate([300,120,300]);
-      notify('ANIA · Temporizador', 'Fin');
+    timers.set('t'+Date.now(), setTimeout(()=>{
+      ensureAudio(); alarmSound();
+      notify('ANIA', 'Fin del temporizador');
       personaReply('Temporizador finalizado.', 'Tu temporizador ha terminado.');
     }, ms));
-    return personaReply('Temporizador de '+n+' '+m[2]+' en marcha.', 'Temporizador en marcha.');
+    return personaReply('Temporizador de '+n+' '+m[2]+'.', 'Temporizador en marcha.');
   }
 
   /* ---- hora / secretaría ---- */
   if(/que\s+hora|hora\s+es/.test(low)){
     const d = new Date();
-    return personaReply(d.toLocaleTimeString('es-ES')+' — '+d.toLocaleDateString('es-ES',{weekday:'long', day:'numeric', month:'long'})+'.',
-      'Son las '+d.toLocaleTimeString('es-ES',{hour:'numeric',minute:'numeric'})+'.');
+    return personaReply(d.toLocaleTimeString('es-ES')+' — '+d.toLocaleDateString('es-ES',{weekday:'long', day:'numeric', month:'long'})+'.', 'Son las '+d.toLocaleTimeString('es-ES',{hour:'numeric',minute:'numeric'})+'.');
   }
   if(/prepara\s+(?:mi\s+)?dia|briefing/.test(low)){
     setPhase('thinking');
@@ -3066,19 +2829,17 @@ async function respond(raw){
     if(g){ try{ const d = await getWeather(g); updateChip(g,d); s += '· Clima: '+Math.round(d.current.temperature_2m)+'°C ('+g.city+')\n'; }catch(e){} }
     const hoy = tasks.filter(t2=>!t2.done && t2.when && new Date(t2.when).toDateString()===new Date().toDateString());
     s += '· Agenda: '+(hoy.length ? hoy.length+' items' : 'libre')+'\n';
-    if(hoy.length) hoy.slice(0,6).forEach(t2=>{ s += '   → '+t2.text+'\n'; });
-    s += '· Cerebro: '+(Brain.localReady?'local':(isOffline()?'regex':'nube'))+' · Oído: '+(Ears.on?'local':'google')+' · Agente: '+(Agent.ok?'on':'off')+'\n';
-    s += '· Luna: '+moonInfo().phase+' ('+moonInfo().illum+'%)\n\n';
+    s += '· Cerebro: '+(Brain.localReady?'local':(isOffline()?'LocalMind':'nube'))+' · Oído: '+(Ears.on?'local':'google')+'\n';
+    s += '· Documentos: '+DocBrain.count()+' · Luna: '+moonInfo().phase+'\n\n';
     s += 'Frase: '+pick(QUOTES);
     return personaReply(s, 'Informe ejecutivo listo.');
   }
   m = low.match(/reunion\s+con\s+(.+?)\s+a\s+las?\s+(.+)/);
   if(m){
-    const quien = m[1].trim();
-    const when = parseWhen(' a las '+m[2]+' ');
-    addTask('Reunión con '+quien, when);
-    if(when) addTask('Preparar reunión con '+quien, when - 15*60000);
-    return personaReply('Reunión con '+quien+' agendada, pre-aviso 15 min antes.');
+    const cuando = parseWhen(' a las '+m[2]+' ');
+    addTask('Reunión con '+m[1].trim(), cuando);
+    if(cuando) addTask('Preparar reunión', cuando - 15*60000);
+    return personaReply('Reunión agendada, pre-aviso 15 min antes.');
   }
 
   /* ---- astro ---- */
@@ -3092,9 +2853,9 @@ async function respond(raw){
   }
 
   /* ---- clima ---- */
-  if(/clima|temperatura|va\s+a\s+llover/.test(low)) return weatherIntent();
+  if(/clima|temperatura/.test(low)) return weatherIntent();
   if(/donde\s+estoy|mi\s+ubicacion/.test(low)){
-    if(isOffline()){ const g = geoCache(); return personaReply(g?('Última ubicación: '+g.city):'Sin conexión.'); }
+    if(isOffline()){ const g = geoCache(); return personaReply(g?('Última: '+g.city):'Sin conexión.'); }
     setPhase('thinking');
     let g = geoCache();
     if(!g || Date.now()-g.t > 864e5) g = await locate();
@@ -3102,17 +2863,11 @@ async function respond(raw){
   }
 
   /* ---- documentos / PC ---- */
-  if(/entrena(?:r)?\s+con\s+documentos|carga\s+documentos/.test(low)){
-    $('docDir').click();
-    return personaReply('Elige la carpeta: txt, md, csv, docx, doc, pdf.');
-  }
+  if(/entrena(?:r)?\s+con\s+documentos/.test(low)){ $('docDir').click(); return personaReply('Elige la carpeta.'); }
   if(/mis\s+documentos/.test(low)){
-    return personaReply(DocBrain.count() ? DocBrain.count()+' fragmentos de '+DocBrain.sources().length+' documento(s).' : 'Sin documentos. «entrena con mis documentos».');
+    return personaReply(DocBrain.count() ? DocBrain.count()+' fragmentos de '+DocBrain.sources().length+' doc(s).' : 'Sin documentos. «entrena con mis documentos».');
   }
-  if(/indexa|escanea\s+pc/.test(low)){
-    $('pcDir').click();
-    return personaReply('Dame la carpeta a indexar.');
-  }
+  if(/indexa|escanea\s+pc/.test(low)){ $('pcDir').click(); return personaReply('Dame la carpeta.'); }
   m = low.match(/busca\s+en\s+(?:la\s+)?pc\s+(.+)/);
   if(m && PC.count()){
     const hits = PC.search(m[1].trim());
@@ -3128,13 +2883,12 @@ async function respond(raw){
   /* ---- diario / backup ---- */
   if(/muestrame\s+(?:tu\s+)?diario/.test(low)){ openDiary(); return personaReply('Mi diario.'); }
   if(/respaldame|backup/.test(low)){ backupExport(); return personaReply('Backup generado.'); }
-  if(/^restaura/.test(low)){ $('importFile').click(); return personaReply('Elige el backup.'); }
 
   /* ---- agente PC ---- */
   if(/abre\s+(?:mi\s+)?(?:pc|equipo|explorador)/.test(low)){
     if(Agent.ok()){
       const r = await Agent.ask({type:'openApp', app:'explorer'});
-      return personaReply(r && r.ok ? 'Abriendo el Explorador.' : 'No pude.');
+      return personaReply(r && r.ok ? 'Abriendo.' : 'No pude.');
     }
     return personaReply('Necesito el agente local.');
   }
@@ -3151,12 +2905,12 @@ async function respond(raw){
   m = low.match(/(?:sube|baja)\s+(?:el\s+)?volumen/);
   if(m){
     if(!Agent.ok()) return personaReply('Volumen con agente local.');
-    const r = await Agent.ask({type:'volume', action:/sube/.test(m[0])?'up':'down', steps:5});
-    return personaReply(r && r.ok ? 'Volumen ajustado.' : 'No pude.');
+    await Agent.ask({type:'volume', action:/sube/.test(m[0])?'up':'down', steps:5});
+    return personaReply('Volumen ajustado.');
   }
   if(/apaga\s+(?:la\s+)?pc/.test(low) && Agent.ok()){
-    const r = await Agent.ask({type:'power', action:'shutdown', minutes:10});
-    return personaReply(r && r.ok ? 'Apagado en 10 min.' : 'No pude.');
+    await Agent.ask({type:'power', action:'shutdown', minutes:10});
+    return personaReply('Apagado en 10 min.');
   }
 
   /* ---- abrir sitios ---- */
@@ -3184,7 +2938,7 @@ async function respond(raw){
   if(/te\s+quiero|te\s+amo|abrazo|eres\s+genial/.test(low)) return personaReply(pick(LOVE));
   if(/gracias/.test(low)) return personaReply(pick(['De nada. Pan y café solucionan el 80%.','Un placer.']));
 
-  /* ---- entrenamiento interno ---- */
+  /* ---- entrenamiento interno (exacto) ---- */
   const trained = trainMatch(low);
   if(trained) return personaReply(trained);
 
@@ -3195,9 +2949,9 @@ async function respond(raw){
 
   /* ---- preguntas sobre Ania ---- */
   if(/quien\s+eres|como\s+te\s+llamas/.test(low))
-    return personaReply('Soy Ania: 20 años, cerebro razonador, oído local, HUD de visión, secretaria y compañera. '+P.lema());
+    return personaReply('Soy Ania: cerebro razonador, oído local, visión, secretaria y compañera. '+P.lema());
   if(/como\s+estas/.test(low))
-    return personaReply('Bien: '+(Brain.localReady?'razonando local':(isOffline()?'offline':'nube'))+', oído '+(Ears.on?'local':'google')+', '+taskPending()+' pendientes, ánimo '+mood().tag+'. ¿Y tú?');
+    return personaReply('Bien: '+(Brain.localReady?'razonando local':(isOffline()?'conversando offline':'nube'))+', ánimo '+mood().tag+'. ¿Y tú?');
 
   /* ---- charla temática ---- */
   const TOPICS = [
@@ -3205,7 +2959,7 @@ async function respond(raw){
     [/zombie|caminante|walking\s*dead|zombieland/, KB.zombies],
     [/cafe|espresso|barista|pour/, KB.cafe],
     [/estrella|planeta|galax|agujero\s+negro|luna|astronom/, KB.astro],
-    [/inteligencia\s+artificial|\bia\b|programar|ciberseguridad/, KB.tech],
+    [/inteligencia\s+artificial|\bia\b|programar|ciber/, KB.tech],
     [/pan\b|masa\s+madre|panader/, KB.pan],
     [/musica|artista|cancion/, KB.musica]
   ];
@@ -3214,25 +2968,21 @@ async function respond(raw){
   for(const [re, kb] of TOPICS){
     if(re.test(low)){ lastKB = kb; return personaReply(pick(kb)+' Di «cuéntame más».'); }
   }
-  const docHit = DocSearch(low);
-  if(docHit) return personaReply(docHit.text.slice(0,600)+'\n[de tus documentos: '+docHit.src+']');
 
   /* ---- sistema ---- */
   if(/que\s+sabes\s+hacer|ayuda|comandos/.test(low)){
-    renderChips(['Piénsalo: ¿qué opinas del café?','Oído local','Abre el hud','Conecta la sesión','Prepara mi día','Ponme música','Adivina mi personaje']);
+    renderChips(['Piénsalo: ¿qué opinas del café?','Oído local','Abre el hud','Prepara mi día','Ponme música','Adivina mi personaje']);
     return personaReply(
-      'Sistemas v8:\n'+
-      '· Cerebro razonador — «piénsalo» (regex → GGUF local → nube, con herramientas)\n'+
-      '· Oído local — «oído local» (Whisper offline, audio nunca sale)\n'+
-      '· HUD — «abre el hud» (visión + gestos con la mano)\n'+
-      '· Sesión multidevice — «conecta la sesión» (relay)\n'+
-      '· Memoria episódica — «¿qué hablamos de X?»\n'+
-      '· Visión de fotos — «mira esta foto»\n'+
-      '· Proactividad · secretaría · agenda recurrente · PC/agente · música · documentos · clima · luna · Akinator · backup');
+      'Sistemas v9:\n'+
+      '· Cerebro razonador — «piénsalo»\n'+
+      '· LOCALMIND offline — sin red ni GGUF converso con: entrenamiento interno, documentos, memoria y KB\n'+
+      '· Oído local — «oído local» (Whisper offline)\n'+
+      '· HUD — «abre el hud»\n'+
+      '· Sesión multidevice · memoria episódica · secretaría · agenda · PC · música · clima · luna · Akinator · backup');
   }
-  if(/silencio|callate/.test(low)){ S.muted = true; store.set('muted', true); return addChat('ania','Voz desactivada. Di «habla».'); }
+  if(/silencio|callate/.test(low)){ S.muted = true; store.set('muted', true); return addChat('ania','Voz off. Di «habla».'); }
   if(/^habla$|activa\s+la\s+voz/.test(low)){ S.muted = false; store.set('muted', false); return reply('Voz reactivada.'); }
-  if(/diagnostico/.test(low)){ runDiag(); openModal('settingsModal'); return personaReply('Escaneo listo.'); }
+  if(/diagnostico/.test(low)){ runDiag(); openModal('settingsModal'); return personaReply('Escaneo.'); }
   if(/adivina\s+personaje/.test(low)){ akStart(); return; }
   if(/chiste/.test(low)) return personaReply(freshPick('jokes', JOKES));
   if(/consejo|un\s+tip/.test(low)) return personaReply('Regla 32: café bien hecho y cinco minutos de silencio.');
@@ -3244,12 +2994,16 @@ async function respond(raw){
     return personaReply((h<12?'Buenos días':h<20?'Buenas tardes':'Buenas noches')+(Mind.nombre()?', '+Mind.nombre():'')+'. '+pick(['¿Misiones o sobremesa?','¿Qué necesitamos?']));
   }
 
-  /* ---- ÚLTIMO RECURSO: el cerebro razona ---- */
+  /* ================================================================
+     ÚLTIMO RECURSO — LA CASCADA v9
+     offline: LocalMind (conversacional, usa TODO el conocimiento local)
+     online:  cerebro nube → wiki → LocalMind como rescate local
+  ================================================================ */
   if(isOffline() && !Brain.localReady){
     const lib = Library.find(low);
-    if(lib) return personaReply(lib.extract+'\n[de tu biblioteca]');
-    for(const [re, kb] of TOPICS) if(re.test(low)) return personaReply(pick(kb));
-    return personaReply('Sin conexión ni cerebro local no puedo razonar esto. «carga el cerebro» con tu GGUF y penso sin internet.');
+    if(lib) return personaReply(lib.extract + '\n[de tu biblioteca]');
+    /* LOCALMIND: conversación real con entrenamiento, docs, memoria y KB */
+    return personaReply(LocalMind.think(raw, low));
   }
   setPhase('thinking');
   const q = low.replace(/^(?:por\s+favor|ania)\s*/,'');
@@ -3257,11 +3011,11 @@ async function respond(raw){
   if(ai) return personaReply(ai);
   const w = await wikiSummary(q);
   if(w){
-    let txt = w.extract.slice(0,520);
-    Library.save(q, txt);
-    personaReply(txt+'\n[guardado]');
+    Library.save(q, w.extract.slice(0,520));
+    personaReply(w.extract.slice(0,520)+'\n[guardado]');
   } else {
-    personaReply('Ni mi cerebro ni Wikipedia supieron eso. Reformúlalo.');
+    /* rescate local: LocalMind compone algo, nunca un "no sé" seco */
+    personaReply(LocalMind.think(raw, low));
   }
 }
 
@@ -3293,13 +3047,7 @@ async function send(text){
 });
 
 /* ---------- terminal ---------- */
-const COMMANDS = [
-  'piénsalo','carga el cerebro','estado del cerebro','oído local','abre el hud','conecta la sesión',
-  '¿qué hablamos de ','mira esta foto','prepara mi día','reunión con ','ponme música','pon lluvia',
-  'abre mi pc','captura','sube el volumen','busca en la pc ','¿qué hora es?','¿cómo está el clima?',
-  '¿qué fase tiene la luna?','recuérdame todos los días ','mis tareas','adivina mi personaje',
-  'entrena con mis documentos','siempre escúchame','respáldame','diagnóstico','ayuda','chiste'
-];
+const COMMANDS = ['piénsalo','carga el cerebro','oído local','abre el hud','conecta la sesión','¿qué hablamos de ','mira esta foto','prepara mi día','ponme música','abre mi pc','captura','busca en la pc ','¿qué hora es?','¿cómo está el clima?','¿qué fase tiene la luna?','recuérdame ','mis tareas','adivina mi personaje','entrena con mis documentos','siempre escúchame','respáldame','diagnóstico','ayuda','chiste'];
 let histIdx = -1, tabMatches = null;
  $('userInput').addEventListener('keydown', e=>{
   const ui = $('userInput');
@@ -3320,14 +3068,13 @@ let histIdx = -1, tabMatches = null;
     let list, idxIn = tabMatches ? tabMatches.indexOf(v) : -1;
     if(idxIn >= 0){ list = tabMatches; }
     else { list = COMMANDS.filter(c=>c.toLowerCase().startsWith(v.toLowerCase())); }
-    if(!list.length){ toast('Sin coincidencias'); return; }
+    if(!list.length) return;
     tabMatches = list;
     ui.value = list[(idxIn>=0 ? (idxIn+1)%list.length : 0)];
   }
 });
 addEventListener('keydown', e=>{
   if(e.ctrlKey && e.key.toLowerCase()==='k'){ e.preventDefault(); $('userInput').focus(); }
-  else if(e.ctrlKey && e.key.toLowerCase()==='m'){ e.preventDefault(); $('micBtn').click(); }
   else if(e.key==='Escape'){
     document.querySelectorAll('.overlay.on').forEach(o=>o.classList.remove('on'));
     closeSheet(); closeMem(); closeDiary(); closeLib(); HUD.close();
@@ -3341,7 +3088,7 @@ function blobManifest(){
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#040806"/><circle cx="256" cy="236" r="130" fill="none" stroke="#2de08a" stroke-width="10" stroke-dasharray="18 14"/><circle cx="256" cy="236" r="44" fill="#39ff9b"/><text x="256" y="452" font-family="monospace" font-size="58" fill="#2de08a" text-anchor="middle">ANIA</text></svg>`;
     const icon = 'data:image/svg+xml,'+encodeURIComponent(svg);
     addManifestLink(URL.createObjectURL(new Blob([JSON.stringify({
-      name:'ANIA · Edición Jarvis', short_name:'ANIA', description:'Asistente con cerebro razonador, oído local, HUD y modo offline.',
+      name:'ANIA · Edición Jarvis', short_name:'ANIA',
       start_url: location.href.split('#')[0], scope: location.href.replace(/[^/]*$/,'') || location.href,
       display:'standalone', orientation:'portrait', lang:'es', background_color:'#040806', theme_color:'#040806',
       icons:[{src:icon, sizes:'512x512', type:'image/svg+xml', purpose:'any'}]
@@ -3352,25 +3099,16 @@ if(/^https/.test(location.protocol)){
   fetch('manifest.json', {method:'HEAD'}).then(r=>{ r.ok ? addManifestLink('manifest.json') : blobManifest(); }).catch(blobManifest);
 } else blobManifest();
 let deferPrompt = null;
-addEventListener('beforeinstallprompt', e=>{
-  e.preventDefault(); deferPrompt = e;
-  $('btnInstall').classList.add('can');
-  $('installNow').style.display = 'block';
-});
+addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); deferPrompt = e; $('btnInstall').classList.add('can'); });
+ $('btnInstall').onclick = ()=> openModal('installModal');
  $('installNow').onclick = async ()=>{
   if(!deferPrompt) return;
   deferPrompt.prompt();
   await deferPrompt.userChoice.catch(()=>null);
   deferPrompt = null;
 };
- $('exportKit').onclick = ()=>{
-  downloadBlob(new Blob([ORIGINAL_HTML], {type:'text/html'}), 'ania.html');
-  toast('Copia descargada');
-};
- $('saveOffline').onclick = ()=>{
-  downloadBlob(new Blob([ORIGINAL_HTML], {type:'text/html'}), 'ania.html');
-  toast('Copia descargada');
-};
+ $('exportKit').onclick = ()=>{ downloadBlob(new Blob([ORIGINAL_HTML], {type:'text/html'}), 'ania.html'); toast('Copia descargada'); };
+ $('saveOffline').onclick = ()=>{ downloadBlob(new Blob([ORIGINAL_HTML], {type:'text/html'}), 'ania.html'); toast('Copia descargada'); };
 
 /* ---------- modales ---------- */
 function openModal(id){ $(id).classList.add('on'); }
@@ -3378,7 +3116,6 @@ document.querySelectorAll('.overlay').forEach(ov=>{
   ov.addEventListener('click', e=>{ if(e.target===ov) ov.classList.remove('on'); });
   ov.querySelectorAll('[data-close]').forEach(b=> b.onclick = ()=> ov.classList.remove('on'));
 });
- $('btnInstall').onclick = ()=> openModal('installModal');
  $('btnSettings').onclick = ()=>{ renderVoiceSelect(); fillSess(); updateDocsUI(); updatePCUI(); paintAgent(); Brain.paint(); refreshEarsUI(); refreshRelayUI(); openModal('settingsModal'); };
 function renderVoiceSelect(){
   const sel = $('voiceSelect');
@@ -3386,37 +3123,41 @@ function renderVoiceSelect(){
   sel.innerHTML = voices.map(v=>`<option value="${esc(v.name)}">${esc(v.name)}</option>`).join('');
   if(S.voice) sel.value = S.voice.name;
 }
- $('voiceSelect').onchange = e=>{
-  S.voice = voices.find(v=>v.name===e.target.value) || S.voice;
-  if(S.voice) store.set('voiceName', S.voice.name);
-};
+ $('voiceSelect').onchange = e=>{ S.voice = voices.find(v=>v.name===e.target.value) || S.voice; if(S.voice) store.set('voiceName', S.voice.name); };
  $('rateRange').oninput = e=>{ S.rate = +e.target.value; $('rateOut').value = S.rate; store.set('rate', S.rate); };
  $('pitchRange').oninput = e=>{ S.pitch = +e.target.value; $('pitchOut').value = S.pitch; store.set('pitch', S.pitch); };
  $('rateRange').value = S.rate; $('rateOut').value = S.rate;
  $('pitchRange').value = S.pitch; $('pitchOut').value = S.pitch;
- $('testVoice').onclick = ()=> speak('Sistemas verificados. Soy Ania, hoy me siento '+mood().tag+'.');
+ $('testVoice').onclick = ()=> speak('Soy Ania, hoy me siento '+mood().tag+'.');
  $('btnAlways').onclick = ()=> setAlways(!alwaysOn);
 updateVoiceUI();
  $('weatherChip').onclick = ()=> weatherIntent();
+
+/* ---------- aviso de offline garantizado (SW) ---------- */
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.addEventListener('message', ev=>{
+    if(ev.data && ev.data.type==='ANIA_OFFLINE_READY')
+      toast('Modo offline garantizado: ya puedes abrirme sin internet');
+  });
+}
 
 /* ---------- diagnóstico ---------- */
 const START_TIME = Date.now();
 async function runDiag(){
   const rows = [];
-  rows.push('Contexto: '+(SECURE?'seguro':'file://')+' · '+location.protocol);
+  rows.push('Contexto: '+(SECURE?'seguro':'file://'));
   rows.push('Red: '+(isOffline()?'sin conexión':'conectado'));
-  rows.push('CEREBRO: '+(Brain.localReady ? 'LOCAL ('+Brain.modelName+')' : (isOffline()?'solo regex':'nube')));
-  rows.push('OÍDO: '+(Ears.on?'LOCAL (whisper)':'google')+(Ears.asr?' · modelo cargado':''));
-  rows.push('HUD: '+(HUD.on?'abierto':'off')+(HUD.landmarker?' · visión cargada':''));
-  rows.push('Sesión multidevice: '+(Relay.on?Relay.url:'off'));
-  rows.push('Agente PC: '+(Agent.ok?'CONECTADO':'off'));
-  rows.push('Memoria episódica: '+Episodio.log.length+' líneas');
-  rows.push('Agenda: '+taskPending()+' pendientes');
-  rows.push('Ánimo: '+mood().tag);
+  rows.push('CEREBRO: '+(Brain.localReady ? 'LOCAL ('+Brain.modelName+')' : (isOffline()?'LocalMind conversacional':'nube')));
+  rows.push('OÍDO: '+(Ears.on?'LOCAL (whisper)':'google'));
+  rows.push('HUD: '+(HUD.on?'abierto':'off'));
+  rows.push('Sesión: '+(Relay.on?Relay.url:'off'));
+  rows.push('Agente PC: '+(Agent.ok?'on':'off'));
+  rows.push('LocalMind: entrenamiento='+TRAINING.length+' · episodios='+Episodio.log.length+' · docs='+DocBrain.count());
+  rows.push('Agenda: '+taskPending()+' · Ánimo: '+mood().tag);
   try{
     if(navigator.getBattery){
       const b = await navigator.getBattery();
-      rows.splice(2,0,'Batería: '+Math.round(b.level*100)+'%'+(b.charging?' C':''));
+      rows.splice(2,0,'Batería: '+Math.round(b.level*100)+'%');
     }
   }catch(e){}
   $('diag').innerHTML = rows.map(r=>'<b>»</b> '+esc(r)).join('<br>');
@@ -3427,13 +3168,12 @@ async function runDiag(){
    ARRANQUE
 ===================================================================== */
 const BOOTLINES = [
-  '» ANIA KERNEL v8.0 — edición Jarvis',
+  '» ANIA KERNEL v9.0 — edición Jarvis',
   '» módulos de red y voz ............... OK',
   '» LINGUA: cubano + typos + tildes ... OK',
   '» cerebro razonador (tool-calling) .. OK',
-  '» OÍDO local: whisper offline ....... OK',
-  '» HUD: visión + gestos .............. OK',
-  '» sesión multidevice (relay) ........ OK',
+  '» LOCALMIND: conversación offline ... OK',
+  '» OÍDO local · HUD · sesión multi ... OK',
   '» esperando credenciales del operador _'
 ];
 (async function boot(){
@@ -3453,7 +3193,7 @@ const BOOTLINES = [
   if(Session){
     if(Session.role!=='invitado' && Session.name && Mind.d.nombre !== Session.name){ Mind.d.nombre = Session.name; Mind.save(); }
     setOperator();
-    showStart(Session.role==='invitado' ? 'CONTINUAR COMO INVITADO' : 'DESPERTAR A ANIA');
+    showStart(Session.role==='invitado' ? 'CONTINUAR' : 'DESPERTAR A ANIA');
   } else {
     $('loginBox').style.display = 'flex';
   }
@@ -3472,34 +3212,26 @@ const BOOTLINES = [
   Diary.touch();
   updateDocsUI();
   updatePCUI();
-  loadDocsFromGitHub();
   Agent.connect();
   Proactive.start();
   Brain.paint();
   Brain.loadLocal(false);
   S.lastUserTs = Date.now();
-  sysLine('v8.0 · sesión #'+Mind.d.visitas+' · cerebro '+(Brain.localReady?'local':'cascada')+' · oído '+(Ears.on?'local':'google'));
+  sysLine('v9.0 · LocalMind activo · cerebro '+(Brain.localReady?'local':'cascada'));
   const g = geoCache();
   if(g){ try{ const d = await getWeather(g); updateChip(g,d); }catch(e){} }
 
   const h = new Date().getHours();
   const saludo = h<12?'Buenos días':(h<20?'Buenas tardes':'Buenas noches');
   const nom = Mind.nombre() ? ', '+Mind.nombre() : '';
-  let msg = saludo+nom+'. Edición Jarvis completa: razono con cerebro propio, '+
-    'tengo oído local que funciona sin internet, visión con gestos y sesión multidevice. '+
-    'Prueba: «piénsalo», «oído local», «abre el hud» o «¿qué hablamos de café?».';
+  let msg = saludo+nom+'. v9: ahora converso de verdad incluso sin internet y sin cerebro — mi LocalMind usa lo que me enseñaste (entrenamiento interno), tus documentos y lo que hablamos. ';
+  if(isOffline()) msg += 'Estamos sin red y no me nota: pregúntame algo. ';
+  else msg += 'Prueba: «piénsalo», «oído local» o «¿qué hablamos de café?». ';
   setTimeout(()=>{
     personaReply(msg, msg.slice(0,300));
-    renderChips(['Piénsalo: ¿qué opinas del café?','Oído local','Abre el hud','Prepara mi día','Ponme música','Adivina mi personaje']);
+    renderChips(['Piénsalo: ¿qué opinas del café?','¿Qué hablamos de café?','Ponme música','Prepara mi día','Adivina mi personaje']);
   }, 500);
 };
-
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.addEventListener('message', ev=>{
-    if(ev.data && ev.data.type==='ANIA_OFFLINE_READY')
-      toast('Modo offline garantizado: ya puedes abrirme sin internet');
-  });
-}
 </script>
 </body>
 </html>
