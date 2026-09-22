@@ -3922,6 +3922,355 @@ const _bootStart = $('bootStart').onclick;
 
 })();
 </script>
+
+<!-- ================================================================
+     ANIA v10.1 · GENERADOR DE VIDEO (Canvas + MediaRecorder)
+     Crea videos .webm 100% local, sin APIs, sin internet.
+     Comandos:
+     · «crea un video con [frase]» — video de frase animada
+     · «crea un video vertical con [frase]» — formato Reels
+     · «video star con [frase]» — fondo estrellado
+     · «video lluvia con [frase]» — fondo lluvia
+     · «video de mi imagen» — slideshow con última imagen
+     · «video logo» — presentación del reactor de Ania
+==================================================================== -->
+<script>
+'use strict';
+(function(){
+
+/* ---------- CANVAS OCULTO ---------- */
+let VC = null, VCTX = null, recording = false, recorder = null, chunks = [];
+
+function ensureCanvas(w, h){
+  if(!VC){
+    VC = document.createElement('canvas');
+    VC.style.cssText = 'position:fixed;left:-9999px;top:-9999px';
+    document.body.appendChild(VC);
+  }
+  VC.width = w; VC.height = h;
+  VCTX = VC.getContext('2d');
+  return VCTX;
+}
+
+/* ---------- PRESETS DE ESTILO ---------- */
+const STYLES = {
+  estrella: {bg:'#040806', fg:'#39ff9b', accent:'#2de08a', anim:'stars'},
+  lluvia:   {bg:'#0a0f14', fg:'#9fdcff', accent:'#5fc9ff', anim:'rain'},
+  fuego:    {bg:'#0a0400', fg:'#ffb547', accent:'#ff7590', anim:'particles'},
+  terminal: {bg:'#040806', fg:'#39ff9b', accent:'#2de084', anim:'scanline'},
+  minimal:  {bg:'#0a0a0a', fg:'#ffffff', accent:'#b18cff', anim:'pulse'}
+};
+
+/* ---------- GENERADORES DE FONDO ---------- */
+function drawBG(ctx, W, H, style, t){
+  ctx.fillStyle = style.bg;
+  ctx.fillRect(0, 0, W, H);
+  if(style.anim === 'stars'){
+    for(let i=0; i<80; i++){
+      const x = (i*137.5)%W;
+      const y = (i*89.3)%H;
+      const s = 1+((i*7)%3);
+      const a = .2+.5*Math.abs(Math.sin(t/800+i));
+      ctx.fillStyle = `rgba(45,224,138,${a})`;
+      ctx.fillRect(x, y, s, s);
+    }
+  }
+  else if(style.anim === 'rain'){
+    ctx.strokeStyle = 'rgba(95,201,255,.2';
+    ctx.lineWidth = 1;
+    for(let i=0; i<40; i++){
+      const x = (i*73)%W;
+      const y = ((t/5+i*31)%H);
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x-2, y+12);
+      ctx.stroke();
+    }
+  }
+  else if(style.anim === 'particles'){
+    for(let i=0; i<30; i++){
+      const x = (i*97)%W;
+      const y = H - ((t/8+i*40)%H);
+      ctx.fillStyle = `rgba(255,${120+((i*13)%120},60,.3)`;
+      ctx.fillRect(x, y, 2, 2);
+    }
+  }
+  else if(style.anim === 'scanline'){
+    const sy = (t/3)%H;
+    ctx.strokeStyle = 'rgba(45,224,138,.15)';
+    ctx.beginPath();
+    ctx.moveTo(0, sy);
+    ctx.lineTo(W, sy);
+    ctx.stroke();
+  }
+  else if(style.anim === 'pulse'){
+    const r = 30+10*Math.sin(t/500);
+    ctx.strokeStyle = style.accent+'33';
+    ctx.beginPath();
+    ctx.arc(W/2, H/2, r, 0, 6.28);
+    ctx.stroke();
+  }
+}
+
+/* ---------- DIBUJAR FRASE ---------- */
+function drawText(ctx, W, H, style, frase, t, progress){
+  const fs = Math.min(H/8, 28);
+  ctx.font = fs+'px "Share Tech Mono", monospace';
+  ctx.fillStyle = style.fg;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const words = frase.split(' ');
+  const maxW = W*0.8;
+  let lines = [];
+  let cur = '';
+  for(const w of words){
+    const test = cur+' '+w;
+    if(ctx.measureText(test).width > maxW){
+      lines.push(cur);
+      cur = w;
+    } else {
+      cur = test;
+    }
+  }
+  lines.push(cur);
+  lines = lines.map(l=>l.trim()).filter(Boolean);
+  const lh = fs*1.5;
+  const startY = H/2 - (lines.length-1)*lh/2;
+  const chars = Math.floor(progress * frase.length);
+  let drawn = 0;
+  for(let i=0; i<lines.length; i++){
+    const line = lines[i];
+    const take = Math.max(0, Math.min(line.length, chars - drawn));
+    if(take > 0){
+      const partial = line.slice(0, take);
+      const y = startY + i*lh;
+      if(drawn + take < frase.length && take < line.length){
+        ctx.fillStyle = style.fg;
+        ctx.fillText(partial + '▌', W/2, y);
+      } else {
+        ctx.fillStyle = style.fg;
+        ctx.fillText(partial, W/2, y);
+      }
+    }
+    drawn += line.length + 1;
+  }
+  ctx.font = fs*0.35+'px "Share Tech Mono", monospace';
+  ctx.fillStyle = style.accent+'99';
+  ctx.fillText('— ANIA —', W/2, H - fs*1.5);
+}
+
+/* ---------- VIDEO DE LOGO ---------- */
+function drawLogo(ctx, W, H, t, progress){
+  const cx = W/2, cy = H/2 - 20;
+  const outer = W*0.2;
+  const inner = W*0.13;
+  const rot = t/800;
+  ctx.strokeStyle = '#2de08a';
+  ctx.lineWidth = 3;
+  for(let k=0; k<2; k++){
+    const off = k*Math.PI;
+    ctx.beginPath();
+    ctx.arc(cx, cy, outer, rot+off, rot+off+1.2);
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.arc(cx, cy, inner, -rot*2, -rot*2+6.28);
+  ctx.stroke();
+  ctx.fillStyle = '#39ff9b';
+  ctx.beginPath();
+  ctx.arc(cx, cy, inner*0.35, 0, 6.28);
+  ctx.fill();
+  ctx.font = W*0.05+'px "Share Tech Mono", monospace';
+  ctx.fillStyle = '#39ff9b';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const show = Math.floor(progress * 4);
+  if(show >= 1) ctx.fillText('A N I A', cx, H*0.72);
+  if(show >= 2) ctx.font = W*0.025+'px "Share Tech Mono", monospace';
+  if(show >= 2) ctx.fillStyle = '#79a88f';
+  if(show >= 2) ctx.fillText('ASISTENTE PERSONAL · v10', cx, H*0.80);
+}
+
+/* ---------- VIDEO CON IMAGEN ---------- */
+function drawImage(ctx, W, H, img, style, t, progress){
+  const scale = Math.max(W/img.width, H/img.height);
+  const w = img.width*scale, h = img.height*scale;
+  const x = (W-w)/2, y = (H-h)/2;
+  const alpha = Math.min(1, progress*2);
+  ctx.globalAlpha = alpha;
+  ctx.drawImage(img, x, y, w, h);
+  ctx.globalAlpha = 1;
+  drawBG(ctx, W, H, style, t);
+  ctx.globalAlpha = alpha*0.85;
+  ctx.drawImage(img, x, y, w, h);
+  ctx.globalAlpha = 1;
+}
+
+/* ---------- FUNCIÓN PRINCIPAL ---------- */
+async function createVideo(opts){
+  if(recording){ toast('Ya estoy creando un video, espera...'); return; }
+  if(typeof MediaRecorder === 'undefined'){ return personaReply('Tu navegador no soporta grabación de video. Prueba Chrome.'); }
+
+  const isVertical = opts.format === 'vertical';
+  const W = isVertical ? 720 : 1280;
+  const H = isVertical ? 1280 : 720;
+  const dur = Math.min(30, Math.max(5, opts.dur || 10));
+  const style = STYLES[opts.style || 'terminal'] || STYLES.terminal;
+  const phrase = opts.frase || '';
+  const imgData = opts.image || null;
+
+  recording = true;
+  toast('Grabando video de '+dur+'s...');
+  showThinking();
+
+  const ctx = ensureCanvas(W, H);
+  const stream = VC.captureStream(30);
+  chunks = [];
+  const mime = 'video/webm;codecs=vp9';
+  recorder = new MediaRecorder(stream, {mimeType: mime, videoBitsPerSecond: 3500000});
+  recorder.ondataavailable = e => { if(e.data.size > 0) chunks.push(e.data); };
+
+  const done = new Promise(res => { recorder.onstop = res; });
+
+  recorder.start();
+
+  const start = performance.now();
+  let imgObj = null;
+  if(imgData){
+    imgObj = new Image();
+    imgObj.src = imgData;
+    await imgObj.decode().catch(()=>{});
+  }
+
+  let playing = true;
+  const animate = () => {
+    if(!playing) return;
+    const t = performance.now() - start;
+    const progress = Math.min(1, t / (dur*1000));
+
+    drawBG(ctx, W, H, style, t);
+
+    if(imgObj){
+      drawImage(ctx, W, H, imgObj, style, t, progress);
+      ctx.font = W*0.03+'px "Share Tech Mono", monospace';
+      ctx.fillStyle = style.fg;
+      ctx.textAlign = 'center';
+      ctx.fillText(phrase, W/2, H*0.85);
+    }
+    else if(phrase){
+      drawText(ctx, W, H, style, phrase, t, progress);
+    }
+    else if(opts.type === 'logo'){
+      drawLogo(ctx, W, H, t, progress);
+    }
+
+    if(t >= dur*1000){
+      playing = false;
+      setTimeout(()=>{ recorder.stop(); }, 200);
+      return;
+    }
+
+    requestAnimationFrame(animate);
+  };
+  animate();
+
+  await done;
+
+  recording = false;
+  hideThinking();
+
+  if(!chunks.length){
+    toast('No pude grabar', true);
+    return;
+  }
+
+  const blob = new Blob(chunks, {type:'video/webm'});
+  const url = URL.createObjectURL(blob);
+  addImageLine(url, 'Video .webm · '+dur+'s · '+(isVertical?'vertical':'horizontal'));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'ania-video-'+Date.now()+'.webm';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  personaReply('Video creado y descargado: '+(isVertical?'vertical':'horizontal')+', '+dur+' segundos. Listo para subir a tu página.');
+}
+
+/* ---------- AUDIO PROCEDURAL PARA VIDEO ---------- */
+function createAudioForVideo(){
+  ensureAudio();
+  if(!AC) return null;
+  const o = AC.createOscillator();
+  const g = AC.createGain();
+  const f = AC.createBiquadFilter();
+  o.type = 'sine';
+  o.frequency.value = 220;
+  f.type = 'lowpass';
+  f.frequency.value = 300;
+  g.gain.value = 0.15;
+  o.connect(f);
+  f.connect(g);
+  g.connect(AC.destination);
+  return {osc:o, gain:g, stop(){ o.stop(); }};
+}
+
+/* ---------- INTEGRAR COMANDOS ---------- */
+const _send_v10 = send;
+send = async function(text){
+  const low = LINGUA.normalizar(text);
+
+  const vM = low.match(/(?:crea|genera|haz)\s+(?:un\s+)?video\s+(?:de\s+|con\s+|sobre\s+)?(.+)?/);
+  if(vM){
+    let frase = (vM[1] || '').trim();
+    let style = 'terminal';
+    let format = 'horizontal';
+    let dur = 10;
+
+    if(/estrella|star|noche|cosmos/.test(low)) style = 'estrella';
+    if(/lluvia|rain/.test(low)) style = 'lluvia';
+    if(/fuego|neon|brillante/.test(low)) style = 'fuego';
+    if(/terminal|minimal|sencillo|futurista/.test(low)) style = 'terminal';
+    if(/vertical|reel|tiktok|tiktoc/.test(low)) format = 'vertical';
+    if(/(\d+)\s*seg/.test(low)){
+      dur = Math.min(30, Math.max(5, +low.match(/(\d+)\s*seg/)[1]));
+    }
+
+    if(!frase && /logo|marca|presentacion|aniate/.test(low)){
+      return createVideo({type:'logo', dur, format, style});
+    }
+
+    if(/imagen|dibujo|foto|slideshow/.test(low)){
+      const lastImg = [...document.querySelectorAll('#chat .line img')].pop();
+      if(lastImg){
+        const response = await fetch(lastImg.src);
+        const blob = await response.blob();
+        const reader = new FileReader();
+        const dataUrl = await new Promise(res => { reader.onload = ()=>res(reader.result); reader.readAsDataURL(blob); });
+        return createVideo({frase, dur, format, style, image: dataUrl});
+      }
+      return personaReply('No encontré una imagen para el slideshow. Dime «dibújame [algo]» primero.');
+    }
+
+    if(frase){
+      frase = frase.replace(/^que\s+/, '').replace(/^con\s+/, '').replace(/vertical|horizontal|reel|tiktok|estrella|lluvia|fuego|terminal|minimal|sencillo|futurista|\d+\s*seg/g, '').trim();
+      if(frase.length > 0){
+        return createVideo({frase, dur, format, style});
+      }
+      return personaReply('Dime qué frase quieres en el video. Ej: «crea un video con Sonríe, mañana será bonito»');
+    }
+
+    return personaReply('¿Qué quieres en el video? Una frase o «video de mi imagen».');
+  }
+
+  return _send_v10(text);
+};
+
+/* ---------- INFORMACIÓN ---------- */
+toast('Generador de video listo: «crea un video con [frase] o «video logo»');
+
+})();
+</script>
   
 </body>
 </html>
