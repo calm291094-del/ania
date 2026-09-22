@@ -4031,6 +4031,312 @@ renderChips = function(list){
 
 })();
 </script>
+
+<script>
+'use strict';
+(function(){
+
+/* ========== 1. MARKDOWN ========== */
+function mdToHtml(s){
+  let t = esc(s);
+  t = t.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  t = t.replace(/\*(.+?)\*/g, '<i>$1</i>');
+  t = t.replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" style="color:var(--acc2);text-decoration:underline;">$1</a>');
+  t = t.replace(/(^|\s)(https?:\/\/[^\s<]+)/g, '$1<a href="$2" target="_blank" style="color:var(--acc2);text-decoration:underline;">$2</a>');
+  return t;
+}
+
+/* ========== 2. THINKING ========== */
+const THINKING_TIPS = [
+  'mientras da un sorbo de café...',
+  'revisando sus notas...',
+  'conectando con sus fuentes...',
+  'desglosando con precisión de pour-over...',
+  'aplicando la regla 32 del pensamiento...'
+];
+let _thinkingEl = null;
+function showThinking(){
+  setPhase('thinking');
+  if(_thinkingEl) _thinkingEl.remove();
+  const l = document.createElement('div');
+  l.className = 'line act';
+  l.innerHTML = `<span class="who"></span><span class="msg"><span style="animation:blink 1.4s steps(1) infinite">● ● ●</span> ${pick(THINKING_TIPS)}</span>`;
+  chat.appendChild(l);
+  scrollChat();
+  _thinkingEl = l;
+}
+function hideThinking(){ if(_thinkingEl){ _thinkingEl.remove(); _thinkingEl=null; } }
+const _reply = reply;
+reply = function(text, say){ hideThinking(); _reply(text, say); };
+const _personaReply = personaReply;
+personaReply = function(text, say){ hideThinking(); _personaReply(text, say); };
+
+/* ========== 3. PERSISTENCIA CHAT ========== */
+const ChatHistory = {
+  save(){
+    try{
+      const lines = [...document.querySelectorAll('#chat .line')].map(l => ({
+        k: l.classList.contains('you')?'you':l.classList.contains('ania')?'ania':'sys',
+        t: (l.querySelector('.msg')?.textContent||'').slice(0,300)
+      })).filter(x=>x.t).slice(-150);
+      store.set('chatHistory', lines);
+    }catch(e){}
+  },
+  restore(){
+    const h = store.get('chatHistory',[]);
+    if(!h.length) return false;
+    h.slice(-15).forEach(l=>{
+      const line = document.createElement('div');
+      line.className = 'line '+l.k;
+      const who = l.k==='you'?'TÚ ▸':l.k==='ania'?'ANIA ▸':'';
+      line.innerHTML = `<span class="who">${who}</span><span class="msg">${esc(l.t)}</span><span class="ts"></span>`;
+      chat.appendChild(line);
+    });
+    scrollChat();
+    return true;
+  }
+};
+setInterval(()=>{ if(S.booted) ChatHistory.save(); }, 5000);
+
+/* ========== 4. GITHUB SYNC ========== */
+const GitHub = {
+  token: store.get('ghToken', null),
+  async api(path, method, body){
+    const url = `https://api.github.com/repos/calm291094-del/ania/${path}`;
+    const headers = {'Authorization':`token ${this.token}`,'Accept':'application/vnd.github.v3+json'};
+    if(body) headers['Content-Type'] = 'application/json';
+    const r = await fetch(url, {method, headers, body: body?JSON.stringify(body):undefined});
+    if(r.status===401){ this.token=null; store.del('ghToken'); throw new Error('Token inválido'); }
+    if(r.status===404) return null;
+    if(!r.ok) throw new Error('GH '+r.status);
+    return r.status===204 ? null : r.json();
+  },
+  async readFile(path){
+    const d = await this.api('contents/'+path);
+    if(!d) return null;
+    return {content: atob(d.content.replace(/\n/g,'')), sha: d.sha};
+  },
+  async writeFile(path, content, message){
+    const existing = await this.readFile(path);
+    const body = { message: message || 'Ania: '+new Date().toISOString(), content: btoa(unescape(encodeURIComponent(content)) };
+    if(existing) body.sha = existing.sha;
+    await this.api('contents/'+path, 'PUT', body);
+  },
+  async connect(token){
+    this.token = token; store.set('ghToken', token);
+    try{
+      await this.api('contents/README.md');
+      $('ghPill').style.display = 'inline-flex';
+      toast('GitHub conectado — Ania aprende en la nube');
+      return true;
+    }catch(e){
+      if(e.message.includes('Token')){ this.token=null; store.del('ghToken'); toast('Token inválido', true); return false; }
+      $('ghPill').style.display='inline-flex'; toast('GitHub conectado'); return true;
+    }
+  },
+  async pull(){
+    if(!this.token) return null;
+    try{
+      const d = await this.readFile('documentos/aprendido.json');
+      if(d){
+        const learned = JSON.parse(d.content);
+        let merged = store.get('learned', []);
+        if(Array.isArray(learned)) learned.forEach(l=>{ if(!merged.find(m=>m.texto===l.texto)) merged.push(l); });
+        store.set('learned', merged);
+        return learned;
+      }
+    }catch(e){}
+    return null;
+  },
+  async push(){
+    if(!this.token) return false;
+    try{ await this.writeFile('documentos/aprendido.json', JSON.stringify(store.get('learned',[]),null,2), 'Ania: aprendiendo'); return true; }
+    catch(e){ return false; }
+  }
+};
+(function(){
+  const p = document.createElement('span');
+  p.className = 'pill'; p.id='ghPill'; p.style.display='none';
+  p.innerHTML = '<span class="dot"></span><span>GITHUB</span>';
+  document.getElementById('operator').parentNode.insertBefore(p, document.getElementById('operator'));
+  if(GitHub.token) p.style.display = 'inline-flex';
+})();
+
+/* ========== 5. APRENDIZAJE ========== */
+const Learned = {
+  list: store.get('learned', []),
+  add(texto, categoria){
+    this.list.push({texto, categoria: categoria||'general', t:Date.now()});
+    store.set('learned', this.list);
+    if(GitHub.token) GitHub.push().catch(()=>{});
+  },
+  search(q){
+    const w = LINGUA.normalizar(q).split(' ').filter(x=>x.length>2);
+    let best=null, bs=0;
+    for(const l of this.list){
+      const lw = LINGUA.normalizar(l.texto);
+      let s=0;
+      for(const x of w) if(lw.includes(x)) s+=2;
+      if(s>bs){ bs=s; best=l; }
+    }
+    return bs>=2 ? best : null;
+  },
+  count(){ return this.list.length; }
+};
+
+/* ========== 6. IMÁGENES ========== */
+async function generateImage(prompt){
+  if(isOffline()) return personaReply('Generar imágenes necesita internet.');
+  showThinking();
+  const url = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) + '?width=768&height=768&nologo=true';
+  addImageLine(url, 'Generando: ' + prompt);
+  hideThinking();
+  personaReply('Ahí está. ¿Cambios? «dibújame [otra cosa]».');
+}
+
+/* ========== 7. POMODORO ========== */
+const Pomodoro = {
+  running:false, mode:'work', remaining:0, timer:null,
+  sessions: store.get('pomodoro_sessions', 0),
+  start(min){ if(this.running) this.stop(); this.running=true; this.mode='work'; this.remaining=min*60; this.tick(); if(typeof wakeOn==='function') wakeOn(); toast('Pomodoro: '+min+' min'); },
+  tick(){
+    if(!this.running) return;
+    this.remaining--;
+    document.title = `ANIA · ${Math.floor(this.remaining/60)}:${String(this.remaining%60).padStart(2,'0')}`;
+    if(this.remaining<=0){
+      ensureAudio(); alarmSound(); vibrate([200,100,200]);
+      this.sessions++; store.set('pomodoro_sessions', this.sessions);
+      if(this.mode==='work'){ this.mode='break'; this.remaining=300; reply('Pomodoro completado ('+this.sessions+'). 5 min de descanso.','Pomodoro completado.'); }
+      else { this.mode='work'; this.remaining=1500; reply('Descanso terminado. ¿Otra ronda?','Descanso terminado.'); }
+    }
+    this.timer = setTimeout(()=>this.tick(), 1000);
+  },
+  stop(){ this.running=false; clearTimeout(this.timer); document.title='ANIA · Edición Jarvis'; }
+};
+
+/* ========== 8. TRIVIA ========== */
+const TRIVIA_DATA = [
+  {cat:'ISEKAI', q:'¿Quién construye una nación para monstruos?', a:'Rimuru Tempest'},
+  {cat:'ISEKAI', q:'¿Qué poder tiene Subaru?', a:'Return by Death'},
+  {cat:'ISEKAI', q:'¿Qué representa Ainz?', a:'La soledad del poder absoluto'},
+  {cat:'CAFÉ', q:'¿Perfil del Yirgacheffe?', a:'Jazmín, bergamota y limón'},
+  {cat:'CAFÉ', q:'¿Café para programar?', a:'Kenia AA en Aeropress'},
+  {cat:'ASTRO', q:'¿Qué es la materia oscura?', a:'El mana del universo real'},
+  {cat:'ASTRO', q:'¿Constelación favorita?', a:'Orión'},
+  {cat:'ASTRO', q:'¿Qué son las nebulosas?', a:'Viveros estelares'},
+  {cat:'ZOMBIES', q:'¿Regla 32?', a:'Disfrutar las pequeñas cosas'},
+  {cat:'ZOMBIES', q:'¿Regla 1?', a:'Cardio'},
+  {cat:'ZOMBIES', q:'¿Regla 2?', a:'Double Tap'},
+  {cat:'TECH', q:'¿Qué es programar?', a:'Invocar magia con lógica'},
+  {cat:'ANIA', q:'¿Cumpleaños?', a:'26 de enero'},
+  {cat:'ANIA', q:'¿Qué animal sería?', a:'Panda'},
+  {cat:'ANIA', q:'¿Lema?', a:'Pan café y anime'},
+];
+const Trivia = {
+  active:false, pool:[], current:null, score:0, streak:0, used: store.get('trivia_used',[]),
+  start(){ this.active=true; this.score=0; this.streak=0; this.pool=TRIVIA_DATA.filter((_,i)=>!this.used.includes(i)); if(!this.pool.length){this.used=[];store.set('trivia_used',[]);this.pool=TRIVIA_DATA.slice();} this.next(); },
+  next(){
+    if(!this.active) return;
+    if(!this.pool.length){ this.active=false; return personaReply('Trivia: '+this.score+' aciertos, racha '+this.streak+'.'); }
+    this.current=this.pool.splice(Math.floor(Math.random()*this.pool.length),1)[0];
+    this.used.push(TRIVIA_DATA.indexOf(this.current));
+    if(this.used.length>TRIVIA_DATA.length-3)this.used=[];
+    store.set('trivia_used',this.used);
+    personaReply('[TRIVIA · '+this.current.cat+'] '+this.current.q+' | Puntos: '+this.score+' Racha: '+this.streak);
+  },
+  answer(text){
+    if(!this.active||!this.current) return false;
+    const low = LINGUA.normalizar(text);
+    const correct = LINGUA.normalizar(this.current.a);
+    if(low.includes(correct.split(' ')[0]) || correct.split(' ').some(w=>w.length>4&&low.includes(w))){
+      this.score++; this.streak++;
+      personaReply('✓ Correcto: '+this.current.a+'. Siguiente...');
+      setTimeout(()=>this.next(),800);
+    }else{
+      this.streak=0; this.active=false;
+      personaReply('✗ Era: '+this.current.a+'. Di «trivia» para reiniciar.');
+    }
+    return true;
+  }
+};
+
+/* ========== 9. INTEGRAR COMANDOS ========== */
+const _send = send;
+send = async function(text){
+  const low = LINGUA.normalizar(text);
+
+  if(Trivia.active){
+    if(/cancela|termina|basta/.test(low)){ Trivia.active=false; return personaReply('Cerrado.'); }
+    if(Trivia.answer(text)) return;
+  }
+
+  const ghM = low.match(/conecta\s+github(?:\s+(?:con\s+)?(?:token|clave)\s+(\w+))?/);
+  if(ghM){
+    if(!ghM[1]) return personaReply('Dime: «conecta github con token [tu-token]». Crear en github.com/settings/tokens → scope: repo.');
+    const ok = await GitHub.connect(ghM[1]);
+    return personaReply(ok?'GitHub conectado. Todo lo que aprenda se guarda en tu repo.':'No pude conectar.');
+  }
+  if(/sincroniza\s+github/.test(low)){
+    if(!GitHub.token) return personaReply('Primero: «conecta github con token [...]»');
+    await GitHub.pull(); await GitHub.push();
+    return personaReply('Sincronizado.');
+  }
+
+  const learnM = low.match(/aprende\s+que\s+(.+)|aprende\s+(.+)/);
+  if(learnM){
+    const fact=(learnM[1]||learnM[2]||'').trim();
+    if(fact.length<3) return personaReply('¿Qué quieres que aprenda?');
+    Learned.add(fact,'manual');
+    return personaReply('Aprendido: «'+fact+'». Guardado'+(GitHub.token?' en memoria Y en GitHub.':' en memoria local.'));
+  }
+  if(/que\s+has\s+aprendido/.test(low)){
+    return personaReply(Learned.count()?Learned.count()+' cosas:\n'+Learned.list.slice(-5).map(l=>'· '+l.texto).join('\n'):'Aún nada. «aprende que [...]»');
+  }
+
+  const pomM = low.match(/pomodoro\s+(?:de\s+)?(\d+)/);
+  if(pomM){ Pomodoro.start(+pomM[1]); return personaReply('Pomodoro de '+pomM[1]+' min.'); }
+  if(/para\s+pomodoro/.test(low)){ Pomodoro.stop(); return personaReply('Detenido.'); }
+
+  if(/trivia/.test(low)){ Trivia.start(); return; }
+
+  const imgM = low.match(/dib[uú]jame\s+(.+)|genera\s+imagen\s+(?:de\s+)?(.+)|crea\s+imagen\s+(?:de\s+)?(.+)/);
+  if(imgM){ return generateImage((imgM[1]||imgM[2]||imgM[3]).trim()); }
+
+  if(/resume\s+(?:la\s+)?(?:conversaci[oó]n|chat)/.test(low)){
+    showThinking();
+    const lines = Episodio.log.slice(-30);
+    if(lines.length<10){ hideThinking(); return personaReply('Necesito más conversación (10+ mensajes).'); }
+    const summary = await Brain.think('Resume en 2-3 frases:\n'+lines.map(l=>l.role+': '+l.text).join('\n').slice(0,2000));
+    hideThinking();
+    return personaReply(summary || 'No pude resumir.');
+  }
+
+  return _send(text);
+};
+
+/* ========== 10. EXTENDER DIAGNÓSTICO ========== */
+const _runDiag = runDiag;
+runDiag = async function(){
+  await _runDiag();
+  $('diag').innerHTML += '<br><b>»</b> GitHub: '+(GitHub.token?'CONECTADO':'off')+
+    '<br><b>»</b> Aprendido: '+Learned.count()+' · Pomodoro: '+Pomodoro.sessions;
+};
+
+/* ========== 11. EXTENDER BOOT ========== */
+const _bootStart = $('bootStart').onclick;
+ $('bootStart').onclick = async function(){
+  await _bootStart.call(this);
+  setTimeout(()=>{ ChatHistory.restore(); }, 800);
+  if(GitHub.token){
+    GitHub.pull().then(()=>{ $('ghPill').style.display='inline-flex'; toast('Aprendizaje sincronizado'); }).catch(()=>{});
+  }
+  setTimeout(()=>{
+    renderChips(['Piénsalo: opina del café','Dibújame un panda espacial','Aprende que me gusta madrugar','Pomodoro de 25','Trivia','Ponme música']);
+  }, 1200);
+};
+
+})();
+</script>
   
 </body>
 </html>
