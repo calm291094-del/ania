@@ -4118,7 +4118,7 @@ const GitHub = {
   },
   async writeFile(path, content, message){
     const existing = await this.readFile(path);
-    const body = { message: message || 'Ania: '+new Date().toISOString(), content: btoa(unescape(encodeURIComponent(content)) };
+    const body = { message: message || 'Ania: '+new Date().toISOString(), content: btoa(unescape(encodeURIComponent(content))) };
     if(existing) body.sha = existing.sha;
     await this.api('contents/'+path, 'PUT', body);
   },
