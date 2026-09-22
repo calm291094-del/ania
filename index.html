@@ -187,7 +187,7 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
 
 <div id="boot">
   <div id="bootBox">
-    <div id="bootTitle">ANIA<small>EDICIÓN JARVIS · v9.0</small></div>
+    <div id="bootTitle">ANIA<small>EDICIÓN JARVIS · v10.0</small></div>
     <div id="bootLog"></div>
     <form id="loginBox" autocomplete="on">
       <input id="loginUser" placeholder="usuario" autocomplete="username" autocapitalize="none" autocorrect="off">
@@ -698,7 +698,7 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
 
 <script>
 /* =====================================================================
-   ANIA v9.0 · EDICIÓN JARVIS — TODO INTEGRADO
+   ANIA v10.0 · EDICIÓN JARVIS — TODO INTEGRADO
    NÚCLEO NUEVO v9: LOCALMIND — motor conversacional offline con
    jerarquía de confianza y turnos conversacionales. Sin red y sin
    GGUF, Ania conversa usando: entrenamiento interno (difuso) →
@@ -3490,7 +3490,7 @@ async function runDiag(){
    ARRANQUE
 ===================================================================== */
 const BOOTLINES = [
-  '» ANIA KERNEL v9.0 — edición Jarvis',
+  '» ANIA KERNEL v10.0 — edición Jarvis',
   '» módulos de red y voz ............... OK',
   '» LINGUA: cubano + typos + tildes ... OK',
   '» cerebro razonador (tool-calling) .. OK',
@@ -3539,7 +3539,7 @@ const BOOTLINES = [
   Brain.paint();
   Brain.loadLocal(false);
   S.lastUserTs = Date.now();
-  sysLine('v9.0 · LocalMind activo · cerebro '+(Brain.localReady?'local':'cascada'));
+  sysLine('v10.0 · LocalMind activo · cerebro '+(Brain.localReady?'local':'cascada'));
   const g = geoCache();
   if(g){ try{ const d = await getWeather(g); updateChip(g,d); }catch(e){} }
 
@@ -3555,5 +3555,482 @@ const BOOTLINES = [
   }, 500);
 };
 </script>
+
+<!-- ================================================================
+     ANIA v10 UPGRADE — Pega este bloque después del script principal.
+     NO elimina nada: solo añade GitHub Sync, Aprendizaje, Imágenes,
+     Pomodoro, Trivia, Markdown, Thinking, Persistencia del chat.
+     Usa tu v9 como base — este bloque lo extiende.
+==================================================================== -->
+<script>
+'use strict';
+(function(){
+
+/* ========== 1. MARKDOWN EN CHAT ========== */
+function mdToHtml(s){
+  let t = esc(s);
+  t = t.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  t = t.replace(/\*(.+?)\*/g, '<i>$1</i>');
+  t = t.replace(/`(.+?)`/g, '<code style="background:var(--panel);padding:1px 4px;border-radius:3px;font-size:12px;">$1</code>');
+  t = t.replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" style="color:var(--acc2);text-decoration:underline;">$1</a>');
+  t = t.replace(/(^|\s)(https?:\/\/[^\s<]+)/g, '$1<a href="$2" target="_blank" style="color:var(--acc2);text-decoration:underline;">$2</a>');
+  return t;
+}
+/* Sobrescribe addChat para que el último frame use markdown */
+const _addChat_v9 = addChat;
+addChat = function(kind, text){
+  /* guardar en historial */
+  ChatHistory.save();
+  if(kind === 'ania'){
+    const line = document.createElement('div');
+    line.className = 'line ania';
+    const ts = new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    line.innerHTML = `<span class="who">ANIA ▸</span><span class="msg"></span><span class="ts">${ts}</span>`;
+    chat.appendChild(line);
+    const span = line.querySelector('.msg');
+    Episodio.push('ania', text);
+    if(Relay.on) Relay.sendChat('ania', text);
+    let i = 0;
+    const iv = setInterval(()=>{
+      i++;
+      span.textContent = text.slice(0,i) + (i<text.length?'▌':'');
+      scrollChat();
+      if(i>=text.length){
+        clearInterval(iv);
+        span.innerHTML = mdToHtml(text);
+        scrollChat();
+      }
+    }, 13);
+    return span;
+  }
+  return _addChat_v9(kind, text);
+};
+
+/* ========== 2. THINKING INDICATOR ========== */
+const THINKING_TIPS = [
+  'mientras da un sorbo de café...',
+  'revisando sus notas...',
+  'conectando con sus fuentes...',
+  'desglosando con precisión de pour-over...',
+  'aplicando la regla 32 del pensamiento...',
+  'buscando en sus memorias...'
+];
+let _thinkingEl = null;
+function showThinking(){
+  setPhase('thinking');
+  if(_thinkingEl) _thinkingEl.remove();
+  const l = document.createElement('div');
+  l.className = 'line act';
+  l.innerHTML = `<span class="who"></span><span class="msg"><span style="animation:blink 1.4s steps(1) infinite">● ● ●</span> ${pick(THINKING_TIPS)}</span>`;
+  chat.appendChild(l);
+  scrollChat();
+  _thinkingEl = l;
+}
+function hideThinking(){
+  if(_thinkingEl){ _thinkingEl.remove(); _thinkingEl = null; }
+}
+const _reply_v9 = reply;
+reply = function(text, say){
+  hideThinking();
+  _reply_v9(text, say);
+};
+const _personaReply_v9 = personaReply;
+personaReply = function(text, say){
+  hideThinking();
+  if(Math.random() < 0.25 && text.length < 300) addChat('act', pick(P.acciones));
+  _reply_v9(text, say);
+};
+
+/* ========== 3. PERSISTENCIA DEL CHAT ========== */
+const ChatHistory = {
+  save(){
+    try{
+      const lines = [...document.querySelectorAll('#chat .line')].map(l => ({
+        k: l.classList.contains('you')?'you':l.classList.contains('ania')?'ania':'sys',
+        t: (l.querySelector('.msg')?.textContent||'').slice(0,300)
+      })).filter(x=>x.t).slice(-150);
+      store.set('chatHistory', lines);
+    }catch(e){}
+  },
+  restore(){
+    const h = store.get('chatHistory',[]);
+    if(!h.length) return false;
+    h.slice(-15).forEach(l=>{
+      const line = document.createElement('div');
+      line.className = 'line '+l.k;
+      const who = l.k==='you'?'TÚ ▸':l.k==='ania'?'ANIA ▸':'';
+      line.innerHTML = `<span class="who">${who}</span><span class="msg">${esc(l.t)}</span><span class="ts"></span>`;
+      chat.appendChild(line);
+    });
+    if(h.length) addChat('sys', '· ' + h.length + ' mensajes de tu última sesión restaurados ·');
+    scrollChat();
+    return true;
+  }
+};
+setInterval(()=>{ if(S.booted) ChatHistory.save(); }, 5000);
+
+/* ========== 4. GITHUB SYNC ========== */
+const GitHub = {
+  token: store.get('ghToken', null),
+  async api(path, method, body){
+    const url = `https://api.github.com/repos/calm291094-del/ania/${path}`;
+    const headers = {'Authorization':`token ${this.token}`,'Accept':'application/vnd.github.v3+json'};
+    if(body) headers['Content-Type'] = 'application/json';
+    const r = await fetch(url, {method, headers, body: body?JSON.stringify(body):undefined});
+    if(r.status===401){ this.token=null; store.del('ghToken'); throw new Error('Token inválido'); }
+    if(r.status===404) return null;
+    if(!r.ok) throw new Error('GH '+r.status);
+    return r.status===204 ? null : r.json();
+  },
+  async readFile(path){
+    const d = await this.api('contents/'+path);
+    if(!d) return null;
+    return {content: atob(d.content.replace(/\n/g,'')), sha: d.sha};
+  },
+  async writeFile(path, content, message){
+    const existing = await this.readFile(path);
+    const body = {
+      message: message || 'Ania v10: '+new Date().toISOString(),
+      content: btoa(unescape(encodeURIComponent(content)))
+    };
+    if(existing) body.sha = existing.sha;
+    await this.api('contents/'+path, 'PUT', body);
+  },
+  async connect(token){
+    this.token = token; store.set('ghToken', token);
+    try{
+      await this.api('contents/README.md');
+      $('ghPill').style.display = 'inline-flex';
+      toast('GitHub conectado — Ania aprende en la nube');
+      return true;
+    }catch(e){
+      if(e.message.includes('Token')){
+        this.token=null; store.del('ghToken');
+        toast('Token inválido', true);
+        return false;
+      }
+      $('ghPill').style.display='inline-flex';
+      toast('GitHub conectado');
+      return true;
+    }
+  },
+  async pull(){
+    if(!this.token) return null;
+    try{
+      const d = await this.readFile('documentos/aprendido.json');
+      if(d){
+        const learned = JSON.parse(d.content);
+        let merged = store.get('learned', []);
+        if(Array.isArray(learned)){
+          learned.forEach(l=>{ if(!merged.find(m=>m.texto===l.texto)) merged.push(l); });
+          store.set('learned', merged);
+        }
+        return learned;
+      }
+    }catch(e){}
+    return null;
+  },
+  async push(){
+    if(!this.token) return false;
+    try{
+      const learned = store.get('learned', []);
+      await this.writeFile('documentos/aprendido.json', JSON.stringify(learned,null,2), 'Ania: nuevo aprendizaje');
+      return true;
+    }catch(e){ return false; }
+  }
+};
+/* pill de GitHub */
+(function(){
+  const p = document.createElement('span');
+  p.className = 'pill'; p.id = 'ghPill'; p.style.display = 'none';
+  p.innerHTML = '<span class="dot"></span><span>GITHUB</span>';
+  const ref = document.getElementById('operator');
+  ref.parentNode.insertBefore(p, ref);
+  if(GitHub.token) p.style.display = 'inline-flex';
+})();
+
+/* ========== 5. SISTEMA DE APRENDIZAJE ========== */
+const Learned = {
+  list: store.get('learned', []),
+  add(texto, categoria){
+    this.list.push({texto, categoria: categoria||'general', t:Date.now()});
+    store.set('learned', this.list);
+    if(GitHub.token) GitHub.push().catch(()=>{});
+  },
+  search(q){
+    const w = LINGUA.normalizar(q).split(' ').filter(x=>x.length>2);
+    if(!w.length) return null;
+    let best=null, bs=0;
+    for(const l of this.list){
+      const lw = LINGUA.normalizar(l.texto);
+      let s=0;
+      for(const x of w) if(lw.includes(x)) s+=2;
+      if(s>bs){ bs=s; best=l; }
+    }
+    return bs>=2 ? best : null;
+  },
+  count(){ return this.list.length; }
+};
+
+/* ========== 6. GENERACIÓN DE IMÁGENES ========== */
+async function generateImage(prompt){
+  if(isOffline()) return personaReply('Generar imágenes necesita internet.');
+  showThinking();
+  try{
+    const url = 'https://image.pollinations.ai/prompt/' + encodeURIComponent(prompt) + '?width=768&height=768&nologo=true';
+    addImageLine(url, 'Generando: ' + prompt);
+    hideThinking();
+    personaReply('Ahí está. ¿Cambios? «dibújame [otra cosa]».');
+  }catch(e){
+    hideThinking();
+    personaReply('No pude generar la imagen.');
+  }
+}
+
+/* ========== 7. POMODORO CON STATS ========== */
+const Pomodoro = {
+  running:false, mode:'work', remaining:0, timer:null,
+  sessions: store.get('pomodoro_sessions', 0),
+  start(min){
+    if(this.running) this.stop();
+    this.running=true; this.mode='work'; this.remaining=min*60;
+    this.tick(); if(typeof wakeOn === 'function') wakeOn();
+    toast('Pomodoro: '+min+' min · sesión #'+(this.sessions+1));
+  },
+  tick(){
+    if(!this.running) return;
+    this.remaining--;
+    const m=Math.floor(this.remaining/60), s=this.remaining%60;
+    document.title = `ANIA · ${m}:${String(s).padStart(2,'0')}`;
+    if(this.remaining<=0){
+      ensureAudio(); alarmSound(); vibrate([200,100,200]);
+      this.sessions++; store.set('pomodoro_sessions', this.sessions);
+      if(this.mode==='work'){
+        this.mode='break'; this.remaining=300;
+        reply('Pomodoro completado ('+this.sessions+' total). 5 min de descanso: estira, agua, mira por la ventana.','Pomodoro completado. Descanso de 5 minutos.');
+      }else{
+        this.mode='work'; this.remaining=1500;
+        reply('Descanso terminado. ¿Otra ronda de 25?','Descanso terminado. Continuamos.');
+      }
+    }
+    this.timer = setTimeout(()=>this.tick(), 1000);
+  },
+  stop(){ this.running=false; clearTimeout(this.timer); document.title='ANIA · Edición Jarvis'; }
+};
+
+/* ========== 8. TRIVIA ========== */
+const TRIVIA_DATA = [
+  {cat:'ISEKAI', q:'¿Quién construye una nación para monstruos con lógica y corazón?', a:'Rimuru Tempest'},
+  {cat:'ISEKAI', q:'¿Qué poder tiene Subaru en Re:Zero?', a:'Return by Death'},
+  {cat:'ISEKAI', q:'¿Qué representa Ainz Ooal Gown?', a:'La soledad del poder absoluto'},
+  {cat:'ISEKAI', q:'¿Quién deconstruye tropos en KonoSuba?', a:'Kazuma'},
+  {cat:'ISEKAI', q:'¿Cuál es el café para programar?', a:'Kenia AA en Aeropress'},
+  {cat:'CAFÉ', q:'¿Qué perfil tiene el Etiopía Yirgacheffe?', a:'Jazmín, bergamota y limón'},
+  {cat:'CAFÉ', q:'¿Qué es el cold brew?', a:'Paciencia hecha bebida'},
+  {cat:'CAFÉ', q:'¿Qué representa el espresso?', a:'La base, como Double Tap'},
+  {cat:'ASTRO', q:'¿Qué es la materia oscura?', a:'El mana del universo real'},
+  {cat:'ASTRO', q:'¿Cuál es la constelación favorita de Ania?', a:'Orión'},
+  {cat:'ASTRO', q:'¿Qué son las nebulosas?', a:'Viveros estelares'},
+  {cat:'ASTRO', q:'¿Qué son los exoplanetas?', a:'Los isekais reales'},
+  {cat:'ZOMBIES', q:'¿Cuál es la regla 32?', a:'Disfrutar las pequeñas cosas'},
+  {cat:'ZOMBIES', q:'¿Cuál es la regla 1?', a:'Cardio'},
+  {cat:'ZOMBIES', q:'¿Cuál es la regla 2?', a:'Double Tap'},
+  {cat:'ZOMBIES', q:'¿Qué demuestra The Walking Dead?', a:'Los vivos son peor amenaza'},
+  {cat:'TECH', q:'¿Qué es programar según Ania?', a:'Invocar magia con lógica'},
+  {cat:'TECH', q:'¿Qué representa la ciberseguridad?', a:'La Clase Defensiva'},
+  {cat:'ANIA', q:'¿Cuándo es el cumpleaños de Ania?', a:'26 de enero'},
+  {cat:'ANIA', q:'¿Qué animal sería Ania?', a:'Panda'},
+  {cat:'ANIA', q:'¿Cuál es el lema de Ania?', a:'Pan café y anime'},
+  {cat:'ANIA', q:'¿Quién creó a Ania?', a:'Carlos Lorenzo Marros'},
+];
+const Trivia = {
+  active:false, pool:[], current:null, score:0, streak:0,
+  used: store.get('trivia_used', []),
+  start(){
+    this.active=true; this.score=0; this.streak=0;
+    this.pool = TRIVIA_DATA.filter((_,i)=>!this.used.includes(i));
+    if(!this.pool.length){ this.used=[]; store.set('trivia_used',[]); this.pool=TRIVIA_DATA.slice(); }
+    this.next();
+  },
+  next(){
+    if(!this.active) return;
+    if(!this.pool.length){
+      this.active=false;
+      return personaReply('Trivia terminada: '+this.score+' aciertos, racha '+this.streak+'. '+pick(['Nivel Ainz.','Rimuru-level.','Respetable.']));
+    }
+    this.current = this.pool.splice(Math.floor(Math.random()*this.pool.length),1)[0];
+    this.used.push(TRIVIA_DATA.indexOf(this.current));
+    if(this.used.length > TRIVIA_DATA.length-3) this.used=[];
+    store.set('trivia_used', this.used);
+    personaReply('[TRIVIA · '+this.current.cat+'] '+this.current.q+'\nPuntos: '+this.score+' · Racha: '+this.streak);
+  },
+  answer(text){
+    if(!this.active || !this.current) return false;
+    const low = LINGUA.normalizar(text);
+    const correct = LINGUA.normalizar(this.current.a);
+    if(low.includes(correct.split(' ')[0]) || correct.split(' ').some(w=>w.length>4 && low.includes(w))){
+      this.score++; this.streak++;
+      personaReply('✓ Correcto: '+this.current.a+'. '+pick(['Nivel Rimuru.','¡Waku waku!'])+' Siguiente...');
+      setTimeout(()=>this.next(), 800);
+    }else{
+      this.streak=0;
+      personaReply('✗ Era: '+this.current.a+'. '+pick(['La próxima cae.','No pasa nada.'])+' Di «trivia» para reiniciar.');
+      this.active=false;
+    }
+    return true;
+  }
+};
+
+/* ========== 9. RESUMEN DE CONVERSACIÓN ========== */
+async function summarizeChat(){
+  const lines = Episodio.log.slice(-30);
+  if(lines.length < 10) return null;
+  const chatText = lines.map(l=>l.role+': '+l.text).join('\n').slice(0, 2000);
+  if(isOffline() && !Brain.localReady) return null;
+  showThinking();
+  try{
+    const summary = await Brain.think('Resume esta conversación en 2-3 frases en español:\n' + chatText);
+    hideThinking();
+    return summary;
+  }catch(e){ hideThinking(); return null; }
+}
+
+/* ========== 10. INTEGRAR COMANDOS NUEVOS ========== */
+const _send_v9 = send;
+send = async function(text){
+  const low = LINGUA.normalizar(text);
+
+  /* TRIVIA activa */
+  if(Trivia.active){
+    if(/cancela|termina|basta|salir/.test(low)){ Trivia.active=false; return personaReply('Trivia cerrada.'); }
+    if(Trivia.answer(text)) return;
+  }
+
+  /* GITHUB */
+  const ghM = low.match(/conecta\s+github(?:\s+(?:con\s+)?(?:token|clave)\s+(\w+))?/);
+  if(ghM){
+    if(!ghM[1]) return personaReply('Dime: «conecta github con token [tu-token]». Crear token: github.com/settings/tokens → Generate new token (classic) → scope: repo.');
+    const ok = await GitHub.connect(ghM[1]);
+    return personaReply(ok?'GitHub conectado. Todo lo que aprenda se guarda en tu repo para siempre.':'No pudi conectar. Revisa el token.');
+  }
+  if(/sincroniza\s+github|sincroniza\s+repo/.test(low)){
+    if(!GitHub.token) return personaReply('Primero: «conecta github con token [...]»');
+    toast('Sincronizando...');
+    await GitHub.pull(); await GitHub.push();
+    return personaReply('Sincronizado. Tu aprendizaje está en GitHub.');
+  }
+
+  /* APRENDIZAJE */
+  const learnM = low.match(/aprende\s+que\s+(.+)|aprende\s+(.+)/);
+  if(learnM){
+    const fact = (learnM[1]||learnM[2]||'').trim();
+    if(fact.length < 3) return personaReply('¿Qué quieres que aprenda?');
+    Learned.add(fact, 'manual');
+    return personaReply('Aprendido: «'+fact+'». Guardado en memoria'+(GitHub.token?' Y en GitHub':'')+' para siempre.');
+  }
+  if(/que\s+has\s+aprendido|lo\s+que\s+aprendiste/.test(low)){
+    return personaReply(Learned.count() ? Learned.count()+' cosas:\n'+Learned.list.slice(-5).map(l=>'· '+l.texto).join('\n') : 'Aún nada. Di «aprende que [...]»');
+  }
+
+  /* POMODORO */
+  const pomM = low.match(/pomodoro\s+(?:de\s+)?(\d+)/);
+  if(pomM){
+    Pomodoro.start(+pomM[1]);
+    return personaReply('Pomodoro de '+pomM[1]+' minutos. Te aviso al terminar.');
+  }
+  if(/para\s+pomodoro|det[eé]n\s+pomodoro/.test(low)){
+    Pomodoro.stop();
+    return personaReply('Pomodoro detenido.');
+  }
+
+  /* TRIVIA */
+  if(/trivia|juguemos\s+trivia/.test(low)){ Trivia.start(); return; }
+
+  /* GENERAR IMAGEN */
+  const imgM = low.match(/dib[uú]jame\s+(.+)|genera\s+(?:una\s+)?imagen\s+(?:de\s+)?(.+)|crea\s+(?:una\s+)?imagen\s+(?:de\s+)?(.+)/);
+  if(imgM){
+    return generateImage((imgM[1]||imgM[2]||imgM[3]).trim());
+  }
+
+  /* RESUMEN */
+  if(/resume\s+(?:la\s+)?(?:conversaci[oó]n|chat)|resumen\s+chat/.test(low)){
+    const s = await summarizeChat();
+    return personaReply(s || 'Necesito más conversación (10+ mensajes) o el cerebro.');
+  }
+
+  return _send_v9(text);
+};
+
+/* ========== 11. EXTENDER DIAGNÓSTICO ========== */
+const _runDiag_v9 = runDiag;
+runDiag = async function(){
+  await _runDiag_v9();
+  $('diag').innerHTML += '<br><b>»</b> GitHub: '+(GitHub.token?'CONECTADO':'off')+
+    '<br><b>»</b> Aprendido: '+Learned.count()+' items'+
+    '<br><b>»</b> Pomodoro: '+Pomodoro.sessions+' sesiones';
+};
+
+/* ========== 12. EXTENDER ARRANQUE ========== */
+const _bootStart_v9 = $('bootStart').onclick;
+ $('bootStart').onclick = async function(){
+  await _bootStart_v9.call(this);
+  setTimeout(()=>{ ChatHistory.restore(); }, 800);
+  if(GitHub.token){
+    GitHub.pull().then(()=>{
+      $('ghPill').style.display='inline-flex';
+      toast('Aprendizaje sincronizado desde GitHub');
+    }).catch(()=>{});
+  }
+  /* añadir chips nuevos */
+  setTimeout(()=>{
+    renderChips(['Piénsalo: opina del café','Dibújame un panda espacial','Aprende que me gusta madrugar','Pomodoro de 25','Trivia','Ponme música','¿Qué hablamos de café?']);
+  }, 1200);
+};
+
+/* ========== 13. AÑADIR SECCIÓN GITHUB EN AJUSTES ========== */
+(function(){
+  const modal = document.querySelector('#settingsModal .modal');
+  if(!modal) return;
+  const hr = document.createElement('hr');
+  modal.appendChild(hr);
+  const h = document.createElement('h2');
+  h.style.cssText = 'font-size:12px;letter-spacing:.25em;color:var(--acc);margin-bottom:8px;';
+  h.textContent = 'GITHUB · MEMORIA EN LA NUBE';
+  modal.appendChild(h);
+  const info = document.createElement('p');
+  info.className='dim'; info.id='ghInfo';
+  info.textContent = 'Dime: «conecta github con token [tu-token]»';
+  modal.appendChild(info);
+  const btn = document.createElement('button');
+  btn.className='bigbtn'; btn.textContent='SINCRONIZAR GITHUB';
+  btn.onclick = async ()=>{
+    if(!GitHub.token){ toast('«conecta github con token [...]»', true); return; }
+    toast('Sincronizando...');
+    await GitHub.pull(); await GitHub.push();
+    toast('Sincronizado con GitHub');
+  };
+  modal.appendChild(btn);
+})();
+
+/* ========== 14. USAR showThinking EN RESPUESTAS LARGAS ========== */
+/* Interceptar doSearch para que muestre el indicador */
+const _doSearch_v9 = (typeof doSearch === 'function') ? doSearch : null;
+if(_doSearch_v9){
+  doSearch = async function(term){
+    if(!isOffline()) showThinking();
+    const result = await _doSearch_v9(term);
+    return result;
+  };
+}
+
+/* ========== 15. ACTUALIZAR AYUDA CON NUEVOS COMANDOS ========== */
+const _renderChips_v9 = renderChips;
+renderChips = function(list){
+  _renderChips_v9(list);
+};
+
+})();
+</script>
+  
 </body>
 </html>
