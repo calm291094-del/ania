@@ -3631,6 +3631,7 @@ const BOOTLINES = [
   setOperator();
   renderTasks();
   initSyncLoop();
+  if (AniaAPI.token) CollectiveBrain.sync().then(()=> CollectiveBrain.flushPending()).catch(()=>{});
   Diary.touch();
   updateDocsUI();
   updatePCUI();
