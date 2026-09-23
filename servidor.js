@@ -1,61 +1,69 @@
-// servidor.js · ANIA local — sirve la carpeta con cabeceras de aislamiento
-// Uso:  node servidor.js  →  http://localhost:8080
-const http = require('http');
-const fs = require('fs');
+// servidor.js · ANIA — sirve la app y la API en el mismo puerto
+// Render usa: node servidor.js
+const express = require('express');
+const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
-const MIME = {
-  '.html':'text/html', '.js':'text/javascript', '.mjs':'text/javascript',
-  '.css':'text/css', '.json':'application/json', '.wasm':'application/wasm',
-  '.gguf':'application/octet-stream', '.png':'image/png', '.svg':'image/svg+xml',
-  '.txt':'text/plain', '.md':'text/plain', '.pdf':'application/pdf'
-};
+const app = express();
+const PORT = process.env.PORT || 10000; // Render asigna el puerto
 
-const PORT = process.env.PORT || 8080; // Render asigna el puerto
-const PUBLIC_DIR = path.join(__dirname, 'public'); // Carpeta de archivos estáticos
+// ----- CORS: permite que tu frontend (GitHub Pages, local, etc.) hable con este backend -----
+app.use(cors({
+  origin: [
+    'https://calm291094-del.github.io',
+    'http://localhost:8080',
+    'http://localhost:3000',
+    'http://localhost:5500'
+  ],
+  credentials: true
+}));
 
-const server = http.createServer((req, res) => {
-  let p = decodeURIComponent((req.url||'/').split('?')[0]);
-  if(p === '/') p = '/index.html';
-  
-  // 1. Intentar servir un archivo estático de la carpeta 'public'
-  let filePath = path.join(PUBLIC_DIR, p);
-  
-  // Seguridad: evitar que se acceda fuera de la carpeta public
-  if (!filePath.startsWith(PUBLIC_DIR)) {
-    res.writeHead(403);
-    return res.end('403 Forbidden');
-  }
+app.use(express.json({ limit: '2mb' }));
 
-  fs.readFile(filePath, (err, data) => {
-    if (err) {
-      // 2. Si el archivo no existe, servir el index.html (SPA fallback)
-      // Esto permite que rutas como /dashboard o /tareas funcionen.
-      fs.readFile(path.join(PUBLIC_DIR, 'index.html'), (err2, data2) => {
-        if (err2) {
-          res.writeHead(404);
-          return res.end('404 Not Found');
-        }
-        res.writeHead(200, {
-          'Content-Type': 'text/html',
-          'Cross-Origin-Opener-Policy': 'same-origin',
-          'Cross-Origin-Embedder-Policy': 'credentialless',
-          'Cache-Control': 'no-cache'
-        });
-        res.end(data2);
-      });
-      return;
-    }
-    
-    // Archivo encontrado
-    res.writeHead(200, {
-      'Content-Type': MIME[path.extname(filePath).toLowerCase()] || 'application/octet-stream',
-      'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'credentialless',
-      'Cache-Control': 'no-cache'
+// ----- Servir archivos estáticos (HTML, CSS, JS, imágenes) desde la carpeta "public" -----
+// Todos los archivos dentro de "public" estarán disponibles en la raíz de la URL.
+const publicDir = path.join(__dirname, 'public');
+if (fs.existsSync(publicDir)) {
+  app.use(express.static(publicDir));
+}
+
+// ----- Ruta raíz: sirve el index.html de Ania -----
+app.get('/', (req, res) => {
+  const indexPath = path.join(publicDir, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.json({
+      ok: true,
+      mensaje: 'ANIA backend funcionando. Coloca tu index.html en la carpeta "public".',
+      endpoints: ['/ania/health', '/ania/ping']
     });
-    res.end(data);
-  });
+  }
 });
 
-server.listen(PORT, '0.0.0.0', () => console.log('ANIA local · http://localhost:' + PORT));
+// ----- Ruta de salud (Render la usa para saber si el servicio está vivo) -----
+app.get('/ania/health', (req, res) => {
+  res.json({ ok: true, t: Date.now() });
+});
+
+// ----- Ruta de prueba -----
+app.get('/ania/ping', (req, res) => {
+  res.json({ mensaje: 'Ania backend activo', servidor: 'ania-backend' });
+});
+
+// ----- SPA Fallback: cualquier otra ruta devuelve el index.html -----
+// Esto es vital para que tu aplicación de una sola página funcione en todas sus rutas.
+app.get('*', (req, res) => {
+  const indexPath = path.join(publicDir, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).json({ error: 'Ruta no encontrada. Asegúrate de que index.html esté en la carpeta "public".' });
+  }
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('ANIA servidor escuchando en puerto ' + PORT);
+  console.log('Sirviendo archivos estáticos desde: ' + publicDir);
+});
