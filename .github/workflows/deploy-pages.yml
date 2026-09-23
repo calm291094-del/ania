@@ -25,12 +25,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
 
-      - name: Copy public folder to root of artifact
+      - name: Create deployment folder with public content at root
         run: |
           mkdir -p _site
           cp -r public/* _site/
+          touch _site/.nojekyll
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
