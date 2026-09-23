@@ -152,7 +152,7 @@ app.post('/ania/register', async (req,res)=>{
     res.json({ ok:true, token, usuario:{ id:nuevo.id, usuario:nuevo.usuario, nombre:nuevo.nombre, email:nuevo.email, rol:nuevo.rol }});
   }catch(e){
     console.error('register:', e);
-    res.status(500).json({ error:'error al registrar' });
+    res.status(500).json({ error:'error al registrar: '+e.message });
   }
 });
 
