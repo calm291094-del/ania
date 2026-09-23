@@ -195,7 +195,20 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
       <div id="loginMsg"></div>
       <button type="submit" class="lbtn">INICIAR SESIÓN</button>
       <button type="button" class="lbtn dim" id="guestBtn">ENTRAR COMO INVITADO</button>
+      <button type="button" class="lbtn dim" id="openRegisterBtn" style="margin-top:6px;">✚ CREAR CUENTA NUEVA</button>
     </form>
+
+<form id="registerBox" style="display:none; flex-direction:column; gap:10px; margin-top:14px;">
+  <input id="regFullName" placeholder="Nombre completo" autocomplete="name" required>
+  <input id="regEmail"    type="email" placeholder="Correo electrónico" autocomplete="email" required>
+  <input id="regUser"     placeholder="Usuario (3-20 alfanuméricos)" autocapitalize="none" required>
+  <input id="regPass"     type="password" placeholder="Contraseña (mín 6)" autocomplete="new-password" required>
+  <input id="regPass2"    type="password" placeholder="Repite la contraseña" autocomplete="new-password" required>
+  <div id="registerMsg" style="font-size:11px; color:var(--dim); min-height:16px;"></div>
+  <button type="submit" class="lbtn">CREAR MI CUENTA</button>
+  <button type="button" class="lbtn dim" id="backToLoginBtn">← VOLVER</button>
+</form>
+    
     <button id="bootStart">DESPERTAR A ANIA</button>
   </div>
 </div>
