@@ -885,22 +885,89 @@ function showStart(label){
   b.textContent = label || 'DESPERTAR A ANIA';
   b.style.display = 'block';
 }
+  
 async function tryLogin(){
   const u = $('loginUser').value.trim();
   const p = $('loginPass').value;
-  if(!u || !p){ loginMsg('Completa usuario y contraseña.', true); return; }
+  if (!u || !p){ loginMsg('Completa usuario y contraseña.', true); return; }
   loginMsg('verificando...', false);
-  const users = await fetchUsers();
-  if(!users.length){ loginMsg('No pude leer usuarios.json.', true); return; }
-  const hit = users.find(x => String(x.username||'').toLowerCase()===u.toLowerCase() && String(x.password)===p);
-  if(!hit){ loginMsg('Incorrectos.', true); return; }
-  Session = { username:hit.username, name:hit.name||hit.username, role:hit.role||'user', t:Date.now() };
+
+  try{
+    const res = await AniaAPI.login({ usuario:u, password:p });
+    AniaAPI.setSession(res.token, res.usuario);
+    finishLogin(res.usuario);
+  }catch(e){
+    // Respaldo: usuarios.json clásico (por si el backend falla)
+    const users = await fetchUsers();
+    const hit = users.find(x =>
+      String(x.username||'').toLowerCase()===u.toLowerCase() && String(x.password)===p
+    );
+    if (hit) return finishLogin({ usuario:hit.username, nombre:hit.name||hit.username, rol:hit.role||'user' });
+    loginMsg(e.message || 'No pude conectar.', true);
+  }
+}
+
+function finishLogin(u){
+  Session = { username:u.usuario, name:u.nombre, role:u.rol||'user', email:u.email, id:u.id, t:Date.now() };
   store.set('session', Session);
-  if(Mind.d.nombre !== Session.name && Session.name){ Mind.d.nombre = Session.name; Mind.save(); }
+  if (Mind.d.nombre !== Session.name && Session.name){ Mind.d.nombre = Session.name; Mind.save(); }
   setOperator();
   loginMsg('Acceso concedido · '+Session.name, false);
-  setTimeout(()=>showStart('DESPERTAR A ANIA'), 500);
+  CollectiveBrain.sync().then(()=> CollectiveBrain.flushPending()).catch(()=>{});
+  setTimeout(()=> showStart('DESPERTAR A ANIA'), 500);
 }
+
+/* ---------- UI de registro ---------- */
+$('openRegisterBtn').onclick = ()=>{
+  $('loginBox').style.display='none';
+  $('registerBox').style.display='flex';
+};
+
+$('backToLoginBtn').onclick = ()=>{
+  $('registerBox').style.display='none';
+  $('loginBox').style.display='flex';
+  $('registerMsg').textContent='';
+};
+
+$('registerBox').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const msg = $('registerMsg');
+  const set = (t,err)=>{ msg.textContent=t; msg.style.color = err?'var(--danger)':'var(--dim)'; };
+
+  const nombre  = $('regFullName').value.trim();
+  const email   = $('regEmail').value.trim();
+  const usuario = $('regUser').value.trim();
+  const p1      = $('regPass').value;
+  const p2      = $('regPass2').value;
+
+  if (nombre.length < 3) return set('Nombre inválido.', true);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return set('Correo inválido.', true);
+  if (!/^[a-zA-Z0-9_.-]{3,20}$/.test(usuario)) return set('Usuario inválido (3-20 alfanuméricos).', true);
+  if (p1.length < 6) return set('Contraseña mínimo 6 caracteres.', true);
+  if (p1 !== p2) return set('Las contraseñas no coinciden.', true);
+
+  set('Creando tu cuenta...');
+  try{
+    const res = await AniaAPI.register({ usuario, password:p1, nombre, email });
+    AniaAPI.setSession(res.token, res.usuario);
+    set('✔ Cuenta creada. Entrando...', false);
+    setTimeout(()=> finishLogin(res.usuario), 700);
+  }catch(err){
+    set('✖ '+err.message, true);
+  }
+});
+
+/* Al arrancar: si hay token pero no sesión local, sincronizar */
+setTimeout(()=>{
+  if (AniaAPI.token && !Session){
+    AniaAPI.getMemoria().then(()=> {
+      CollectiveBrain.sync().catch(()=>{});
+    }).catch(()=>{
+      AniaAPI.clearSession();
+    });
+  }
+}, 1500);
+  
  $('loginBox').addEventListener('submit', e=>{ e.preventDefault(); tryLogin(); });
  $('guestBtn').onclick = ()=>{ Session = { username:'invitado', name:'Invitado', role:'invitado', t:Date.now() }; store.set('session', Session); showStart('CONTINUAR COMO INVITADO'); };
 function fillSess(){ $('sessInfo').textContent = Session ? ('Usuario: '+Session.username+' · '+Session.name) : 'Sin sesión.'; }
