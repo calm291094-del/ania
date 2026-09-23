@@ -1,30 +1,51 @@
-// servidor.js · ANIA local — sirve la carpeta con cabeceras de aislamiento
-// Uso:  node servidor.js  →  http://localhost:8080
-// Las cabeceras COOP/COEP activan SharedArrayBuffer → WASM multihilo (GGUF rápido)
-const http = require('http');
-const fs = require('fs');
+const express = require('express');
+const cors = require('cors');
 const path = require('path');
 
-const MIME = {
-  '.html':'text/html', '.js':'text/javascript', '.mjs':'text/javascript',
-  '.css':'text/css', '.json':'application/json', '.wasm':'application/wasm',
-  '.gguf':'application/octet-stream', '.png':'image/png', '.svg':'image/svg+xml',
-  '.txt':'text/plain', '.md':'text/plain', '.pdf':'application/pdf'
-};
+const app = express();
+const PORT = process.env.PORT || 10000; // Render asigna el puerto automáticamente
 
-http.createServer((req, res) => {
-  let p = decodeURIComponent((req.url||'/').split('?')[0]);
-  if(p === '/') p = '/index.html';
-  const file = path.join(__dirname, path.normalize(p));
-  if(!file.startsWith(__dirname)){ res.writeHead(403); return res.end(); }
-  fs.readFile(file, (err, data) => {
-    if(err){ res.writeHead(404); return res.end('404'); }
-    res.writeHead(200, {
-      'Content-Type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream',
-      'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'credentialless',
-      'Cache-Control': 'no-cache'
-    });
-    res.end(data);
+// ----- CORS: permite que tu frontend (GitHub Pages, local, etc.) hable con este backend -----
+app.use(cors({
+  origin: [
+    'https://calm291094-del.github.io',   // Tu GitHub Pages
+    'http://localhost:8080',
+    'http://localhost:3000',
+    'http://localhost:5500'
+  ],
+  credentials: true
+}));
+
+app.use(express.json({ limit: '2mb' }));
+
+// ----- Servir archivos estáticos (opcional) -----
+// Si quieres que el backend también sirva tu index.html, crea una carpeta "public"
+// y mete dentro tu index.html. Luego descomenta las dos líneas siguientes.
+// app.use(express.static(path.join(__dirname, 'public')));
+// app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+
+// ----- Ruta de salud (Render la usa para saber si el servicio está vivo) -----
+app.get('/ania/health', (req, res) => {
+  res.json({ ok: true, t: Date.now() });
+});
+
+// ----- Ruta de prueba -----
+app.get('/ania/ping', (req, res) => {
+  res.json({ mensaje: 'Ania backend activo', servidor: 'ania-backend' });
+});
+
+// ----- Ruta raíz (para que no salga "Cannot GET /") -----
+app.get('/', (req, res) => {
+  res.json({
+    ok: true,
+    mensaje: 'ANIA backend funcionando correctamente',
+    endpoints: [
+      '/ania/health',
+      '/ania/ping'
+    ]
   });
-}).listen(8080, () => console.log('ANIA local · http://localhost:8080'));
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('ANIA backend escuchando en puerto ' + PORT);
+});
