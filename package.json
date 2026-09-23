@@ -1,10 +1,10 @@
 {
-  "name": "ania-backend",
+  "name": "ania",
   "version": "1.0.0",
-  "description": "Backend exclusivo para ANIA",
-  "main": "index.js",
+  "description": "Ania · Núcleo personal",
+  "main": "servidor.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node servidor.js"
   },
   "dependencies": {
     "express": "^4.19.2",
