@@ -1045,12 +1045,28 @@ let TRAINING = [];
     TRAINING = (j.respuestas || []).filter(r => r && r.respuesta && (Array.isArray(r.claves) ? r.claves.length : r.pregunta));
   }catch(e){ TRAINING = []; }
 })();
+  
 function trainMatch(low){
-  for(const r of TRAINING){
-    if(Array.isArray(r.claves)){
-      for(const k of r.claves){ if(k && low.includes(String(k).toLowerCase())) return r.respuesta; }
+  // 1) Entrenamiento interno (el JSON del HTML)
+  for (const r of TRAINING){
+    if (Array.isArray(r.claves)){
+      for (const k of r.claves) if (k && low.includes(String(k).toLowerCase())) return r.respuesta;
     }
   }
+  // 2) Conocimiento global aprendido por la comunidad
+  const global = store.get('globalKB', []);
+  if (!global.length) return null;
+  const words = low.split(' ').filter(w=>w.length>3);
+  let best=null, bestScore=0;
+  for (const e of global){
+    const eLow = LINGUA.normalizar(e.clave);
+    let score = 0;
+    if (low.includes(eLow)) score += 10;
+    else for (const w of eLow.split(' ')) if (w.length>3 && words.includes(w)) score += 2;
+    score += Math.min(5, e.votos||1);
+    if (score > bestScore){ bestScore=score; best=e; }
+  }
+  if (bestScore>=5 && best && best.valores && best.valores[0]) return best.valores[0];
   return null;
 }
 
