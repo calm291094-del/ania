@@ -4057,6 +4057,141 @@ send = function(text) {
   return oldSend(text);
 };
 </script>
+
+<script>
+/* =====================================================================
+   ANIA API CLIENT · registro, login, conocimiento y memoria
+===================================================================== */
+const AniaAPI = {
+  token: store.get('apiToken', null),
+  user:  store.get('apiUser', null),
+
+  setSession(token, user){ this.token=token; this.user=user; store.set('apiToken',token); store.set('apiUser',user); },
+  clearSession(){ this.token=null; this.user=null; store.del('apiToken'); store.del('apiUser'); },
+
+  async req(path, opts={}){
+    const headers = { 'Content-Type':'application/json', ...(opts.headers||{}) };
+    if (this.token) headers.Authorization = 'Bearer '+this.token;
+    const r = await fetch(CONFIG.ANIA_API+path, { ...opts, headers });
+    const data = await r.json().catch(()=>({}));
+    if (!r.ok) throw new Error(data.error || ('HTTP '+r.status));
+    return data;
+  },
+
+  register(p){ return this.req('/ania/register', { method:'POST', body:JSON.stringify(p) }); },
+  login(p)   { return this.req('/ania/login',    { method:'POST', body:JSON.stringify(p) }); },
+
+  getKnowledge(){ return this.req('/ania/knowledge'); },
+  contribute(clave, valor, categoria){
+    return this.req('/ania/knowledge', { method:'POST', body:JSON.stringify({clave,valor,categoria}) });
+  },
+
+  getMemoria(){ return this.req('/ania/me/memoria'); },
+  saveMemoria(d){ return this.req('/ania/me/memoria', { method:'POST', body:JSON.stringify(d) }); }
+};
+
+/* =====================================================================
+   CEREBRO COLECTIVO · 3 capas
+===================================================================== */
+const CollectiveBrain = {
+  async learn(key, value, source='auto'){
+    const lowKey = String(key).toLowerCase();
+    const lowVal = String(value).toLowerCase();
+
+    if (source==='lingua-fix' || /klima|musika|rekuerdame|bu[sz]came/.test(lowKey))
+      return this.toGlobal(key, value, 'lingua');
+
+    if (/^(qué es|quien es|como se|definición|significa|historia de|capital de)/i.test(lowKey))
+      return this.toGlobal(key, value, 'hecho');
+
+    if (/me\s+(llamo|gusta|duele|preocupa)|mi\s+(nombre|casa|cumple|correo|trabajo)|soy\s+|tengo\s+\d|vivo\s+en/i.test(lowKey+lowVal))
+      return this.toPrivate(key, value);
+
+    if (source==='pattern') return this.toGlobal(key, value, 'patron');
+    return this.toPrivate(key, value);
+  },
+
+  async toGlobal(clave, valor, categoria){
+    if (!AniaAPI.token){
+      const pending = store.get('pendingGlobal', []);
+      pending.push({ clave, valor, categoria, t:Date.now() });
+      store.set('pendingGlobal', pending.slice(-200));
+      return;
+    }
+    try{ await AniaAPI.contribute(clave, valor, categoria); }
+    catch{
+      const pending = store.get('pendingGlobal', []);
+      pending.push({ clave, valor, categoria, t:Date.now() });
+      store.set('pendingGlobal', pending.slice(-200));
+    }
+  },
+
+  async toPrivate(clave, valor){
+    Mind.d.hechos = Mind.d.hechos || [];
+    Mind.d.hechos.push({ clave, valor, t:Date.now() });
+    Mind.save();
+    if (AniaAPI.token){
+      try{ await AniaAPI.saveMemoria({ hechos: Mind.d.hechos }); }catch{}
+    }
+  },
+
+  async sync(){
+    if (!AniaAPI.token) return;
+    try{
+      const kb = await AniaAPI.getKnowledge();
+      store.set('globalKB', kb);
+      const mia = await AniaAPI.getMemoria();
+      if (mia){
+        Mind.d.nombre = mia.nombre || Mind.d.nombre;
+        Mind.d.gustos = mia.gustos || Mind.d.gustos;
+        Mind.d.hechos = mia.hechos || Mind.d.hechos;
+        Mind.save();
+      }
+    }catch(e){ console.warn('[CollectiveBrain.sync]', e.message); }
+  },
+
+  async flushPending(){
+    const pending = store.get('pendingGlobal', []);
+    if (!pending.length || !AniaAPI.token) return;
+    const ok = [];
+    for (const p of pending){
+      try{ await AniaAPI.contribute(p.clave, p.valor, p.categoria); ok.push(p); }catch{ break; }
+    }
+    store.set('pendingGlobal', pending.filter(p=>!ok.includes(p)));
+  }
+};
+
+/* =====================================================================
+   APRENDIZAJE PASIVO · Ania aprende de cada intercambio
+===================================================================== */
+async function learnFromExchange(userText, aniaReply){
+  const low = LINGUA.normalizar(userText);
+  const m = low.match(/no[, ]+(?:es|era)\s+(.+?)[, ]+(?:es|era)\s+(.+)/);
+  if (m) CollectiveBrain.learn(m[1].trim(), m[2].trim(), 'lingua-fix');
+
+  const p = userText.match(/me\s+gusta(?:n)?\s+(?:el\s+|la\s+|los\s+|las\s+)?(.{2,60})/i);
+  if (p){
+    Mind.d.gustos = Mind.d.gustos || [];
+    Mind.d.gustos.push(p[1].trim());
+    Mind.save();
+    CollectiveBrain.toPrivate('gusto', p[1].trim());
+  }
+
+  if (userText.length > 40 && /^(sabías|te cuento|aprende|recuerda que|ten en cuenta)/i.test(userText)){
+    CollectiveBrain.learn(userText.slice(0,200), 'aportado por usuario', 'hecho');
+  }
+}
+
+if (!window.__aniaLearnPatched){
+  window.__aniaLearnPatched = true;
+  const _reply_orig = reply;
+  reply = function(text, say){
+    const lastUser = Episodio.log.filter(l=>l.role==='you').slice(-1)[0];
+    if (lastUser) learnFromExchange(lastUser.text, text).catch(()=>{});
+    return _reply_orig(text, say);
+  };
+}
+</script>
   
 </body>
 </html>
