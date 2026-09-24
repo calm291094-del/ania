@@ -3883,7 +3883,10 @@ async function cargarPanelAdmin(){
 
   // ===== REPORTE DE SEGURIDAD =====
   try{
-    const rSec = await fetch('https://raw.githubusercontent.com/calm291094-del/ania/main/datos/security-report.json?t=' + Date.now());
+    const rSec = await fetch(
+      'https://api.github.com/repos/calm291094-del/ania/contents/datos/security-report.json',
+      { headers: { 'Accept': 'application/vnd.github.raw' } }
+    );
     const reporte = rSec.ok ? await rSec.json() : null;
     const secBox = $('adminSecurityReport');
     if (!reporte || !reporte.hallazgos || reporte.hallazgos.length === 0){
