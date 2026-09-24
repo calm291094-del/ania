@@ -277,6 +277,76 @@ app.get('/ania/admin/knowledge-stats', auth, async (req,res)=>{
   }
 });
 
+/* ==================== CAMBIO DE CONTRASEÑA ==================== */
+app.post('/ania/me/password', auth, async (req,res)=>{
+  try{
+    const { actual, nueva } = req.body || {};
+    if (!actual || !nueva) return res.status(400).json({ error:'faltan datos' });
+    if (nueva.length < 6) return res.status(400).json({ error:'la nueva debe tener mínimo 6 caracteres' });
+
+    const users = await loadUsers();
+    const u = users.find(x=>x.id === req.user.id);
+    if (!u) return res.status(404).json({ error:'usuario no encontrado' });
+    if (!checkPass(actual, u.passwordHash))
+      return res.status(401).json({ error:'contraseña actual incorrecta' });
+
+    u.passwordHash = hashPass(nueva);
+    u.actualizado = Date.now();
+    await saveUsers(users);
+    res.json({ ok:true });
+  }catch(e){
+    console.error('password:', e);
+    res.status(500).json({ error:'error al cambiar contraseña' });
+  }
+});
+
+/* ==================== ADMIN · RESET PASSWORD ==================== */
+app.post('/ania/admin/reset-password', auth, async (req,res)=>{
+  try{
+    if (req.user.rol !== 'admin' && req.user.rol !== 'superadmin')
+      return res.status(403).json({ error:'solo administradores' });
+    const { userId, nueva } = req.body || {};
+    if (!userId || !nueva) return res.status(400).json({ error:'faltan datos' });
+    if (nueva.length < 6) return res.status(400).json({ error:'mínimo 6 caracteres' });
+
+    const users = await loadUsers();
+    const u = users.find(x=>x.id === userId);
+    if (!u) return res.status(404).json({ error:'usuario no encontrado' });
+    if (u.rol === 'superadmin' && req.user.rol !== 'superadmin')
+      return res.status(403).json({ error:'no puedes tocar al superadmin' });
+
+    u.passwordHash = hashPass(nueva);
+    u.actualizado = Date.now();
+    await saveUsers(users);
+    res.json({ ok:true });
+  }catch(e){
+    res.status(500).json({ error:'error al resetear' });
+  }
+});
+
+/* ==================== ADMIN · CAMBIAR ROL ==================== */
+app.post('/ania/admin/set-role', auth, async (req,res)=>{
+  try{
+    if (req.user.rol !== 'superadmin')
+      return res.status(403).json({ error:'solo el superadmin puede cambiar roles' });
+    const { userId, rol } = req.body || {};
+    if (!userId || !['user','admin'].includes(rol))
+      return res.status(400).json({ error:'rol inválido' });
+
+    const users = await loadUsers();
+    const u = users.find(x=>x.id === userId);
+    if (!u) return res.status(404).json({ error:'usuario no encontrado' });
+    if (u.rol === 'superadmin')
+      return res.status(403).json({ error:'no puedes cambiar el rol del superadmin' });
+
+    u.rol = rol;
+    u.actualizado = Date.now();
+    await saveUsers(users);
+    res.json({ ok:true });
+  }catch(e){
+    res.status(500).json({ error:'error al cambiar rol' });
+  }
+});
 
 /* ==================== ESTÁTICOS + SPA ==================== */
 app.use(express.static(PUBLIC_DIR, {
