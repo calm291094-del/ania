@@ -2,6 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -136,6 +137,45 @@ function auth(req,res,next){
   req.user = p; next();
 }
 
+/* ==================== RATE LIMITERS ==================== */
+// Login: 5 intentos por 15 min por IP
+const limiterLogin = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'demasiados intentos, espera 15 minutos' },
+  skipSuccessfulRequests: true
+});
+
+// Registro: 3 registros por hora por IP (evita spam de cuentas)
+const limiterRegister = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 3,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'demasiados registros desde esta IP, espera 1 hora' }
+});
+
+// Cambio/reset de contraseña: 5 intentos por hora
+const limiterPassword = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'demasiados intentos de cambio de contraseña' }
+});
+
+// API general: 300 peticiones por 15 min por IP (evita scraping)
+const limiterGeneral = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'demasiadas peticiones, espera un momento' }
+});
+
+
 /* ==================== MIDDLEWARE ==================== */
 // Helmet: cabeceras de seguridad (CSP desactivada porque servimos muchos orígenes)
 app.use(helmet({
@@ -147,11 +187,17 @@ app.use(cors());
 app.use(express.json({ limit:'2mb' }));
 
 /* ==================== HEALTH ==================== */
+// Aplicar limitador general a todas las rutas /ania/* (excepto health)
+app.use('/ania', (req, res, next) => {
+  if (req.path === '/health') return next();
+  return limiterGeneral(req, res, next);
+});
+
 app.get('/ania/health', (req,res)=> res.json({ ok:true, t:Date.now() }));
 app.get('/ania/ping',   (req,res)=> res.json({ mensaje:'Ania backend activo' }));
 
 /* ==================== REGISTRO ==================== */
-app.post('/ania/register', async (req,res)=>{
+app.post('/ania/register', limiterRegister, async (req,res)=>{
   try{
     const { usuario, password, nombre, email } = req.body || {};
     if (!usuario || !password || !nombre || !email)
@@ -190,7 +236,7 @@ app.post('/ania/register', async (req,res)=>{
 });
 
 /* ==================== LOGIN ==================== */
-app.post('/ania/login', async (req,res)=>{
+app.post('/ania/login', limiterLogin, async (req,res)=>{
   try{
     const { usuario, password } = req.body || {};
     if (!usuario || !password) return res.status(400).json({ error:'faltan datos' });
@@ -310,7 +356,7 @@ app.get('/ania/admin/knowledge-stats', auth, async (req,res)=>{
 });
 
 /* ==================== CAMBIO DE CONTRASEÑA ==================== */
-app.post('/ania/me/password', auth, async (req,res)=>{
+app.post('/ania/me/password', limiterPassword, auth, async (req,res)=>{
   try{
     const { actual, nueva } = req.body || {};
     if (!actual || !nueva) return res.status(400).json({ error:'faltan datos' });
