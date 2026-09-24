@@ -509,6 +509,28 @@ app.get('/ania/admin/stats', auth, async (req,res)=>{
   }
 });
 
+/* ==================== PROXY DE ARCHIVOS PÚBLICOS ==================== */
+// Sirve archivos de datos/ evitando CORS de raw.githubusercontent
+const ARCHIVOS_PERMITIDOS = [
+  'datos/security-report.json',
+  'datos/sugerencias.json',
+  'datos/perfiles.json',
+  'datos/conocimiento.json'
+];
+
+app.get('/ania/public/:archivo', async (req, res) => {
+  try {
+    const archivo = 'datos/' + req.params.archivo;
+    if (!ARCHIVOS_PERMITIDOS.includes(archivo))
+      return res.status(403).json({ error: 'archivo no permitido' });
+    const f = await ghRead(archivo);
+    if (!f) return res.status(404).json({ error: 'no encontrado' });
+    res.json(JSON.parse(f.content));
+  } catch (e) {
+    res.status(500).json({ error: 'error al leer archivo' });
+  }
+});
+
 /* ==================== PERFIL DEL USUARIO ==================== */
 app.get('/ania/me/perfil', auth, async (req,res)=>{
   try{
