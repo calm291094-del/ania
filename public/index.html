@@ -8,7 +8,17 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>ANIA · Edición Jarvis</title>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  
+<!-- Fuente local (sin Google) -->
+<style>
+@font-face {
+  font-family: 'Share Tech Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/share-tech-mono.woff2') format('woff2');
+}
+</style>
   
 <!-- ✅ NotifyX servido localmente (sin CDN, sin ORB) -->
 <link rel="stylesheet" href="./vendor/notifyx.min.css">
@@ -3911,7 +3921,7 @@ async function cargarPanelAdmin(){
 
   // ===== SUGERENCIAS DEL AGENTE =====
   try{
-    const rSug = await fetch('https://raw.githubusercontent.com/calm291094-del/ania/main/datos/sugerencias.json?t=' + Date.now());
+    const rSug = await fetch('https://cdn.jsdelivr.net/gh/calm291094-del/ania@main/datos/sugerencias.json?t=' + Date.now());
     const historial = rSug.ok ? await rSug.json() : [];
     const box = $('adminSugerencias');
     if (!historial.length){
