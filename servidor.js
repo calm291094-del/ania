@@ -27,6 +27,7 @@ const BRANCH = 'main';
 const P_USERS     = 'datos/usuarios.enc.json';
 const P_MEMORIES  = 'datos/memorias.enc.json';
 const P_KNOWLEDGE = 'datos/conocimiento.json';
+const P_ADMIN_LOG  = 'datos/admin-log.json';
 
 const GITHUB_TOKEN  = process.env.GITHUB_TOKEN;
 const ANIA_SECRET   = process.env.ANIA_SECRET;
@@ -403,11 +404,11 @@ app.post('/ania/admin/reset-password', auth, async (req,res)=>{
     u.passwordHash = hashPass(nueva);
     u.actualizado = Date.now();
     await saveUsers(users);
+    logAdmin('reset-password', req.user, { id:u.id, usuario:u.usuario }, '');
     res.json({ ok:true });
   }catch(e){
     res.status(500).json({ error:'error al resetear' });
   }
-});
 
 /* ==================== ADMIN · CAMBIAR ROL ==================== */
 app.post('/ania/admin/set-role', auth, async (req,res)=>{
@@ -424,9 +425,11 @@ app.post('/ania/admin/set-role', auth, async (req,res)=>{
     if (u.rol === 'superadmin')
       return res.status(403).json({ error:'no puedes cambiar el rol del superadmin' });
 
+    const rolAnterior = u.rol;
     u.rol = rol;
     u.actualizado = Date.now();
     await saveUsers(users);
+    logAdmin('cambiar-rol', req.user, { id:u.id, usuario:u.usuario }, rolAnterior + ' → ' + rol);
     res.json({ ok:true });
   }catch(e){
     res.status(500).json({ error:'error al cambiar rol' });
@@ -450,6 +453,7 @@ app.post('/ania/admin/toggle-block', auth, async (req,res)=>{
     u.bloqueado = !u.bloqueado;
     u.actualizado = Date.now();
     await saveUsers(users);
+    logAdmin(u.bloqueado ? 'bloquear' : 'desbloquear', req.user, { id:u.id, usuario:u.usuario }, '');
     res.json({ ok:true, bloqueado:u.bloqueado });
   }catch(e){
     console.error('toggle-block:', e);
@@ -482,6 +486,7 @@ app.post('/ania/admin/delete-user', auth, async (req,res)=>{
       }
     }catch(e){ console.warn('no pude borrar memoria:', e.message); }
 
+    logAdmin('eliminar-usuario', req.user, { id:u.id, usuario:u.usuario, email:u.email }, '');
     res.json({ ok:true, eliminados: users.length - nuevas.length });
   }catch(e){
     console.error('delete-user:', e);
@@ -508,6 +513,45 @@ app.get('/ania/admin/stats', auth, async (req,res)=>{
     res.status(500).json({ error:'error en stats' });
   }
 });
+
+/* ==================== ADMIN LOG ==================== */
+async function logAdmin(accion, adminUser, target, detalles){
+  try{
+    let lista = [];
+    try{
+      const f = await ghRead(P_ADMIN_LOG);
+      if (f) lista = JSON.parse(f.content) || [];
+    }catch{}
+    lista.unshift({
+      t: Date.now(),
+      accion,
+      admin: { id: adminUser.id, usuario: adminUser.usuario, rol: adminUser.rol },
+      target: target || null,
+      detalles: detalles || ''
+    });
+    if (lista.length > 200) lista = lista.slice(0, 200);
+    await ghWrite(P_ADMIN_LOG, JSON.stringify(lista, null, 2), 'Ania: log admin ' + accion);
+  }catch(e){
+    console.error('✗ logAdmin falló:', e.message);
+  }
+}
+
+app.get('/ania/admin/log', auth, async (req,res)=>{
+  try{
+    if (req.user.rol !== 'admin' && req.user.rol !== 'superadmin')
+      return res.status(403).json({ error:'solo administradores' });
+    let lista = [];
+    try{
+      const f = await ghRead(P_ADMIN_LOG);
+      if (f) lista = JSON.parse(f.content) || [];
+    }catch{}
+    res.json({ ok:true, total:lista.length, log:lista.slice(0, 50) });
+  }catch(e){
+    console.error('admin/log:', e);
+    res.status(500).json({ error:'error al leer log' });
+  }
+});
+
 
 /* ==================== PROXY DE ARCHIVOS PÚBLICOS ==================== */
 // Sirve archivos de datos/ evitando CORS de raw.githubusercontent
