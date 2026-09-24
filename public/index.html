@@ -1645,7 +1645,7 @@ function tickClock(){ $('clock').textContent = new Date().toLocaleTimeString('es
 setInterval(tickClock, 1000); tickClock();
 function updateNet(){
   const off = isOffline();
-  const n = OfflineQueue.count();
+  const n = (typeof OfflineQueue !== 'undefined' && OfflineQueue.count) ? OfflineQueue.count() : 0;
   $('netPill').classList.toggle('off', off);
   $('netTxt').textContent = off
     ? 'SIN CONEXIÓN' + (n ? ' · '+n+' EN COLA' : '')
