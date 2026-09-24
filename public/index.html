@@ -1645,10 +1645,18 @@ function tickClock(){ $('clock').textContent = new Date().toLocaleTimeString('es
 setInterval(tickClock, 1000); tickClock();
 function updateNet(){
   const off = isOffline();
+  const n = OfflineQueue.count();
   $('netPill').classList.toggle('off', off);
-  $('netTxt').textContent = off ? 'SIN CONEXIÓN' : 'EN LÍNEA';
+  $('netTxt').textContent = off
+    ? 'SIN CONEXIÓN' + (n ? ' · '+n+' EN COLA' : '')
+    : 'EN LÍNEA';
 }
-addEventListener('online', ()=>{ updateNet(); toast('Conexión restaurada'); Sync.fullSync(); });
+addEventListener('online', ()=>{
+  updateNet();
+  toast('Conexión restaurada');
+  Sync.fullSync();
+  setTimeout(procesarColaOffline, 1200);
+});
 addEventListener('offline', ()=>{ updateNet(); toast('Modo offline: núcleo personal activo', true); });
 updateNet();
 function updateBatt(){
@@ -3839,6 +3847,41 @@ async function send(text){
     if(nxt) send(nxt);
   }
 }
+
+/* =====================================================================
+   INTERCEPTOR DE ENVÍO · guarda en cola si no hay red
+===================================================================== */
+const _sendOriginal = send;
+send = async function(text){
+  if (!text) return;
+  if (isOffline()){
+    OfflineQueue.push(text);
+    addChat('you', text);
+    addChat('sys', '⚠ Sin conexión · guardado en cola (' + OfflineQueue.count() + '). Se enviará al reconectar.');
+    return;
+  }
+  return _sendOriginal(text);
+};
+
+/* Procesar cola al recuperar conexión */
+async function procesarColaOffline(){
+  const lista = OfflineQueue.list();
+  if (!lista.length) return;
+  addChat('sys', '✉ Reconectado · procesando ' + lista.length + ' mensaje(s) en cola...');
+  for (const item of lista){
+    if (isOffline()) break;
+    try{
+      await _sendOriginal(item.msg);
+      OfflineQueue.remove(item.id);
+      await new Promise(r => setTimeout(r, 800));
+    }catch(e){
+      console.warn('Fallo al procesar cola:', e.message);
+      break;
+    }
+  }
+  if (!OfflineQueue.count()) addChat('sys', '✔ Cola vacía');
+}
+  
  $('inputBar').addEventListener('submit', e=>{
   e.preventDefault();
   const v = $('userInput').value.trim();
@@ -4378,6 +4421,11 @@ const BOOTLINES = [
   Brain.loadLocal(false);
   S.lastUserTs = Date.now();
   sysLine('v10.0 · LocalMind activo · cerebro '+(Brain.localReady?'local':'cascada'));
+  const colaInicial = OfflineQueue.count();
+  if (colaInicial){
+    sysLine('✉ Tienes ' + colaInicial + ' mensaje(s) en cola desde la última vez sin conexión.');
+    if (!isOffline()) setTimeout(procesarColaOffline, 2500);
+  }
   const g = geoCache();
   if(g){ try{ const d = await getWeather(g); updateChip(g,d); }catch(e){} }
 
@@ -4896,6 +4944,23 @@ send = function(text) {
 </script>
 
 <script>
+/* =====================================================================
+   COLA OFFLINE · mensajes que esperan conexión
+===================================================================== */
+const OfflineQueue = {
+  KEY: 'offlineQueue',
+  list(){ return store.get(this.KEY, []); },
+  save(l){ store.set(this.KEY, l); actualizarPillRed(); },
+  push(msg){
+    const l = this.list();
+    l.push({ t: Date.now(), msg, id: 'off-'+Date.now()+'-'+Math.random().toString(36).slice(2,6) });
+    this.save(l);
+  },
+  remove(id){ this.save(this.list().filter(x => x.id !== id)); },
+  clear(){ this.save([]); },
+  count(){ return this.list().length; }
+};
+  
 /* =====================================================================
    ANIA API CLIENT · registro, login, conocimiento y memoria
 ===================================================================== */
