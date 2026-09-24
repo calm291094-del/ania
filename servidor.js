@@ -244,10 +244,15 @@ app.post('/ania/login', limiterLogin, async (req,res)=>{
     const u = users.find(x=>x.usuario===usuario.toLowerCase() || x.email===usuario.toLowerCase());
     if (!u || !checkPass(password, u.passwordHash))
       return res.status(401).json({ error:'usuario o contraseña incorrectos' });
+    if (u.bloqueado === true)
+      return res.status(403).json({ error:'cuenta bloqueada. contacta al administrador.' });
+    u.ultimoAcceso = Date.now();
+    // guardar se hace más abajo si no hay verificación
     if (SUPERADMIN_EMAIL && u.email === SUPERADMIN_EMAIL && u.rol !== 'superadmin'){
       u.rol = 'superadmin';
       await saveUsers(users);
     }
+    await saveUsers(users);
     const token = makeToken({ id:u.id, usuario:u.usuario, rol:u.rol });
     res.json({ ok:true, token, usuario:{ id:u.id, usuario:u.usuario, nombre:u.nombre, email:u.email, rol:u.rol }});
   }catch(e){
@@ -425,6 +430,84 @@ app.post('/ania/admin/set-role', auth, async (req,res)=>{
     res.status(500).json({ error:'error al cambiar rol' });
   }
 });
+
+/* ==================== ADMIN · BLOQUEAR/DESBLOQUEAR ==================== */
+app.post('/ania/admin/toggle-block', auth, async (req,res)=>{
+  try{
+    if (req.user.rol !== 'admin' && req.user.rol !== 'superadmin')
+      return res.status(403).json({ error:'solo administradores' });
+    const { userId } = req.body || {};
+    if (!userId) return res.status(400).json({ error:'falta userId' });
+
+    const users = await loadUsers();
+    const u = users.find(x=>x.id === userId);
+    if (!u) return res.status(404).json({ error:'usuario no encontrado' });
+    if (u.rol === 'superadmin') return res.status(403).json({ error:'no puedes bloquear al superadmin' });
+    if (u.id === req.user.id) return res.status(403).json({ error:'no puedes bloquearte a ti mismo' });
+
+    u.bloqueado = !u.bloqueado;
+    u.actualizado = Date.now();
+    await saveUsers(users);
+    res.json({ ok:true, bloqueado:u.bloqueado });
+  }catch(e){
+    console.error('toggle-block:', e);
+    res.status(500).json({ error:'error al bloquear' });
+  }
+});
+
+/* ==================== ADMIN · ELIMINAR USUARIO ==================== */
+app.post('/ania/admin/delete-user', auth, async (req,res)=>{
+  try{
+    if (req.user.rol !== 'superadmin')
+      return res.status(403).json({ error:'solo el superadmin puede eliminar cuentas' });
+    const { userId } = req.body || {};
+    if (!userId) return res.status(400).json({ error:'falta userId' });
+
+    const users = await loadUsers();
+    const u = users.find(x=>x.id === userId);
+    if (!u) return res.status(404).json({ error:'usuario no encontrado' });
+    if (u.rol === 'superadmin') return res.status(403).json({ error:'no puedes eliminar al superadmin' });
+    if (u.id === req.user.id) return res.status(403).json({ error:'no puedes eliminarte a ti mismo' });
+
+    const nuevas = users.filter(x=>x.id !== userId);
+    await saveUsers(nuevas);
+
+    // Borrar su memoria privada
+    try{
+      const mem = await loadMemories();
+      if (mem[userId]){
+        delete mem[userId];
+        await saveMemories(mem);
+      }
+    }catch(e){ console.warn('no pude borrar memoria:', e.message); }
+
+    res.json({ ok:true, eliminados: users.length - nuevas.length });
+  }catch(e){
+    console.error('delete-user:', e);
+    res.status(500).json({ error:'error al eliminar' });
+  }
+});
+
+/* ==================== ADMIN · ESTADÍSTICAS DETALLADAS ==================== */
+app.get('/ania/admin/stats', auth, async (req,res)=>{
+  try{
+    if (req.user.rol !== 'admin' && req.user.rol !== 'superadmin')
+      return res.status(403).json({ error:'solo administradores' });
+    const users = await loadUsers();
+    const ahora = Date.now();
+    const dia = 24 * 3600 * 1000;
+    res.json({
+      total: users.length,
+      activos: users.filter(u => u.ultimoAcceso && (ahora - u.ultimoAcceso) < 7 * dia).length,
+      bloqueados: users.filter(u => u.bloqueado).length,
+      admins: users.filter(u => u.rol === 'admin').length,
+      superadmins: users.filter(u => u.rol === 'superadmin').length
+    });
+  }catch(e){
+    res.status(500).json({ error:'error en stats' });
+  }
+});
+
 
 /* ==================== ESTÁTICOS + SPA ==================== */
 app.use(express.static(PUBLIC_DIR, {
