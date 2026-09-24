@@ -1090,14 +1090,9 @@ function normalizeUsers(d){
   if(d && d.username) return [d];
   return [];
 }
+  
 async function fetchUsers(){
-  for(const url of CONFIG.USERS_URLS){
-    try{
-      const list = normalizeUsers(await jget(url, 8000));
-      if(list.length){ store.set('users', list); return list; }
-    }catch(e){}
-  }
-  return store.get('users', []) || [];
+  return [];
 }
 fetchUsers().catch(()=>{});
 function loginMsg(txt, err){ const el=$('loginMsg'); el.textContent=txt; el.classList.toggle('err', !!err); }
@@ -1119,12 +1114,6 @@ async function tryLogin(){
     AniaAPI.setSession(res.token, res.usuario);
     finishLogin(res.usuario);
   }catch(e){
-    // Respaldo: usuarios.json clásico (por si el backend falla)
-    const users = await fetchUsers();
-    const hit = users.find(x =>
-      String(x.username||'').toLowerCase()===u.toLowerCase() && String(x.password)===p
-    );
-    if (hit) return finishLogin({ usuario:hit.username, nombre:hit.name||hit.username, rol:hit.role||'user' });
     loginMsg(e.message || 'No pude conectar.', true);
   }
 }
