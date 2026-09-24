@@ -10,7 +10,9 @@
     "express": "^4.19.2",
     "cors": "^2.8.5",
     "helmet": "^7.1.0",
-    "express-rate-limit": "^7.4.0"
+    "express-rate-limit": "^7.4.0",
+    "nodemailer": "^6.9.14",
+    "njsscan": "^0.4.3"
   },
   "engines": {
     "node": ">=18"
