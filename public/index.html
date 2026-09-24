@@ -176,6 +176,103 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
 .toast.warn{color:var(--amber);border-color:rgba(255,181,71,.5);}
 @keyframes tIn{from{opacity:0;transform:translateY(-8px);}}
 @media(min-width:700px){#reactorWrap{width:240px;height:240px;}.line{font-size:15px;}}
+
+/* ==================== BENTO UI · PANEL ADMIN ==================== */
+.bento-grid{
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  gap:12px;
+  padding:4px 0;
+  animation:bentoIn .35s ease-out;
+}
+@keyframes bentoIn{
+  from{opacity:0;transform:translateY(8px);}
+  to{opacity:1;transform:translateY(0);}
+}
+.bento-tile{
+  background:linear-gradient(135deg, rgba(8,21,15,.85), rgba(4,8,6,.95));
+  border:1px solid rgba(45,224,138,.18);
+  border-radius:14px;
+  padding:14px 16px;
+  position:relative;
+  overflow:hidden;
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  transition:border-color .25s, transform .25s, box-shadow .25s;
+}
+.bento-tile::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:1px;
+  background:linear-gradient(90deg, transparent, rgba(45,224,138,.6), transparent);
+  opacity:.6;
+}
+.bento-tile:hover{
+  border-color:rgba(45,224,138,.45);
+  transform:translateY(-2px);
+  box-shadow:0 8px 24px -8px rgba(45,224,138,.25);
+}
+.bento-tile.tile-stat{
+  grid-column:span 1;
+  text-align:center;
+  padding:16px 12px;
+}
+.bento-tile.tile-stat .stat-num{
+  font-size:clamp(22px, 4vw, 34px);
+  color:var(--acc2);
+  line-height:1;
+  letter-spacing:.02em;
+  margin-bottom:6px;
+  text-shadow:0 0 20px rgba(45,224,138,.5);
+}
+.bento-tile.tile-stat .stat-lbl{
+  font-size:9px;
+  letter-spacing:.22em;
+  color:var(--dim);
+  text-transform:uppercase;
+}
+.bento-tile.tile-stat.tile-danger .stat-num{color:var(--danger);text-shadow:0 0 20px rgba(255,84,112,.5);}
+.bento-tile.tile-stat.tile-amber .stat-num{color:var(--amber);text-shadow:0 0 20px rgba(255,181,71,.5);}
+.bento-tile.tile-wide{grid-column:span 2;}
+.bento-tile.tile-full{grid-column:span 4;}
+.bento-tile .tile-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:12px;
+  padding-bottom:10px;
+  border-bottom:1px dashed rgba(45,224,138,.15);
+}
+.bento-tile .tile-title{
+  font-size:10px;
+  letter-spacing:.28em;
+  color:var(--acc);
+  text-transform:uppercase;
+}
+.bento-tile .tile-badge{
+  font-size:9px;
+  color:var(--dim);
+  letter-spacing:.1em;
+}
+.bento-tile .tile-body{
+  max-height:38dvh;
+  overflow-y:auto;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(45,224,138,.35) transparent;
+}
+.bento-tile .tile-body::-webkit-scrollbar{width:5px;}
+.bento-tile .tile-body::-webkit-scrollbar-thumb{background:rgba(45,224,138,.3);border-radius:3px;}
+.bento-tile.tile-sugerencias .tile-body{max-height:44dvh;}
+.bento-tile.tile-seguridad .tile-body{max-height:44dvh;}
+.bento-tile.tile-log .tile-body{max-height:32dvh;}
+@media(max-width:600px){
+  .bento-grid{grid-template-columns:repeat(2, 1fr);gap:10px;}
+  .bento-tile.tile-wide{grid-column:span 2;}
+  .bento-tile.tile-full{grid-column:span 2;}
+  .bento-tile.tile-stat{padding:12px 8px;}
+}
+  
 #hudPanel{position:fixed;inset:0;z-index:970;background:rgba(2,6,4,.96);display:none;flex-direction:column;}
 #hudPanel.on{display:flex;}
 .hudHead{display:flex;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);}
@@ -376,33 +473,81 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
 </div>
 
 <div class="overlay" id="adminModal">
-  <div class="modal">
+  <div class="modal" style="width:min(1000px,100%);max-width:1000px;">
     <h2>PANEL DE ADMINISTRACIÓN
       <button class="xbtn" data-close style="margin-left:auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     </h2>
-    <p class="dim" id="adminStats">Cargando estadísticas...</p>
-    <hr>
-    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">USUARIOS REGISTRADOS</h2>
-    <div id="adminUsersList" style="max-height:50dvh;overflow-y:auto;margin-top:8px;">
-      <div class="empty">Cargando...</div>
-    </div>
-    
-    <hr>
-    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">CONOCIMIENTO COMPARTIDO</h2>
-    <div id="adminKBList" style="max-height:30dvh;overflow-y:auto;margin-top:8px;">
-      <div class="empty">Cargando...</div>
-    </div>
-    
-    <hr>
-    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">REPORTE DE SEGURIDAD</h2>
-    <div id="adminSecurityReport" style="max-height:40dvh;overflow-y:auto;margin-top:8px;">
-      <div class="empty">Cargando...</div>
-    </div>
-    
-    <hr>
-    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">SUGERENCIAS DEL AGENTE</h2>
-    <div id="adminSugerencias" style="max-height:40dvh;overflow-y:auto;margin-top:8px;">
-      <div class="empty">Cargando...</div>
+    <p class="dim" id="adminStats" style="font-size:11px;margin-bottom:14px;">Cargando...</p>
+
+    <div class="bento-grid">
+      <!-- Fila 1 · Stats -->
+      <div class="bento-tile tile-stat">
+        <div class="stat-num" id="bentoTotalUsuarios">—</div>
+        <div class="stat-lbl">Usuarios</div>
+      </div>
+      <div class="bento-tile tile-stat">
+        <div class="stat-num" id="bentoActivos">—</div>
+        <div class="stat-lbl">Activos 7d</div>
+      </div>
+      <div class="bento-tile tile-stat tile-amber">
+        <div class="stat-num" id="bentoBloqueados">—</div>
+        <div class="stat-lbl">Bloqueados</div>
+      </div>
+      <div class="bento-tile tile-stat">
+        <div class="stat-num" id="bentoConocimiento">—</div>
+        <div class="stat-lbl">Conocimiento</div>
+      </div>
+
+      <!-- Fila 2 · Usuarios (ancho completo) -->
+      <div class="bento-tile tile-full">
+        <div class="tile-head">
+          <span class="tile-title">Usuarios registrados</span>
+          <span class="tile-badge" id="bentoUserCount">0</span>
+        </div>
+        <div class="tile-body" id="adminUsersList">
+          <div class="empty">Cargando...</div>
+        </div>
+      </div>
+
+      <!-- Fila 3 · Sugerencias + Seguridad -->
+      <div class="bento-tile tile-wide tile-sugerencias">
+        <div class="tile-head">
+          <span class="tile-title">Sugerencias del agente</span>
+          <span class="tile-badge">auto</span>
+        </div>
+        <div class="tile-body" id="adminSugerencias">
+          <div class="empty">Cargando...</div>
+        </div>
+      </div>
+      <div class="bento-tile tile-wide tile-seguridad">
+        <div class="tile-head">
+          <span class="tile-title">Reporte de seguridad</span>
+          <span class="tile-badge">auto</span>
+        </div>
+        <div class="tile-body" id="adminSecurityReport">
+          <div class="empty">Cargando...</div>
+        </div>
+      </div>
+
+      <!-- Fila 4 · Conocimiento + Log -->
+      <div class="bento-tile tile-wide">
+        <div class="tile-head">
+          <span class="tile-title">Conocimiento compartido</span>
+          <span class="tile-badge">top</span>
+        </div>
+        <div class="tile-body" id="adminKBList">
+          <div class="empty">Cargando...</div>
+        </div>
+      </div>
+      <div class="bento-tile tile-wide tile-log">
+        <div class="tile-head">
+          <span class="tile-title">Log admin</span>
+          <span class="tile-badge">últimas</span>
+        </div>
+        <div class="tile-body" id="adminLogList">
+          <div class="empty">Cargando...</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -3681,17 +3826,19 @@ async function cargarPanelAdmin(){
   if (!AniaAPI.token) return toast('Sesión no válida', true);
 
   // ===== STATS =====
-  $('adminStats').textContent = 'Cargando estadísticas...';
+  $('adminStats').textContent = 'Actualizando...';
   try{
     const s = await AniaAPI.req('/ania/admin/knowledge-stats');
     const stats = await AniaAPI.req('/ania/admin/stats').catch(()=>({activos:0, bloqueados:0, admins:0, superadmins:0}));
-    $('adminStats').innerHTML =
-      '<b style="color:var(--acc)">' + s.totalUsuarios + '</b> usuarios ' +
-      '(<span style="color:var(--acc2)">' + (stats.activos||0) + ' activos</span>) · ' +
-      '<b style="color:var(--danger)">' + (stats.bloqueados||0) + '</b> bloqueados · ' +
-      '<b style="color:var(--amber)">' + (stats.admins||0) + '</b> admins · ' +
-      '<b style="color:var(--acc)">' + s.totalMemorias + '</b> memorias · ' +
-      '<b style="color:var(--acc)">' + s.totalConocimiento + '</b> conoc.';
+
+    // Tiles Bento
+    const elU = $('bentoTotalUsuarios'); if (elU) elU.textContent = s.totalUsuarios;
+    const elA = $('bentoActivos'); if (elA) elA.textContent = stats.activos || 0;
+    const elB = $('bentoBloqueados'); if (elB) elB.textContent = stats.bloqueados || 0;
+    const elC = $('bentoConocimiento'); if (elC) elC.textContent = s.totalConocimiento;
+    const elUC = $('bentoUserCount'); if (elUC) elUC.textContent = s.totalUsuarios + ' total';
+    $('adminStats').textContent =
+      stats.admins + ' admins · ' + stats.superadmins + ' superadmins · ' + s.totalMemorias + ' memorias privadas';
 
     const kbBox = $('adminKBList');
     if (!s.topConocimiento || !s.topConocimiento.length){
