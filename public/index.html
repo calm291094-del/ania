@@ -386,19 +386,24 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
     <div id="adminUsersList" style="max-height:50dvh;overflow-y:auto;margin-top:8px;">
       <div class="empty">Cargando...</div>
     </div>
+    
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">CONOCIMIENTO COMPARTIDO</h2>
-    
     <div id="adminKBList" style="max-height:30dvh;overflow-y:auto;margin-top:8px;">
       <div class="empty">Cargando...</div>
     </div>
-    <!-- ⬇️⬇️⬇️ NUEVO BLOQUE ⬇️⬇️⬇️ -->
+    
+    <hr>
+    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">REPORTE DE SEGURIDAD</h2>
+    <div id="adminSecurityReport" style="max-height:40dvh;overflow-y:auto;margin-top:8px;">
+      <div class="empty">Cargando...</div>
+    </div>
+    
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">SUGERENCIAS DEL AGENTE</h2>
     <div id="adminSugerencias" style="max-height:40dvh;overflow-y:auto;margin-top:8px;">
       <div class="empty">Cargando...</div>
     </div>
-    <!-- ⬆️⬆️⬆️ FIN NUEVO BLOQUE ⬆️⬆️⬆️ -->
   </div>
 </div>
   
@@ -3729,6 +3734,36 @@ async function cargarPanelAdmin(){
     $('adminSugerencias').innerHTML = '<div class="empty">Error al leer sugerencias</div>';
   }
 
+  // ===== REPORTE DE SEGURIDAD =====
+  try{
+    const rSec = await fetch('https://raw.githubusercontent.com/calm291094-del/ania/main/datos/security-report.json?t=' + Date.now());
+    const reporte = rSec.ok ? await rSec.json() : null;
+    const secBox = $('adminSecurityReport');
+    if (!reporte || !reporte.hallazgos || reporte.hallazgos.length === 0){
+      secBox.innerHTML = '<div class="empty">Sin hallazgos de seguridad 🎉</div>';
+    } else {
+      const res = reporte.resumen;
+      let html = '<p class="dim" style="font-size:11px;margin-bottom:8px;">' +
+        'Análisis: ' + new Date(reporte.fecha).toLocaleString('es-ES') + '<br>' +
+        '<span style="color:var(--danger)">' + res.critico + ' críticos</span> · ' +
+        '<span style="color:var(--amber)">' + res.alto + ' altos</span> · ' +
+        '<span style="color:var(--acc)">' + res.medio + ' medios</span> · ' +
+        '<span style="color:var(--dim)">' + res.bajo + ' bajos</span>' +
+        '</p>';
+      reporte.hallazgos.forEach(h => {
+        const color = h.severidad === 'critico' ? 'var(--danger)' : (h.severidad === 'alto' ? 'var(--amber)' : 'var(--acc)');
+        html += '<div style="padding:8px 2px;border-bottom:1px dashed rgba(45,224,138,.12);font-size:12px;">' +
+          '<span style="color:' + color + ';font-weight:bold;">[' + h.severidad.toUpperCase() + ']</span> ' +
+          '<span style="color:var(--text);">' + (h.descripcion || '') + '</span>' +
+          (h.solucion ? '<br><span style="color:var(--dim);font-size:11px;">→ ' + h.solucion + '</span>' : '') +
+          '</div>';
+      });
+      secBox.innerHTML = html;
+    }
+  }catch(eSec){
+    $('adminSecurityReport').innerHTML = '<div class="empty" style="color:var(--danger);">Error al leer el reporte de seguridad</div>';
+  }
+  
   // ===== USUARIOS =====
   try{
     const d = await AniaAPI.req('/ania/admin/users');
