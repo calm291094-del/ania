@@ -1,5 +1,52 @@
 [
   {
+    "mejoras": [
+      {
+        "titulo": "Reemplazar token manual con JWT estándar",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "El esquema actual crea y verifica tokens con HMAC manual, lo que dificulta la interoperabilidad y puede ser vulnerable a errores de expiración. Usar jsonwebtoken simplifica la implementación y permite validar firmas y expiraciones de forma segura.",
+        "como": "Instalar jsonwebtoken y usar jwt.sign(payload, secret, {expiresIn: '30d'}) para generar tokens, y jwt.verify(token, secret) en el middleware de autenticación."
+      },
+      {
+        "titulo": "Añadir protección de cabeceras con Helmet",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "Helmet configura cabeceras HTTP que previenen ataques comunes como XSS y clickjacking. Actualmente el servidor solo usa cors y express.json.",
+        "como": "Instalar helmet y usar app.use(helmet()); antes de otros middlewares."
+      },
+      {
+        "titulo": "Cachear respuestas de GitHub en memoria",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "Cada petición a /knowledge o /users lee directamente el repositorio, provocando latencia y sobrecarga. Cachear los archivos por tiempo corto reduce llamadas y mejora la respuesta.",
+        "como": "Implementar un Map con TTL, guardando JSON y SHA; usar en ghRead y ghWrite para servir desde cache cuando sea válido."
+      },
+      {
+        "titulo": "Validar cuerpo JSON en POST antes de procesar",
+        "categoria": "bug",
+        "prioridad": "baja",
+        "descripcion": "Si el cliente envía un cuerpo no JSON, express.json lanzará error 400 pero el código no captura y devuelve 500. Validar explícitamente evita errores inesperados.",
+        "como": "Añadir try/catch alrededor de req.body parse, devolver 400 si el parse falla."
+      },
+      {
+        "titulo": "Implementar paginación en /ania/knowledge",
+        "categoria": "ux",
+        "prioridad": "media",
+        "descripcion": "El endpoint devuelve todo el conocimiento, lo que puede llegar a ser pesado. Paginación mejora la experiencia del usuario y reduce la carga de datos.",
+        "como": "Aceptar parámetros ?page=&limit= en GET, calcular offset, y devolver subset junto con total y páginas."
+      }
+    ],
+    "fecha": "2026-09-24T13:54:08.362Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 19929,
+    "fuente": "ia"
+  },
+  {
     "resumen": "Mejorar seguridad, rendimiento y UX mientras se corrigen bugs y se añaden funcionalidades útiles.",
     "fecha": "2026-09-24T13:40:43.782Z",
     "analizadoPor": "Ania Auto-Agent (Pollinations)",
