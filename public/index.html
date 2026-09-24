@@ -1172,6 +1172,63 @@ $('registerBox').addEventListener('submit', async (e)=>{
   }
 });
 
+/* =====================================================================
+   PERSONALIZACIÓN · Lee el perfil del usuario y adapta la app
+===================================================================== */
+async function cargarPerfilYPersonalizar(){
+  if (!Session || !Session.id) return;
+  try{
+    const r = await fetch('https://cdn.jsdelivr.net/gh/calm291094-del/ania@main/datos/perfiles.json?t=' + Date.now());
+    if (!r.ok) return;
+    const perfiles = await r.json();
+    const p = perfiles[Session.id];
+    if (!p) return;
+
+    // Guardar el perfil en localStorage para uso futuro
+    store.set('miPerfil', p);
+
+    // Aplicar personalización
+    aplicarPersonalizacion(p);
+  }catch(e){ console.warn('[Personalización]', e.message); }
+}
+
+function aplicarPersonalizacion(p){
+  // 1. Chips personalizados según sus temas
+  const chipsPorTema = {
+    cafe:       ['¿Qué café me recomiendas?', 'Receta de pour-over'],
+    anime:      ['¿Qué anime veo hoy?', 'Tu personaje favorito'],
+    tech:       ['Ayúdame con código', 'Explícame una API'],
+    astronomia: ['¿Qué hay en el cielo hoy?', 'Fase lunar'],
+    zombies:    ['Plan de supervivencia', 'Mejor peli de zombies'],
+    comida:     ['¿Qué cocino hoy?', 'Receta rápida'],
+    trabajo:    ['Organiza mi día', 'Recuérdame una reunión'],
+    salud:      ['Consejo de descanso', 'Recordatorio de agua']
+  };
+
+  const chipsBase = ['Piénsalo: opina del café', 'Ponme música', 'Prepara mi día'];
+  const chipsTemas = (p.temas || []).flatMap(t => chipsPorTema[t] || []).slice(0, 3);
+  const chipsFinales = [...chipsTemas, ...chipsBase].slice(0, 6);
+
+  // Guardar para usarlos en el arranque
+  store.set('chipsPersonalizados', chipsFinales);
+
+  // 2. Saludo personalizado en el chat
+  const saludoHora = { mañana:'Buenos días', tarde:'Buenas tardes', noche:'Buenas noches', madrugada:'Buenas noches' }[p.horario] || 'Hola';
+  store.set('saludoPersonalizado', `${saludoHora}, ${p.nombre}.`);
+
+  console.log('🎨 Personalización aplicada:', p.temas.join(', ') || 'sin temas');
+}
+
+// Cargar el perfil al iniciar sesión
+const _finishLoginPersonalizacion = finishLogin;
+finishLogin = function(u){
+  _finishLoginPersonalizacion(u);
+  setTimeout(cargarPerfilYPersonalizar, 1000);
+};
+
+setTimeout(()=>{
+  if (AniaAPI.token && !Session){
+  
 /* Al arrancar: si hay token pero no sesión local, sincronizar */
 setTimeout(()=>{
   if (AniaAPI.token && !Session){
@@ -4144,7 +4201,8 @@ const BOOTLINES = [
   else msg += 'Prueba: «piénsalo», «oído local» o «¿qué hablamos de café?». ';
   setTimeout(()=>{
     personaReply(msg, msg.slice(0,300));
-    renderChips(['Piénsalo: ¿qué opinas del café?','¿Qué hablamos de café?','Ponme música','Prepara mi día','Adivina mi personaje']);
+    const chipsPers = store.get('chipsPersonalizados', null);
+    renderChips(chipsPers || ['Piénsalo: ¿qué opinas del café?','¿Qué hablamos de café?','Ponme música','Prepara mi día','Adivina mi personaje']);
   }, 500);
 };
 </script>
