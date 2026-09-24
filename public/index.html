@@ -3639,13 +3639,18 @@ async function cargarPanelAdmin(){
   if (!esAdmin()) return toast('Solo administradores', true);
   if (!AniaAPI.token) return toast('Sesión no válida', true);
 
+  // ===== STATS =====
   $('adminStats').textContent = 'Cargando estadísticas...';
   try{
     const s = await AniaAPI.req('/ania/admin/knowledge-stats');
+    const stats = await AniaAPI.req('/ania/admin/stats').catch(()=>({activos:0, bloqueados:0, admins:0, superadmins:0}));
     $('adminStats').innerHTML =
-      '<b style="color:var(--acc)">' + s.totalUsuarios + '</b> usuarios · ' +
-      '<b style="color:var(--acc)">' + s.totalMemorias + '</b> memorias privadas · ' +
-      '<b style="color:var(--acc)">' + s.totalConocimiento + '</b> entradas de conocimiento';
+      '<b style="color:var(--acc)">' + s.totalUsuarios + '</b> usuarios ' +
+      '(<span style="color:var(--acc2)">' + (stats.activos||0) + ' activos</span>) · ' +
+      '<b style="color:var(--danger)">' + (stats.bloqueados||0) + '</b> bloqueados · ' +
+      '<b style="color:var(--amber)">' + (stats.admins||0) + '</b> admins · ' +
+      '<b style="color:var(--acc)">' + s.totalMemorias + '</b> memorias · ' +
+      '<b style="color:var(--acc)">' + s.totalConocimiento + '</b> conoc.';
 
     const kbBox = $('adminKBList');
     if (!s.topConocimiento || !s.topConocimiento.length){
@@ -3658,36 +3663,37 @@ async function cargarPanelAdmin(){
         '</div>'
       ).join('');
     }
-    // ⬇️⬇️⬇️ NUEVO BLOQUE ⬇️⬇️⬇️
-    try{
-      const rSug = await fetch('https://raw.githubusercontent.com/calm291094-del/ania/main/datos/sugerencias.json?t=' + Date.now());
-      const historial = rSug.ok ? await rSug.json() : [];
-      const box = $('adminSugerencias');
-      if (!historial.length){
-        box.innerHTML = '<div class="empty">Sin análisis todavía</div>';
-      } else {
-        const ult = historial[0];
-        const fecha = new Date(ult.fecha).toLocaleString('es-ES');
-        let html = '<p class="dim" style="font-size:11px;margin-bottom:8px;">' + fecha + ' · ' + ult.resumen + '</p>';
-        ult.mejoras.forEach(m => {
-          const color = m.prioridad === 'alta' ? 'var(--danger)' : (m.prioridad === 'media' ? 'var(--amber)' : 'var(--acc)');
-          html += '<div class="memRow" style="padding:10px 2px;border-bottom:1px dashed rgba(45,224,138,.12);">' +
-            '<span class="k" style="color:' + color + ';">' + m.prioridad.toUpperCase() + '</span>' +
-            '<span class="v"><b style="color:var(--text);">' + m.titulo + '</b><br>' +
-            '<span style="color:var(--dim);font-size:11px;">[' + m.categoria + '] ' + m.descripcion + '</span><br>' +
-            '<span style="color:var(--acc2);font-size:11px;font-style:italic;">→ ' + m.como + '</span></span>' +
-            '</div>';
-        });
-        box.innerHTML = html;
-      }
-    }catch(eSug){
-      $('adminSugerencias').innerHTML = '<div class="empty">Error al leer sugerencias</div>';
-    }
-    // ⬆️⬆️⬆️ FIN NUEVO BLOQUE ⬆️⬆️⬆️
   }catch(e){
     $('adminStats').textContent = '✖ ' + e.message;
   }
 
+  // ===== SUGERENCIAS DEL AGENTE =====
+  try{
+    const rSug = await fetch('https://raw.githubusercontent.com/calm291094-del/ania/main/datos/sugerencias.json?t=' + Date.now());
+    const historial = rSug.ok ? await rSug.json() : [];
+    const box = $('adminSugerencias');
+    if (!historial.length){
+      box.innerHTML = '<div class="empty">Sin análisis todavía</div>';
+    } else {
+      const ult = historial[0];
+      const fecha = new Date(ult.fecha).toLocaleString('es-ES');
+      let html = '<p class="dim" style="font-size:11px;margin-bottom:8px;">' + fecha + ' · ' + (ult.analizadoPor || '') + '</p>';
+      ult.mejoras.forEach(m => {
+        const color = m.prioridad === 'alta' ? 'var(--danger)' : (m.prioridad === 'media' ? 'var(--amber)' : 'var(--acc)');
+        html += '<div class="memRow" style="padding:10px 2px;border-bottom:1px dashed rgba(45,224,138,.12);">' +
+          '<span class="k" style="color:' + color + ';">' + m.prioridad.toUpperCase() + '</span>' +
+          '<span class="v"><b style="color:var(--text);">' + m.titulo + '</b><br>' +
+          '<span style="color:var(--dim);font-size:11px;">[' + m.categoria + '] ' + m.descripcion + '</span><br>' +
+          '<span style="color:var(--acc2);font-size:11px;font-style:italic;">→ ' + m.como + '</span></span>' +
+          '</div>';
+      });
+      box.innerHTML = html;
+    }
+  }catch(eSug){
+    $('adminSugerencias').innerHTML = '<div class="empty">Error al leer sugerencias</div>';
+  }
+
+  // ===== USUARIOS =====
   try{
     const d = await AniaAPI.req('/ania/admin/users');
     const lista = $('adminUsersList');
@@ -3696,39 +3702,76 @@ async function cargarPanelAdmin(){
     } else {
       lista.innerHTML = d.usuarios.map(u => {
         const fecha = new Date(u.creado).toLocaleDateString('es-ES');
+        const ultAcc = u.ultimoAcceso ? new Date(u.ultimoAcceso).toLocaleDateString('es-ES') : '—';
         const rolColor = u.rol === 'superadmin' ? 'var(--danger)' : (u.rol === 'admin' ? 'var(--amber)' : 'var(--acc)');
         const esYo = Session && Session.id === u.id;
-        const puedo = esSuperAdmin() && !esYo && u.rol !== 'superadmin';
+        const puedoRol = esSuperAdmin() && !esYo && u.rol !== 'superadmin';
+        const puedoBloquear = esAdmin() && !esYo && u.rol !== 'superadmin';
+        const puedoEliminar = esSuperAdmin() && !esYo && u.rol !== 'superadmin';
 
-        let acciones = '';
-        if (puedo){
+        const estado = u.bloqueado
+          ? '<span style="color:var(--danger);font-size:10px;">● BLOQUEADO</span>'
+          : '<span style="color:var(--acc2);font-size:10px;">● ACTIVO</span>';
+
+        let acciones = '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">';
+        if (puedoRol){
           const nuevoRol = u.rol === 'admin' ? 'user' : 'admin';
           const etiqueta = u.rol === 'admin' ? 'QUITAR ADMIN' : 'HACER ADMIN';
-          acciones =
-            '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">' +
-            '<button class="chip" data-action="role" data-id="' + u.id + '" data-rol="' + nuevoRol + '" style="font-size:10px;">' + etiqueta + '</button>' +
-            '<button class="chip" data-action="reset" data-id="' + u.id + '" style="font-size:10px;">RESET PASS</button>' +
-            '</div>';
+          acciones += '<button class="chip" data-action="role" data-id="' + u.id + '" data-rol="' + nuevoRol + '" style="font-size:10px;">' + etiqueta + '</button>';
         }
+        if (puedoBloquear){
+          acciones += '<button class="chip" data-action="block" data-id="' + u.id + '" style="font-size:10px;">' + (u.bloqueado ? 'DESBLOQUEAR' : 'BLOQUEAR') + '</button>';
+        }
+        acciones += '<button class="chip" data-action="reset" data-id="' + u.id + '" style="font-size:10px;">RESET PASS</button>';
+        if (puedoEliminar){
+          acciones += '<button class="chip" data-action="delete" data-id="' + u.id + '" style="font-size:10px;color:var(--danger);border-color:rgba(255,84,112,.4);">ELIMINAR</button>';
+        }
+        acciones += '</div>';
 
         return '<div class="memRow" style="padding:10px 2px;border-bottom:1px dashed rgba(45,224,138,.12);">' +
-          '<span class="k" style="color:' + rolColor + ';">' + u.rol.toUpperCase() + '</span>' +
+          '<span class="k" style="color:' + rolColor + ';">' + u.rol.toUpperCase() + '<br>' + estado + '</span>' +
           '<span class="v"><b style="color:var(--text);">' + u.nombre + '</b>' + (esYo ? ' <span style="color:var(--dim);font-size:10px;">(tú)</span>' : '') + '<br>' +
-          '<span style="color:var(--dim);font-size:11px;">@' + u.usuario + ' · ' + u.email + ' · ' + fecha + '</span>' +
+          '<span style="color:var(--dim);font-size:11px;">@' + u.usuario + ' · ' + u.email + '</span><br>' +
+          '<span style="color:var(--dim);font-size:10px;">reg: ' + fecha + ' · últ. acceso: ' + ultAcc + '</span>' +
           acciones + '</span>' +
           '</div>';
       }).join('');
 
+      // ---- Acciones por botón ----
       lista.querySelectorAll('[data-action="role"]').forEach(b => {
         b.onclick = async ()=>{
-          if (!confirm('¿Cambiar rol de este usuario?')) return;
+          if (!confirm('¿Cambiar rol?')) return;
           try{
             await AniaAPI.req('/ania/admin/set-role', {
               method:'POST',
               body: JSON.stringify({ userId: b.dataset.id, rol: b.dataset.rol })
             });
-            toast('Rol actualizado');
+            toast('Rol actualizado'); cargarPanelAdmin();
+          }catch(e){ toast(e.message, true); }
+        };
+      });
+      lista.querySelectorAll('[data-action="block"]').forEach(b => {
+        b.onclick = async ()=>{
+          try{
+            const r = await AniaAPI.req('/ania/admin/toggle-block', {
+              method:'POST',
+              body: JSON.stringify({ userId: b.dataset.id })
+            });
+            toast(r.bloqueado ? 'Usuario bloqueado' : 'Usuario desbloqueado');
             cargarPanelAdmin();
+          }catch(e){ toast(e.message, true); }
+        };
+      });
+      lista.querySelectorAll('[data-action="delete"]').forEach(b => {
+        b.onclick = async ()=>{
+          if (!confirm('⚠ ELIMINAR usuario y su memoria. ¿Seguro?')) return;
+          if (!confirm('Última confirmación. Esta acción es irreversible.')) return;
+          try{
+            await AniaAPI.req('/ania/admin/delete-user', {
+              method:'POST',
+              body: JSON.stringify({ userId: b.dataset.id })
+            });
+            toast('Usuario eliminado'); cargarPanelAdmin();
           }catch(e){ toast(e.message, true); }
         };
       });
