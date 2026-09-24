@@ -363,6 +363,7 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
     <button class="dbtn" id="btnLib"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h7M8 11h7"/></svg>BIBLIOTECA</button>
     <button class="dbtn" id="btnInstall"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 7v7"/><path d="M9.5 11.5 12 14l2.5-2.5"/></svg>INSTALAR</button>
     <button class="dbtn" id="btnAdmin" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>ADMIN</button>
+    <button class="dbtn" id="btnPerfil" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2"/></svg>PERFIL</button>
     <button class="dbtn" id="btnSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/></svg>AJUSTES</button>
   </nav>
 </div>
@@ -559,6 +560,59 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="overlay" id="perfilModal">
+  <div class="modal" style="width:min(720px,100%);max-width:720px;">
+    <h2>MI PERFIL
+      <button class="xbtn" data-close style="margin-left:auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </h2>
+    <p class="dim" id="perfilSubtitulo" style="font-size:11px;margin-bottom:14px;">Cargando tu perfil...</p>
+
+    <div class="bento-grid">
+      <!-- Fila 1 · Stats rápidas -->
+      <div class="bento-tile tile-stat">
+        <div class="stat-num" id="perfilInteracciones">—</div>
+        <div class="stat-lbl">Interacciones</div>
+      </div>
+      <div class="bento-tile tile-stat">
+        <div class="stat-num" id="perfilHechos">—</div>
+        <div class="stat-lbl">Hechos</div>
+      </div>
+      <div class="bento-tile tile-stat">
+        <div class="stat-num" id="perfilGustos">—</div>
+        <div class="stat-lbl">Gustos</div>
+      </div>
+      <div class="bento-tile tile-stat">
+        <div class="stat-num" id="perfilLongitud">—</div>
+        <div class="stat-lbl">Long. media</div>
+      </div>
+
+      <!-- Fila 2 · Temas + Tono -->
+      <div class="bento-tile tile-wide">
+        <div class="tile-head">
+          <span class="tile-title">Tus temas favoritos</span>
+          <span class="tile-badge">detectados</span>
+        </div>
+        <div class="tile-body" id="perfilTemas">
+          <div class="empty">Cargando...</div>
+        </div>
+      </div>
+      <div class="bento-tile tile-wide">
+        <div class="tile-head">
+          <span class="tile-title">Tu estilo</span>
+          <span class="tile-badge">tono</span>
+        </div>
+        <div class="tile-body" id="perfilEstilo">
+          <div class="empty">Cargando...</div>
+        </div>
+      </div>
+    </div>
+
+    <p class="dim" id="perfilPie" style="font-size:10px;margin-top:14px;text-align:center;">
+      Este perfil se actualiza automáticamente cada día con tu actividad. Solo tú puedes verlo.
+    </p>
   </div>
 </div>
   
@@ -4079,6 +4133,100 @@ finishLogin = function(u){
   setTimeout(refrescarBotonAdmin, 150);
 };
 setTimeout(refrescarBotonAdmin, 2000);
+
+/* =====================================================================
+   PERFIL DEL USUARIO
+===================================================================== */
+function refrescarBotonPerfil(){
+  const b = $('btnPerfil');
+  if (!b) return;
+  b.style.display = Session ? 'flex' : 'none';
+}
+
+async function cargarMiPerfil(){
+  if (!Session || !AniaAPI.token) return;
+
+  $('perfilSubtitulo').textContent = 'Cargando...';
+  try{
+    const d = await AniaAPI.req('/ania/me/perfil');
+    if (!d.ok){
+      $('perfilSubtitulo').textContent = d.error || 'Sin perfil generado todavía';
+      return;
+    }
+
+    const p = d.perfil;
+    const s = d.stats;
+
+    // Stats numéricas
+    $('perfilInteracciones').textContent = p.interacciones || 0;
+    $('perfilHechos').textContent = s.hechos || 0;
+    $('perfilGustos').textContent = s.gustos || 0;
+    $('perfilLongitud').textContent = p.longitudMedia || 0;
+
+    // Subtítulo
+    const fecha = p.actualizado ? new Date(p.actualizado).toLocaleDateString('es-ES') : '—';
+    $('perfilSubtitulo').textContent = p.nombre + ' · actualizado el ' + fecha;
+
+    // Temas
+    const temasBox = $('perfilTemas');
+    const nombresTemas = {
+      cafe:'☕ Café', anime:'🎌 Anime', tech:'💻 Tecnología',
+      astronomia:'🌌 Astronomía', zombies:'🧟 Zombies',
+      comida:'🍕 Comida', trabajo:'💼 Trabajo', salud:'💚 Salud'
+    };
+    if (!p.temas || !p.temas.length){
+      temasBox.innerHTML = '<div class="empty">Aún no tengo suficientes datos para detectar tus temas. Sigue hablando conmigo.</div>';
+    } else {
+      temasBox.innerHTML = p.temas.map((t, i) => {
+        const color = i === 0 ? 'var(--acc2)' : (i === 1 ? 'var(--amber)' : 'var(--acc)');
+        return '<div style="padding:8px 0;border-bottom:1px dashed rgba(45,224,138,.12);display:flex;align-items:center;gap:10px;">' +
+          '<span style="font-size:20px;">' + (nombresTemas[t] || '·') + '</span>' +
+          '<span style="font-size:13px;color:' + color + ';letter-spacing:.1em;">' + t.toUpperCase() + '</span>' +
+          '</div>';
+      }).join('');
+    }
+
+    // Estilo
+    const estiloBox = $('perfilEstilo');
+    const tonoTexto = {
+      'formal':'📝 Formal · prefieres comunicación estructurada',
+      'informal':'😎 Informal · te gusta el lenguaje relajado',
+      'neutro':'⚖️ Neutro · adaptas tu tono al contexto',
+      'informal-expresivo':'🎉 Informal y expresivo · usas emojis y lenguaje vivo',
+      'formal-expresivo':'🎩 Formal pero expresivo · cuidas las formas sin perder calidez',
+      'neutro-urgente':'⚡ Neutro y directo · vas al grano',
+      'informal-urgente':'🔥 Informal y urgente · pides rapidez sin rodeos'
+    }[p.tono] || p.tono;
+    const horarioTexto = {
+      'mañana':'🌅 Eres más activo por la mañana',
+      'tarde':'☀️ Eres más activo por la tarde',
+      'noche':'🌙 Eres más activo por la noche',
+      'madrugada':'🌌 Eres noctámbulo',
+      'variable':'🕐 Tus horarios son variables'
+    }[p.horario] || p.horario;
+
+    estiloBox.innerHTML =
+      '<div style="padding:8px 0;border-bottom:1px dashed rgba(45,224,138,.12);font-size:13px;">' + tonoTexto + '</div>' +
+      '<div style="padding:8px 0;font-size:13px;">' + horarioTexto + '</div>';
+  }catch(e){
+    $('perfilSubtitulo').textContent = '✖ ' + e.message;
+  }
+}
+
+if ($('btnPerfil')){
+  $('btnPerfil').onclick = ()=>{
+    openModal('perfilModal');
+    cargarMiPerfil();
+  };
+}
+
+// Refrescar visibilidad tras login
+const _finishLoginPerfil = finishLogin;
+finishLogin = function(u){
+  _finishLoginPerfil(u);
+  setTimeout(refrescarBotonPerfil, 200);
+};
+setTimeout(refrescarBotonPerfil, 2000);
   
  $('btnSettings').onclick = ()=>{ renderVoiceSelect(); fillSess(); updateDocsUI(); updatePCUI(); paintAgent(); Brain.paint(); refreshEarsUI(); refreshRelayUI(); openModal('settingsModal'); };
 function renderVoiceSelect(){
