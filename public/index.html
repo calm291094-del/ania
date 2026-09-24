@@ -1225,10 +1225,7 @@ finishLogin = function(u){
   _finishLoginPersonalizacion(u);
   setTimeout(cargarPerfilYPersonalizar, 1000);
 };
-
-setTimeout(()=>{
-  if (AniaAPI.token && !Session){
-  
+ 
 /* Al arrancar: si hay token pero no sesión local, sincronizar */
 setTimeout(()=>{
   if (AniaAPI.token && !Session){
