@@ -4111,6 +4111,34 @@ async function cargarPanelAdmin(){
   }catch(eSec){
     $('adminSecurityReport').innerHTML = '<div class="empty" style="color:var(--danger);">✖ ' + eSec.message + '</div>';
   }
+
+  // ===== LOG DE ACCIONES ADMIN =====
+  try{
+    const dLog = await AniaAPI.req('/ania/admin/log');
+    const logBox = $('adminLogList');
+    if (!logBox){
+      console.warn('No existe #adminLogList');
+    } else if (!dLog.log || !dLog.log.length){
+      logBox.innerHTML = '<div class="empty" style="font-size:11px;">Sin acciones registradas</div>';
+    } else {
+      logBox.innerHTML = dLog.log.map(e => {
+        const fecha = new Date(e.t).toLocaleString('es-ES', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+        const color = /eliminar/.test(e.accion) ? 'var(--danger)' : (/bloquear/.test(e.accion) ? 'var(--amber)' : 'var(--acc)');
+        const target = e.target ? (' → ' + e.target.usuario) : '';
+        const detalles = e.detalles ? (' · ' + e.detalles) : '';
+        return '<div style="padding:8px 2px;border-bottom:1px dashed rgba(45,224,138,.12);font-size:11px;line-height:1.5;">' +
+          '<span style="color:var(--dim);font-size:9px;letter-spacing:.05em;">' + fecha + '</span><br>' +
+          '<span style="color:var(--acc2);">@' + e.admin.usuario + '</span> ' +
+          '<span style="color:' + color + ';font-weight:bold;">' + e.accion + '</span>' +
+          '<span style="color:var(--text);">' + target + '</span>' +
+          '<span style="color:var(--dim);font-size:10px;">' + detalles + '</span>' +
+          '</div>';
+      }).join('');
+    }
+  }catch(eLog){
+    const logBox = $('adminLogList');
+    if (logBox) logBox.innerHTML = '<div class="empty" style="color:var(--danger);font-size:11px;">✖ ' + eLog.message + '</div>';
+  }
   
   // ===== USUARIOS =====
   try{
