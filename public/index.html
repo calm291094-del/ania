@@ -1236,7 +1236,7 @@ $('registerBox').addEventListener('submit', async (e)=>{
 async function cargarPerfilYPersonalizar(){
   if (!Session || !Session.id) return;
   try{
-    const r = await fetch('https://cdn.jsdelivr.net/gh/calm291094-del/ania@main/datos/perfiles.json?t=' + Date.now());
+    const r = await fetch(CONFIG.ANIA_API + '/ania/public/perfiles.json');
     if (!r.ok) return;
     const perfiles = await r.json();
     const p = perfiles[Session.id];
@@ -4058,7 +4058,7 @@ async function cargarPanelAdmin(){
 
   // ===== SUGERENCIAS DEL AGENTE =====
   try{
-    const rSug = await fetch('https://cdn.jsdelivr.net/gh/calm291094-del/ania@main/datos/sugerencias.json?t=' + Date.now());
+    const rSug = await fetch(CONFIG.ANIA_API + '/ania/public/sugerencias.json');
     const historial = rSug.ok ? await rSug.json() : [];
     const box = $('adminSugerencias');
     if (!historial.length){
