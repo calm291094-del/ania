@@ -342,6 +342,7 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">SESIÓN Y BACKUP</h2>
     <p class="dim" id="sessInfo">Sin sesión.</p>
+    <button class="bigbtn" id="btnChangePass">CAMBIAR MI CONTRASEÑA</button>
     <button class="bigbtn" id="logoutBtn">CERRAR SESIÓN</button>
     <button class="bigbtn" id="btnBackupExp">EXPORTAR TODO (.JSON)</button>
     <button class="bigbtn" id="btnBackupImp">RESTAURAR BACKUP</button>
@@ -355,6 +356,19 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
   </div>
 </div>
 
+<div class="overlay" id="passModal">
+  <div class="modal">
+    <h2>CAMBIAR CONTRASEÑA
+      <button class="xbtn" data-close style="margin-left:auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </h2>
+    <input id="passActual" type="password" placeholder="Contraseña actual" style="width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:15px;padding:11px 13px;margin-bottom:8px;">
+    <input id="passNueva" type="password" placeholder="Nueva contraseña (mín 6)" style="width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:15px;padding:11px 13px;margin-bottom:8px;">
+    <input id="passNueva2" type="password" placeholder="Repite la nueva" style="width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:15px;padding:11px 13px;margin-bottom:8px;">
+    <div id="passMsg" style="font-size:11px; color:var(--dim); min-height:16px; margin-bottom:8px;"></div>
+    <button class="bigbtn" id="savePassBtn">GUARDAR CAMBIO</button>
+  </div>
+</div>
+  
 <div id="toasts"></div>
 <input type="file" id="docDir" webkitdirectory multiple style="display:none">
 <input type="file" id="pcDir" webkitdirectory multiple style="display:none">
@@ -3538,6 +3552,47 @@ document.querySelectorAll('.overlay').forEach(ov=>{
   ov.addEventListener('click', e=>{ if(e.target===ov) ov.classList.remove('on'); });
   ov.querySelectorAll('[data-close]').forEach(b=> b.onclick = ()=> ov.classList.remove('on'));
 });
+
+/* =====================================================================
+   CAMBIO DE CONTRASEÑA
+===================================================================== */
+if ($('btnChangePass')){
+  $('btnChangePass').onclick = ()=>{
+    $('passActual').value = '';
+    $('passNueva').value = '';
+    $('passNueva2').value = '';
+    $('passMsg').textContent = '';
+    openModal('passModal');
+  };
+}
+
+if ($('savePassBtn')){
+  $('savePassBtn').onclick = async ()=>{
+    const msg = $('passMsg');
+    const set = (t,err)=>{ msg.textContent=t; msg.style.color = err?'var(--danger)':'var(--acc)'; };
+    const actual = $('passActual').value;
+    const nueva = $('passNueva').value;
+    const nueva2 = $('passNueva2').value;
+
+    if (!actual) return set('Falta la contraseña actual.', true);
+    if (nueva.length < 6) return set('La nueva debe tener mínimo 6 caracteres.', true);
+    if (nueva !== nueva2) return set('Las nuevas no coinciden.', true);
+
+    set('Cambiando...');
+    try{
+      await AniaAPI.req('/ania/me/password', {
+        method:'POST',
+        body: JSON.stringify({ actual, nueva })
+      });
+      set('✔ Contraseña cambiada', false);
+      setTimeout(()=> $('passModal').classList.remove('on'), 1500);
+    }catch(e){
+      set('✖ ' + e.message, true);
+    }
+  };
+}
+
+  
  $('btnSettings').onclick = ()=>{ renderVoiceSelect(); fillSess(); updateDocsUI(); updatePCUI(); paintAgent(); Brain.paint(); refreshEarsUI(); refreshRelayUI(); openModal('settingsModal'); };
 function renderVoiceSelect(){
   const sel = $('voiceSelect');
