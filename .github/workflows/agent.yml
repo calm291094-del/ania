@@ -1,0 +1,38 @@
+name: Ania Auto-Improvement Agent
+
+on:
+  schedule:
+    # Cada día a las 3am UTC (madrugada en Cuba/España)
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Ejecutar agente
+        run: node agente/mejoras.js
+
+      - name: Commit y push sugerencias
+        run: |
+          git config user.name "Ania Agent"
+          git config user.email "ania-agent@users.noreply.github.com"
+          git add datos/sugerencias.json
+          git diff --staged --quiet && echo "Sin cambios" && exit 0
+          git commit -m "Ania: análisis automático $(date +%Y-%m-%d)"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
