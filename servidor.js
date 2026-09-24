@@ -509,6 +509,35 @@ app.get('/ania/admin/stats', auth, async (req,res)=>{
   }
 });
 
+/* ==================== PERFIL DEL USUARIO ==================== */
+app.get('/ania/me/perfil', auth, async (req,res)=>{
+  try{
+    const perfilUrl = 'https://cdn.jsdelivr.net/gh/calm291094-del/ania@main/datos/perfiles.json?t=' + Date.now();
+    const r = await fetch(perfilUrl);
+    if (!r.ok) return res.json({ ok:false, error:'perfil no disponible aún' });
+    const perfiles = await r.json();
+    const miPerfil = perfiles[req.user.id];
+    if (!miPerfil) return res.json({ ok:false, error:'sin perfil generado todavía' });
+
+    // Añadir estadísticas de memoria
+    const mem = await loadMemories();
+    const miMemoria = mem[req.user.id] || {};
+
+    res.json({
+      ok: true,
+      perfil: miPerfil,
+      stats: {
+        hechos: Array.isArray(miMemoria.hechos) ? miMemoria.hechos.length : 0,
+        gustos: Array.isArray(miMemoria.gustos) ? miMemoria.gustos.length : 0,
+        ultimaActualizacion: miMemoria.actualizado || null
+      }
+    });
+  }catch(e){
+    console.error('me/perfil:', e);
+    res.status(500).json({ error:'error al leer perfil' });
+  }
+});
+
 /* ==================== ESTÁTICOS + SPA ==================== */
 app.use(express.static(PUBLIC_DIR, {
   dotfiles: 'deny',
