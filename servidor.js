@@ -27,6 +27,21 @@ if (MISSING.length) console.error('⚠ Faltan env vars:', MISSING.join(', '));
 
 const KEY = crypto.createHash('sha256').update(ANIA_SECRET || 'fallback').digest();
 
+/* ==================== CACHÉ DE GITHUB (TTL 30s) ==================== */
+const GHCache = {
+  store: new Map(),
+  TTL: 30000,
+  get(key){
+    const e = this.store.get(key);
+    if (!e) return null;
+    if (Date.now() - e.t > this.TTL){ this.store.delete(key); return null; }
+    return e.value;
+  },
+  set(key, value){ this.store.set(key, { value, t: Date.now() }); },
+  invalidate(key){ this.store.delete(key); },
+  clear(){ this.store.clear(); }
+};
+
 /* ==================== CIFRADO ==================== */
 function encrypt(obj){
   const iv = crypto.randomBytes(12);
@@ -45,12 +60,20 @@ function decrypt(b64){
 
 /* ==================== GITHUB API ==================== */
 async function ghRead(p){
+  const cached = GHCache.get('read:' + p);
+  if (cached !== null) return cached;
+
   const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${p}?ref=${BRANCH}`,
     { headers:{ Authorization:`Bearer ${GITHUB_TOKEN}`, Accept:'application/vnd.github+json' }});
-  if (r.status === 404) return null;
+  if (r.status === 404){
+    GHCache.set('read:' + p, null);
+    return null;
+  }
   if (!r.ok) throw new Error('gh read '+r.status);
   const j = await r.json();
-  return { content: Buffer.from(j.content,'base64').toString('utf8'), sha: j.sha };
+  const result = { content: Buffer.from(j.content,'base64').toString('utf8'), sha: j.sha };
+  GHCache.set('read:' + p, result);
+  return result;
 }
 async function ghWrite(p, content, msg){
   let sha = null;
@@ -68,6 +91,8 @@ async function ghWrite(p, content, msg){
     body: JSON.stringify(body)
   });
   if (!r.ok) throw new Error('gh write '+r.status+' '+await r.text());
+  // Invalidar caché del archivo tras escribir
+  GHCache.invalidate('read:' + p);
   return r.json();
 }
 
