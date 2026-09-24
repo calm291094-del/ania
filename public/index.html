@@ -456,6 +456,7 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">SESIÓN Y BACKUP</h2>
     <p class="dim" id="sessInfo">Sin sesión.</p>
+    <button class="bigbtn" id="btnNotif">ACTIVAR NOTIFICACIONES</button>
     <button class="bigbtn" id="btnChangePass">CAMBIAR MI CONTRASEÑA</button>
     <button class="bigbtn" id="logoutBtn">CERRAR SESIÓN</button>
     <button class="bigbtn" id="btnBackupExp">EXPORTAR TODO (.JSON)</button>
@@ -3029,14 +3030,60 @@ function fireTask(tk){
   if(tk.done || (tk.fired && !tk.recur)) return;
   ensureAudio(); alarmSound(); vibrate([200,100,200]);
   toast('Recordatorio: '+tk.text);
-  notify('ANIA · Recordatorio', tk.text);
+  notify('ANIA · Recordatorio', tk.text, { tag: 'task-'+tk.id, important: true });
   if(tk.recur){ reply('Recordatorio: '+tk.text+'. '+recurLabel(tk.recur)+'.', 'Recordatorio: '+tk.text); tk.when = nextRecur(tk.when, tk.recur); tk.fired=false; scheduleTask(tk); }
   else { tk.fired = true; reply('Recordatorio: '+tk.text+'. «pospón 10 minutos».', 'Recordatorio: '+tk.text); }
   saveTasks(); renderTasks();
 }
-function notify(title, body){
-  try{ if('Notification' in window && Notification.permission==='granted') new Notification(title, {body}); }catch(e){}
+
+function notify(title, body, opts){
+  try{
+    if (!('Notification' in window)) return false;
+    if (Notification.permission !== 'granted') return false;
+    const o = opts || {};
+    const n = new Notification(title, {
+      body,
+      icon: './icon.svg',
+      badge: './icon.svg',
+      tag: o.tag || 'ania',
+      requireInteraction: !!o.important,
+      vibrate: [180,80,180]
+    });
+    n.onclick = ()=>{ try{ window.focus(); }catch(e){} n.close(); };
+    setTimeout(()=>{ try{ n.close(); }catch(e){} }, o.important ? 20000 : 8000);
+    return true;
+  }catch(e){ return false; }
 }
+
+function actualizarBotonNotif(){
+  const b = $('btnNotif');
+  if (!b) return;
+  if (!('Notification' in window)){ b.textContent = 'NOTIFICACIONES NO SOPORTADAS'; return; }
+  const p = Notification.permission;
+  if (p === 'granted') b.textContent = 'NOTIFICACIONES: ACTIVAS';
+  else if (p === 'denied') b.textContent = 'NOTIFICACIONES: BLOQUEADAS';
+  else b.textContent = 'ACTIVAR NOTIFICACIONES';
+}
+
+async function pedirPermisoNotif(){
+  if (!('Notification' in window)) return toastError('Tu navegador no soporta notificaciones');
+  if (Notification.permission === 'granted'){ toast('Ya tienes notificaciones activas'); return; }
+  if (Notification.permission === 'denied'){ toastError('Bloqueadas en el navegador. Actívalas en la barra de URL.'); return; }
+  try{
+    const p = await Notification.requestPermission();
+    actualizarBotonNotif();
+    if (p === 'granted'){
+      toast('Notificaciones activadas');
+      setTimeout(()=> notify('ANIA', 'Notificaciones activadas. Te avisaré aunque no estés mirando.', { tag:'welcome' }), 400);
+    } else {
+      toastError('Permiso denegado');
+    }
+  }catch(e){ toastError('No pude pedir permiso'); }
+}
+
+if ($('btnNotif')) $('btnNotif').addEventListener('click', pedirPermisoNotif);
+setTimeout(actualizarBotonNotif, 1500);
+  
  $('addTaskBtn').onclick = ()=>{
   const text = $('taskInput').value.trim();
   if(!text) return;
@@ -4340,6 +4387,18 @@ const BOOTLINES = [
   let msg = saludo+nom+'. v10: ahora converso de verdad incluso sin internet y sin cerebro — mi LocalMind usa lo que me enseñaste (entrenamiento interno), tus documentos y lo que hablamos. ';
   if(isOffline()) msg += 'Estamos sin red y no me nota: pregúntame algo. ';
   else msg += 'Prueba: «piénsalo», «oído local» o «¿qué hablamos de café?». ';
+
+  // Notificación de bienvenida (una vez al día)
+  try{
+    if (Notification.permission === 'granted'){
+      const lastNotif = store.get('lastWelcomeNotif', 0);
+      if (Date.now() - lastNotif > 20*3600*1000){
+        store.set('lastWelcomeNotif', Date.now());
+        setTimeout(()=> notify('ANIA', 'Estoy lista. ¿Qué necesitas?', { tag:'welcome-daily' }), 2500);
+      }
+    }
+  }catch(e){}
+   
   setTimeout(()=>{
     personaReply(msg, msg.slice(0,300));
     const chipsPers = store.get('chipsPersonalizados', null);
