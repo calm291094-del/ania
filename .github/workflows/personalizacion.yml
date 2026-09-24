@@ -1,0 +1,37 @@
+name: Ania Personalization Agent
+
+on:
+  schedule:
+    - cron: '0 4 * * *'   # 4am UTC, después del agente de seguridad
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  personalizar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Ejecutar agente de personalización
+        env:
+          ANIA_SECRET: ${{ secrets.ANIA_SECRET }}
+        run: node agente/personalizacion.js
+
+      - name: Commit y push
+        run: |
+          git config user.name "Ania Personalization Agent"
+          git config user.email "personalization-agent@users.noreply.github.com"
+          git add datos/perfiles.json
+          git diff --staged --quiet && echo "Sin cambios" && exit 0
+          git commit -m "Ania: perfiles actualizados $(date +%Y-%m-%d)"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
