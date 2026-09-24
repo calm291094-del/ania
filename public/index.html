@@ -9,6 +9,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>ANIA · Edición Jarvis</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  
+<!-- NotifyX v4 · notificaciones premium -->
+<link rel="stylesheet" href="https://unpkg.com/notifyx@latest/dist/notifyx.min.css">
+<script src="https://unpkg.com/notifyx@latest/dist/notifyx.min.js"></script>
+  
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23040806'/%3E%3Ccircle cx='50' cy='50' r='26' fill='%232de08a'/%3E%3Ccircle cx='50' cy='50' r='9' fill='%23040806'/%3E%3C/svg%3E">
 <style>
 :root{--bg:#040806;--bg2:#071009;--panel:#08150f;--line:rgba(45,224,138,.20);--line2:rgba(45,224,138,.45);--text:#cfeede;--dim:#79a88f;--acc:#2de08a;--acc2:#39ff9b;--amber:#ffb547;--danger:#ff5470;--mono:'Share Tech Mono','Courier New',ui-monospace,Menlo,Consolas,monospace;}
@@ -768,6 +773,20 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
 ===================================================================== */
 'use strict';
 
+/* =====================================================================
+   NOTIFYX · Configuración global para Ania
+===================================================================== */
+if (typeof NotifyX !== 'undefined'){
+  NotifyX.configure({
+    theme: 'glass',
+    animation: 'spring',
+    position: 'top-right',
+    duration: 4000,
+    maxToasts: 4,
+    pauseOnHover: true
+  });
+}
+  
 const ORIGINAL_HTML = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
 const SECURE = window.isSecureContext === true;
 
@@ -958,6 +977,7 @@ function finishLogin(u){
   if (Mind.d.nombre !== Session.name && Session.name){ Mind.d.nombre = Session.name; Mind.save(); }
   setOperator();
   loginMsg('Acceso concedido · '+Session.name, false);
+  toast('Bienvenido, ' + Session.name);
   CollectiveBrain.sync().then(()=> CollectiveBrain.flushPending()).catch(()=>{});
   setTimeout(()=> showStart('DESPERTAR A ANIA'), 500);
 }
@@ -1344,11 +1364,27 @@ function freshPick(key, arr){
    TOASTS / RELOJ / RED / BATERÍA
 ===================================================================== */
 function toast(msg, warn){
-  const t = document.createElement('div');
-  t.className = 'toast'+(warn?' warn':'');
-  t.textContent = '» '+msg;
-  $('toasts').appendChild(t);
-  setTimeout(()=>{ t.style.opacity='0'; t.style.transition='opacity .4s'; setTimeout(()=>t.remove(),400); }, 3600);
+  if (typeof NotifyX === 'undefined'){
+    console.warn('[NotifyX no cargado]', msg);
+    return;
+  }
+  if (warn){
+    NotifyX.warning(msg, { title: 'ANIA' });
+  } else {
+    NotifyX.success(msg, { title: 'ANIA' });
+  }
+}
+
+/* Helpers adicionales para usar en toda la app */
+function toastError(msg){ if (typeof NotifyX !== 'undefined') NotifyX.error(msg, { title: 'ANIA · Error' }); }
+function toastInfo(msg){ if (typeof NotifyX !== 'undefined') NotifyX.info(msg, { title: 'ANIA' }); }
+function toastLoading(msg){
+  if (typeof NotifyX !== 'undefined') return NotifyX.loading(msg, { title: 'ANIA · Procesando' });
+}
+function toastAI(msg, meta){
+  if (typeof NotifyX !== 'undefined'){
+    NotifyX.ai(msg, { title: 'ANIA · IA', ai: meta || {} });
+  }
 }
 function tickClock(){ $('clock').textContent = new Date().toLocaleTimeString('es-ES'); }
 setInterval(tickClock, 1000); tickClock();
@@ -1619,7 +1655,7 @@ if(SR){
   };
   recog.onend = ()=>{ recogActive = false; $('micBtn').classList.remove('live'); if(S.phase==='listening' && !alwaysOn) setPhase('idle'); if(alwaysOn && !ttsActive && !Ears.on) scheduleRestart(); };
   recog.onerror = e=>{
-    if(e.error==='not-allowed'){ alwaysOn = false; store.set('alwaysListen', false); updateVoiceUI(); toast('Micrófono denegado', true); return; }
+    if(e.error==='not-allowed'){ alwaysOn = false; store.set('alwaysListen', false); updateVoiceUI(); toastError('Micrófono denegado'); return; }
     if(e.error==='network' || e.error==='audio-capture') sttErrors++;
     if(S.phase==='listening' && !alwaysOn) setPhase('idle');
   };
