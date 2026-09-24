@@ -237,6 +237,47 @@ app.post('/ania/me/memoria', auth, async (req,res)=>{
   }catch(e){ res.status(500).json({ error:'no pude guardar' }); }
 });
 
+/* ==================== ADMIN · LISTA DE USUARIOS ==================== */
+app.get('/ania/admin/users', auth, async (req,res)=>{
+  try{
+    if (req.user.rol !== 'admin' && req.user.rol !== 'superadmin')
+      return res.status(403).json({ error:'solo administradores' });
+    const users = await loadUsers();
+    const publicos = users.map(u => ({
+      id: u.id,
+      usuario: u.usuario,
+      nombre: u.nombre,
+      email: u.email,
+      rol: u.rol,
+      creado: u.creado
+    }));
+    res.json({ ok:true, total:users.length, usuarios:publicos });
+  }catch(e){
+    console.error('admin/users:', e);
+    res.status(500).json({ error:'error al listar usuarios' });
+  }
+});
+
+app.get('/ania/admin/knowledge-stats', auth, async (req,res)=>{
+  try{
+    if (req.user.rol !== 'admin' && req.user.rol !== 'superadmin')
+      return res.status(403).json({ error:'solo administradores' });
+    const users = await loadUsers();
+    const memorias = await loadMemories();
+    let kb = [];
+    try{ const f = await ghRead(P_KNOWLEDGE); if (f) kb = JSON.parse(f.content); }catch{}
+    res.json({
+      totalUsuarios: users.length,
+      totalMemorias: Object.keys(memorias).length,
+      totalConocimiento: kb.length,
+      topConocimiento: kb.sort((a,b)=>(b.votos||1)-(a.votos||1)).slice(0,10)
+    });
+  }catch(e){
+    res.status(500).json({ error:'error en stats' });
+  }
+});
+
+
 /* ==================== ESTÁTICOS + SPA ==================== */
 app.use(express.static(PUBLIC_DIR, {
   setHeaders: (res)=>{
