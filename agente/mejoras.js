@@ -76,10 +76,15 @@ Responde SOLO el JSON, sin markdown, sin explicaciones.`;
   console.log('📥 Respuesta recibida (' + texto.length + ' chars)');
 
   // Extraer JSON
-  const match = texto.match(/\{[\s\S]*\}/);
+  // Limpiar markdown si lo hay
+  texto = texto.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+
+  // Buscar el JSON con el array mejoras
+  let match = texto.match(/\{[\s\S]*"mejoras"[\s\S]*\}/);
+  if (!match) match = texto.match(/\{[\s\S]*\}/);
   if (!match){
     console.error('✗ No hay JSON en la respuesta');
-    console.error('Respuesta cruda:', texto.slice(0, 500));
+    console.error('Respuesta cruda:', texto.slice(0, 800));
     process.exit(1);
   }
 
@@ -88,6 +93,14 @@ Responde SOLO el JSON, sin markdown, sin explicaciones.`;
     data = JSON.parse(match[0]);
   }catch(e){
     console.error('✗ JSON inválido:', e.message);
+    console.error('Texto recibido:', match[0].slice(0, 500));
+    process.exit(1);
+  }
+
+  // Si la IA devolvió "mejoras" vacío, avisar
+  if (!Array.isArray(data.mejoras) || data.mejoras.length === 0){
+    console.error('⚠ La IA no devolvió mejoras. Respuesta completa:');
+    console.error(texto.slice(0, 1000));
     process.exit(1);
   }
 
