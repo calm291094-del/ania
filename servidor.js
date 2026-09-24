@@ -1,4 +1,4 @@
-// servidor.js · ANIA · backend con registro + cerebro colectivo
+// servidor.js · ANIA · backend con registro + cerebro colectivo + fixes de seguridad
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -10,6 +10,16 @@ const crypto = require('crypto');
 const app = express();
 const PORT = process.env.PORT || 10000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
+
+/* ==================== HANDLERS GLOBALES ==================== */
+// Evita que errores no capturados tumben el proceso en producción
+process.on('unhandledRejection', (reason) => {
+  console.error('⚠ Unhandled Rejection:', reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('⚠ Uncaught Exception:', err.message);
+  console.error(err.stack);
+});
 
 /* ==================== CONFIG ==================== */
 const REPO   = 'calm291094-del/ania';
@@ -92,7 +102,6 @@ async function ghWrite(p, content, msg){
     body: JSON.stringify(body)
   });
   if (!r.ok) throw new Error('gh write '+r.status+' '+await r.text());
-  // Invalidar caché del archivo tras escribir
   GHCache.invalidate('read:' + p);
   return r.json();
 }
@@ -138,7 +147,6 @@ function auth(req,res,next){
 }
 
 /* ==================== RATE LIMITERS ==================== */
-// Login: 5 intentos por 15 min por IP
 const limiterLogin = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
@@ -148,7 +156,6 @@ const limiterLogin = rateLimit({
   skipSuccessfulRequests: true
 });
 
-// Registro: 3 registros por hora por IP (evita spam de cuentas)
 const limiterRegister = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 3,
@@ -157,7 +164,6 @@ const limiterRegister = rateLimit({
   message: { error: 'demasiados registros desde esta IP, espera 1 hora' }
 });
 
-// Cambio/reset de contraseña: 5 intentos por hora
 const limiterPassword = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 5,
@@ -166,7 +172,6 @@ const limiterPassword = rateLimit({
   message: { error: 'demasiados intentos de cambio de contraseña' }
 });
 
-// API general: 300 peticiones por 15 min por IP (evita scraping)
 const limiterGeneral = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
@@ -175,9 +180,7 @@ const limiterGeneral = rateLimit({
   message: { error: 'demasiadas peticiones, espera un momento' }
 });
 
-
 /* ==================== MIDDLEWARE ==================== */
-// Helmet: cabeceras de seguridad (CSP desactivada porque servimos muchos orígenes)
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
@@ -187,7 +190,6 @@ app.use(cors());
 app.use(express.json({ limit:'2mb' }));
 
 /* ==================== HEALTH ==================== */
-// Aplicar limitador general a todas las rutas /ania/* (excepto health)
 app.use('/ania', (req, res, next) => {
   if (req.path === '/health') return next();
   return limiterGeneral(req, res, next);
@@ -231,7 +233,7 @@ app.post('/ania/register', limiterRegister, async (req,res)=>{
     res.json({ ok:true, token, usuario:{ id:nuevo.id, usuario:nuevo.usuario, nombre:nuevo.nombre, email:nuevo.email, rol:nuevo.rol }});
   }catch(e){
     console.error('register:', e);
-    res.status(500).json({ error:'error al registrar: '+e.message });
+    res.status(500).json({ error:'error al registrar' });
   }
 });
 
@@ -247,10 +249,8 @@ app.post('/ania/login', limiterLogin, async (req,res)=>{
     if (u.bloqueado === true)
       return res.status(403).json({ error:'cuenta bloqueada. contacta al administrador.' });
     u.ultimoAcceso = Date.now();
-    // guardar se hace más abajo si no hay verificación
     if (SUPERADMIN_EMAIL && u.email === SUPERADMIN_EMAIL && u.rol !== 'superadmin'){
       u.rol = 'superadmin';
-      await saveUsers(users);
     }
     await saveUsers(users);
     const token = makeToken({ id:u.id, usuario:u.usuario, rol:u.rol });
@@ -332,7 +332,9 @@ app.get('/ania/admin/users', auth, async (req,res)=>{
       nombre: u.nombre,
       email: u.email,
       rol: u.rol,
-      creado: u.creado
+      creado: u.creado,
+      ultimoAcceso: u.ultimoAcceso || null,
+      bloqueado: !!u.bloqueado
     }));
     res.json({ ok:true, total:users.length, usuarios:publicos });
   }catch(e){
@@ -472,7 +474,6 @@ app.post('/ania/admin/delete-user', auth, async (req,res)=>{
     const nuevas = users.filter(x=>x.id !== userId);
     await saveUsers(nuevas);
 
-    // Borrar su memoria privada
     try{
       const mem = await loadMemories();
       if (mem[userId]){
@@ -508,17 +509,28 @@ app.get('/ania/admin/stats', auth, async (req,res)=>{
   }
 });
 
-
 /* ==================== ESTÁTICOS + SPA ==================== */
 app.use(express.static(PUBLIC_DIR, {
+  dotfiles: 'deny',
+  index: false,
   setHeaders: (res)=>{
     res.setHeader('Cross-Origin-Opener-Policy','same-origin');
     res.setHeader('Cross-Origin-Embedder-Policy','credentialless');
+    res.setHeader('X-Content-Type-Options','nosniff');
   }
 }));
+
 app.get('*', (req,res)=>{
   const idx = path.join(PUBLIC_DIR,'index.html');
   fs.existsSync(idx) ? res.sendFile(idx) : res.status(404).send('index.html no encontrado');
+});
+
+/* ==================== ERROR HANDLER GLOBAL ==================== */
+// Captura cualquier error no manejado en rutas (debe ir al final, después del SPA)
+app.use((err, req, res, next) => {
+  console.error('✗ Error en ruta', req.method, req.path, ':', err.message);
+  if (res.headersSent) return next(err);
+  res.status(err.status || 500).json({ error: 'error interno del servidor' });
 });
 
 app.listen(PORT,'0.0.0.0', ()=> console.log('ANIA backend · puerto '+PORT));
