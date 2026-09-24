@@ -1,6 +1,7 @@
 // servidor.js · ANIA · backend con registro + cerebro colectivo
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -111,6 +112,12 @@ function auth(req,res,next){
 }
 
 /* ==================== MIDDLEWARE ==================== */
+// Helmet: cabeceras de seguridad (CSP desactivada porque servimos muchos orígenes)
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
+}));
 app.use(cors());
 app.use(express.json({ limit:'2mb' }));
 
