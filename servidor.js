@@ -19,6 +19,7 @@ const P_KNOWLEDGE = 'datos/conocimiento.json';
 const GITHUB_TOKEN  = process.env.GITHUB_TOKEN;
 const ANIA_SECRET   = process.env.ANIA_SECRET;
 const TOKEN_SECRET  = process.env.ANIA_TOKEN_SECRET;
+const SUPERADMIN_EMAIL = (process.env.SUPERADMIN_EMAIL || '').toLowerCase() || null;
 
 const MISSING = ['GITHUB_TOKEN','ANIA_SECRET','ANIA_TOKEN_SECRET'].filter(k => !process.env[k]);
 if (MISSING.length) console.error('⚠ Faltan env vars:', MISSING.join(', '));
@@ -142,7 +143,7 @@ app.post('/ania/register', async (req,res)=>{
       nombre: nombre.trim().slice(0,80),
       email: email.toLowerCase(),
       passwordHash: hashPass(password),
-      rol: users.length===0 ? 'admin' : 'user',
+      rol: (SUPERADMIN_EMAIL && email.toLowerCase() === SUPERADMIN_EMAIL) ? 'superadmin' : (users.length===0 ? 'admin' : 'user'),
       creado: Date.now()
     };
     users.push(nuevo);
@@ -165,6 +166,10 @@ app.post('/ania/login', async (req,res)=>{
     const u = users.find(x=>x.usuario===usuario.toLowerCase() || x.email===usuario.toLowerCase());
     if (!u || !checkPass(password, u.passwordHash))
       return res.status(401).json({ error:'usuario o contraseña incorrectos' });
+    if (SUPERADMIN_EMAIL && u.email === SUPERADMIN_EMAIL && u.rol !== 'superadmin'){
+      u.rol = 'superadmin';
+      await saveUsers(users);
+    }
     const token = makeToken({ id:u.id, usuario:u.usuario, rol:u.rol });
     res.json({ ok:true, token, usuario:{ id:u.id, usuario:u.usuario, nombre:u.nombre, email:u.email, rol:u.rol }});
   }catch(e){
