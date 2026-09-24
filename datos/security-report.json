@@ -1,5 +1,5 @@
 {
-  "fecha": "2026-09-24T16:05:12.471Z",
+  "fecha": "2026-09-24T16:34:55.499Z",
   "analizadoPor": "Ania Security Agent v2",
   "hallazgos": [
     {
@@ -9,13 +9,6 @@
     },
     {
       "tipo": "codigo",
-      "regla": "PATH-002",
-      "severidad": "bajo",
-      "descripcion": "express.static() with dotfiles option not set to 'deny' may expose hidden files.",
-      "ubicacion": "desconocida"
-    },
-    {
-      "tipo": "codigo",
       "regla": "AUTH-001",
       "severidad": "alto",
       "descripcion": "Route handler for `.delete()` has no authentication middleware.",
@@ -40,27 +33,6 @@
       "regla": "AUTH-001",
       "severidad": "alto",
       "descripcion": "Route handler for `.post()` has no authentication middleware.",
-      "ubicacion": "desconocida"
-    },
-    {
-      "tipo": "codigo",
-      "regla": "ERR-001",
-      "severidad": "medio",
-      "descripcion": "Error details sent to client, potentially exposing stack traces.",
-      "ubicacion": "desconocida"
-    },
-    {
-      "tipo": "codigo",
-      "regla": "ERR-002",
-      "severidad": "bajo",
-      "descripcion": "Express application without a global error handler middleware.",
-      "ubicacion": "desconocida"
-    },
-    {
-      "tipo": "codigo",
-      "regla": "ERR-003",
-      "severidad": "bajo",
-      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
       "ubicacion": "desconocida"
     },
     {
@@ -177,13 +149,6 @@
     },
     {
       "tipo": "codigo",
-      "regla": "DEP-001",
-      "severidad": "alto",
-      "descripcion": "CVE-2024-43796: XSS via res.redirect — express@4.19.2 (vulnerable: <4.20.0)",
-      "ubicacion": "desconocida"
-    },
-    {
-      "tipo": "codigo",
       "regla": "DEP-003",
       "severidad": "bajo",
       "descripcion": "Dependency \"express\" is declared but never imported in source files.",
@@ -227,8 +192,8 @@
   ],
   "resumen": {
     "critico": 0,
-    "alto": 14,
-    "medio": 2,
-    "bajo": 15
+    "alto": 13,
+    "medio": 1,
+    "bajo": 12
   }
 }
