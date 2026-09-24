@@ -44,37 +44,17 @@ ${codigo['package.json'] || '(no disponible)'}
 === ESTADÍSTICAS del frontend ===
 ${indexStats}`;
 
-  const prompt = `Eres un revisor experto de código senior. Analiza este proyecto y sugiere 5 mejoras CONCRETAS y PRIORIZADAS.
+  const prompt = `Analiza este código y da EXACTAMENTE 5 mejoras concretas.
 
-Proyecto: ANIA, asistente personal con:
-- Backend Node.js/Express desplegado en Render (gratis)
-- Frontend HTML/JS vanilla en GitHub Pages
-- Registro de usuarios con scrypt, tokens HMAC
-- Memoria privada cifrada (AES-256-GCM) en GitHub
-- Cerebro colectivo (conocimiento compartido)
-- PWA, voz, HUD, agente PC opcional
-- El backend usa la API de GitHub como base de datos (datos/usuarios.enc.json, datos/memorias.enc.json, datos/conocimiento.json)
+${resumen}
 
-Analiza el código y sugiere 5 mejoras en estas áreas (prioriza seguridad y bugs):
-1. Seguridad (vulnerabilidades, fugas, malas prácticas)
-2. Rendimiento (cuellos de botella)
-3. UX (experiencia del usuario)
-4. Bugs (problemas potenciales)
-5. Features (funcionalidades que faltan y serían valiosas)
+DEVUELVE SOLO ESTE JSON (nada más, ni texto antes ni después):
 
-Responde SOLO con JSON válido, sin texto antes ni después. Formato exacto:
-{
-  "resumen": "una frase de 10-20 palabras",
-  "mejoras": [
-    {
-      "titulo": "título corto (máx 60 chars)",
-      "categoria": "seguridad|rendimiento|ux|bug|feature",
-      "prioridad": "alta|media|baja",
-      "descripcion": "qué mejorar y por qué (2-3 frases)",
-      "como": "cómo implementarlo paso a paso (2-3 frases)"
-    }
-  ]
-}`;
+{"mejoras":[{"titulo":"titulo corto","categoria":"seguridad","prioridad":"alta","descripcion":"que mejorar y por que","como":"como hacerlo"},{"titulo":"...","categoria":"rendimiento","prioridad":"media","descripcion":"...","como":"..."},{"titulo":"...","categoria":"ux","prioridad":"media","descripcion":"...","como":"..."},{"titulo":"...","categoria":"bug","prioridad":"baja","descripcion":"...","como":"..."},{"titulo":"...","categoria":"feature","prioridad":"baja","descripcion":"...","como":"..."}]}
+
+Categorías válidas: seguridad, rendimiento, ux, bug, feature.
+Prioridades válidas: alta, media, baja.
+Responde SOLO el JSON, sin markdown, sin explicaciones.`;
 
   console.log('📤 Enviando a IA...');
   const r = await fetch('https://text.pollinations.ai/openai', {
