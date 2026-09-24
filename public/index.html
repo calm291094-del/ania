@@ -4032,7 +4032,6 @@ async function cargarPanelAdmin(){
     const s = await AniaAPI.req('/ania/admin/knowledge-stats');
     const stats = await AniaAPI.req('/ania/admin/stats').catch(()=>({activos:0, bloqueados:0, admins:0, superadmins:0}));
 
-    // Tiles Bento
     const elU = $('bentoTotalUsuarios'); if (elU) elU.textContent = s.totalUsuarios;
     const elA = $('bentoActivos'); if (elA) elA.textContent = stats.activos || 0;
     const elB = $('bentoBloqueados'); if (elB) elB.textContent = stats.bloqueados || 0;
@@ -4113,11 +4112,13 @@ async function cargarPanelAdmin(){
   }
 
   // ===== LOG DE ACCIONES ADMIN =====
+  console.log('[DIAG] Iniciando carga de log admin...');
   try{
     const dLog = await AniaAPI.req('/ania/admin/log');
+    console.log('[DIAG] Log recibido:', dLog);
     const logBox = $('adminLogList');
     if (!logBox){
-      console.warn('No existe #adminLogList');
+      console.warn('[DIAG] No existe #adminLogList');
     } else if (!dLog.log || !dLog.log.length){
       logBox.innerHTML = '<div class="empty" style="font-size:11px;">Sin acciones registradas</div>';
     } else {
@@ -4136,10 +4137,11 @@ async function cargarPanelAdmin(){
       }).join('');
     }
   }catch(eLog){
+    console.error('[DIAG] Error log:', eLog);
     const logBox = $('adminLogList');
     if (logBox) logBox.innerHTML = '<div class="empty" style="color:var(--danger);font-size:11px;">✖ ' + eLog.message + '</div>';
   }
-  
+
   // ===== USUARIOS =====
   try{
     const d = await AniaAPI.req('/ania/admin/users');
@@ -4184,15 +4186,11 @@ async function cargarPanelAdmin(){
           '</div>';
       }).join('');
 
-      // ---- Acciones por botón ----
       lista.querySelectorAll('[data-action="role"]').forEach(b => {
         b.onclick = async ()=>{
           if (!confirm('¿Cambiar rol?')) return;
           try{
-            await AniaAPI.req('/ania/admin/set-role', {
-              method:'POST',
-              body: JSON.stringify({ userId: b.dataset.id, rol: b.dataset.rol })
-            });
+            await AniaAPI.req('/ania/admin/set-role', { method:'POST', body: JSON.stringify({ userId: b.dataset.id, rol: b.dataset.rol }) });
             toast('Rol actualizado'); cargarPanelAdmin();
           }catch(e){ toast(e.message, true); }
         };
@@ -4200,10 +4198,7 @@ async function cargarPanelAdmin(){
       lista.querySelectorAll('[data-action="block"]').forEach(b => {
         b.onclick = async ()=>{
           try{
-            const r = await AniaAPI.req('/ania/admin/toggle-block', {
-              method:'POST',
-              body: JSON.stringify({ userId: b.dataset.id })
-            });
+            const r = await AniaAPI.req('/ania/admin/toggle-block', { method:'POST', body: JSON.stringify({ userId: b.dataset.id }) });
             toast(r.bloqueado ? 'Usuario bloqueado' : 'Usuario desbloqueado');
             cargarPanelAdmin();
           }catch(e){ toast(e.message, true); }
@@ -4214,10 +4209,7 @@ async function cargarPanelAdmin(){
           if (!confirm('⚠ ELIMINAR usuario y su memoria. ¿Seguro?')) return;
           if (!confirm('Última confirmación. Esta acción es irreversible.')) return;
           try{
-            await AniaAPI.req('/ania/admin/delete-user', {
-              method:'POST',
-              body: JSON.stringify({ userId: b.dataset.id })
-            });
+            await AniaAPI.req('/ania/admin/delete-user', { method:'POST', body: JSON.stringify({ userId: b.dataset.id }) });
             toast('Usuario eliminado'); cargarPanelAdmin();
           }catch(e){ toast(e.message, true); }
         };
@@ -4228,10 +4220,7 @@ async function cargarPanelAdmin(){
           if (!nueva) return;
           if (nueva.length < 6) return toast('Mínimo 6 caracteres', true);
           try{
-            await AniaAPI.req('/ania/admin/reset-password', {
-              method:'POST',
-              body: JSON.stringify({ userId: b.dataset.id, nueva })
-            });
+            await AniaAPI.req('/ania/admin/reset-password', { method:'POST', body: JSON.stringify({ userId: b.dataset.id, nueva }) });
             toast('Contraseña reseteada');
           }catch(e){ toast(e.message, true); }
         };
