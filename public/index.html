@@ -383,9 +383,17 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
     </div>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">CONOCIMIENTO COMPARTIDO</h2>
+    
     <div id="adminKBList" style="max-height:30dvh;overflow-y:auto;margin-top:8px;">
       <div class="empty">Cargando...</div>
     </div>
+    <!-- ⬇️⬇️⬇️ NUEVO BLOQUE ⬇️⬇️⬇️ -->
+    <hr>
+    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">SUGERENCIAS DEL AGENTE</h2>
+    <div id="adminSugerencias" style="max-height:40dvh;overflow-y:auto;margin-top:8px;">
+      <div class="empty">Cargando...</div>
+    </div>
+    <!-- ⬆️⬆️⬆️ FIN NUEVO BLOQUE ⬆️⬆️⬆️ -->
   </div>
 </div>
   
@@ -3650,6 +3658,32 @@ async function cargarPanelAdmin(){
         '</div>'
       ).join('');
     }
+    // ⬇️⬇️⬇️ NUEVO BLOQUE ⬇️⬇️⬇️
+    try{
+      const rSug = await fetch('https://raw.githubusercontent.com/calm291094-del/ania/main/datos/sugerencias.json?t=' + Date.now());
+      const historial = rSug.ok ? await rSug.json() : [];
+      const box = $('adminSugerencias');
+      if (!historial.length){
+        box.innerHTML = '<div class="empty">Sin análisis todavía</div>';
+      } else {
+        const ult = historial[0];
+        const fecha = new Date(ult.fecha).toLocaleString('es-ES');
+        let html = '<p class="dim" style="font-size:11px;margin-bottom:8px;">' + fecha + ' · ' + ult.resumen + '</p>';
+        ult.mejoras.forEach(m => {
+          const color = m.prioridad === 'alta' ? 'var(--danger)' : (m.prioridad === 'media' ? 'var(--amber)' : 'var(--acc)');
+          html += '<div class="memRow" style="padding:10px 2px;border-bottom:1px dashed rgba(45,224,138,.12);">' +
+            '<span class="k" style="color:' + color + ';">' + m.prioridad.toUpperCase() + '</span>' +
+            '<span class="v"><b style="color:var(--text);">' + m.titulo + '</b><br>' +
+            '<span style="color:var(--dim);font-size:11px;">[' + m.categoria + '] ' + m.descripcion + '</span><br>' +
+            '<span style="color:var(--acc2);font-size:11px;font-style:italic;">→ ' + m.como + '</span></span>' +
+            '</div>';
+        });
+        box.innerHTML = html;
+      }
+    }catch(eSug){
+      $('adminSugerencias').innerHTML = '<div class="empty">Error al leer sugerencias</div>';
+    }
+    // ⬆️⬆️⬆️ FIN NUEVO BLOQUE ⬆️⬆️⬆️
   }catch(e){
     $('adminStats').textContent = '✖ ' + e.message;
   }
