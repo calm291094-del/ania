@@ -4084,10 +4084,7 @@ async function cargarPanelAdmin(){
 
   // ===== REPORTE DE SEGURIDAD =====
   try{
-    const rSec = await fetch(
-      'https://api.github.com/repos/calm291094-del/ania/contents/datos/security-report.json',
-      { headers: { 'Accept': 'application/vnd.github.raw' } }
-    );
+    const rSec = await fetch(CONFIG.ANIA_API + '/ania/public/security-report.json');
     const reporte = rSec.ok ? await rSec.json() : null;
     const secBox = $('adminSecurityReport');
     if (!reporte || !reporte.hallazgos || reporte.hallazgos.length === 0){
@@ -4112,7 +4109,7 @@ async function cargarPanelAdmin(){
       secBox.innerHTML = html;
     }
   }catch(eSec){
-    $('adminSecurityReport').innerHTML = '<div class="empty" style="color:var(--danger);">Error al leer el reporte de seguridad</div>';
+    $('adminSecurityReport').innerHTML = '<div class="empty" style="color:var(--danger);">✖ ' + eSec.message + '</div>';
   }
   
   // ===== USUARIOS =====
