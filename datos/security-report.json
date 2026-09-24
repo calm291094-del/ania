@@ -1,0 +1,234 @@
+{
+  "fecha": "2026-09-24T16:05:12.471Z",
+  "analizadoPor": "Ania Security Agent v2",
+  "hallazgos": [
+    {
+      "tipo": "error",
+      "severidad": "medio",
+      "descripcion": "No se pudo ejecutar npm audit. Revisa las dependencias manualmente."
+    },
+    {
+      "tipo": "codigo",
+      "regla": "PATH-002",
+      "severidad": "bajo",
+      "descripcion": "express.static() with dotfiles option not set to 'deny' may expose hidden files.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "AUTH-001",
+      "severidad": "alto",
+      "descripcion": "Route handler for `.delete()` has no authentication middleware.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "AUTH-001",
+      "severidad": "alto",
+      "descripcion": "Route handler for `.delete()` has no authentication middleware.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "AUTH-001",
+      "severidad": "alto",
+      "descripcion": "Route handler for `.post()` has no authentication middleware.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "AUTH-001",
+      "severidad": "alto",
+      "descripcion": "Route handler for `.post()` has no authentication middleware.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-001",
+      "severidad": "medio",
+      "descripcion": "Error details sent to client, potentially exposing stack traces.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-002",
+      "severidad": "bajo",
+      "descripcion": "Express application without a global error handler middleware.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-001",
+      "severidad": "medio",
+      "descripcion": "Error details sent to client, potentially exposing stack traces.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "AUTH-001",
+      "severidad": "alto",
+      "descripcion": "Route handler for `.delete()` has no authentication middleware.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "AUTH-001",
+      "severidad": "alto",
+      "descripcion": "Route handler for `.put()` has no authentication middleware.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "AUTH-001",
+      "severidad": "alto",
+      "descripcion": "Route handler for `.put()` has no authentication middleware.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "AUTH-001",
+      "severidad": "alto",
+      "descripcion": "Route handler for `.put()` has no authentication middleware.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "AUTH-001",
+      "severidad": "alto",
+      "descripcion": "Route handler for `.put()` has no authentication middleware.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "AUTH-001",
+      "severidad": "alto",
+      "descripcion": "Route handler for `.put()` has no authentication middleware.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "AUTH-001",
+      "severidad": "alto",
+      "descripcion": "Route handler for `.put()` has no authentication middleware.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "AUTH-001",
+      "severidad": "alto",
+      "descripcion": "Route handler for `.put()` has no authentication middleware.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "Async operation without error handling may cause unhandled promise rejection.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "Async operation without error handling may cause unhandled promise rejection.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DOM-005",
+      "severidad": "alto",
+      "descripcion": "A \"message\" event handler does not validate event.origin.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DEP-001",
+      "severidad": "alto",
+      "descripcion": "CVE-2024-43796: XSS via res.redirect — express@4.19.2 (vulnerable: <4.20.0)",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DEP-003",
+      "severidad": "bajo",
+      "descripcion": "Dependency \"express\" is declared but never imported in source files.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DEP-003",
+      "severidad": "bajo",
+      "descripcion": "Dependency \"cors\" is declared but never imported in source files.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DEP-003",
+      "severidad": "bajo",
+      "descripcion": "Dependency \"helmet\" is declared but never imported in source files.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DEP-003",
+      "severidad": "bajo",
+      "descripcion": "Dependency \"express-rate-limit\" is declared but never imported in source files.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DEP-003",
+      "severidad": "bajo",
+      "descripcion": "Dependency \"nodemailer\" is declared but never imported in source files.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DEP-003",
+      "severidad": "bajo",
+      "descripcion": "Dependency \"basesec\" is declared but never imported in source files.",
+      "ubicacion": "desconocida"
+    }
+  ],
+  "resumen": {
+    "critico": 0,
+    "alto": 14,
+    "medio": 2,
+    "bajo": 15
+  }
+}
