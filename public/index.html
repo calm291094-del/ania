@@ -1912,6 +1912,7 @@ LogoController.init();
   
 function tickClock(){ $('clock').textContent = new Date().toLocaleTimeString('es-ES'); }
 setInterval(tickClock, 1000); tickClock();
+  
 function updateNet(){
   const off = isOffline();
   const n = (typeof OfflineQueue !== 'undefined' && OfflineQueue.count) ? OfflineQueue.count() : 0;
@@ -1919,7 +1920,13 @@ function updateNet(){
   $('netTxt').textContent = off
     ? 'SIN CONEXIÓN' + (n ? ' · '+n+' EN COLA' : '')
     : 'EN LÍNEA';
+  // Sincronizar logo
+  if (typeof LogoController !== 'undefined' && LogoController.setState){
+    if (off) LogoController.setState('offline');
+    else if (LogoController.currentState === 'offline') LogoController.setState('idle');
+  }
 }
+  
 addEventListener('online', ()=>{
   updateNet();
   toast('Conexión restaurada');
@@ -1997,13 +2004,19 @@ function sizeReactor(){
 addEventListener('resize', sizeReactor); sizeReactor();
 const PH = { idle:{spin:0.18,lvl:0.10}, listening:{spin:0.55,lvl:0.38}, thinking:{spin:1.9,lvl:0.16}, speaking:{spin:0.35,lvl:0} };
 let drawLevel = 0.1;
+  
 function setPhase(p){
   S.phase = p;
   const lbl = {idle:'EN ESPERA', listening:'ESCUCHANDO', thinking:'PROCESANDO', speaking:'HABLANDO'}[p];
   const el = $('phase');
   el.textContent = lbl;
   el.classList.toggle('amber', p==='listening'||p==='thinking');
+  // Sincronizar logo
+  if (typeof LogoController !== 'undefined' && LogoController.setState){
+    LogoController.setState(p);
+  }
 }
+  
 function reactorLoop(ms){
   const t = ms/1000;
   const ph = PH[S.phase] || PH.idle;
