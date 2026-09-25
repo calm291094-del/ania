@@ -1276,7 +1276,10 @@ const LINGUA = (() => {
     [/bu[sz]came/g, 'buscame'],
     [/po[nm]me/g, 'ponme']
   ];
-  const STT = [[/\ba[nñ]a\b|\banya\b|\banja\b|\bon\s+ya\b|\baniya\b|\baria\b/g, 'ania']];
+  const STT = [[
+    /\b(a[nñ]{1,2}[ijy]a?|ana|anja|aña|hania|onia|anea|anie|anio|anni[ae]|a[nñ]{1,2}[iy]a)\b/g,
+    'ania'
+  ]];
   function normalizar(texto){
     let t = String(texto||'').toLowerCase().trim();
     t = sinDiacriticos(t);
