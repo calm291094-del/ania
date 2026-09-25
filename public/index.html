@@ -7,7 +7,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>ANIA · Edición Jarvis</title>
+
+  <title>ANIA · Edición Jarvis</title>
   
 <!-- Fuente local (sin Google) -->
 <style>
@@ -23,6 +24,7 @@
 <!-- ✅ NotifyX servido localmente (sin CDN, sin ORB) -->
 <link rel="stylesheet" href="./vendor/notifyx.min.css">
 <script src="./vendor/notifyx.min.js"></script>
+<script src="./vendor/vendor.js"></script>
   
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23040806'/%3E%3Ccircle cx='50' cy='50' r='26' fill='%232de08a'/%3E%3Ccircle cx='50' cy='50' r='9' fill='%23040806'/%3E%3C/svg%3E">
 <style>
@@ -612,6 +614,7 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">OÍDO LOCAL · WHISPER</h2>
     <p class="dim" id="earsInfo">Primera vez ~80 MB, luego offline total.</p>
     <button class="bigbtn" id="btnEars">ACTIVAR OÍDO LOCAL</button>
+    <button class="bigbtn" id="btnVosk">OÍDO OFFLINE (VOSK)</button>
     <button class="bigbtn" id="btnEarsModel">CAMBIAR MODELO (tiny/base)</button>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">HUD · VISIÓN Y GESTOS</h2>
@@ -2225,17 +2228,24 @@ function updateVoiceUI(){
   $('micBtn').classList.toggle('awake', alwaysOn);
   $('btnAlways').textContent = alwaysOn ? 'ESCUCHA ACTIVA: SÍ' : 'ESCUCHA ACTIVA: NO';
 }
- $('micBtn').onclick = async ()=>{
-  if(Ears.on){ Ears.stop(); refreshEarsUI(); return; }
-  // Prioridad: nativo del navegador (sin descargas)
-  if(recog && !recogActive){ stopSpeak(); ensureAudio(); startListening(); return; }
-  // Si el nativo no está disponible, intentar Whisper
-  if(Ears.asr || !isOffline()){ await Ears.start(); return; }
-  if(!recog){ toast('Voz no disponible. Usa Chrome/Edge.', true); return; }
-  if(alwaysOn){ toast('Escucha activa: di «Ania»'); return; }
-  if(recogActive){ try{recog.stop();}catch(e){} return; }
-  stopSpeak(); ensureAudio();
-  startListening();
+  
+$('micBtn').onclick = async ()=>{
+  // Si Vosk está activo, lo apagamos
+  if (VoskEngine.on){ VoskEngine.stop(); return; }
+  if (Ears.on){ Ears.stop(); refreshEarsUI(); return; }
+
+  // Si estamos offline → usar Vosk (offline real)
+  if (isOffline()){
+    await VoskEngine.start();
+    return;
+  }
+
+  // Si estamos online → usar el nativo del navegador (rápido, sin descargas)
+  if (recog && !recogActive){ stopSpeak(); ensureAudio(); startListening(); return; }
+
+  // Respaldo final: Whisper (si el nativo no está disponible)
+  if (Ears.asr){ await Ears.start(); return; }
+  if (!recog){ toastError('Voz no disponible. Usa Chrome/Edge.'); return; }
 };
 
 /* =====================================================================
@@ -2254,6 +2264,125 @@ function resampleTo16k(input, rate){
   }
   return out;
 }
+
+/* =====================================================================
+   VOSK ENGINE · reconocimiento de voz 100% offline (WASM + modelo local)
+===================================================================== */
+const VoskEngine = {
+  model: null,
+  recognizer: null,
+  stream: null,
+  actx: null,
+  proc: null,
+  sink: null,
+  on: false,
+  ready: false,
+  _modelUrl: './models/vosk-model-small-es-0.42.tar.gz',
+
+  async loadModel(){
+    if (this.model) return true;
+    if (typeof Vosk === 'undefined'){
+      console.warn('[Vosk] Librería no cargada');
+      return false;
+    }
+    try{
+      toast('Cargando modelo de voz offline...');
+      const model = await Vosk.createModel(this._modelUrl);
+      this.model = model;
+      this.ready = true;
+      console.log('[Vosk] Modelo cargado');
+      toast('Oído offline listo');
+      return true;
+    }catch(e){
+      console.error('[Vosk] Error al cargar modelo:', e);
+      toastError('No se pudo cargar el modelo de voz offline');
+      return false;
+    }
+  },
+
+  async start(){
+    if (this.on) return;
+    if (!this.ready){
+      const ok = await this.loadModel();
+      if (!ok) return;
+    }
+    try{
+      this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    }catch(e){
+      toastError('Micrófono denegado');
+      return;
+    }
+
+    this.actx = new AudioContext();
+    const source = this.actx.createMediaStreamSource(this.stream);
+    this.proc = this.actx.createScriptProcessor(4096, 1, 1);
+    this.sink = this.actx.createGain();
+    this.sink.gain.value = 0;
+
+    const self = this;
+    const recognizer = new this.model.KaldiRecognizer(this.actx.sampleRate);
+    this.recognizer = recognizer;
+
+    recognizer.on('result', (message) => {
+      const texto = (message.result && message.result.text) || '';
+      if (texto) self.handleTranscript(texto);
+    });
+
+    recognizer.on('partialresult', (message) => {
+      // Opcional: mostrar texto parcial en el input
+      const parcial = (message.result && message.result.partial) || '';
+      if (parcial && !alwaysOn){
+        const inp = document.getElementById('userInput');
+        if (inp) inp.value = parcial;
+      }
+    });
+
+    this.proc.onaudioprocess = (ev) => {
+      if (!self.on) return;
+      const data = ev.inputBuffer.getChannelData(0);
+      try{
+        recognizer.acceptWaveform(data);
+      }catch(e){}
+    };
+
+    source.connect(this.proc);
+    this.proc.connect(this.sink);
+    this.sink.connect(this.actx.destination);
+
+    this.on = true;
+    setPhase('listening');
+    toastInfo('Oído offline activo');
+    console.log('[Vosk] Escuchando...');
+  },
+
+  stop(){
+    this.on = false;
+    if (this.proc){ try{ this.proc.disconnect(); }catch(e){} this.proc = null; }
+    if (this.sink){ try{ this.sink.disconnect(); }catch(e){} this.sink = null; }
+    if (this.stream){ this.stream.getTracks().forEach(t => t.stop()); this.stream = null; }
+    if (this.actx){ try{ this.actx.close(); }catch(e){} this.actx = null; }
+    if (this.recognizer){ try{ this.recognizer.remove(); }catch(e){} this.recognizer = null; }
+    if (S.phase === 'listening') setPhase('idle');
+    toastInfo('Oído offline detenido');
+    console.log('[Vosk] Detenido');
+  },
+
+  handleTranscript(texto){
+    console.log('[Vosk] Transcripción:', texto);
+    const low = LINGUA.normalizar(texto);
+    if (alwaysOn){
+      const m = low.match(/\b(ania|ana|anja)\b/);
+      if (!m) return;
+      const cmd = texto.slice(low.indexOf(m[0]) + m[0].length).replace(/^[\s,.:;¡!¿?]+/,'').trim();
+      if (!cmd){ stopSpeak(); return reply('¿Sí? Te escucho.'); }
+      stopSpeak();
+      send(cmd);
+    } else {
+      send(texto.trim());
+    }
+  }
+};
+  
 const Ears = {
   on:false, asr:null, stream:null, actx:null, proc:null, sink:null,
   buf:[], capture:false, talkTrail:0, level:0, transcribing:false, paused:false,
@@ -2356,6 +2485,12 @@ function refreshEarsUI(){
   $('btnEars').textContent = Ears.on ? 'OÍDO LOCAL: ACTIVO' : 'ACTIVAR OÍDO LOCAL';
 }
  $('btnEars').onclick = async ()=>{ Ears.on ? Ears.stop() : await Ears.start(); };
+if ($('btnVosk')){
+  $('btnVosk').onclick = async ()=>{
+    if (VoskEngine.on){ VoskEngine.stop(); $('btnVosk').textContent = 'OÍDO OFFLINE (VOSK)'; }
+    else { await VoskEngine.start(); $('btnVosk').textContent = 'DETENER VOSK'; }
+  };
+}
  $('btnEarsModel').onclick = ()=>{
   const cur = store.get('earsModel','onnx-community/whisper-base');
   const next = cur.includes('tiny') ? 'onnx-community/whisper-base' : 'onnx-community/whisper-tiny';
