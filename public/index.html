@@ -2227,6 +2227,9 @@ function updateVoiceUI(){
 }
  $('micBtn').onclick = async ()=>{
   if(Ears.on){ Ears.stop(); refreshEarsUI(); return; }
+  // Prioridad: nativo del navegador (sin descargas)
+  if(recog && !recogActive){ stopSpeak(); ensureAudio(); startListening(); return; }
+  // Si el nativo no está disponible, intentar Whisper
   if(Ears.asr || !isOffline()){ await Ears.start(); return; }
   if(!recog){ toast('Voz no disponible. Usa Chrome/Edge.', true); return; }
   if(alwaysOn){ toast('Escucha activa: di «Ania»'); return; }
@@ -3220,6 +3223,7 @@ let lastPC = [];
 function updatePCUI(){ $('pcInfo').textContent = PC.count() ? PC.count()+' archivos.' : '0.'; }
  $('btnIndexPC').onclick = ()=> $('pcDir').click();
  $('btnClearPC').onclick = ()=>{ PC.clear(); updatePCUI(); };
+  
 const Agent = {
   ws:null, ok:false, retry:null,
   connect(){
