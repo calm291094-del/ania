@@ -241,6 +241,7 @@ python ania.py
 Por carpeta local (privado): «entrena con mis documentos» → eliges la carpeta → nada sale de tu dispositivo.
 
 » Estructura del repositorio
+```json
 ania/
 ├── servidor.js              ← backend Node.js (Render)
 ├── ania.py                  ← lanzador local todo-en-uno
@@ -276,6 +277,7 @@ ania/
 ├── documentos/              ← entrenamiento por carpeta
 ├── modelos/                 ← modelos GGUF (opcional)
 └── README.md
+```
 
 APIs externas usadas (todas gratuitas, sin clave):
 Open-Meteo (clima) · Nominatim (geolocalización) · Wikipedia · DuckDuckGo · MyMemory (traducción) · Pollinations (IA) · jsDelivr/Statically (CDN) · GitHub API · APIs nativas del navegador (voz, notificaciones, batería, vibración, wake lock).
@@ -297,75 +299,29 @@ njsscan falla en npm	No es un paquete de npm; usar basesec en su lugar
 </details>
 » Hoja de ruta
 
-    ☑
-
-    Reconocimiento de voz continuo con palabra de activación
-    ☑
-
-    Entrenamiento con documentos propios
-    ☑
-
-    Control del PC vía agente local
-    ☑
-
-    Agenda recurrente con canales separados
-    ☑
-
-    Hash de contraseñas con scrypt
-    ☑
-
-    Registro público multiusuario
-    ☑
-
-    Super admin + panel de administración
-    ☑
-
-    Cerebro colectivo con privacidad garantizada
-    ☑
-
-    Memoria cifrada AES-256-GCM
-    ☑
-
-    Rate limiting en todos los endpoints sensibles
-    ☑
-
-    Agentes IA (mejoras, seguridad, personalización)
-    ☑
-
-    Logo reactivo de 5 estados
-    ☑
-
-    Notificaciones nativas del sistema
-    ☑
-
-    Cola offline de mensajes
-    ☑
-
-    Reconocimiento de voz offline con Vosk
-    ☑
-
-    Lanzador local ania.py
-    □
-
-    Recuperación de contraseña por email
-    □
-
-    Sincronización cifrada entre dispositivos
-    □
-
-    PIN local de bloqueo
-    □
-
-    Panel de moderación de conocimiento compartido
-    □
-
-    Gráficos históricos en el panel admin
-    □
-
-    Editor visual de la personalidad de Ania
-    □
-
-    Modo multijugador / salas compartidas
+    ☑     Reconocimiento de voz continuo con palabra de activación
+    ☑     Entrenamiento con documentos propios
+    ☑     Control del PC vía agente local
+    ☑     Agenda recurrente con canales separados
+    ☑     Hash de contraseñas con scrypt
+    ☑     Registro público multiusuario
+    ☑     Super admin + panel de administración
+    ☑     Cerebro colectivo con privacidad garantizada
+    ☑     Memoria cifrada AES-256-GCM
+    ☑     Rate limiting en todos los endpoints sensibles
+    ☑     Agentes IA (mejoras, seguridad, personalización)
+    ☑     Logo reactivo de 5 estados
+    ☑     Notificaciones nativas del sistema
+    ☑     Cola offline de mensajes
+    ☑     Reconocimiento de voz offline con Vosk
+    ☑     Lanzador local ania.py
+    □     Recuperación de contraseña por email
+    □     Sincronización cifrada entre dispositivos
+    □     PIN local de bloqueo
+    □     Panel de moderación de conocimiento compartido
+    □     Gráficos históricos en el panel admin
+    □     Editor visual de la personalidad de Ania
+    □     Modo multijugador / salas compartidas
 
 » Créditos y licencia
 
