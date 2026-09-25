@@ -2184,7 +2184,10 @@ const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recog = null, recogActive = false;
 if(SR){
   recog = new SR();
-  recog.lang = 'es-ES'; recog.interimResults = true; recog.continuous = true;
+  recog.lang = 'es-ES'; 
+  recog.maxAlternatives = 5; // Pide hasta 5 interpretaciones diferentes[reference:5]
+  recog.interimResults = true; // Ya lo tienes, pero es clave para ver resultados en tiempo real
+  recog.continuous = true;
   recog.onresult = e=>{
     let fin='', inter='';
     for(const r of e.results){ if(r.isFinal) fin += r[0].transcript; else inter += r[0].transcript; }
