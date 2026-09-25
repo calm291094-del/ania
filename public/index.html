@@ -2190,12 +2190,32 @@ if(SR){
   recog.continuous = true;
   recog.onresult = e=>{
     let fin='', inter='';
-    for(const r of e.results){ if(r.isFinal) fin += r[0].transcript; else inter += r[0].transcript; }
+
+    for (let i = 0; i < e.results.length; i++) {
+      const result = e.results[i];
+      if (result.isFinal) {
+        // Elegir la alternativa con mayor confianza
+        let mejor = result[0];
+        for (let j = 1; j < result.length; j++) {
+          if (result[j].confidence > mejor.confidence) mejor = result[j];
+        }
+        if (mejor && mejor.transcript) {
+          // En móvil la confianza suele ser baja o undefined: aceptamos siempre pero logueamos
+          if (mejor.confidence && mejor.confidence < 0.5) {
+            console.warn('[STT] Confianza baja:', mejor.confidence, '→', mejor.transcript);
+          }
+          fin += mejor.transcript + ' ';
+        }
+      } else {
+        if (result[0] && result[0].transcript) inter += result[0].transcript;
+      }
+    }
+  
     if(inter && !alwaysOn) $('userInput').value = inter;
     if(!fin) return;
     const low = LINGUA.normalizar(fin);
     if(alwaysOn){
-      const m = low.match(/\b(ania|ana|anja)\b/);
+      const m = low.match(/\b(ania|ana|anja|aña|annia|hania|onia|anea|aniya|anya|añia|añá|anie|anio|anni?[ae]|a[nñ]{1,2}[iy]a?)\b/);
       if(!m) return;
       let cmd = fin.slice(low.indexOf(m[0]) + m[0].length).replace(/^[\s,.:;¡!¿?]+/,'').trim();
       if(!cmd){ stopSpeak(); return reply('¿Sí? Te escucho.'); }
@@ -2388,7 +2408,7 @@ const VoskEngine = {
     console.log('[Vosk] Transcripción:', texto);
     const low = LINGUA.normalizar(texto);
     if (alwaysOn){
-      const m = low.match(/\b(ania|ana|anja)\b/);
+      const m = low.match(/\b(ania|ana|anja|aña|annia|hania|onia|anea|aniya|anya|añia|añá|anie|anio|anni?[ae]|a[nñ]{1,2}[iy]a?)\b/);
       if (!m) return;
       const cmd = texto.slice(low.indexOf(m[0]) + m[0].length).replace(/^[\s,.:;¡!¿?]+/,'').trim();
       if (!cmd){ stopSpeak(); return reply('¿Sí? Te escucho.'); }
@@ -2485,7 +2505,7 @@ const Ears = {
   handleTranscript(fin){
     const low = LINGUA.normalizar(fin);
     if(alwaysOn){
-      const m = low.match(/\b(ania|ana|anja)\b/);
+      const m = low.match(/\b(ania|ana|anja|aña|annia|hania|onia|anea|aniya|anya|añia|añá|anie|anio|anni?[ae]|a[nñ]{1,2}[iy]a?)\b/);
       if(!m) return;
       let cmd = fin.slice(low.indexOf(m[0]) + m[0].length).replace(/^[\s,.:;¡!¿?]+/,'').trim();
       if(!cmd){ stopSpeak(); return reply('¿Sí? Te escucho.'); }
