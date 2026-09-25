@@ -8,9 +8,10 @@ const fs = require('fs');
 const crypto = require('crypto');
 
 const app = express();
-app.set('trust proxy', 1); // Render está detrás de un proxy: confiar en él para leer la IP real
 const PORT = process.env.PORT || 10000;
 const PUBLIC_DIR = path.join(__dirname, 'public');
+
+app.set('trust proxy', 1); // Render está detrás de un proxy: confiar en él para leer la IP real
 
 /* ==================== HANDLERS GLOBALES ==================== */
 process.on('unhandledRejection', (reason) => { console.error('⚠ Unhandled Rejection:', reason); });
