@@ -2277,7 +2277,10 @@ const VoskEngine = {
   sink: null,
   on: false,
   ready: false,
-  _modelUrl: './models/vosk-model-small-es-0.42.tar.gz',
+  _modelUrls: [
+    'https://github.com/calm291094-del/ania/releases/download/v1.0-modelos/vosk-model-small-es-0.42.tar.gz',
+    './models/vosk-model-small-es-0.42.tar.gz'
+  ],
 
   async loadModel(){
     if (this.model) return true;
@@ -2285,20 +2288,29 @@ const VoskEngine = {
       console.warn('[Vosk] Librería no cargada');
       return false;
     }
-    try{
-      toast('Cargando modelo de voz offline...');
-      const model = await Vosk.createModel(this._modelUrl);
-      this.model = model;
-      this.ready = true;
-      console.log('[Vosk] Modelo cargado');
-      toast('Oído offline listo');
-      return true;
-    }catch(e){
-      console.error('[Vosk] Error al cargar modelo:', e);
-      toastError('No se pudo cargar el modelo de voz offline');
-      return false;
+    // Probar cada URL en orden
+    for (let i = 0; i < this._modelUrls.length; i++){
+      const url = this._modelUrls[i];
+      try{
+        toast('Cargando modelo de voz offline... (' + (i+1) + '/' + this._modelUrls.length + ')');
+        console.log('[Vosk] Intentando cargar desde:', url);
+        const model = await Vosk.createModel(url);
+        this.model = model;
+        this.ready = true;
+        console.log('[Vosk] Modelo cargado desde:', url);
+        toast('Oído offline listo');
+        return true;
+      }catch(e){
+        console.warn('[Vosk] Falló la URL ' + (i+1) + ':', e.message);
+        // Continuar con la siguiente URL
+      }
     }
-  },
+
+  // Si ninguna URL funcionó
+  console.error('[Vosk] Ninguna URL del modelo funcionó');
+  toastError('No se pudo cargar el modelo de voz offline');
+  return false;
+},
 
   async start(){
     if (this.on) return;
