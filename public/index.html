@@ -1823,6 +1823,93 @@ function toastAI(msg, meta){
     NotifyX.ai(msg, { title: 'ANIA · IA', ai: meta || {} });
   }
 }
+
+/* =====================================================================
+   LOGO CONTROLLER · máquina de estados del logo reactivo
+===================================================================== */
+const LogoController = {
+  el: null,
+  currentState: 'idle',
+  states: ['idle', 'listening', 'thinking', 'speaking', 'offline'],
+  tags: { idle:'SYS', listening:'REC', thinking:'PROC', speaking:'TALK', offline:'OFF' },
+  idleTagTimer: null,
+  idleTagIdx: 0,
+  idleTagCycle: ['SYS','IA','RDY','OK','LIVE','ON'],
+
+  init(){
+    function arrancar(){
+      const el = document.getElementById('logo');
+      if (!el){ setTimeout(arrancar, 300); return; }
+      this.el = el;
+      this.attachEvents();
+      this.setState('idle');
+      console.log('🎨 LogoController iniciado');
+    }
+    if (document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', () => arrancar.call(this));
+    } else {
+      arrancar.call(this);
+    }
+  },
+
+  attachEvents(){
+    window.addEventListener('online', () => { if (this.currentState === 'offline') this.setState('idle'); });
+    window.addEventListener('offline', () => this.setState('offline'));
+  },
+
+  setState(nuevo){
+    if (!this.states.includes(nuevo)) return;
+    if (this.currentState === nuevo && this.el.classList.contains('logo-' + nuevo)) return;
+
+    this.el.classList.remove('logo-' + this.currentState);
+    this.el.classList.add('logo-' + nuevo);
+    this.currentState = nuevo;
+
+    const tag = this.el.querySelector('#logoTAG');
+    if (tag){
+      if (nuevo === 'idle'){
+        this.startIdleTagCycle();
+      } else {
+        this.stopIdleTagCycle();
+        tag.textContent = this.tags[nuevo] || '';
+        tag.classList.add('on');
+      }
+    }
+    console.log('🎨 Logo →', nuevo);
+  },
+
+  startIdleTagCycle(){
+    const tag = this.el && this.el.querySelector('#logoTAG');
+    if (!tag) return;
+    this.stopIdleTagCycle();
+    setTimeout(() => {
+      if (this.currentState !== 'idle') return;
+      tag.textContent = this.idleTagCycle[0];
+      tag.classList.add('on');
+      this.idleTagIdx = 1;
+      setTimeout(() => tag.classList.remove('on'), 1800);
+    }, 2000);
+    this.idleTagTimer = setInterval(() => {
+      if (this.currentState !== 'idle') return;
+      tag.textContent = this.idleTagCycle[this.idleTagIdx % this.idleTagCycle.length];
+      tag.classList.add('on');
+      this.idleTagIdx++;
+      setTimeout(() => tag.classList.remove('on'), 1800);
+    }, 4000);
+  },
+
+  stopIdleTagCycle(){
+    if (this.idleTagTimer){
+      clearInterval(this.idleTagTimer);
+      this.idleTagTimer = null;
+    }
+  }
+};
+
+// Arrancar el controlador
+LogoController.init();
+
+  
 function tickClock(){ $('clock').textContent = new Date().toLocaleTimeString('es-ES'); }
 setInterval(tickClock, 1000); tickClock();
 function updateNet(){
