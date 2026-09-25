@@ -1,5 +1,5 @@
 {
-  "fecha": "2026-09-24T16:34:55.499Z",
+  "fecha": "2026-09-25T10:03:59.131Z",
   "analizadoPor": "Ania Security Agent v2",
   "hallazgos": [
     {
@@ -40,6 +40,13 @@
       "regla": "ERR-001",
       "severidad": "medio",
       "descripcion": "Error details sent to client, potentially exposing stack traces.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
       "ubicacion": "desconocida"
     },
     {
@@ -149,6 +156,62 @@
     },
     {
       "tipo": "codigo",
+      "regla": "AUTH-001",
+      "severidad": "alto",
+      "descripcion": "Route handler for `.delete()` has no authentication middleware.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "Async operation without error handling may cause unhandled promise rejection.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DOM-001",
+      "severidad": "alto",
+      "descripcion": "Assigning a dynamic value to `.innerHTML` can introduce DOM-based XSS.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DOM-001",
+      "severidad": "alto",
+      "descripcion": "Assigning a dynamic value to `.innerHTML` can introduce DOM-based XSS.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DOM-001",
+      "severidad": "alto",
+      "descripcion": "Assigning a dynamic value to `.innerHTML` can introduce DOM-based XSS.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DOM-001",
+      "severidad": "alto",
+      "descripcion": "Assigning a dynamic value to `.innerHTML` can introduce DOM-based XSS.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DOM-001",
+      "severidad": "alto",
+      "descripcion": "Assigning a dynamic value to `.innerHTML` can introduce DOM-based XSS.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
       "regla": "DEP-003",
       "severidad": "bajo",
       "descripcion": "Dependency \"express\" is declared but never imported in source files.",
@@ -192,8 +255,8 @@
   ],
   "resumen": {
     "critico": 0,
-    "alto": 13,
+    "alto": 19,
     "medio": 1,
-    "bajo": 12
+    "bajo": 15
   }
 }
