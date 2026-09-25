@@ -1209,6 +1209,20 @@ const store = {
   set(k,v){ try{ localStorage.setItem('ania_'+k, JSON.stringify(v)); }catch(e){} },
   del(k){ localStorage.removeItem('ania_'+k); }
 };
+
+/* ---------- Detección de modo local ---------- */
+(function(){
+  const host = location.hostname;
+  if (host === 'localhost' || host === '127.0.0.1'){
+    // Reescribir configuración para apuntar a local
+    CONFIG.ANIA_API = 'http://' + location.host;
+    CONFIG.BACKEND_URL = 'http://' + location.host;
+    // Activar el agente PC automáticamente en local
+    store.set('agentActivado', true);
+    console.log('🏠 Modo local activado · API y agente en ' + location.host);
+  }
+})();
+  
 const pick = a => a[Math.floor(Math.random()*a.length)];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const isOffline = () => !navigator.onLine;
