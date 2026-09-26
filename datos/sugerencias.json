@@ -37,6 +37,53 @@
         "como": "Endpoint GET /ania/me/export que devuelva JSON con toda su memoria. Botón en Ajustes."
       }
     ],
+    "fecha": "2026-09-26T08:20:53.339Z",
+    "analizadoPor": "Ania Auto-Agent v3 (fallback-local (la IA no respondió))",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 61259,
+    "fuente": "fallback"
+  },
+  {
+    "mejoras": [
+      {
+        "titulo": "Rate limiting en login",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Sin límite de intentos, un atacante puede probar contraseñas por fuerza bruta. Añadir throttling protege las cuentas.",
+        "como": "Instalar express-rate-limit y aplicar 5 intentos por 15 min por IP en /ania/login. Guardar bloqueos en memoria."
+      },
+      {
+        "titulo": "Validación de email",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Se aceptan correos sin verificar. Un typo bloquea la cuenta para siempre y permite registros falsos.",
+        "como": "Enviar email de confirmación con token temporal al registrarse. Marcar usuario como verificado tras el clic."
+      },
+      {
+        "titulo": "HTTPS forzado en cookies",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "Los tokens viajan en headers pero no se fuerza HTTPS. En redes públicas podría haber interceptación.",
+        "como": "Añadir middleware que redirija HTTP a HTTPS en producción. En Render ya es automático, pero validar."
+      },
+      {
+        "titulo": "Compresión gzip",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "Las respuestas JSON viajan sin comprimir. Reducir tamaño mejora tiempos de carga en móvil.",
+        "como": "Añadir middleware compression de Express con umbral de 1KB. Beneficio doble si se cachean respuestas."
+      },
+      {
+        "titulo": "Exportar memoria del usuario",
+        "categoria": "feature",
+        "prioridad": "baja",
+        "descripcion": "El usuario no puede descargar sus datos. La portabilidad de datos es un derecho y mejora la confianza.",
+        "como": "Endpoint GET /ania/me/export que devuelva JSON con toda su memoria. Botón en Ajustes."
+      }
+    ],
     "fecha": "2026-09-25T08:34:05.285Z",
     "analizadoPor": "Ania Auto-Agent v3 (fallback-local (la IA no respondió))",
     "archivosAnalizados": [
