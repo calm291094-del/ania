@@ -438,7 +438,13 @@ app.post('/ania/admin/delete-user', auth, async (req,res)=>{
 });
 
 /* ==================== PROXY DE ARCHIVOS PÚBLICOS ==================== */
-const ARCHIVOS_PERMITIDOS = ['datos/security-report.json','datos/sugerencias.json','datos/perfiles.json','datos/conocimiento.json'];
+const ARCHIVOS_PERMITIDOS = [
+  'datos/security-report.json',
+  'datos/sugerencias.json',
+  'datos/perfiles.json',
+  'datos/conocimiento.json',
+  'documentos/entrenamiento-ania.json'
+];
 app.get('/ania/public/:archivo', async (req, res) => {
   try{
     const archivo = 'datos/' + req.params.archivo;
