@@ -456,6 +456,28 @@ app.get('/ania/public/:archivo', async (req, res) => {
   }catch(e){ res.status(500).json({ error:'error al leer archivo' }); }
 });
 
+/* ==================== ENTRENAMIENTO V5 ==================== */
+app.get('/ania/entrenamiento', async (req, res) => {
+  try {
+    // El archivo está en datos/entrenamiento-ania.json
+    let f = await ghRead('datos/entrenamiento-ania.json');
+    if (!f) {
+      // Fallback: por si algún día lo mueves a documentos/
+      f = await ghRead('documentos/entrenamiento-ania.json');
+    }
+    if (!f) return res.status(404).json({ error: 'entrenamiento no encontrado' });
+
+    const datos = JSON.parse(f.content);
+    const entradas = Array.isArray(datos.entrenamiento) ? datos.entrenamiento.length : 0;
+    console.log('📚 Entrenamiento servido:', entradas, 'entradas');
+    res.json(datos);
+  } catch (e) {
+    console.error('entrenamiento:', e.message);
+    res.status(500).json({ error: 'error al leer entrenamiento' });
+  }
+});
+
+
 /* ==================== PERFIL DEL USUARIO ==================== */
 app.get('/ania/me/perfil', auth, async (req,res)=>{
   try{
