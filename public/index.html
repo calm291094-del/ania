@@ -1878,6 +1878,7 @@ const LogoController = {
   },
 
   setState(nuevo){
+    if (!this.el) return;  // <-- el logo aún no está listo
     if (!this.states.includes(nuevo)) return;
     if (this.currentState === nuevo && this.el.classList.contains('logo-' + nuevo)) return;
 
@@ -1941,7 +1942,7 @@ function updateNet(){
     ? 'SIN CONEXIÓN' + (n ? ' · '+n+' EN COLA' : '')
     : 'EN LÍNEA';
   // Sincronizar logo
-  if (typeof LogoController !== 'undefined' && LogoController.setState){
+  if (typeof LogoController !== 'undefined' && LogoController.el && LogoController.setState){
     if (off) LogoController.setState('offline');
     else if (LogoController.currentState === 'offline') LogoController.setState('idle');
   }
