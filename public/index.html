@@ -1593,25 +1593,25 @@ let ENTRENAMIENTO_V5 = [];
 async function cargarEntrenamientoV5(){
   if (ENTRENAMIENTO_V5.length) return ENTRENAMIENTO_V5;
   try{
-    // Intentar primero vía backend proxy
-    let r = await fetch(CONFIG.ANIA_API + '/ania/public/entrenamiento-ania.json');
+    const r = await fetch(CONFIG.ANIA_API + '/ania/entrenamiento');
 
-    // Si falla, intentar ruta local directa
     if (!r.ok){
-      r = await fetch('./documentos/entrenamiento-ania.json');
+      console.warn('[V5] Entrenamiento no disponible (status ' + r.status + ')');
+      return [];
     }
-    if (!r.ok){
-      console.warn('[V5] Entrenamiento no disponible');
+
+    const contentType = r.headers.get('content-type') || '';
+    if (!contentType.includes('json')){
+      console.warn('[V5] Respuesta no es JSON:', contentType);
       return [];
     }
 
     const data = await r.json();
     if (!data || !Array.isArray(data.entrenamiento)){
-      console.warn('[V5] Formato inesperado');
+      console.warn('[V5] Formato inesperado:', Object.keys(data || {}));
       return [];
     }
 
-    // Normalizar cada entrada al formato interno de Ania
     ENTRENAMIENTO_V5 = data.entrenamiento.map(e => ({
       tag: e.tag || 'sin-tag',
       claves: Array.isArray(e.patterns) ? e.patterns.map(p => LINGUA.normalizar(p)).filter(Boolean) : [],
