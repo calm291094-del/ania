@@ -1,4 +1,4 @@
-/* ANIA v9 · service worker "OFFLINE-FOREVER"
+/* ANIA v10 · service worker "OFFLINE-FOREVER"
    Estrategia:
    1. INSTALACIÓN TOLERANTE: cada recurso se cachea por separado. Si uno falla,
       el resto queda guardado (addAll atómico era el bug: si icon.svg faltaba,
@@ -11,9 +11,23 @@
    REGLA DE ACTUALIZACIÓN: cuando cambies index.html, sube este archivo
    con CACHE incrementado (ania-v9 → ania-v10). */
 
-const CACHE = 'ania-v9';
+const CACHE = 'ania-v10';
 const RUNTIME = 'ania-runtime-v9';
-const APP_SHELL = ['./', './index.html', './manifest.json', './icon.svg'];
+const APP_SHELL = [
+  './', './index.html', './manifest.json', './icon.svg',
+  './vendor/notifyx.min.css',
+  './vendor/notifyx.min.js',
+  './vendor/mediapipe/vision_bundle.mjs',
+  './vendor/mediapipe-wasm/vision_wasm_internal.js',
+  './vendor/mediapipe-wasm/vision_wasm_internal.wasm',
+  './vendor/mediapipe-wasm/vision_wasm_nosimd_internal.js',
+  './vendor/mediapipe-wasm/vision_wasm_nosimd_internal.wasm',
+  './vendor/transformers/transformers.min.js',
+  './vendor/wllama/index.mjs',
+  './vendor/wllama/wllama.wasm',
+  './fonts/share-tech-mono.woff2',
+  './models/hand_landmarker.task'
+];
 const FONT_CSS = 'https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap';
 
 const AI_PREFIXES = [
