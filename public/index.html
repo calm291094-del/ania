@@ -1263,6 +1263,25 @@ const S = { phase:'idle', muted: store.get('muted', false), voice:null, rate: st
 ===================================================================== */
 const LINGUA = (() => {
   const sinDiacriticos = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const LEX_V5 = [
+    [/\bq\b|\bk\b|\bke\b/g, 'que'],
+    [/\bxq\b|\bporq\b/g, 'porque'],
+    [/\btmb\b|\btb\b/g, 'tambien'],
+    [/\bgrax\b|\bgracias\b/g, 'gracias'],
+    [/\bhl\b/g, 'hola'],
+    [/\btoy\b/g, 'estoy'],
+    [/\btas\b/g, 'estas'],
+    [/\bta\b/g, 'esta'],
+    [/\bvoh\b/g, 'tu'],
+    [/\basere\b|\bacere\b/g, 'amigo'],
+    [/\bcompai?\b|\bcompa\b/g, 'companero'],
+    [/\bherma(no|na)?\b/g, 'hermano'],
+    [/\bsocio\b/g, 'amigo'],
+    [/\bchama\b/g, 'chica'],
+    [/\bchamo\b/g, 'chico'],
+    [/\bpinga\b/g, ''],
+    [/\bbol[aá]\b/g, 'que tal']
+  ];
   const LEX = [
     [/\b(que\s+)?bola[so]?\b|\bque\s+vol[aa]\b/g, 'que tal'],
     [/\basere\b|\bacere\b|\bcompay\b/g, 'amigo'],
@@ -1300,6 +1319,7 @@ const LINGUA = (() => {
     t = t.replace(/[¿?¡!.,;:"'`´()[\]]/g, ' ').replace(/\s+/g,' ').trim();
     for(const [re, sub] of STT) t = t.replace(re, ' '+sub+' ');
     for(const [re, sub] of LEX) t = t.replace(re, ' '+sub+' ');
+    for(const [re, sub] of LEX_V5) t = t.replace(re, ' '+sub+' ');
     for(const [re, sub] of FIX) t = t.replace(re, sub);
     return t.replace(/\s+/g,' ').trim();
   }
@@ -1564,8 +1584,101 @@ let TRAINING = [];
     TRAINING = (j.respuestas || []).filter(r => r && r.respuesta && (Array.isArray(r.claves) ? r.claves.length : r.pregunta));
   }catch(e){ TRAINING = []; }
 })();
+
+/* =====================================================================
+   ENTRENAMIENTO EXTERNO v5 · carga el JSON de patrones y respuestas
+===================================================================== */
+let ENTRENAMIENTO_V5 = [];
+
+async function cargarEntrenamientoV5(){
+  if (ENTRENAMIENTO_V5.length) return ENTRENAMIENTO_V5;
+  try{
+    // Intentar primero vía backend proxy
+    let r = await fetch(CONFIG.ANIA_API + '/ania/public/entrenamiento-ania.json');
+
+    // Si falla, intentar ruta local directa
+    if (!r.ok){
+      r = await fetch('./documentos/entrenamiento-ania.json');
+    }
+    if (!r.ok){
+      console.warn('[V5] Entrenamiento no disponible');
+      return [];
+    }
+
+    const data = await r.json();
+    if (!data || !Array.isArray(data.entrenamiento)){
+      console.warn('[V5] Formato inesperado');
+      return [];
+    }
+
+    // Normalizar cada entrada al formato interno de Ania
+    ENTRENAMIENTO_V5 = data.entrenamiento.map(e => ({
+      tag: e.tag || 'sin-tag',
+      claves: Array.isArray(e.patterns) ? e.patterns.map(p => LINGUA.normalizar(p)).filter(Boolean) : [],
+      respuestas: Array.isArray(e.responses) ? e.responses : (e.respuesta ? [e.respuesta] : []),
+      meta: e.meta || {}
+    })).filter(e => e.claves.length && e.respuestas.length);
+
+    console.log('📚 Entrenamiento V5 cargado:', ENTRENAMIENTO_V5.length, 'entradas');
+    return ENTRENAMIENTO_V5;
+  }catch(e){
+    console.warn('[V5] Error al cargar:', e.message);
+    return [];
+  }
+}
+
+// Placeholder de nombre: [nombre] → nombre del usuario o "amigo"
+function aplicarNombre(texto){
+  const nombre = (Mind.d.nombre) || 'amigo';
+  return texto.replace(/\[nombre\]/gi, nombre);
+}
+
+// Busca en el entrenamiento V5
+function buscarEnV5(low){
+  if (!ENTRENAMIENTO_V5.length) return null;
+
+  let mejor = null, mejorScore = 0;
+  const palabras = low.split(' ').filter(w => w.length > 2);
+
+  for (const entrada of ENTRENAMIENTO_V5){
+    let score = 0;
+    for (const clave of entrada.claves){
+      // Match directo substring: 10 puntos
+      if (low.includes(clave)) score += 10;
+      else {
+        // Match por palabras: 2 puntos por palabra coincidente
+        const palabrasClave = clave.split(' ').filter(w => w.length > 2);
+        for (const w of palabrasClave){
+          if (palabras.includes(w)) score += 2;
+        }
+      }
+    }
+
+    // Bonus por prioridad alta
+    if (entrada.meta && entrada.meta.prioridad === 'alta') score += 3;
+
+    if (score > mejorScore){ mejorScore = score; mejor = entrada; }
+  }
+
+  if (mejorScore < 5 || !mejor) return null;
+
+  // Elegir una respuesta aleatoria (no siempre la misma)
+  const respuesta = mejor.respuestas[Math.floor(Math.random() * mejor.respuestas.length)];
+  return {
+    tag: mejor.tag,
+    respuesta: aplicarNombre(respuesta),
+    meta: mejor.meta
+  };
+}
+
+// Cargar al arrancar (asíncrono, no bloquea)
+setTimeout(cargarEntrenamientoV5, 1500);
   
 function trainMatch(low){
+  // 0) Entrenamiento V5 externo (el JSON grande)
+  const v5 = buscarEnV5(low);
+  if (v5) return v5.respuesta;
+  
   // 1) Entrenamiento interno (el JSON del HTML)
   for (const r of TRAINING){
     if (Array.isArray(r.claves)){
