@@ -1195,10 +1195,10 @@ const CONFIG = {
   ANIA_API: 'https://ania-oqct.onrender.com',
   ANIA_USER: 'admin', SYNC_INTERVAL: 45000,
   USERS_URLS: [],
-  WLLAMA_CDN: 'https://cdn.jsdelivr.net/npm/@wllama/wllama@2.3.1/esm/index.js',
-  WLLAMA_WASM_CDN: 'https://cdn.jsdelivr.net/npm/@wllama/wllama@2.3.1/esm/',
-  TRANSFORMERS_CDN: 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.3.1',
-  MEDIAPIPE_CDN: 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14',
+  WLLAMA_CDN: './vendor/wllama/index.mjs',
+  WLLAMA_WASM_CDN: './vendor/wllama/',
+  TRANSFORMERS_CDN: './vendor/transformers/transformers.min.js',
+  MEDIAPIPE_CDN: './vendor/mediapipe',
   MEDIAPIPE_MODEL: './models/hand_landmarker.task'
 };
 
@@ -2560,7 +2560,7 @@ const Ears = {
     toast('Cargando oído local (~80 MB, luego offline)...');
     setPhase('thinking');
     let mod = null;
-    for(const p of ['./engine/transformers.mjs', CONFIG.TRANSFORMERS_CDN]){
+    for(const p of ['./vendor/transformers/transformers.min.js', './engine/transformers.mjs']){
       try{ mod = await import(p); break; }catch(e){}
     }
     if(!mod){ setPhase('idle'); toast('Sin runtime: engine/ o internet', true); return false; }
@@ -2970,7 +2970,7 @@ const Brain = {
   },
   async loadEngine(interactive){
     if(this.Wllama) return this.Wllama;
-    for(const p of ['./engine/wllama.mjs','./engine/index.js']){
+    for(const p of ['./vendor/wllama/index.mjs','./engine/wllama.mjs','./engine/index.js']){
       try{ const m = await import(p); this.Wllama = m.Wllama || m.default; if(this.Wllama) break; }catch(e){}
     }
     if(!this.Wllama && !isOffline()){
@@ -3003,7 +3003,7 @@ const Brain = {
       const W = await this.loadEngine(interactive);
       if(!W){ setPhase('idle'); return personaReply('No encontré el runtime (engine/wllama.mjs).'); }
       const c = await caches.open('ania-runtime-v9').catch(()=>null);
-      const wasmUrl = (c && await c.match('./engine/wllama.wasm')) ? './engine/wllama.wasm' : CONFIG.WLLAMA_WASM_CDN + 'single-thread/wllama.wasm';
+      const wasmUrl = './vendor/wllama/wllama.wasm';
       const wl = new W({'single-thread/wllama.wasm': wasmUrl});
       toast('Cargando modelo...');
       await wl.loadModel(modelUrl, { n_ctx: (man && man.n_ctx) || this.ctx, n_threads: Math.min(8, navigator.hardwareConcurrency || 2) });
@@ -3131,7 +3131,7 @@ const HUD = {
     if(!this.landmarker){
       toast('Cargando visión (~12 MB)...');
       let vision = null;
-      try{ vision = await import(CONFIG.MEDIAPIPE_CDN); }catch(e){}
+      try{ vision = await import('./vendor/mediapipe/vision_bundle.mjs'); }catch(e){ console.warn('MediaPipe local no cargó:', e.message); }
       if(!vision) return toast('Sin CDN de visión', true);
       try{
         const fileset = await vision.FilesetResolver.forVisionTasks('./vendor/mediapipe-wasm');
