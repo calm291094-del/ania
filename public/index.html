@@ -3134,7 +3134,7 @@ const HUD = {
       try{ vision = await import(CONFIG.MEDIAPIPE_CDN); }catch(e){}
       if(!vision) return toast('Sin CDN de visión', true);
       try{
-        const fileset = await vision.FilesetResolver.forVisionTasks(CONFIG.MEDIAPIPE_CDN + '/wasm');
+        const fileset = await vision.FilesetResolver.forVisionTasks('./vendor/mediapipe-wasm');
         this.landmarker = await vision.HandLandmarker.createFromOptions(fileset, {
           baseOptions: { modelAssetPath: CONFIG.MEDIAPIPE_MODEL, delegate: 'GPU' },
           numHands: 1, runningMode: 'VIDEO'
