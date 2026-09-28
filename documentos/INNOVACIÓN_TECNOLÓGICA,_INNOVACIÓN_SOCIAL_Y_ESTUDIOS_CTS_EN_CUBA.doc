@@ -1,0 +1,442 @@
+{\rtf1\ansi\ansicpg1252\uc1 \deff0\deflang1033\deflangfe3082{\fonttbl{\f0\froman\fcharset0\fprq2{\*\panose 02020603050405020304}Times New Roman;}{\f1\fswiss\fcharset0\fprq2{\*\panose 020b0604020202020204}Arial;}
+{\f3\froman\fcharset2\fprq2{\*\panose 05050102010706020507}Symbol;}{\f16\fmodern\fcharset0\fprq1{\*\panose 00000000000000000000}Fixedsys;}{\f17\fswiss\fcharset0\fprq2{\*\panose 020b0a04020102020204}Arial Black;}
+{\f18\froman\fcharset0\fprq2{\*\panose 02050604050505020204}Bookman Old Style;}{\f19\froman\fcharset238\fprq2 Times New Roman CE;}{\f20\froman\fcharset204\fprq2 Times New Roman Cyr;}{\f22\froman\fcharset161\fprq2 Times New Roman Greek;}
+{\f23\froman\fcharset162\fprq2 Times New Roman Tur;}{\f24\froman\fcharset186\fprq2 Times New Roman Baltic;}{\f25\fswiss\fcharset238\fprq2 Arial CE;}{\f26\fswiss\fcharset204\fprq2 Arial Cyr;}{\f28\fswiss\fcharset161\fprq2 Arial Greek;}
+{\f29\fswiss\fcharset162\fprq2 Arial Tur;}{\f30\fswiss\fcharset186\fprq2 Arial Baltic;}{\f121\fswiss\fcharset238\fprq2 Arial Black CE;}{\f122\fswiss\fcharset204\fprq2 Arial Black Cyr;}{\f124\fswiss\fcharset161\fprq2 Arial Black Greek;}
+{\f125\fswiss\fcharset162\fprq2 Arial Black Tur;}{\f126\fswiss\fcharset186\fprq2 Arial Black Baltic;}{\f127\froman\fcharset238\fprq2 Bookman Old Style CE;}{\f128\froman\fcharset204\fprq2 Bookman Old Style Cyr;}
+{\f130\froman\fcharset161\fprq2 Bookman Old Style Greek;}{\f131\froman\fcharset162\fprq2 Bookman Old Style Tur;}{\f132\froman\fcharset186\fprq2 Bookman Old Style Baltic;}}{\colortbl;\red0\green0\blue0;\red0\green0\blue255;\red0\green255\blue255;
+\red0\green255\blue0;\red255\green0\blue255;\red255\green0\blue0;\red255\green255\blue0;\red255\green255\blue255;\red0\green0\blue128;\red0\green128\blue128;\red0\green128\blue0;\red128\green0\blue128;\red128\green0\blue0;\red128\green128\blue0;
+\red128\green128\blue128;\red192\green192\blue192;}{\stylesheet{\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid \snext0 Normal;}{\*\cs10 \additive Default Paragraph Font;}{\s15\nowidctlpar\widctlpar\tqc\tx4252\tqr\tx8504\adjustright 
+\fs20\lang3082\cgrid \sbasedon0 \snext15 footer;}{\*\cs16 \additive \sbasedon10 page number;}{\s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid \sbasedon0 \snext17 footnote text;}{\*\cs18 \additive \super \sbasedon10 footnote reference;}{
+\s19\nowidctlpar\widctlpar\tqc\tx4252\tqr\tx8504\adjustright \fs20\lang3082\cgrid \sbasedon0 \snext19 header;}}{\*\listtable{\list\listtemplateid201981975\listsimple{\listlevel\levelnfc4\leveljc0\levelfollow0\levelstartat1\levelspace0\levelindent0
+{\leveltext\'02\'00);}{\levelnumbers\'01;}\fi-360\li360\jclisttab\tx360 }{\listname ;}\listid988443738}{\list\listtemplateid201981967\listsimple{\listlevel\levelnfc0\leveljc0\levelfollow0\levelstartat1\levelspace0\levelindent0{\leveltext
+\'02\'00.;}{\levelnumbers\'01;}\fi-360\li360\jclisttab\tx360 }{\listname ;}\listid1044718348}{\list\listtemplateid201981975\listsimple{\listlevel\levelnfc4\leveljc0\levelfollow0\levelstartat1\levelspace0\levelindent0{\leveltext\'02\'00);}{\levelnumbers
+\'01;}\fi-360\li360\jclisttab\tx360 }{\listname ;}\listid1062023841}{\list\listtemplateid201981953\listsimple{\listlevel\levelnfc23\leveljc0\levelfollow0\levelstartat1\levelspace0\levelindent0{\leveltext\'01\u-3913 ?;}{\levelnumbers;}\f3\fbias0 
+\fi-360\li360\jclisttab\tx360 }{\listname ;}\listid1161772505}{\list\listtemplateid201981953\listsimple{\listlevel\levelnfc23\leveljc0\levelfollow0\levelstartat1\levelspace0\levelindent0{\leveltext\'01\u-3913 ?;}{\levelnumbers;}\f3\fbias0 \fi-360\li360
+\jclisttab\tx360 }{\listname ;}\listid1670982314}{\list\listtemplateid201981953\listsimple{\listlevel\levelnfc23\leveljc0\levelfollow0\levelstartat1\levelspace0\levelindent0{\leveltext\'01\u-3913 ?;}{\levelnumbers;}\f3\fbias0 \fi-360\li360
+\jclisttab\tx360 }{\listname ;}\listid1816021800}{\list\listtemplateid201981953\listsimple{\listlevel\levelnfc23\leveljc0\levelfollow0\levelstartat1\levelspace0\levelindent0{\leveltext\'01\u-3913 ?;}{\levelnumbers;}\f3\fbias0 \fi-360\li360
+\jclisttab\tx360 }{\listname ;}\listid1988591073}{\list\listtemplateid201981953\listsimple{\listlevel\levelnfc23\leveljc0\levelfollow0\levelstartat1\levelspace0\levelindent0{\leveltext\'01\u-3913 ?;}{\levelnumbers;}\f3\fbias0 \fi-360\li360
+\jclisttab\tx360 }{\listname ;}\listid2020697004}}{\*\listoverridetable{\listoverride\listid1161772505\listoverridecount0\ls1}{\listoverride\listid1988591073\listoverridecount0\ls2}{\listoverride\listid1670982314\listoverridecount0\ls3}
+{\listoverride\listid1816021800\listoverridecount0\ls4}{\listoverride\listid2020697004\listoverridecount0\ls5}{\listoverride\listid1062023841\listoverridecount0\ls6}{\listoverride\listid988443738\listoverridecount0\ls7}{\listoverride\listid1044718348
+\listoverridecount0\ls8}}{\info{\title Universidad de La Habana}{\author Aurora Fern\'e1ndez Gonz\'e1lez}{\operator abm}{\creatim\yr1999\mo6\dy6\hr7\min51}{\revtim\yr2000\mo4\dy21\hr10\min47}{\printim\yr2000\mo1\dy13\hr10\min18}{\version4}{\edmins10}
+{\nofpages2}{\nofwords6456}{\nofchars36800}{\*\company .}{\nofcharsws45192}{\vern73}}\paperw11909\margl1411\margr1138\margt1411\margb1138 \deftab708\widowctrl\ftnbj\aenddoc\hyphhotz425\hyphcaps0\formshade\viewkind1\viewscale75\pgbrdrhead\pgbrdrfoot \fet0
+\sectd \psz9\linex0\headery706\footery706\colsx709\endnhere\sectdefaultcl {\header \pard\plain \s19\nowidctlpar\widctlpar\tqc\tx4252\tqr\tx8504\adjustright \fs20\lang3082\cgrid {\lang1034 
+                                                                                                                                                                                    }{\field{\*\fldinst {\cs16  PAGE }}{\fldrslt {\cs16\lang1024 1}}}{
+\lang1034 
+\par }}{\footer \pard\plain \s15\ri360\nowidctlpar\widctlpar\tqc\tx4252\tqr\tx8504\adjustright \fs20\lang3082\cgrid {
+\par }}{\*\pnseclvl1\pnucrm\pnstart1\pnindent720\pnhang{\pntxta .}}{\*\pnseclvl2\pnucltr\pnstart1\pnindent720\pnhang{\pntxta .}}{\*\pnseclvl3\pndec\pnstart1\pnindent720\pnhang{\pntxta .}}{\*\pnseclvl4\pnlcltr\pnstart1\pnindent720\pnhang{\pntxta )}}
+{\*\pnseclvl5\pndec\pnstart1\pnindent720\pnhang{\pntxtb (}{\pntxta )}}{\*\pnseclvl6\pnlcltr\pnstart1\pnindent720\pnhang{\pntxtb (}{\pntxta )}}{\*\pnseclvl7\pnlcrm\pnstart1\pnindent720\pnhang{\pntxtb (}{\pntxta )}}{\*\pnseclvl8
+\pnlcltr\pnstart1\pnindent720\pnhang{\pntxtb (}{\pntxta )}}{\*\pnseclvl9\pnlcrm\pnstart1\pnindent720\pnhang{\pntxtb (}{\pntxta )}}\pard\plain \qc\nowidctlpar\widctlpar\brdrt\brdrs\brdrw10\brsp20 \brdrl\brdrs\brdrw10\brsp80 \brdrb\brdrs\brdrw10\brsp20 
+\brdrr\brdrs\brdrw10\brsp80 \adjustright \shading1250\cbpat8 \fs20\lang3082\cgrid {\i\f17\fs22\lang1034 INNOVACI\'d3N TECNOL\'d3GICA, INNOVACI\'d3N SOCIAL Y ESTUDIOS CTS EN CUBA
+\par }\pard \nowidctlpar\widctlpar\adjustright {\b\i\f18\fs22\lang1034 
+\par 
+\par }{\b\i\f1\fs22\lang1034 Dr. Jorge N\'fa\'f1ez Jover}{\cs18\b\i\f1\fs22\lang1034\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ Universidad de La Habana}}}{\b\i\f1\fs22\lang1034 
+
+\par }{\b\i\f18\fs22\lang1034 Dr. Jos\'e9 Antonio L\'f3pez Cerezo}{\cs18\b\i\f18\fs22\lang1034\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ Universidad de Oviedo}}}{
+\b\i\f18\fs22\lang1034 
+\par 
+\par Introducci\'f3n
+\par }{\b\f16\fs22\lang1034 
+\par }{\b\f18\fs22\lang1034 
+\par }\pard \qj\nowidctlpar\widctlpar\adjustright {\f18\fs22\lang1034 En este documento pretendemos dejar constancia del proceso de institucionalizaci\'f3n de los Estudios Ciencia, Tecnolog\'eda y Sociedad (CTS}{\b\f18\fs22\lang1034 ) }{\f18\fs22\lang1034 
+en Cuba, as\'ed como de las circunstancias sociales y acad\'e9micas que los nutra.  Mostraremos los esfuerzos principales que se vienen desarrollando poni\'e9ndolos en relaci\'f3
+n con las necesidades y demandas de la sociedad cubana y con las tradiciones de pensamiento y desaf\'edos te\'f3ricos propios de su cultura.
+\par 
+\par En el caso de los estudios CTS en cuba se apreciar\'e1, como suele ocurrir, que se est\'e1 produciendo un proceso de transferencia y asimilaci\'f3n de la experiencia a nivel internacional.  Pero se observar\'e1
+ que ese proceso tiene particularidades que tienen que ver con la trayectoria social e intelectual del pa\'eds.
+\par 
+\par Para comenzar expondremos un panorama muy resumido de la evoluci\'f3n de la ciencia y la tecnolog\'eda en cuba en las \'faltimas cuatro d\'e9cadas. A trav\'e9s de \'e9l pretendemos argumentar la tesis de que el desarrollo cient\'edfico, tecnol\'f3
+gico y educacional cubano transparenta lo que suele interesar a los estudios CTS: las estrechas relaciones entre ciencia, tecnolog\'eda y sociedad; entre la ciencia, la tecnolog\'eda, la pol\'ed
+tica y los valores.  En particular consideraremos los temas de la evoluci\'f3n de las pol\'edticas cient\'edficas y la implantaci\'f3n de singulares experiencias de participaci\'f3n p\'fablica. Este panorama servir\'e1
+ para argumentar nuestro punto de vista seg\'fan el cual los cambios que se vienen produciendo en el contexto social y su demanda a la ciencia, la tecnolog\'eda y la educaci\'f3n, pueden benefic
+iarse de los enfoques y propuestas de los estudios CTS.  A continuaci\'f3n consideraremos el tema de las tradiciones de pensamiento que han influido en la cultura cubana y conforman un cierto marco conceptual a trav\'e9
+s del cual se asimilan y refractan los desarrollos contempor\'e1neos en CTS.
+\par 
+\par Por \'faltimo expondremos las experiencias de institucionalizaci\'f3n de  los Estudios CTS y los objetivos que animan esos proyectos.
+\par 
+\par }{\b\i\f18\fs22\lang1034 La "Pol\'edtica del conocimiento" y la pol\'edtica cient\'edfica y tecnol\'f3gica.
+\par 
+\par }{\f18\fs22\lang1034 En el a\'f1o 1959 se desencaden\'f3 en Cuba un proceso de profundas transformaciones sociales cuyos objetivos socialistas se declararon oficialmente en 1961. Uno de los signos caracter\'ed
+sticos del programa social inaugurado y uno de sus sentidos principales fue la implantaci\'f3n de lo que llamaremos una "pol\'edtica del conocimiento".  Esa pol\'edtica tiene un punto de partida fundamental en la Campa\'f1a de Alfabetizaci\'f3
+n de 1961; continu\'f3 con la nacionalizaci\'f3n de la ense\'f1anza, el acceso gratuito a la educaci\'f3n, la realizaci\'f3n de una amplia pol\'edtica de edici\'f3n y distribuci\'f3
+n de libros. Los planes masivos de becas que permitieron a los estudiantes de cualquier sitio del pa\'eds y procedencia social acceder a la ense\'f1anza, el desarrollo de la educaci\'f3n para adultos, los programas de ense\'f1anza para cam
+pesinos, en particular mujeres, fueron entre otras muchas, medidas adoptadas por los revolucionarios en el poder.
+\par 
+\par Al hablar de una "pol\'edtica del conocimiento" subrayamos que se ha tratado de una estrategia deliberada, sostenida e impulsada desde los m\'e1s altos niveles de gobierno y orientada a la extensi\'f3
+n, en la mayor medida posible, de los beneficios del conocimiento a todos los ciudadanos.
+\par 
+\par Componente esencial de la "pol\'edtica del conocimiento" relatada ha sido la pol\'edtica cient\'edfica y tecnol\'f3gica (PCT) que el pa\'eds ha venido instrumentando}{\cs18\f18\fs22\lang1034\super \chftn {\footnote \pard\plain 
+\s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ Sobre la PCT cubana: Capote, Castro D\'edaz Balart, Rosa Elena Sime\'f3n.}}}{\f18\fs22\lang1034 .
+\par 
+\par El an\'e1lisis de la PCT cubana, primero impl\'edcita y luego expl\'edcita}{\cs18\f18\fs22\lang1034\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ Herrera, et.al.}}}{
+\f18\fs22\lang1034 , permite explorar c\'f3mo se han expresado en sus diferentes etapas, variadas percepciones sobre las interrelaciones entre ciencia, tecnolog\'eda y sociedad, as\'ed
+ como los diferentes impactos sociales que en cada una de esas etapas se registran; de igual modo es posible identificar los rasgos de la situaci\'f3n actual y de qu\'e9 modo los estudios CTS pueden contribuir al avance de las pol\'edticas propuestas.
+
+\par 
+\par La PCT cubana ha atravesado a partir de 1959 por tres etapas principales. A la primera etapa pudiera denomin\'e1rsele de "promoci\'f3n dirigida de la ciencia" }{\cs18\f18\fs22\lang1034\super \chftn {\footnote \pard\plain 
+\s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ Garc\'eda Capote, 1996, p.149.}}}{\f18\fs22\lang1034  o "pol\'edtica desde el lado del suministro" como la denomina Freeman (1981)}{\cs18\f18\fs22\lang1034\super \chftn 
+{\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ La analog\'eda es de Garc\'eda Capote, E (1996).}}}{\f18\fs22\lang1034 , es decir, una pol\'edtica que se esfuerza por crear un sector de investigaci
+\'f3n desarrollo inexistente, lo que en Cuba se tradujo en un \'e9nfasis extraordinario en la creaci\'f3n de instituciones cient\'edficas y la preparaci\'f3n de los investigadores que deb\'edan trabajar en ellas.  De acuerdo con esto, en los a\'f1
+os 60 se crearon muchos de los principales centros de investigaci\'f3n que el pa\'eds tiene hoy}{\cs18\f18\fs22\lang1034\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{
+ Mencionar los que Mayoli indica en pp18-19}}}{\f18\fs22\lang1034 , se cre\'f3 una Universidad Polit\'e9cnica, el Centro de Investigaci\'f3n Digital que construy\'f3 la primera computadora cubana en 1969, el Jard\'edn Bot\'e1
+nico Nacional, la Academia de Ciencias de Cuba y otras instituciones y grupos de trabajo.  Se despleg\'f3 tambi\'e9n desde entonces un marcado proceso de intercambio internacional a trav\'e9s de la participaci\'f3n de cient\'ed
+ficos extranjeros en Cuba y la formaci\'f3n de profesionales cubanos en el exterior.
+\par 
+\par Como se parti\'f3 de antecedentes muy exiguos puede decirse que el avance en la promoci\'f3n dirigida de la ciencia en los a\'f1os sesenta signigic\'f3 un salto extraordinario en el desarrollo cient\'edfico cubano.  Ese salto fue po
+sible, ante todo, por la voluntad pol\'edtica que lo moviliz\'f3.  El nuevo poder revolucionario asumi\'f3 que el desarrollo social depender\'eda de la capacidad, la inteligencia y el talento que el pa\'eds fuera capaz de crear.  Al inicio de la d\'e9
+cada Fidel Castro defini\'f3 el futuro del pa\'eds como un futuro de hombres de ciencia, de hombres de pensamiento}{\cs18\f18\fs22\lang1034\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super 
+\chftn }{ N\'fa\'f1ez\'85}}}{\f18\fs22\lang1034  y poco despu\'e9s Ernesto Che Guevara, luego de asumir la direcci\'f3n del Ministerio de Industria, funda en 1962 la revista Nueva Industria Tecnol\'f3gica en cuyo primer editorial defini\'f3
+ toda  una estrategia tecnol\'f3gica  que pasar\'eda primero por resolver problemas m\'e1s o menos inmediatos de la producci\'f3n y llegar\'eda a generar tecnolog\'edas avanzadas en las condiciones naturales y culturales del pa\'ed
+s.  En el propio editorial el Che Guevara declara el objetivo de conectar la ciencia moderna con la industrializaci\'f3n avanzada}{\cs18\f18\fs22\lang1034\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {
+\cs18\super \chftn }{ Mayoli 16, 17}}}{\f18\fs22\lang1034 .
+\par 
+\par No se dif\'edcil encontrar cierto paralelismo entre la "etapa de promoci\'f3n dirigido" de la ciencia en Cuba y las percepciones que caracterizan las pol\'edticas cient\'edficas implantadas a partir de 1959 en los pa\'edses industrializados}{
+\cs18\f18\fs22\lang1034\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ Nu\'f1ez\'85}}}{\f18\fs22\lang1034 
+ y que en gran medida se inspiraron en el informe de V. Bush "________________"}{\cs18\f18\fs22\lang1034\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ Bush.}}}{\f18\fs22\lang1034 .
+
+\par 
+\par El paralelismo se encuentra en la idea de que el impulso a la ciencia alimentar\'eda el desarrollo tecnol\'f3gico y \'e9ste el crecimiento econ\'f3mico y el bienestar.  Esa percepci\'f3
+n, seguramente dominante en el mundo hasta fines de los 60 e inicios de los 70, luego ha sido criticada por su linealidad y relativismo optimismo, as\'ed como el descuido de la variable tecnol\'f3
+gica (atendida como ciencia aplicada) y del papel de la demanda.  Esas cr\'edticas y los recortes presupuestarios de los a\'f1os setenta impulsaron a los pa\'edses industrializados al despliegue de "Pol\'edticas de ciencia y tecnolog\'eda", ahora m\'e1
+s atentas a la variable tecnol\'f3gica y a sus dis\'edmiles y contradictorios impactos sociales.
+\par 
+\par En Cuba, la inexistencia de una base cient\'edfica nacional explica el \'e9nfasis puesto en la "promoci\'f3n dirigida de la ciencia".  Pero ya en la mitad de los setenta, comenzaron a acumularse evidencias de que el problema de la utilizaci\'f3n pr\'e1
+ctica de los resultados cient\'edficos a fin de satisfacer los problemas de la producci\'f3n y los servicios era un asunto de la mayor complejidad.  Esto dio lugar a cambios en la PCT implant\'e1ndose lo que ha dado en llamarse el "modelo de direcci\'f3
+n centralizada" }{\cs18\f18\fs22\lang1034\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ }}}{\f18\fs22\lang1034 
+ (1916-1989) cuyo objetivo era completar el esfuerzo desde el lado del suministro con una estrategia deliberada para utilizar los resultados cient\'edfico-t\'e9cnicos, a lo que se dio en llamar "introducci\'f3n de resultados".  Esto se pretend\'ed
+a lograr mediante un modelo muy centralizado que se apoyaba en la identificaci\'f3n de "problemas de investigaci\'f3n" que orientara la investigaci\'f3n hacia temas de la mayor prioridad  y la utilizaci\'f3n de resultados en las esferas de la producci\'f3
+n y los servicios.  Aunque se enfatizaba la utilizaci\'f3n de resultados esta etapa descansaba en la misma concepci\'f3n lineal que aprecia la investigaci\'f3n cient\'edfica como elemento desencadenante de la relaci\'f3n entre la ciencia, la tecnolog\'ed
+a y la producci\'f3n.
+\par 
+\par A los problemas de concepci\'f3n se sumaba una circunstancia pr\'e1ctica muy relevante.  Junto al \'e9nfasis de la ciencia y la expectativa de que ella deb\'eda incrementar su contribuci\'f3n al desarrollo, marchaba una pol\'edtica tecnol\'f3gica impl\'ed
+cita que se caracterizaba por la importaci\'f3n generalizada de tecnolog\'edas, con mucha frecuencia de los pa\'edses socialistas de Europa, moderadamente modernas, de baja eficiencia energ\'e9tica, agresividad ambiental, entre otras caracter\'edsticas}{
+\cs18\f18\fs22\lang1034\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ Caope p.146}}}{\f18\fs22\lang1034 .  La tendencia a asimilar, m\'e1s que a producir tecnolog\'ed
+as tradicionales o apropiadas, la falta de sistematicidad en la evaluaci\'f3n social de las tecnolog\'edas y el desinter\'e9s frecuente por innovar del segmento empresarial de los agentes del cambio tecnol\'f3gico}{\cs18\f18\fs22\lang1034\super \chftn 
+{\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ Capote, p.151}}}{\f18\fs22\lang1034 , explican que el desarrollo cient\'edfico y el potencial humano creado no se expresaran en los resultados pr\'e1
+cticos esperados.
+\par 
+\par Esta situaci\'f3n justifica la percepci\'f3n cr\'edtica que sobre el tema se fue conformando a lo largo de la d\'e9cada de los ochenta, discusi\'f3n que se vio envuelta en un debate m\'e1s amplio  sobre la pr\'e1ctica de la transici\'f3
+n socialista en Cuba y en particular sobre la eficiencia de la econom\'eda del pa\'eds.
+\par 
+\par A esa percepci\'f3n cr\'edtica se sumaron otros factores. La concepci\'f3n de que el avance del socialismo a nivel mundial depender\'eda en gran medida de su capacidad para desarrollar la ciencia y la tecnolog\'ed
+a como fuerzas productivas sociales, fue otro elemento importante.  A \'e9l habr\'eda que agregar la necesidad de elevar la capacidad del pa\'eds para enfrentar las agresiones biol\'f3gicas de que estaba siendo objeto, prioridad expresada con gran \'e9
+nfasis desde inicios de los a\'f1os ochenta, as\'ed como el esfuerzo por continuar mejorando el sistema de salud cubano con la creaci\'f3n de avanzadas tecnolog\'edas en ese campo.  Se pens\'f3 tambi\'e9n en crear nuevos rubros de exportaci\'f3
+n aprovechando las potencialidades que ofrec\'eda la revoluci\'f3n en el campo de las biotecnolog\'edas, proceso al que el pa\'eds decidi\'f3 incorporarse activamente.
+\par 
+\par Aunque incompleto, este cuadro de razones determinan que desde mediados de los a\'f1os ochenta  el pa\'eds introdujera cambios en su PCT.  Entre los cambios m\'e1s relevantes se encuentran el relanzamiento de la investigaci\'f3n cient\'edfica univ
+ersitaria, ahora con orientaci\'f3n m\'e1s aplicada; la definici\'f3n de prioridades nuevas para el desarrollo cient\'edfico y tecnol\'f3gico (Biociencias, Biotecnolog\'eda, industria farmac\'e9utica, equipos m\'e9dicos de alta tecnolog\'ed
+a, entre otras); la creaci\'f3n de los polos cient\'edfico- productivos, verdaderas redes de cooperaci\'f3n integrada donde la investigaci\'f3n, la creaci\'f3n de tecnolog\'edas, la producci\'f3n y comercializaci\'f3
+n de productos, forman parte de un proceso continuo conducido por estrategias \'fanicas; la potenciaci\'f3n del Foro de Ciencia y T\'e9cnica}{\cs18\f18\fs22\lang1034\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright 
+\fs20\lang3082\cgrid {\cs18\super \chftn }{ Sobre el Foro se comentar\'e1 m\'e1s adelante.}}}{\f18\fs22\lang1034 , singular experiencia cubana orientada a incrementar la participaci\'f3n ciudadana en el desarrollo tecnocient\'edfico y sus aplicaciones.
+
+\par 
+\par Durante la d\'e9cada de los noventa, la PCT nacional entra en su tercera y actual etapa, la que se caracteriza por la creaci\'f3n de un Sistema Nacional de Ciencia e Innovaci\'f3n Tecnol\'f3gica, con rasgos semejantes a los sistemas nacionales de innovaci
+\'f3n que se han instalado en otros pa\'edses.
+\par La nueva etapa refleja los cambios econ\'f3micos y sociales que vive el pa\'eds.  Esos cambios apuntan a la b\'fasqueda de soluciones a la crisis econ\'f3mica y al despliegue de los resortes del desarrollo econ\'f3
+mico y social.  Para lo uno y para lo otro, se hace m\'e1s necesaria que nunca la contribuci\'f3n de la ciencia y la tecnolog\'eda y la calificaci\'f3
+n de los profesionales.  Pero ese aporte debe ofrecerse en condiciones internas y externas diferentes.  Ahora el problema de la competitividad de los productos y servicios es fundamental, para lo cual la innovaci\'f3n tecnol\'f3
+gica se convierte en un eslab\'f3n decisivo para actuar en el mercado internacional y tambi\'e9n para la eficiencia y la competitividad interna.
+\par 
+\par La direcci\'f3n y el ordenamiento general de la sociedad avanza hacia una descentralizaci\'f3n y una participaci\'f3n incrementados}{\cs18\f18\fs22\lang1034\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {
+\cs18\super \chftn }{ Capote, p.55.}}}{\f18\fs22\lang1034  lo que conduce al aumento del papel de las empresas y los territorios en la vida econ\'f3mica y en particular en la innovaci\'f3n tecnol\'f3
+gica.  El problema de la sostenibilidad del desarrollo econ\'f3mico ahora aparece en un primer plano.  La protecci\'f3n y uso apropiado de la biodiversidad est\'e1 en el centro de la racionalidad tecnol\'f3
+gica.  En particular, el cuidado del medio ambiente se convierte en una prioridad de cara al despliegue de la industria tur\'edstica.
+\par 
+\par As\'ed, la centralidad de la innovaci\'f3n en la pol\'edtica econ\'f3mica, una renovada racionalidad tecnol\'f3gica ahora m\'e1s urgida de implantar mecanismos de evaluaci\'f3n de tecnolog\'edas y la consolidaci\'f3n de nexos cada vez m\'e1s s\'f3
+lidos  y estables entre la ciencia y la tecnolog\'eda en los diferentes sectores de la sociedad y los diversos territorios, conforman un escenario donde los nexos ciencia - tecnolog\'eda - sociedad se renuevan.  Pero para ello deben tambi\'e9
+n actualizarse los paradigmas desde los cuales se piensan esas interrelaciones.  Ahora las intencionalidades sociales  que los conducen tienen que ser m\'e1s marcadas y los actores que pueden influir sobre ellos aparecen m\'e1
+s dispersos en el escenario social.  En la primera etapa de la PCT rese\'f1ada, el centro de investigaci\'f3n aparece como el actor central del desarrollo cient\'edfico t\'e9cnico, concepci\'f3n que se arrastra a la segunda etapa, con el a\'f1
+adido de un alto grado de centralizaci\'f3n en la definici\'f3n de los problemas a investigar.  En la etapa actual, los agentes del sistema de ciencia e innovaci\'f3n tecnol\'f3
+gica son muy variados: centros de I+D, universidades; entidades productoras de bienes y servicios de diverso tama\'f1o y alcance territorial; entidades de consultor\'eda, gesti\'f3n tecnol\'f3gica; sindicatos, instituciones educativas, organism
+os financieros, entre otros.  Es obvio que las percepciones de esos diversos sectores influir\'e1n sobre el sistema de Ciencia e Innovaci\'f3n Tecnol\'f3gica que el pa\'ed
+s viene conformando.  En esa perspectiva parece razonable suponer que esas racionalidades deben ser educadas a trav\'e9s de un ejercicio intelectual y cr\'edtico al cual los Estudios CTS pueden contribuir.
+\par 
+\par Las transformaciones que en materia de PCT est\'e1n teniendo en Cuba se van expresando poco a poco en documentos oficiales que sirven de marco legal para el desarrollo cient\'edfico y tecnol\'f3gico y sus interrelaciones con la sociedad.  En el a\'f1
+o pasado, por ejemplo, fueron formuladas las bases para la proyecci\'f3n estrat\'e9gica de la ciencia y la tecnolog\'eda en Cuba}{\cs18\f18\fs22\lang1034\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {
+\cs18\super \chftn }{ }}}{\f18\fs22\lang1034  y el Anteproyecto de Ley de la ciencia y la tecnolog\'eda de la Rep\'fablica de Cuba}{\cs18\f18\fs22\lang1034\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {
+\cs18\super \chftn }{ }}}{\f18\fs22\lang1034 .  Como es de esperar se trata de documentos que descansan en im\'e1genes de la ciencia, la tecnolog\'eda y la innovaci\'f3n y respecto a ellos se proscriben ideales, metodolog\'edas, criterios de evaluaci\'f3
+n que persiguen estimular pol\'edticas nacionales, territoriales, sectoriales y otras, coherentes con el avance del modelo de desarrollo social por el cual el pa\'eds ha optado; un modelo que coloca la satisfacci\'f3n de las necesidades de las mayor\'ed
+as, la justicia y la equidad social en el centro de sus valores.  Esos fines exigen de concepciones y pr\'e1cticas apoyados en "abordajes"}{\cs18\f18\fs22\lang1034\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright 
+\fs20\lang3082\cgrid {\cs18\super \chftn }{ Dagnino, 1996.}}}{\f18\fs22\lang1034  diferentes a los que han estimulado las transformaciones en la PCT latinoamericana durante la d\'e9cada de los noventa. 
+\par 
+\par Para ilustrar este punto veremos como Mart\'ednez (1997) resume los cambios producidos en la institucionalizaci\'f3n de la ciencia y la tecnolog\'eda en Am\'e9rica Latina durante esta d\'e9cada:   
+\par 
+\par {\pntext\pard\plain\f3\fs22\lang1034\cgrid \loch\af3\dbch\af0\hich\f3 \'b7\tab}}\pard \qj\fi-360\li360\nowidctlpar\widctlpar\jclisttab\tx360{\*\pn \pnlvlblt\ilvl0\ls1\pnrnot0\pnf3\pnstart1\pnindent360\pnhang{\pntxtb \'b7}}\ls1\adjustright {
+\f18\fs22\lang1034  }{\f18\fs22 La pol\'edtica cient\'edfica y tecnol\'f3gica se sustituye por una pol\'edtica para la innovaci\'f3n.  En la pr\'e1ctica esto supone el abandono de la pretensi\'f3n de un desarrollo cient\'edfico y tecnol\'f3gico end\'f3
+geno, relativamente aut\'f3nomo, y en un nivel formal postula una "pol\'edtica para la innovaci\'f3n" que carece de asideros en la sociedad real.  
+\par }\pard \qj\nowidctlpar\widctlpar\adjustright {\f18\fs22 
+\par {\pntext\pard\plain\f3\fs22\cgrid \loch\af3\dbch\af0\hich\f3 \'b7\tab}}\pard \qj\fi-360\li360\nowidctlpar\widctlpar\jclisttab\tx360{\*\pn \pnlvlblt\ilvl0\ls2\pnrnot0\pnf3\pnstart1\pnindent360\pnhang{\pntxtb \'b7}}\ls2\adjustright {\f18\fs22 
+Hasta la fecha el sentido com\'fan de la pol\'edtica cient\'edfica y tecnol\'f3gica de Am\'e9rica Latina consiste en un modelo ofertista basado en el supuesto de que el desarrollo social es un resultado de la oferta de conocimiento cient\'ed
+fico (Dagnino, 1996).  Ese modelo responsabilizaba al Estado con el fomento de la investigaci\'f3n y la educaci\'f3n y ha tenido un efecto claro de la institucionalizaci\'f3n de la ciencia en la Regi\'f3n.  Ahora el \'e9
+nfasis del discurso se traslada de la oferta de investigaci\'f3n y su previsible contribuci\'f3n al desarrollo social al \'e9nfasis en el papel del mercado y con ello al predominio de la investigaci\'f3n tecnol\'f3gica y los servicios t\'e9
+cnicos.  Se pierde as\'ed de vista el car\'e1cter estrat\'e9gico de la investigaci\'f3n y la formaci\'f3n de alto nivel.
+\par }\pard \qj\nowidctlpar\widctlpar\adjustright {\f18\fs22 
+\par {\pntext\pard\plain\f3\fs22\cgrid \loch\af3\dbch\af0\hich\f3 \'b7\tab}}\pard \qj\fi-360\li360\nowidctlpar\widctlpar\jclisttab\tx360{\*\pn \pnlvlblt\ilvl0\ls3\pnrnot0\pnf3\pnstart1\pnindent360\pnhang{\pntxtb \'b7}}\ls3\adjustright {\f18\fs22 
+Las formas de gesti\'f3n tradicional de la investigaci\'f3n y la asignaci\'f3n rutinaria de recursos se sustituyen por la aplicaci\'f3n de criterios de eficiencia, evaluaci\'f3n de desempe\'f1o y exigencias de v\'ednculo con las empresas.
+\par }\pard \qj\nowidctlpar\widctlpar\adjustright {\f18\fs22 
+\par {\pntext\pard\plain\f3\fs22\cgrid \loch\af3\dbch\af0\hich\f3 \'b7\tab}}\pard \qj\fi-360\li360\nowidctlpar\widctlpar\jclisttab\tx360{\*\pn \pnlvlblt\ilvl0\ls4\pnrnot0\pnf3\pnstart1\pnindent360\pnhang{\pntxtb \'b7}}\ls4\adjustright {\f18\fs22 
+El rol de promoci\'f3n y participaci\'f3n del Estado en la investigaci\'f3n se sustituye por la ilusi\'f3n de articular un sistema nacional de innovaci\'f3n.  Ilusi\'f3n porque "M\'e1s all\'e1 de ciertas se\'f1ales incipientes, no se podr\'ed
+a plantear el desarrollo de una red de instituciones, de recursos, de interacciones y relaciones, de mecanismos e instrumentos de pol\'edtica, y de actividades cient\'edficas y tecnol\'f3
+gicas, que promuevan, articulen y materialicen los procesos de innovaci\'f3n y difusi\'f3n tecnol\'f3gica en \'f1a sociedad" (ibid, p.116).
+\par }\pard \qj\nowidctlpar\widctlpar\adjustright {\f18\fs22 
+\par {\pntext\pard\plain\f3\fs22\cgrid \loch\af3\dbch\af0\hich\f3 \'b7\tab}}\pard \qj\fi-360\li360\nowidctlpar\widctlpar\jclisttab\tx360{\*\pn \pnlvlblt\ilvl0\ls5\pnrnot0\pnf3\pnstart1\pnindent360\pnhang{\pntxtb \'b7}}\ls5\adjustright {\f18\fs22 
+Se introducen cambios en la actitud del Estado hacia la educaci\'f3n superior, sustituyendo la cl\'e1sica ausencia de evaluaci\'f3n y control de la calidad  por procesos de evaluaci\'f3n y acreditaci\'f3n acad\'e9
+micos, lo que supone todo un cambio en la "cultura de la evaluaci\'f3n".  Sin embargo, el propio Estado suele favorecer la privatizaci\'f3n de la educaci\'f3n superior, reduciendo con ello la proyecci\'f3n investigativa de las universidades.
+\par }\pard \qj\nowidctlpar\widctlpar\adjustright {\f18\fs22\lang1034 
+\par Estos cambios han ocurrido en el proceso de implantaci\'f3n de pol\'edticas neoliberales. Sobre ellas, Mart\'ednez (idem) dice:
+\par }{\f18\fs22 "La pol\'edtica neoliberal, en su aplicaci\'f3n casi generalizada, ha demostrado desentenderse de tres problemas centrales que enfrentan los pa\'edses: las exigencias que plantea la competencia internacional, esto es, la relaci\'f3
+n que se da entre la apertura al mercado mundial y la generaci\'f3n de la capacidad competitiva para enfrentarla; la deteriorada situaci\'f3n social, es decir, la relaci\'f3n entre producci\'f3n y distribuci\'f3
+n; y, en fin, las fuertes cargas ambientales, o sea, la relaci\'f3n entre econom\'eda y ecolog\'eda" (pp.109-110).
+\par 
+\par Es obvio que en la medida que el modelo cubano se desmarca del neoliberalismo y procura defender los valores citados antes, junto a otros como el cuidado del medio ambiente, la defensa de la identidad cultural, la educaci\'f3n como derecho,
+ y todo ello en un contexto de garant\'eda de la independencia nacional, la racionalidad de la PCT tiene que ser otra. Como lo demuestran las experiencias acumuladas en las d\'e9cadas anteriores, la voluntad pol\'edtica imprescindible requiere ser acompa
+\'f1ada de pol\'edticas y pr\'e1cticas reposadas en marcos conceptuales o abordajes apropiados.  Por la naturaleza diversa y dispersa de los actores involucrados en el sistema de ciencia e innovaci\'f3n tecnol\'f3gica esos abordajes no s\'f3
+lo deben ser adecuados, sino tambi\'e9n compartidos, lo cual requiere de programas educativos, entre ellos de CTS.
+\par 
+\par }{\b\i\f18\fs22 Ideolog\'eda de/en la ciencia.
+\par 
+\par }{\f18\fs22 El recorrido anterior debe permitir apreciar que desde el m\'e1s temprano discurso pol\'edtico de los a\'f1os sesenta, ha dominado una percepci\'f3n que insiste en el valor de la ciencia, en su conexi\'f3
+n directa con los problemas del desarrollo social, y lo que es muy importante para los fines de este documento, extiende a la mayor\'eda de la poblaci\'f3n la participaci\'f3n en el conocimiento y sus beneficios.
+\par 
+\par Al provenir esa percepci\'f3n de los niveles m\'e1s altos de gobierno del pa\'eds, ella ha desencadenado acciones pr\'e1cticas orientadas al desarrollo de la educaci\'f3n, la extensi\'f3n de la cultura cient\'edfica y la consolidaci\'f3
+n de un potencial y una infraestructura cient\'edfico y tecnol\'f3gica nacionales.
+\par 
+\par En resumen, es posible observar en el pensamiento pol\'edtico cubano una percepci\'f3n del valor y la significaci\'f3n social de la ciencia y la tecnolog\'eda, de su prioridad y centralidad en las estrategias de desarrollo social que pudi\'e9
+ramos sintetizar en la existencia de "ideolog\'eda de la ciencia" que viene del lado de los principales actores pol\'edticos.
+\par 
+\par Esa ideolog\'eda, entendida como un sistema de valores que traducen intereses sociales, cristaliz\'f3 como parte del proceso de transformaciones sociales m\'e1s amplias en el cual los sectores populares se incorporaron a la educaci\'f3
+n y la  ciencia, nutriendo la masa de profesionales, cient\'edficos y profesores que han copado los departamentos universitarios y fundado la mayor\'eda de los centros de investigaci\'f3n.  Si como dice Price en el mundo est\'e1n vivos el 90% de los cient
+\'edficos que han existido, en Cuba casi la totalidad de los cient\'edficos, ingenieros, t\'e9cnicos, profesores y maestros accedieron a esa condici\'f3n en las \'faltimas cuatro d\'e9cadas y de forma mayoritaria h
+an respaldado las transformaciones sociales del pa\'eds. No es extra\'f1o que esa comunidad cient\'edfica en gestaci\'f3n haya  hecho suya la propuesta de una ciencia en funci\'f3n de la soluci\'f3n de los problemas del desarrollo social del pa\'ed
+s.  Con ello ha madurado el complemento de la "ideolog\'eda de la ciencia" proyectada desde el poder pol\'edtico: la "ideolog\'eda de la ciencia" entendida como la percepci\'f3n \'e9tico-pol\'edtica del trabajo cient\'edfico asumida por los cient\'ed
+ficos, ingenieros, profesores, percepci\'f3n que permite concebir el trabajo de todos ellos, sobre todo, como una contribuci\'f3n social.
+\par 
+\par Todos estos valores que venimos comentando han madurado, puestos a prueba y sometidos a tensiones a lo largo de las \'fanicas cuatro d\'e9cadas y han conformado un contexto ideol\'f3gico, pol\'edtico y \'e9
+tico muy singular, incomprensible desde aquellas interpretaciones de la ciencia de corte internalista y cientificista que predican separaciones tajantes entre ciencia y valor, entre motivaciones pol\'edticas y finalidades cient\'edficas.  Sin lugar a du
+das los cient\'edficos cubanos no han vivido en su experiencia pr\'e1ctica semejantes dicotom\'edas.
+\par 
+\par En la d\'e9cada actual los valores aludidos se plasmaron en el C\'f3digo sobre la Etica Profesional de los trabajadores de la ciencia en Cuba}{\cs18\f18\fs22\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {
+\cs18\super \chftn }{ Documento del CITMA s/f.}}}{\f18\fs22 .  El documento prescribe diversos ideales respecto a la conducta de los cient\'edficos y propone que de \'e9l se deriven c\'f3digos sectoriales e institucionales espec\'edficos, seg\'fa
+n las particularidades de las tareas cient\'edficas que en ellos se realizan.  Los ideales aluden a conceptos de diferente naturaleza, epistemol\'f3gicos y \'e9ticos unos (verdad, rigor, objetividad, honestidad) y sociol\'f3gicos y pol\'ed
+ticos otros (patriotismo, compromiso social, intereses sociales).  A la vez que se exige de los cient\'edficos la b\'fasque
+da de la verdad y el trabajo honesto y desinteresado que debe tributar al avance de la ciencia, se define que la principal contribuci\'f3
+n que se espera de ese trabajo es el bienestar de la sociedad, al cual se subordinan los intereses individuales y gremiales.
+\par 
+\par El C\'f3digo resulta as\'ed una singular mezcla de prescripciones propias del ethos acad\'e9mico cl\'e1sico}{\cs18\f18\fs22\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ Merton\'85}}
+}{\f18\fs22  con ideales pol\'edticos y valores sociales asumidos como prioritarios; una interesante combinaci\'f3n de racionalidades epistemol\'f3gicas, \'e9ticas y pol\'edticas.
+\par 
+\par 
+\par 
+\par 
+\par }{\b\i\f18\fs22 Integraci\'f3n, colaboraci\'f3n y participaci\'f3n p\'fablica.
+\par 
+\par }{\f18\fs22 Entre los signos distintivos del funcionamiento de la ciencia y la tecnolog\'eda en Cuba est\'e1n la integraci\'f3n, la colaboraci\'f3n y la participaci\'f3n p\'fablica en esas actividades.  Esos rasgos transpar
+entan las particulares interrelaciones entre la ciencia, la pol\'edtica y los valores que caracterizan el contexto cubano.
+\par 
+\par La pol\'edtica nacional en ciencia y tecnolog\'eda se orienta, deliberadamente y con m\'e1xima prioridad, a fortalecer los nexos de todos aquellos que intervienen de diversos modos y en diversos niveles en el cambio t\'e9
+cnico.  Para ello se han desplegado  movimientos y organizaciones sociales y formas institucionales que favorecen la b\'fasqueda cooperada de soluciones a los diversos problemas t\'e9cnicos, econ\'f3
+micos y sociales que la sociedad enfrenta.  Entre los primeros se encuentran las Brigadas T\'e9cnicas Juveniles (BTJ), la Asociaci\'f3n Nacional de Innovadores y Racionalizadores (ANIR) y el Sindicato de Trabajadores de la Ciencia (STC).  Los primeros so
+n movimientos que aglutinan a obreros, t\'e9cnicos, ingenieros y otros vinculados a actividades productivas que se re\'fanen con el objetivo de potenciar los esfuerzos dedicados a la b\'fasqueda de soluciones t\'e9
+cnicas; se estructuran desde los talleres de las f\'e1bricas y las empresas hasta el nivel nacional.  La diferencia principal entre la BTJ y la ANIR es la edad  de sus miembros, donde los miembros de las BTJ tienen como promedio menos de 30 a\'f1os,
+
+\par 
+\par El Sindicato de Trabajadores de la Ciencia aparece como una organizaci\'f3n que re\'fane a la masa de cient\'edficos del pa\'eds favoreciendo la b\'fasqueda de soluciones colectivas a los problemas de su membres\'ed
+a y sobre todo, intentando potenciar sus contribuciones sociales.
+\par 
+\par Tambi\'e9n existen importantes veh\'edculos institucionales para favorecer la cooperaci\'f3n y la integraci\'f3n. Uno de ellos son los Polos Cient\'edficos Productivos a que hemos aludido antes.  Existen en pr\'e1cticamente todas las provincias del pa\'ed
+s y a trav\'e9s de ellos se articulan los esfuerzos de los centros de investigaci\'f3n, laboratorios de I+D de las empresas, las universidades y otros centros educacionales, con la participaci\'f3
+n activa de los gobiernos de los territorios.  En los polos se debaten los problemas del desarrollo econ\'f3mico y social de cada regi\'f3n y se intenta buscarles soluciones que se basen en la capacidad cient\'edfico t\'e9cnica disponible.  El ejemplo m
+\'e1s conocido a nivel internacional, el cual tiene y tendr\'e1 cada vez mayor impacto en el desarrollo del pa\'eds, es el Polo Cient\'edfico Productivo situado en el oeste de la capital cuyos esfuerzos est\'e1
+n concentrados principalmente en el desarrollo de la biotecnolog\'eda, la industria farmac\'e9utica y los equipos m\'e9dicos de alta tecnolog\'eda.  En ese polo se re\'fanen y colaboran instituciones cient\'edficas de _____ organismos del Est
+ado, _________________trabajadores entre cient\'edficos, ingenieros, t\'e9cnicos y otros}{\cs18\f18\fs22\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ El Polo del Oeste gener\'f3
+ al pa\'eds ________ millones de d\'f3lares en _________.}}}{\f18\fs22 .
+\par 
+\par Un factor de integraci\'f3n relevante es la existencia de un organismo del Estado con una funci\'f3n rectora en materia de pol\'edtica cient\'edfica y tecnol\'f3gica nacional}{\cs18\f18\fs22\super \chftn {\footnote \pard\plain 
+\s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ Es el Ministerio de Ciencia, Tecnolog\'eda y Medio Ambiente.}}}{\f18\fs22 .  Una de las experiencias sociales m\'e1s interesantes que en material de desarrollo t\'e9
+cnico el pa\'eds ha fomentado es lo que gen\'e9ricamente llamaremos el Movimiento del Forum.  Las ra\'edces de ese movimiento se sit\'faan a inicios de los a\'f1os sesenta con la estrategia de desarrollo tecnol\'f3
+gico ideada por el Che Guevara en el Ministerio de Industrias, consistente en generar soluciones t\'e9cnicas de diferente envergadura a la carencia de piezas de repuesto, rotura de maquinarias, etc.
+\par 
+\par De hecho las BTJ y la ANIR son movimientos que responden a esas necesidades.
+\par 
+\par Desde inicios de los a\'f1os ochenta la b\'fasqueda creativa de soluciones t\'e9cnicas se expres\'f3 en el Movimiento del Forum.  Este no es otra cosa que un proceso que se despliega desde las f\'e1
+bricas, empresas, talleres y otras unidades de base y escalonadamente, hasta llegar a un encuentro nacional, va promoviendo el debate en torno a las soluciones propuestas y estimulando a aquellos que presentan las m\'e1
+s valiosas iniciativas.  A partir de 1982 y hasta 1998 se han realizado 13 procesos de esta naturaleza.  Entre los cambios observables, est\'e1n, por un lado, el diferente tipo de demanda que este Movimiento ha tenido que enfrentar.  Cuando se inici\'f3
+, el tema b\'e1sico era la sustituci\'f3n de equipamiento y tecnolog\'eda procedente de pa\'edses occidentales cuyo flujo a la Isla se hab\'eda interrumpido, disponiendo para ello de suced\'e1neos procedentes de los pa\'edses s
+ocialistas de Europa.  Luego del derrumbe del socialismo europeo  la creatividad ha debido ser multiplicada para enfrentar las carencias tecnol\'f3
+gicas.  Junto a esto, el Movimiento ha ampliado los frentes de su creatividad al incorporar a los centros de investigaci\'f3n, lo que lo ha convertido en un Forum de Ciencia y T\'e9cnica}{\cs18\f18\fs22\super \chftn {\footnote \pard\plain 
+\s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ Estos cambios se revelan en los diferentes nombres adoptados.  Si el primer Forum (febrero de 1982) se denomin\'f3 Forum de Fabricaci\'f3n y Restauraci\'f3
+n de Piezas de Repuesto, ya el VI (1991) se llam\'f3 Forum de Piezas de Repuesto, equipos y tecnolog\'edas de avanzada, para a partir de 1993 ser rebautizado como Forum de Ciencia y T\'e9cnica.}}}{\f18\fs22  donde se re\'fanen desde obreros, campesinos, t
+\'e9cnicos, estudiantes hasta cient\'edficos e ingenieros vinculados a lo m\'e1s avanzado de la actividad de investigaci\'f3n e innovaci\'f3n tecnol\'f3gica en el pa\'eds.  El Forum se convierte cada vez m\'e1
+s en un significativo canal que favorece la participaci\'f3n ciudadana en el proceso de innovaci\'f3n.  Puede observarse  que el Movimiento del Forum transparenta con claridad las premisas ideol\'f3
+gicas que han conducido el proceso cubano y en particular el desarrollo cient\'edfico y tecnol\'f3gico a que \'e9l ha dado lugar.  La pr\'e1ctica de estas actividades y sus beneficios, se consideran patrimonio com\'fan
+ del pueblo; es decir, se trata de una concepci\'f3n que ampl\'eda los actores de esas  pr\'e1cticas, no limit\'e1ndolos a los cient\'edficos e ingenieros del sector de I+D e incorporando a ellas a un vasto segmento de la poblaci\'f3
+n, en principio a todos aquellos que pueden intervenir en la producci\'f3n, diseminaci\'f3n y aplicaci\'f3
+n del conocimiento.  En este camino se fortalece la naturaleza social del proceso innovativo.  A esto se suma que en Cuba uno de cada____  trabajadores son universitarios y uno de cada ____ son profesionales o t\'e9
+cnicos.  Se trata, por tanto, de una capacidad bastante extendida en el cuerpo social.
+\par 
+\par 
+\par 
+\par 
+\par }{\b\i\f18\fs22 CTS se institucionaliza.
+\par 
+\par }{\f18\fs22 Al definir las tradiciones b\'e1sicas que articulan el campo de los Estudios CTS, se suelen reconocer dos: americana y europea}{\cs18\f18\fs22\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {
+\cs18\super \chftn }{ Marta\'85}}}{\f18\fs22 .  Junto a esto, los panoramas que muestran el proceso que dio lugar al despegue de estos Estudios en los a\'f1os sesenta, se refieren al esfuerzo que suponen visiones tradicionales de la ciencia y la tecnolog
+\'eda, cuyas ra\'edces est\'e1n con frecuencia en la Concepci\'f3n Heredada, que subvaloran o ignoran las determinaciones e impactos sociales del desarrollo cient\'edfico y tecnol\'f3gico}{\cs18\f18\fs22\super \chftn {\footnote \pard\plain 
+\s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ ibid.}}}{\f18\fs22 .  En calidad de importante ra\'edz social de los Estudios CTS se reconoce la resonancia que en la opini\'f3n p\'fablica y los ambientes acad\'e9
+micos han tenido los usos militares de la ciencia y la tecnolog\'eda.  Estos y otros factores, explican que desde los a\'f1os sesenta se produzca un proceso de consolidaci\'f3n e institucionalizaci\'f3n de los Estudios CTS, principalmente en Estados Unido
+s y Europa.
+\par 
+\par Al explicar el proceso de institucionalizaci\'f3n de los Estudios CTS en Cuba hay que recurrir a expedientes diferentes.
+\par 
+\par Desde los a\'f1os sesenta la tradici\'f3n m\'e1s influyente en Cuba en el campo de las ciencias sociales ha sido el marxismo. El marxismo se ha ense\'f1ado e investigado en Cuba por m\'e1s de cuatro d\'e9
+cadas y su influencia alcanza a amplios sectores de la sociedad.  En particular se ense\'f1a en las carreras universitarias.  Se trata de una cosmovisi\'f3n cuyos rasgos esenciales hacen parte de la formaci\'f3
+n de los universitarios, entre ellos los cient\'edficos e ingenieros.  En grupos de investigaci\'f3n, as\'ed
+ como en carreras y estudios de posgrado vinculados a las ciencias sociales, el marxismo se investiga en sus diferentes expresiones:  tanto el marxismo originario como el institucionalizado en los pa\'ed
+ses de Europa Socialista, el marxismo occidental y la propia evoluci\'f3n del marxismo cubano.
+\par 
+\par Al margen de las variadas percepciones que sobre el desarrollo cient\'edfico y tecnol\'f3gico puede encontrarse en diferentes fuentes marxistas, es obvio que se trata de una propuesta que desde sus or\'edgenes y en sus m\'e1s l\'fa
+cidos cultivadores  ha insistido en las interrelaciones entre la ciencia, la tecnolog\'eda y la estructura y agentes sociales.  Desde las ideas seminales de Marx}{\cs18\f18\fs22\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright 
+\fs20\lang3082\cgrid {\cs18\super \chftn }{ \'85}}}{\f18\fs22  en las que el desarrollo cient\'edfico se comprend\'eda como parte del proceso de la reproducci\'f3n del capital y en nexo directo con el proceso de industrializaci\'f3
+n,  pasando por la muy comentada propuesta de Hessen}{\cs18\f18\fs22\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ \'85}}}{\f18\fs22  o las ideas de J.D. Bernal}{
+\cs18\f18\fs22\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ \'85}}}{\f18\fs22  u otras concepciones menos conocidas, el marxismo ha apostado a una comprensi\'f3
+n de la ciencia y la tecnolog\'eda donde se les examina como dimensiones de la totalidad social, inexplicables al margen de las variables econ\'f3micas, pol\'edticas, los intereses de clase u otros. En Cuba es esa ra\'ed
+z marxista la que ha comunicado su aliento al actual proceso de institucionalizaci\'f3n de los Estudios CTS.
+\par 
+\par A partir de los a\'f1os setenta y sobre todo en los ochenta se hicieron presentes en Cuba los cursos y publicaciones sobre la ciencia (en mucha mayor medida que sobre la tecnolog\'eda).  Los foros de inter\'e9s fueron principalmente los debates filos\'f3
+ficos sobre el desarrollo de las ciencias (con menos \'e9nfasis en los temas l\'f3gicos que en las resonancias valorativas, ideol\'f3gicas, pol\'edticas), los estudios sobre la Revoluci\'f3n Cient\'edfico - T\'e9
+cnica y sus consecuencias sociales y temas de Historia de la Ciencia y pol\'edtica cient\'edfica.}{\cs18\f18\fs22\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{
+ Parcialmente estos intereses se reflejan en la obra colectiva Filosof\'eda y Ciencia (1985).}}}{\f18\fs22 
+\par 
+\par En la medida en que avanz\'f3 la d\'e9cada de los ochenta fue madurando la idea de que se necesitaba desbordar las fronteras disciplinarias de estos estudios (Historia, Filosof\'eda y otras) y avanzar hacia una concepci\'f3
+n interdisciplinaria.  En ello influy\'f3 la consolidaci\'f3n que este punto de vista ten\'eda en los pa\'edses de Europa Socialista a trav\'e9s de los trabajos en el campo de la Cienciolog\'eda}{\cs18\f18\fs22\super \chftn {\footnote \pard\plain 
+\s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ Mikulinski, S.R. (1985)}}}{\f18\fs22 .
+\par 
+\par En la segunda mitad de los a\'f1os ochenta se comenzaron a preparar algunos trabajos de s\'edntesis}{\cs18\f18\fs22\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ N\'fa\'f1ez, J(1989
+\'aa, 1989b y 1990).}}}{\f18\fs22 , defender tesis de licenciatura y a ofrecer cursos donde concurrieran las diferentes perspectivas, relacion\'e1ndolas lo mejor posible. Tambi\'e9n durante los a\'f1os ochenta fue increment\'e1ndose la atenci\'f3
+n sobre la problem\'e1tica y el pensamiento latinoamericano en ciencia y tecnolog\'eda.  La  discusi\'f3n en torno al desarrollo social y su relaci\'f3n con temas como el atraso cient\'edfico, la dependencia tecnol\'f3gica, las tecnolog\'ed
+as apropiadas, las pol\'edticas p\'fablicas en ciencia y tecnolog\'eda en los pa\'edses en desarrollo, las particularidades del proceso de institucionalizaci\'f3n de las comunidades cient\'ed
+ficas en la periferia,  fueron concitando un cada vez mayor inter\'e9s acad\'e9mico por su conexi\'f3n directa con la problem\'e1tica cubana.  Nuevas tradiciones, autores
+ y problemas encajaron en la agenda de los estudios de la ciencia; problemas cuya discusi\'f3n no era posible m\'e1s que desde una perspectiva social, interdisciplinaria y cr\'edtica.
+\par 
+\par Durante esa d\'e9cada tambi\'e9n se increment\'f3 la recepci\'f3n de autores y obras de origen norteamericano y europeo de reconocida importancia, sobre todo en Filosof\'eda de la Ciencia}{\cs18\f18\fs22\super \chftn {\footnote \pard\plain 
+\s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ Proceso favorecido por el inter\'e9s editorial por esos temas en Espa\'f1a, M\'e9xico, Argentina y otros pa\'edses de Iberoam\'e9rica.}}}{\f18\fs22 
+, lo que dio lugar a estimulantes debates.
+\par 
+\par En un resumen, cabe decir que a fines de los ochenta hab\'edan madurado en algunas zonas del ambiente universitario cubano algunas ideas que aqu\'ed podemos resumir:
+\par 
+\par {\pntext\pard\plain\f18\fs22\cgrid \hich\af18\dbch\af0\loch\f18 a)\tab}}\pard \qj\fi-360\li360\nowidctlpar\widctlpar\jclisttab\tx360{\*\pn \pnlvlbody\ilvl0\ls6\pnrnot0\pnlcltr\pnstart1\pnindent360\pnhang{\pntxta )}}\ls6\adjustright {\f18\fs22 
+La necesidad de estudiar sistem\'e1ticamente las interrelaciones entre la ciencia, la tecnolog\'eda y la sociedad, aunque la dimensi\'f3n tecnol\'f3gica a\'fan permanec\'eda desatendida.
+\par {\pntext\pard\plain\f18\fs22\cgrid \hich\af18\dbch\af0\loch\f18 b)\tab}}\pard \qj\fi-360\li360\nowidctlpar\widctlpar\jclisttab\tx360{\*\pn \pnlvlbody\ilvl0\ls6\pnrnot0\pnlcltr\pnstart1\pnindent360\pnhang{\pntxta )}}\ls6\adjustright {\f18\fs22 
+Esos estudios deb\'edan tener una orientaci\'f3n interdisciplinaria.
+\par {\pntext\pard\plain\f18\fs22\cgrid \hich\af18\dbch\af0\loch\f18 c)\tab}}\pard \qj\fi-360\li360\nowidctlpar\widctlpar\jclisttab\tx360{\*\pn \pnlvlbody\ilvl0\ls6\pnrnot0\pnlcltr\pnstart1\pnindent360\pnhang{\pntxta )}}\ls6\adjustright {\f18\fs22 
+Era necesario un ejercicio de recepci\'f3n y actualizaci\'f3n respecto a las tradiciones internacionales en este campo menos conocidas en Cuba.
+\par {\pntext\pard\plain\f18\fs22\cgrid \hich\af18\dbch\af0\loch\f18 d)\tab}}\pard \qj\fi-360\li360\nowidctlpar\widctlpar\jclisttab\tx360{\*\pn \pnlvlbody\ilvl0\ls6\pnrnot0\pnlcltr\pnstart1\pnindent360\pnhang{\pntxta )}}\ls6\adjustright {\f18\fs22 
+Estos estudios pod\'edan tener importancia en el campo educacional y probablemente en el de las pol\'edticas en ciencia y tecnolog\'eda.
+\par }\pard \qj\nowidctlpar\widctlpar\adjustright {\f18\fs22 
+\par A inicios de los noventa estos avances hicieron posible consolidar un espacio para la disciplina Problemas Sociales de la Ciencia y la Tecnolog\'eda (PSCT) en el ciclo de ciencias sociales de la mayor\'eda de las carreras universitarias en Cuba. Se estim
+\'f3 desde entonces que la formaci\'f3n en la educaci\'f3n superior, sobre todo de cient\'edficos e ingenieros, se enriquec\'eda con el estudio de los problemas del desarrollo cient\'edfico y tecnol\'f3gico, era su dimensi\'f3n universal y tambi\'e9
+n latinoamericana y cubana.  Debe observarse que la incorporaci\'f3n de esta disciplina fue posible porque la educaci\'f3n superior cubana asume que la formaci\'f3n cient\'edfico t\'e9cnica y human\'edstica tiene que marchar unida.  Las cl\'e1
+sicas separaciones entre ciencia y valor que dan lugar a ordenamientos disciplinarios e institucionales que tienden a separar ciencias y humanidades aqu\'ed no tienen lugar.  Lo que se hizo entonces fue aprovechar esta concepci\'f3
+n y el espacio que ella creaba para introducir esa PSCT como disciplina en los planes de estudio.
+\par 
+\par Por la misma fecha la Comisi\'f3n Nacional de Grados Cient\'edficos}{\cs18\f18\fs22\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ Organo rector de la pol\'ed
+tica de doctorados en Cuba.}}}{\f18\fs22  sustituy\'f3 el examen de Filosof\'eda al cual se somet\'edan habitualmente los aspirantes al doctorado por un examen de PSCT e igual decisi\'f3n se adopt\'f3 para los ascensos de categor\'edas docentes e
+ investigativas.  Con estas definiciones el p\'fablico de esta disciplina se ampli\'f3 a buena parte del \'e1mbito acad\'e9mico. El primer texto se public\'f3 en 1994}{\cs18\f18\fs22\super \chftn {\footnote \pard\plain 
+\s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ N\'fa\'f1ez, J; Pimentel, L (1994)}}}{\f18\fs22 .
+\par 
+\par En la propia d\'e9cada de los noventa tiene lugar, seg\'fan vimos antes, el esfuerzo por consolidar una estrategia cient\'edfica y tecnol\'f3gica que sirviera para enfrentar la crisis econ\'f3mica y m\'e1s a\'fa
+n, avanzar en el desarrollo social. Cambian las pol\'edticas p\'fablicas, en las universidades la investigaci\'f3n y el posgrado multiplican su espacio, se inicia un proceso de transformaciones jur\'ed
+dicas, organizativas e institucionales tendente a elevar la contribuci\'f3n econ\'f3mica, social y cultural del portencial cient\'edfico nacional.  Todo esto supone cambios conceptuales, discursivos y pr\'e1cticos d
+onde las reflexiones sobre ciencia, tecnolog\'eda y sociedad tienen un lugar muy importante.
+\par 
+\par Fue entonces que se iniciaron las conexiones sistem\'e1ticas con el desarrollo de los Estudios CTS (posgrados, investigaciones, actividad editorial, cursos, grupos de trabajo, etc.)  que ha tenido lugar en Espa\'f1a.
+\par 
+\par Durante la d\'e9cada de los noventa el intercambio acad\'e9mico entre Cuba y Espa\'f1a ha crecido considerablemente.  No es raro entonces que esos contactos se extendieran al campo CTS.  Dentro de las posibilidades ins
+titucionales creadas, ha sido el contacto personal lo que ha permitido avanzar la colaboraci\'f3n en CTS.
+\par 
+\par Ese apoyo ha sido fundamental para avanzar un programa de formaci\'f3n a nivel de posgrado orientado a preparar personas que puedan desarrollar, ahora de modo m\'e1s profesional, la ense\'f1anza y la investigaci\'f3
+n en CTS.  Unas 50 personas se forman a nivel de maestr\'eda y unas diez se encaminan hacia el doctorado.  Con frecuencia proceden de las ciencias sociales y la Filosof\'eda pero algunos tienen formaci\'f3n en ciencias e ingenier\'ed
+a.  Participan en la maestr\'eda personas procedentes de casi todas las provincias del pa\'eds}{\cs18\f18\fs22\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ El programa de maestr\'ed
+a se inaugur\'f3 en 1997. Su estructura disciplinar refleja el inter\'e9s por favorecer la colaboraci\'f3n multidisciplinaria y la conexi\'f3n de los aspectos te\'f3ricos y pr\'e1
+cticos. El programa recoge las siguientes disciplinas: Panorama de los Estudios CTS, Epistemolog\'eda y Filosof\'eda de la Ciencia, Historia de la Ciencia y la Tecnolog\'eda, Filosof\'eda de la Tecnolog\'eda, Metodolog\'eda de la Investigaci\'f3
+n, Etica de la Ciencia y la Tecnolog\'eda, Econom\'eda y Cambio Tecnol\'f3gico, Gesti\'f3n de la ciencia y la Tecnolog\'eda, Sociolog\'eda del conocimiento, la ciencia y la tecnolog\'eda; Ciencia, Tecnolog\'ed
+a y Desarrollo; Medio Ambiente y Desarrollo, Educaci\'f3n y Desarrollo, Regulaci\'f3n Jur\'eddica de la Ciencia, la Tecnolog\'eda y el Medio Ambiente, Pensamiento y acci\'f3n en Am\'e9rica Latina, la Direcci\'f3n del Posgrado y la Investigaci\'f3n Cient
+\'edfica en las Universidades.}}}{\f18\fs22 .
+\par 
+\par }{\b\i\f18\fs22 CTS  en contexto: mirar hacia delante.
+\par 
+\par }{\f18\fs22 Una de las consecuencias del avance de los estudios CTS es la comprensi\'f3n del fen\'f3meno cient\'edfico y tecnol\'f3gico como un proceso social que no puede ser comprendido mas que "en contexto",es decir, dentro de la constelaci\'f3
+n de circunstancias sociales que le dan sentido.  En esa perspectiva, la Ciencia, en su expresi\'f3n m\'e1s amplia se nos presenta como una red de individuos, instituciones y pr\'e1
+cticas anclados en contextos con sus propias determinaciones culturales, econ\'f3micas y sociales}{\cs18\f18\fs22\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{ Chambers, D.W. (1993)}
+}}{\f18\fs22 .
+\par 
+\par Es desde esa misma perspectiva que debe ser entendido el proceso de consolidaci\'f3n del campo acad\'e9mico que se denomina CTS.  Por esta raz\'f3n, al mostrar su proceso de institucionalizaci\'f3n en Cuba, nos hemos remitido al \ldblquote entramado
+\rdblquote , al \ldblquote contexto\rdblquote  que le ha configurado.  De igual modo, el desarrollo de estos estudios reclamar\'e1 en lo adelante una especial atenci\'f3n a la sociedad donde se produce.
+\par 
+\par Esto se refiere, por ejemplo, a la relaci\'f3n cada vez m\'e1s fruct\'edfera que CTS debe establecer con las transformaciones educativas y el sistema de ciencia e innovaci\'f3n tecnol\'f3gica que se viene desplegando. Si a nivel de la educaci\'f3
+n superior y de posgrado hay un espacio ganado para CTS, no ocurre igual con la ense\'f1anza precedente, hu\'e9rfana a\'fan de CTS como disciplina o enfoque.  De igual modo, la propia ense\'f1anza de las disciplinas cient\'edficas y t\'e9
+cnicas en las universidades est\'e1 lejos de incorporar enfoques sociales e hist\'f3ricos.}{\cs18\f18\fs22\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn }{
+ Este es, sin embargo, un desideratum vigente.}}}{\f18\fs22 .
+\par 
+\par Respecto a la centralidad que adquiere el tema de la innovaci\'f3n tecnol\'f3gica cabe mencionar que ello requiere de mucha actividad de investigaci\'f3n y educaci\'f3n que acompa\'f1e a las pol\'edticas p\'fablicas orientadas a la innovaci\'f3
+n.  Hay que desarrollar una educaci\'f3n para la innovaci\'f3n que la muestre como un proceso social integral atento no s\'f3lo a las variables econ\'f3micas sino tambi\'e9n ambientales, culturales y otras.  La gesti\'f3n de la innovaci\'f3n tecnol\'f3
+gica es, conceptual y pr\'e1cticamente hablando, un tema que apenas se introduce en Cuba.  Es obvio que los marcos conceptuales, metodol\'f3gicos y axiol\'f3gicos que se articulan a la innovaci\'f3
+n no son neutrales respecto a sus consecuencias sociales.  El enfoque CTS es necesario al menos porque: 
+\par 
+\par {\pntext\pard\plain\f18\fs22\cgrid \hich\af18\dbch\af0\loch\f18 a)\tab}}\pard \qj\fi-360\li360\nowidctlpar\widctlpar\jclisttab\tx360{\*\pn \pnlvlbody\ilvl0\ls7\pnrnot0\pnlcltr\pnstart1\pnindent360\pnhang{\pntxta )}}\ls7\adjustright {\f18\fs22 
+Rescata el sentido pol\'edtico en las decisiones  en ciencia y tecnolog\'eda.
+\par }\pard \qj\li360\nowidctlpar\widctlpar{\*\pn \pnlvlcont\ilvl0\ls0\pnrnot0\pndec }\adjustright {\f18\fs22 
+\par {\pntext\pard\plain\f18\fs22\cgrid \hich\af18\dbch\af0\loch\f18 b)\tab}}\pard \qj\fi-360\li360\nowidctlpar\widctlpar\jclisttab\tx360{\*\pn \pnlvlbody\ilvl0\ls7\pnrnot0\pnlcltr\pnstart1\pnindent360\pnhang{\pntxta )}}\ls7\adjustright {\f18\fs22 
+Insiste en la necesidad de articular los medios y los fines en las pol\'edticas, donde los fines deben contribuir a dise\'f1os estrat\'e9gicos que hagan humanos y sostenibles los esfuerzos.
+\par }\pard \qj\nowidctlpar\widctlpar{\*\pn \pnlvlcont\ilvl0\ls0\pnrnot0\pndec }\adjustright {\f18\fs22 
+\par {\pntext\pard\plain\f18\fs22\cgrid \hich\af18\dbch\af0\loch\f18 c)\tab}}\pard \qj\fi-360\li360\nowidctlpar\widctlpar\jclisttab\tx360{\*\pn \pnlvlbody\ilvl0\ls7\pnrnot0\pnlcltr\pnstart1\pnindent360\pnhang{\pntxta )}}\ls7\adjustright {\f18\fs22 
+Subraya que no existen recetas \'fanicas y construir pol\'edticas propias es imprescindible.  Esas pol\'edticas  no pueden menos que articularse a las realidades econ\'f3micas, culturales, educacionales, ambientales, propias de pa\'ed
+ses o regiones.  Sin embargo "el reclamo de la especificidad no puede interpretarse en clave aldeana ni, mucho menos, como coartada para darle la espalda al mundo" (Arocena, 1993, p.102).
+\par }\pard \qj\nowidctlpar\widctlpar{\*\pn \pnlvlcont\ilvl0\ls0\pnrnot0\pndec }\adjustright {\f18\fs22 
+\par {\pntext\pard\plain\f18\fs22\cgrid \hich\af18\dbch\af0\loch\f18 d)\tab}}\pard \qj\fi-360\li360\nowidctlpar\widctlpar\jclisttab\tx360{\*\pn \pnlvlbody\ilvl0\ls7\pnrnot0\pnlcltr\pnstart1\pnindent360\pnhang{\pntxta )}}\ls7\adjustright {\f18\fs22 La pol\'ed
+tica tecnol\'f3gica, bien entendida configura un \'e1mbito interdisciplinario donde las ciencias econ\'f3micas tienen bastante que decir pero ni mucho menos todo.  Las ciencias sociales, la filosof\'eda, la \'e9
+tica, por citar algunas disciplinas, son de la mayor importancia.
+\par }\pard \qj\nowidctlpar\widctlpar\adjustright {\f18\fs22 
+\par Paralelamente, el \'e9xito de una empresa acad\'e9mica, vista como proceso que transcurre en un contexto local determinado}{\cs18\f18\fs22\super \chftn {\footnote \pard\plain \s17\nowidctlpar\widctlpar\adjustright \fs20\lang3082\cgrid {\cs18\super \chftn 
+}{ Chambers, D.W. (1993)}}}{\f18\fs22 , depende de la capacidad de garantizar una adecuada interrelaci\'f3n entre elementos tales como la actividad acad\'e9
+mica misma, con sus instituciones, programas, grupos de trabajo, publicaciones, entre otros elementos; la red de comunicaci\'f3
+n internacional que logre construir, y sus relaciones con los mecanismos sociales y las estrategias culturales vinculadas a esa actividad acad\'e9mica.
+\par 
+\par En relaci\'f3n con estos elementos, pueden mencionarse varias tendencias que se aprecian en Cuba a fines de los a\'f1os 90:
+\par 
+\par {\pntext\pard\plain\f18\fs22\cgrid \hich\af18\dbch\af0\loch\f18 1.\tab}}\pard \qj\fi-360\li360\nowidctlpar\widctlpar\jclisttab\tx360{\*\pn \pnlvlbody\ilvl0\ls8\pnrnot0\pndec\pnstart1\pnindent360\pnhang{\pntxta .}}\ls8\adjustright {\f18\fs22 La mayor\'ed
+a de los departamentos, grupos de trabajo y programas que hoy existen, avanzan hacia la creaci\'f3n de un Programa Nacional en CTS consistente en una red de individuos e instituciones que se articulan para desarrolla
+r diferentes programas de trabajo, con orientaciones preferentes hacia diversos canales educativos, formales e informales, y el fortalecimiento de las estrategias de innovaci\'f3
+n, sobre todo desde la perspectiva del sistema universitario (fortalecimiento de las interfases universidad empresa, etc.).
+\par }\pard \qj\nowidctlpar\widctlpar{\*\pn \pnlvlcont\ilvl0\ls0\pnrnot0\pndec }\adjustright {\f18\fs22 
+\par {\pntext\pard\plain\f18\fs22\cgrid \hich\af18\dbch\af0\loch\f18 2.\tab}}\pard \qj\fi-360\li360\nowidctlpar\widctlpar\jclisttab\tx360{\*\pn \pnlvlbody\ilvl0\ls8\pnrnot0\pndec\pnstart1\pnindent360\pnhang{\pntxta .}}\ls8\adjustright {\f18\fs22 Se ampl\'ed
+an paulatinamente los p\'fablicos de CTS: cient\'edficos e ingenieros vinculados al sector de I+D, variados agentes de la innovaci\'f3n, profesores universitarios de las ramas cient\'edficas, t\'e9cnicas y m\'e9dicas, 
+profesionales y usuarios de la divulgaci\'f3n cient\'edfica, maestros que trabajan en la ense\'f1anza media, son entre otros, grupos que acceden a la ense\'f1anza CTS, preferentemente a trav\'e9s de los posgrados.
+\par }\pard \qj\nowidctlpar\widctlpar{\*\pn \pnlvlcont\ilvl0\ls0\pnrnot0\pndec }\adjustright {\f18\fs22 
+\par {\pntext\pard\plain\f18\fs22\cgrid \hich\af18\dbch\af0\loch\f18 3.\tab}}\pard \qj\fi-360\li360\nowidctlpar\widctlpar\jclisttab\tx360{\*\pn \pnlvlbody\ilvl0\ls8\pnrnot0\pndec\pnstart1\pnindent360\pnhang{\pntxta .}}\ls8\adjustright {\f18\fs22 
+Se consolida el intercambio acad\'e9mico, en especial con Iberoam\'e9rica y sobre todo con Espa\'f1a.  Est\'e1
+n en marcha varias iniciativas para consolidar los nexos internacionales del Programa CTS de Cuba.  Existen ya ejemplos de intercambio de profesores y de bibliograf\'eda, los que se fortalecer\'e1n en el futuro.
+\par }\pard \qj\nowidctlpar\widctlpar\adjustright {\f18\fs22 
+\par Todo este intercambio y sus expresiones a trav\'e9s del posgrado y la investigaci\'f3n permitir\'e1n consolidar el proceso de asimilaci\'f3n y refracci\'f3n de las tendencias internacionales en el campo de los Estudios CTS. Habr\'e1
+ que favorecer el proceso de actualizaci\'f3n respecto a esos desarrollos, entendiendo siempre que se trata de productos culturales cuya significaci\'f3n var\'eda mucho al ser trasladado de un contexto a otro.  Los estudios de laboratorio, los an\'e1
+lisis sobre gesti\'f3n del riesgo tecnol\'f3gico o sobre evaluaci\'f3n de tecnolog\'edas; los estudios cientom\'e9tricos o sobre las controversias cient\'edficas; el debate sobre ciencia y g\'e9nero y los conflictos \'e9ticos en ciencia y tecnolog\'ed
+a, por mencionar algunos ejemplos, proporcionan un extraordinario material para comprender las particularidades, el lugar y papel del desarrollo cient\'edfico y tecnol\'f3gico con la sociedad contempor\'e1nea. En particular ser\'e1 de inter\'e9
+s actualizarnos respecto a la experiencia internacional en materia de ense\'f1anza CTS a nivel primario y secundario.
+\par 
+\par Cada sociedad y cada cultura tiene, sin embargo, sus propios conflictos y tareas por resolver.  A ellos deben atender preferentemente los estudios CTS en Cuba.  Se trata de fortalecer el proceso de endogenizaci\'f3
+n de los estudios CTS en Cuba, empleando para ello la tradici\'f3n internacional y contribuyendo a ella.
+\par 
+\par Un poeta de la Isla dec\'eda que ser cubano es la mejor manera de ser universal.
+\par 
+\par 
+\par 
+\par 
+\par 
+\par 
+\par 
+\par }{\f18\fs22\lang1034 
+\par 
+\par 
+\par 
+\par }{\f18\fs22 
+\par }}
