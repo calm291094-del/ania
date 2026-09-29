@@ -1983,6 +1983,111 @@ function normalizeCommand(mensaje) {
   return null;
 }
 
+function manejarComandoAlias(cmd, mensaje) {
+  switch (cmd) {
+    case 'ayuda':
+      return '📚 **COMANDOS DISPONIBLES**\n\n' +
+        '· /tareas · /pendientes · /mis_tareas\n' +
+        '· /agregar_tarea [texto]\n' +
+        '· /completar_tarea [ID]\n' +
+        '· /modelo · /ia\n' +
+        '· /emocion · /estado_emocional\n' +
+        '· /historial · /memoria\n' +
+        '· /hora · /clima\n' +
+        '· /chiste · /cita\n' +
+        '· /modo [amigable|profesional|divertido]\n' +
+        '· /personalidad · /estado\n' +
+        '· /conexion · /ip\n\n' +
+        '💡 Todos los comandos tienen varios alias.';
+
+    case 'hora':
+      return '🕐 Son las ' + new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) +
+             ' del ' + new Date().toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }) + '.';
+
+    case 'chiste': {
+      const chistes = [
+        '¿Qué le dice un semáforo a otro? ¡No me mires, me estoy cambiando! 🚦',
+        '¿Por qué los pájaros no usan Facebook? ¡Porque ya tienen Twitter! 🐦',
+        '¿Cómo se despiden los químicos? Ácido un placer 👋',
+        '¿Qué hace una abeja en el gimnasio? ¡Zum-ba! 🐝'
+      ];
+      return chistes[Math.floor(Math.random() * chistes.length)];
+    }
+
+    case 'cita': {
+      const citas = [
+        '✨ «La vida es lo que pasa mientras estás ocupado haciendo otros planes.» — John Lennon',
+        '🌟 «El único modo de hacer un gran trabajo es amar lo que haces.» — Steve Jobs',
+        '🚀 «El futuro depende de lo que hagas hoy.» — Mahatma Gandhi',
+        '💫 «Somos polvo de estrellas pensando en estrellas.» — Carl Sagan'
+      ];
+      return citas[Math.floor(Math.random() * citas.length)];
+    }
+
+    case 'modelo':
+      return '🧠 **CEREBRO DE ANIA**\n\n' +
+        '· Cerebro H5: cargado\n' +
+        '· Entrenamiento interno: ' + (typeof TRAINING !== 'undefined' ? TRAINING.length : 0) + ' entradas\n' +
+        '· LocalMind: activo\n' +
+        '· Cerebro colectivo: activo\n' +
+        '· Memoria episódica: ' + (typeof Episodio !== 'undefined' ? Episodio.log.length : 0) + ' líneas\n' +
+        '· Documentos: ' + (typeof DocBrain !== 'undefined' ? DocBrain.count() : 0) + ' fragmentos';
+
+    case 'emocion':
+    case 'estado_emocional': {
+      const e = (typeof Mind !== 'undefined' && Mind.d.estadoEmocional) || { energia: 7, empatia: 8, curiosidad: 9, profundidad: 6 };
+      return '🎭 **ESTADO EMOCIONAL DE ANIA**\n\n' +
+        '· Energía: ' + '⚡'.repeat(Math.round(e.energia/2)) + ' ' + e.energia + '/10\n' +
+        '· Empatía: ' + '💖'.repeat(Math.round(e.empatia/2)) + ' ' + e.empatia + '/10\n' +
+        '· Curiosidad: ' + '🔍'.repeat(Math.round(e.curiosidad/2)) + ' ' + e.curiosidad + '/10\n' +
+        '· Profundidad: ' + '🧠'.repeat(Math.round(e.profundidad/2)) + ' ' + e.profundidad + '/10';
+    }
+
+    case 'historial': {
+      if (typeof Episodio === 'undefined' || !Episodio.log.length)
+        return '📝 Aún no hay historial registrado.';
+      const últimas = Episodio.log.slice(-3);
+      let txt = '🧠 **ÚLTIMAS INTERACCIONES**\n\n';
+      últimas.forEach(e => {
+        const fecha = new Date(e.t).toLocaleString('es-ES', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+        txt += '· [' + fecha + '] ' + (e.role === 'you' ? 'Tú' : 'Ania') + ': ' + e.text.slice(0, 80) + '\n';
+      });
+      return txt;
+    }
+
+    case 'conexion': {
+      const host = location.hostname;
+      return '🌐 **CONEXIÓN**\n\n' +
+        '· URL actual: ' + location.href + '\n' +
+        '· Host: ' + host + '\n' +
+        '· Protocolo: ' + location.protocol;
+    }
+
+    case 'personalidad':
+      return '🌟 **SOY ANIA**\n\n' +
+        '20 años, egresada de la Academia Eden. Especialista en café, anime, astronomía y tecnología.\n\n' +
+        '· Me gusta: pan de masa madre, Yirgacheffe, isekai, zombies\n' +
+        '· Lema: «Pan, café y anime: la trinidad de la felicidad»\n' +
+        '· Creada por: Carlos Lorenzo Marros';
+
+    case 'estado': {
+      const tareas = (typeof tasks !== 'undefined' && Array.isArray(tasks)) ? tasks.filter(t => !t.done).length : 0;
+      return '📊 **ESTADO DEL SISTEMA**\n\n' +
+        '· Usuario: ' + (Session?.name || 'invitado') + '\n' +
+        '· Tareas pendientes: ' + tareas + '\n' +
+        '· Entrenamiento V5: ' + (typeof ENTRENAMIENTO_V5 !== 'undefined' ? ENTRENAMIENTO_V5.length : 0) + ' entradas\n' +
+        '· Alias cargados: ' + Object.keys(COMANDOS_ALIAS).length + '\n' +
+        '· Red: ' + (isOffline() ? 'sin conexión' : 'en línea');
+    }
+
+    case 'modo':
+      return '🎭 Modos disponibles: amigable, profesional, divertido. Uso: /modo [nombre]';
+
+    default:
+      return null;
+  }
+}
+  
 // Cargar alias al arrancar
 setTimeout(cargarAlias, 1500);
   
@@ -4365,12 +4470,19 @@ async function respond(raw){
   if(/te\s+quiero|te\s+amo|abrazo|eres\s+genial/.test(low)) return personaReply(pick(LOVE));
   if(/gracias/.test(low)) return personaReply(pick(['De nada. Pan y café solucionan el 80%.','Un placer.']));
 
+  // Comandos con alias
+  const cmdAlias = normalizeCommand(raw);
+  if (cmdAlias) {
+    const resp = manejarComandoAlias(cmdAlias.cmd, raw);
+    if (resp) return personaReply(resp);
+  }
+  
   // Prioridad 1: cerebro H5 (patrones del entrenamiento)
   if (CerebroH5.cargado) {
     const respH5 = CerebroH5.responder(raw);
     if (respH5) return personaReply(respH5);
   }
-  
+
   /* ---- entrenamiento interno (exacto) ---- */
   const trained = trainMatch(low);
   if(trained) return personaReply(trained);
