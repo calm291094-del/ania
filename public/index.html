@@ -553,6 +553,7 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
   </nav>
 </div>
 
+<div id="moodBubble" title="Estado emocional de Ania" style="position:fixed;bottom:calc(90px + env(safe-area-inset-bottom));right:16px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg, rgba(8,21,15,.9), rgba(4,8,6,.95));border:2px solid var(--line2);display:none;place-items:center;font-size:24px;z-index:450;box-shadow:0 4px 16px rgba(45,224,138,.35);cursor:pointer;transition:transform .3s, border-color .3s;">😊</div>
 <button id="ambBtn" title="Detener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.2 11.2A3.9 3.9 0 0 0 6.5 19z"/></svg></button>
 
 <div id="backdrop"></div>
@@ -653,6 +654,16 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
     <div id="diag">Pulsa para escanear.</div>
     <button class="bigbtn" id="runDiag">ESCANEAR</button>
     <hr>
+
+    <hr>
+    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">TEMA VISUAL</h2>
+    <div style="display:flex;gap:8px;margin:10px 0;flex-wrap:wrap;">
+      <button class="chip esBtn" data-es="verde" onclick="applyEssence('verde');toast('Tema verde')">🟢 VERDE</button>
+      <button class="chip esBtn" data-es="morado" onclick="applyEssence('morado');toast('Tema morado')">🟣 MORADO</button>
+      <button class="chip esBtn" data-es="carmesi" onclick="applyEssence('carmesi');toast('Tema carmesí')">🔴 CARMESÍ</button>
+      <button class="chip esBtn" data-es="hielo" onclick="applyEssence('hielo');toast('Tema hielo')">🔵 HIELO</button>
+    </div>
+    
     <button class="bigbtn" id="forgetGeo">OLVIDAR UBICACIÓN</button>
   </div>
 </div>
@@ -1959,6 +1970,54 @@ function toastAI(msg, meta){
 }
 
 /* =====================================================================
+   SISTEMA EMOCIONAL v2 · Detección + Estado persistente
+===================================================================== */
+const EMO_V2 = {
+  positivas: ['feliz','alegre','contento','emocionado','genial','increíble','maravilloso'],
+  tristes: ['triste','deprimido','melancólico','solo','vacío','desanimado'],
+  ira: ['enfadado','enojado','furioso','molesto','frustrado','harto'],
+  miedo: ['asustado','nervioso','ansioso','preocupado','inquieto'],
+  curiosidad: ['curioso','pregunta','por qué','cómo','interesante'],
+
+  analizar(texto) {
+    const t = texto.toLowerCase();
+    const conteo = {
+      alegria: this.positivas.filter(p => t.includes(p)).length,
+      tristeza: this.tristes.filter(p => t.includes(p)).length,
+      ira: this.ira.filter(p => t.includes(p)).length,
+      miedo: this.miedo.filter(p => t.includes(p)).length,
+      curiosidad: this.curiosidad.filter(p => t.includes(p)).length
+    };
+    if (t.includes('?')) conteo.curiosidad += 2;
+    if (/no funciona|error|problema|mal/i.test(t)) conteo.ira += 2;
+    if (/no sé|quizás|tal vez|inseguro/i.test(t)) conteo.miedo += 1;
+
+    const max = Object.entries(conteo).sort((a,b) => b[1]-a[1])[0];
+    return { emocion: max[1] > 0 ? max[0] : 'neutral', intensidad: max[1] };
+  },
+
+  actualizarEstado(emocion) {
+    if (!Mind.d.estadoEmocional) {
+      Mind.d.estadoEmocional = { energia: 7, empatia: 8, curiosidad: 9, profundidad: 6, tono: 'cálido' };
+    }
+    const e = Mind.d.estadoEmocional;
+    if (emocion === 'alegria') { e.energia = Math.min(10, e.energia+1); e.empatia = Math.min(10, e.empatia+1); }
+    if (emocion === 'tristeza') { e.empatia = Math.min(10, e.empatia+2); e.energia = Math.max(1, e.energia-1); }
+    if (emocion === 'ira') { e.empatia = Math.max(1, e.empatia-1); }
+    if (emocion === 'curiosidad') { e.curiosidad = Math.min(10, e.curiosidad+1); e.profundidad = Math.min(10, e.profundidad+1); }
+    Mind.save();
+  },
+
+  adaptarRespuesta(texto, emocion, intensidad) {
+    if (intensidad < 2) return texto;
+    if (emocion === 'tristeza') return '💙 ' + texto + '\n\n*Si necesitas hablar, aquí estoy.*';
+    if (emocion === 'alegria') return '🎉 ' + texto + '\n\n*¡Me alegra verte así!*';
+    if (emocion === 'ira') return '🧘 ' + texto + '\n\n*Tómate un respiro.*';
+    return texto;
+  }
+};
+  
+/* =====================================================================
    SISTEMA DE ALIAS DE COMANDOS
 ===================================================================== */
 let COMANDOS_ALIAS = {};
@@ -2090,6 +2149,33 @@ function manejarComandoAlias(cmd, mensaje) {
   
 // Cargar alias al arrancar
 setTimeout(cargarAlias, 1500);
+
+/* ===== Burbuja de ánimo ===== */
+function actualizarBurbujaAnimo(){
+  const b = document.getElementById('moodBubble');
+  if (!b) return;
+  const e = Mind.d.estadoEmocional;
+  if (!e) { b.textContent = '😊'; return; }
+  let emoji = '😊';
+  if (e.energia >= 8) emoji = '⚡';
+  else if (e.energia <= 3) emoji = '😴';
+  else if (e.empatia >= 9) emoji = '💖';
+  else if (e.curiosidad >= 9) emoji = '🤔';
+  else if (e.profundidad >= 8) emoji = '🧠';
+  b.textContent = emoji;
+}
+setInterval(actualizarBurbujaAnimo, 5000);
+setTimeout(() => {
+  const b = document.getElementById('moodBubble');
+  if (b) {
+    b.style.display = 'grid';
+    b.onclick = () => {
+      const cmd = manejarComandoAlias('emocion', '/emocion');
+      if (cmd) personaReply(cmd);
+    };
+  }
+  actualizarBurbujaAnimo();
+}, 3000);
   
 /* =====================================================================
    LOGO CONTROLLER · máquina de estados del logo reactivo
@@ -3036,7 +3122,14 @@ function reply(text, say){
   speak(say!==undefined ? say : stripP(text).slice(0,340));
 }
 function personaReply(text, say){
-  if(Math.random() < 0.25 && text.length < 300) addChat('act', pick(P.acciones));
+  // Adaptar según emoción del último mensaje
+  try {
+    const ultimo = Episodio.log.filter(l => l.role === 'you').slice(-1)[0];
+    if (ultimo && ultimo.emocion) {
+      text = EMO_V2.adaptarRespuesta(text, ultimo.emocion, ultimo.intensidad);
+    }
+  } catch(e) {}
+  if(Math.random() < 0.25 && text.length < 400) addChat('act', pick(P.acciones));
   reply(text, say);
 }
 function sysLine(text){ addChat('sys', text); }
@@ -3738,18 +3831,35 @@ function renderTasks(){
       <button class="tsmall tcheck"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></button>
       <div class="tmain"><div class="ttext">${esc(tk.text)}${viaTag}${recTag}</div><div class="twhen">${fmtWhen(tk.when)}</div></div>
       <button class="tsmall tdel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/></svg></button>`;
-    row.querySelector('.tcheck').onclick = ()=>{ tk.done=!tk.done; if(tk.done){ cancelTimer(tk.id); Sync.markDone(tk); } saveTasks(); renderTasks(); };
+    row.querySelector('.tcheck').onclick = ()=>{
+      tk.done = !tk.done;
+      if (tk.done) {
+        tk.completadoEn = Date.now();
+        cancelTimer(tk.id);
+        Sync.markDone(tk);
+      } else {
+        tk.completadoEn = null;
+      }
+      saveTasks();
+      renderTasks();
+    };
     row.querySelector('.tdel').onclick = ()=>{ cancelTimer(tk.id); tasks = tasks.filter(t=>t.id!==tk.id); saveTasks(); renderTasks(); };
     list.appendChild(row);
   });
 }
 function cancelTimer(id){ if(timers.has(id)){ clearTimeout(timers.get(id)); timers.delete(id); } }
 function addTask(text, when, opts){
-  const tk = { id: Date.now()+'-'+Math.random().toString(36).slice(2,6), text, when, done:false, fired:false, source:(opts&&opts.source)||'web', recur:(opts&&opts.recur)||null, notifyVia:'web', owner:DEVICE_ID, pendingSync:true };
-  tasks.push(tk); saveTasks(); renderTasks(); scheduleTask(tk);
-  Sync.pushTask(tk).catch(()=>{});
-  return tk;
-}
+  const tk = {
+    id: Date.now()+'-'+Math.random().toString(36).slice(2,6),
+    text, when, done:false, fired:false,
+    source:(opts&&opts.source)||'web',
+    recur:(opts&&opts.recur)||null,
+    notifyVia:'web',
+    owner:DEVICE_ID,
+    pendingSync:true,
+    categoria:(opts&&opts.categoria)||'general',
+    completadoEn:null
+  };
 function scheduleTask(tk){
   if(!tk.when || tk.done || (tk.fired && !tk.recur)) return;
   cancelTimer(tk.id);
@@ -4475,6 +4585,19 @@ async function respond(raw){
   if (cmdAlias) {
     const resp = manejarComandoAlias(cmdAlias.cmd, raw);
     if (resp) return personaReply(resp);
+  }
+
+  // Análisis emocional del mensaje
+  const analisisEmo = EMO_V2.analizar(raw);
+  if (analisisEmo.emocion !== 'neutral') {
+    EMO_V2.actualizarEstado(analisisEmo.emocion);
+    Episodio.log.push({
+      t: Date.now(),
+      role: 'you',
+      text: raw,
+      emocion: analisisEmo.emocion,
+      intensidad: analisisEmo.intensidad
+    });
   }
   
   // Prioridad 1: cerebro H5 (patrones del entrenamiento)
