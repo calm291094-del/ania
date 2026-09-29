@@ -499,16 +499,28 @@ app.get('/ania/me/perfil', auth, async (req,res)=>{
   }catch(e){ res.status(500).json({ error:'error al leer perfil' }); }
 });
 
+/* ==================== MIME TYPES ==================== */
+express.static.mime.define({
+  'application/wasm': ['wasm'],
+  'application/octet-stream': ['task']
+});
+
 /* ==================== ESTÁTICOS + SPA ==================== */
 app.use(express.static(PUBLIC_DIR, {
-  dotfiles: 'deny', index: false,
-  setHeaders: (res)=>{
-    res.setHeader('Cross-Origin-Opener-Policy','same-origin');
-    res.setHeader('Cross-Origin-Embedder-Policy','credentialless');
-    res.setHeader('X-Content-Type-Options','nosniff');
+  dotfiles: 'deny',
+  index: false,
+  setHeaders: (res) => {
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
   }
 }));
-app.get('*', (req,res)=>{
+app.get('*', (req, res, next) => {
+  // Si la ruta tiene extensión de archivo estático, devolver 404
+  if (/\.(js|css|wasm|task|json|png|svg|woff2?|ttf|eot|map|h5|tar\.gz)$/i.test(req.path)) {
+    return res.status(404).send('Archivo no encontrado');
+  }
+  // Solo servir el SPA para rutas sin extensión (rutas de la app)
   const idx = path.join(PUBLIC_DIR, 'index.html');
   fs.existsSync(idx) ? res.sendFile(idx) : res.status(404).send('index.html no encontrado');
 });
