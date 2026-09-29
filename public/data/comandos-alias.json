@@ -1,8 +1,23 @@
 {
-  "tareas": ["/tareas", "/tasks", "/mis_tareas", "/pendientes"],
-  "agregar_tarea": ["/agregar_tarea", "/añadir_tarea", "/nueva_tarea"],
+  "tareas": ["/tareas", "/tasks", "/mis_tareas", "/lista_tareas", "/pendientes"],
+  "agregar_tarea": ["/agregar_tarea", "/añadir_tarea", "/add_task", "/nueva_tarea", "/crear_tarea"],
+  "completar_tarea": ["/completar_tarea", "/complete_task", "/hecho", "/terminado"],
+  "eliminar_tarea": ["/eliminar_tarea", "/delete_task", "/borrar_tarea"],
+  "tareas_completadas": ["/tareas_completadas", "/hechas", "/terminadas"],
+  "limpiar_tareas": ["/limpiar_tareas", "/clear_tasks", "/vaciar_tareas"],
+  "modelo": ["/modelo", "/model", "/ia", "/ai", "/neural"],
+  "ayuda": ["/help", "/ayuda", "/comandos", "/asistencia"],
+  "nombre": ["/nombre", "/name", "/llamame"],
+  "chiste": ["/chiste", "/joke", "/broma", "/humor"],
+  "cita": ["/cita", "/quote", "/frase", "/inspiracion"],
+  "hora": ["/hora", "/time", "/que_hora"],
+  "clima": ["/clima", "/weather", "/tiempo"],
+  "limpiar": ["/limpiar", "/clear", "/borrar_chat", "/nuevo_chat"],
+  "estado": ["/estado", "/status", "/sistema", "/info"],
+  "recargar": ["/recargar", "/reload", "/actualizar"],
+  "personalidad": ["/personalidad", "/about", "/sobre_mi"],
+  "modo": ["/modo", "/mode", "/cambiar_modo"],
+  "conexion": ["/conexion", "/connection", "/ip", "/url"],
   "estado_emocional": ["/emocion", "/estado_emocional", "/como_estas"],
-  "modelo": ["/modelo", "/ia", "/neural"],
-  "ayuda": ["/help", "/ayuda", "/comandos"],
-  "conexion": ["/conexion", "/ip", "/url"]
+  "historial": ["/historial", "/contexto", "/memoria", "/recuerda"]
 }
