@@ -24,6 +24,7 @@
 <!-- ✅ NotifyX servido localmente (sin CDN, sin ORB) -->
 <link rel="stylesheet" href="./vendor/notifyx.min.css">
 <script src="./vendor/notifyx.min.js"></script>
+<script src="./vendor/h5wasm/h5wasm.js"></script>
 <script src="./vendor/vosk.min.js"></script>
   
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23040806'/%3E%3Ccircle cx='50' cy='50' r='26' fill='%232de08a'/%3E%3Ccircle cx='50' cy='50' r='9' fill='%23040806'/%3E%3C/svg%3E">
@@ -4336,6 +4337,12 @@ async function respond(raw){
   if(/te\s+quiero|te\s+amo|abrazo|eres\s+genial/.test(low)) return personaReply(pick(LOVE));
   if(/gracias/.test(low)) return personaReply(pick(['De nada. Pan y café solucionan el 80%.','Un placer.']));
 
+  // Prioridad 1: cerebro H5 (patrones del entrenamiento)
+  if (CerebroH5.cargado) {
+    const respH5 = CerebroH5.responder(raw);
+    if (respH5) return personaReply(respH5);
+  }
+  
   /* ---- entrenamiento interno (exacto) ---- */
   const trained = trainMatch(low);
   if(trained) return personaReply(trained);
@@ -5696,6 +5703,220 @@ if (!window.__aniaLearnPatched){
     return _reply_orig(text, say);
   };
 }
+</script>
+
+<script>
+  /* =====================================================================
+   MOTOR H5 · Carga cerebro.h5 y hace pattern matching (100% offline)
+   Adaptado del HTML "Creador de Cerebro" para Ania
+===================================================================== */
+const CerebroH5 = {
+  cargado: false,
+  tags: [],
+  substitutions: {},
+  userName: null,
+  ultimaRespIndex: {},
+  totalPatterns: 0,
+
+  async cargar() {
+    if (this.cargado) return true;
+    if (typeof h5wasm === 'undefined') {
+      console.warn('[H5] h5wasm no disponible');
+      return false;
+    }
+
+    try {
+      await h5wasm.ready;
+      const resp = await fetch('./models/cerebro.h5');
+      if (!resp.ok) { console.warn('[H5] cerebro.h5 no encontrado'); return false; }
+
+      const buf = new Uint8Array(await resp.arrayBuffer());
+      const FS = h5wasm.FS;
+      try { FS.unlink('/_ania.h5'); } catch(e) {}
+      FS.writeFile('/_ania.h5', buf);
+
+      const file = new h5wasm.File('/_ania.h5', 'r');
+      this.file = file;
+
+      this._cargarSubstituciones(file);
+      this._cargarTags(file);
+
+      this.cargado = true;
+      console.log(`🧠 Cerebro H5 cargado: ${this.tags.length} tags, ${this.totalPatterns} patrones`);
+      return true;
+    } catch(e) {
+      console.warn('[H5] Error al cargar cerebro:', e.message);
+      return false;
+    }
+  },
+
+  _h5Keys(obj) {
+    if (!obj) return [];
+    try {
+      const k = obj.keys();
+      if (Array.isArray(k)) return k;
+      if (k && k[Symbol.iterator]) return Array.from(k);
+    } catch(e) {}
+    return [];
+  },
+
+  _h5Get(obj, key) {
+    if (!obj) return null;
+    try { const h = obj.get(key); if (h) return h; } catch(e) {}
+    try { const h = obj[key]; if (h && typeof h !== 'function') return h; } catch(e) {}
+    return null;
+  },
+
+  _leerTexto(ds) {
+    if (!ds) return '';
+    try {
+      const v = ds.value;
+      if (v == null) return '';
+      if (typeof v === 'string') return v;
+      if (v instanceof Uint8Array) return new TextDecoder().decode(v);
+      if (Array.isArray(v)) {
+        if (v.length && typeof v[0] === 'number') return new TextDecoder().decode(new Uint8Array(v));
+        return v.join('\n');
+      }
+      return String(v);
+    } catch(e) { return ''; }
+  },
+
+  _cargarSubstituciones(file) {
+    try {
+      const gCfg = this._h5Get(file, 'configuracion');
+      if (!gCfg) return;
+      const gMini = this._h5Get(gCfg, 'mini_lenguaje_natural_humano');
+      if (!gMini) return;
+      const gNorm = this._h5Get(gMini, 'normalizacion_emocional');
+      if (!gNorm) return;
+      for (const k of this._h5Keys(gNorm)) {
+        const ds = this._h5Get(gNorm, k);
+        const v = this._leerTexto(ds).trim();
+        if (v) this.substitutions[k.toLowerCase()] = v.toLowerCase();
+      }
+      console.log('[H5] Substituciones:', Object.keys(this.substitutions).length);
+    } catch(e) {}
+  },
+
+  _cargarTags(file) {
+    const gE = this._h5Get(file, 'entrenamiento');
+    if (!gE) return;
+    for (const tagName of this._h5Keys(gE)) {
+      const gTag = this._h5Get(gE, tagName);
+      if (!gTag) continue;
+
+      const patternsTxt = this._leerTexto(this._h5Get(gTag, 'patterns'));
+      const patterns = patternsTxt ? patternsTxt.split('\n').filter(p => p.trim()) : [];
+
+      let responses = [];
+      const respTxt = this._leerTexto(this._h5Get(gTag, 'responses'));
+      if (respTxt) responses = respTxt.split('\n---\n').filter(r => r.trim());
+
+      if (!patterns.length || !responses.length) continue;
+
+      let meta = {};
+      try {
+        const mj = this._leerTexto(this._h5Get(gTag, 'meta_json'));
+        if (mj) meta = JSON.parse(mj);
+      } catch(e) {}
+
+      this.tags.push({
+        tag: tagName,
+        patterns,
+        patternsNorm: patterns.map(p => this._normalizar(p)),
+        responses,
+        meta
+      });
+      this.totalPatterns += patterns.length;
+    }
+  },
+
+  _normalizar(texto) {
+    if (!texto) return '';
+    let t = String(texto).toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (Object.keys(this.substitutions).length) {
+      t = t.replace(/\b\w+\b/g, w => this.substitutions[w] || w);
+    }
+    return t.replace(/[¿?¡!.,;:()"']/g, ' ').replace(/\s+/g, ' ').trim();
+  },
+
+  _puntuar(input, patron) {
+    if (!patron || !input) return 0;
+    if (input === patron) return 100;
+    if (input.includes(patron)) return 85 + Math.min(10, patron.length / 2);
+    if (patron.includes(input) && input.length >= 4) return 70 + Math.min(10, input.length / 2);
+
+    const iw = new Set(input.split(' ').filter(Boolean));
+    const pw = patron.split(' ').filter(Boolean);
+    if (!pw.length) return 0;
+    let overlap = 0;
+    for (const w of pw) if (iw.has(w)) overlap++;
+    if (!overlap) return 0;
+    return (overlap / pw.length) * 60;
+  },
+
+  buscar(input) {
+    if (!this.cargado) return null;
+    const norm = this._normalizar(input);
+    if (!norm) return null;
+
+    let mejor = null, mejorScore = 0;
+    for (const t of this.tags) {
+      let max = 0;
+      for (const p of t.patternsNorm) {
+        const s = this._puntuar(norm, p);
+        if (s > max) max = s;
+        if (max >= 100) break;
+      }
+      if (t.meta?.prioridad === 'alta') max *= 1.15;
+      if (max > mejorScore) { mejorScore = max; mejor = t; }
+    }
+
+    return mejorScore >= 30 ? { tag: mejor, score: mejorScore } : null;
+  },
+
+  _extraerNombre(input) {
+    const re = [
+      /me llamo\s+([a-záéíóúñ]+)/i,
+      /mi nombre es\s+([a-záéíóúñ]+)/i,
+      /puedes llamarme\s+([a-záéíóúñ]+)/i,
+      /^soy\s+([a-záéíóúñ]+)$/i
+    ];
+    for (const r of re) {
+      const m = input.match(r);
+      if (m) return m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
+    }
+    return null;
+  },
+
+  _elegirResp(tag) {
+    const list = tag.responses;
+    if (list.length === 1) return list[0];
+    let idx, tries = 0;
+    do { idx = Math.floor(Math.random() * list.length); tries++; }
+    while (idx === this.ultimaRespIndex[tag.tag] && tries < 10);
+    this.ultimaRespIndex[tag.tag] = idx;
+    return list[idx];
+  },
+
+  responder(input) {
+    const nombre = this._extraerNombre(input);
+    if (nombre) this.userName = nombre;
+
+    const r = this.buscar(input);
+    if (!r) return null;
+
+    let texto = this._elegirResp(r.tag);
+    const nom = this.userName || Mind?.d?.nombre || 'amigo/a';
+    texto = texto.replace(/\[nombre\]/gi, nom);
+    return texto;
+  }
+};
+
+// Cargar el cerebro al arrancar
+setTimeout(() => CerebroH5.cargar(), 2000);
 </script>
   
 </body>
