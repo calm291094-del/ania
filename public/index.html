@@ -3860,6 +3860,13 @@ function addTask(text, when, opts){
     categoria:(opts&&opts.categoria)||'general',
     completadoEn:null
   };
+  tasks.push(tk);
+  saveTasks();
+  renderTasks();
+  scheduleTask(tk);
+  Sync.pushTask(tk).catch(()=>{});
+  return tk;
+}
 function scheduleTask(tk){
   if(!tk.when || tk.done || (tk.fired && !tk.recur)) return;
   cancelTimer(tk.id);
