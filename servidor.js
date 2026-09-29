@@ -505,6 +505,12 @@ express.static.mime.define({
   'application/octet-stream': ['task']
 });
 
+/* ==================== ESTÁTICOS TAMBIÉN BAJO /ania ==================== */
+// Permite que la app funcione tanto en / como en /ania/login
+app.use('/ania', express.static(PUBLIC_DIR, {
+  dotfiles: 'deny', index: false
+}));
+
 /* ==================== ESTÁTICOS + SPA ==================== */
 app.use(express.static(PUBLIC_DIR, {
   dotfiles: 'deny',
