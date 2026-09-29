@@ -1959,6 +1959,34 @@ function toastAI(msg, meta){
 }
 
 /* =====================================================================
+   SISTEMA DE ALIAS DE COMANDOS
+===================================================================== */
+let COMANDOS_ALIAS = {};
+
+async function cargarAlias() {
+  try {
+    const r = await fetch('./data/comandos-alias.json');
+    COMANDOS_ALIAS = await r.json();
+    console.log('📚 Alias cargados:', Object.keys(COMANDOS_ALIAS).length, 'comandos');
+  } catch (e) {
+    console.warn('Alias no disponibles:', e.message);
+  }
+}
+
+function normalizeCommand(mensaje) {
+  const low = mensaje.toLowerCase().trim();
+  for (const [cmd, alias] of Object.entries(COMANDOS_ALIAS)) {
+    for (const a of alias) {
+      if (low.startsWith(a.toLowerCase())) return { cmd, alias: a };
+    }
+  }
+  return null;
+}
+
+// Cargar alias al arrancar
+setTimeout(cargarAlias, 1500);
+  
+/* =====================================================================
    LOGO CONTROLLER · máquina de estados del logo reactivo
 ===================================================================== */
 const LogoController = {
