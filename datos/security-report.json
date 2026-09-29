@@ -1,5 +1,5 @@
 {
-  "fecha": "2026-09-28T11:32:45.917Z",
+  "fecha": "2026-09-29T11:12:15.061Z",
   "analizadoPor": "Ania Security Agent v2",
   "hallazgos": [
     {
@@ -212,6 +212,104 @@
     },
     {
       "tipo": "codigo",
+      "regla": "AUTH-001",
+      "severidad": "alto",
+      "descripcion": "Route handler for `.delete()` has no authentication middleware.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "AUTH-001",
+      "severidad": "alto",
+      "descripcion": "Route handler for `.delete()` has no authentication middleware.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "AUTH-001",
+      "severidad": "alto",
+      "descripcion": "Route handler for `.delete()` has no authentication middleware.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "SEC-001",
+      "severidad": "critico",
+      "descripcion": "Hardcoded secret in property \"PWD\". Use environment variables.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DOM-004",
+      "severidad": "medio",
+      "descripcion": "postMessage() uses \"*\" as targetOrigin, sending data to any origin.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DOM-005",
+      "severidad": "alto",
+      "descripcion": "A \"message\" event handler does not validate event.origin.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "SEC-001",
+      "severidad": "critico",
+      "descripcion": "Hardcoded secret in property \"PWD\". Use environment variables.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DOM-004",
+      "severidad": "medio",
+      "descripcion": "postMessage() uses \"*\" as targetOrigin, sending data to any origin.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DOM-005",
+      "severidad": "alto",
+      "descripcion": "A \"message\" event handler does not validate event.origin.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
       "regla": "DEP-003",
       "severidad": "bajo",
       "descripcion": "Dependency \"express\" is declared but never imported in source files.",
@@ -254,9 +352,9 @@
     }
   ],
   "resumen": {
-    "critico": 0,
-    "alto": 19,
-    "medio": 1,
-    "bajo": 15
+    "critico": 2,
+    "alto": 24,
+    "medio": 3,
+    "bajo": 20
   }
 }
