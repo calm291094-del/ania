@@ -4905,8 +4905,8 @@ async function cargarPanelAdmin(){
     } else {
       kbBox.innerHTML = s.topConocimiento.map(e =>
         '<div class="memRow" style="padding:8px 2px;border-bottom:1px dashed rgba(45,224,138,.12);">' +
-        '<span class="k" style="color:var(--acc);">' + e.votos + ' votos</span>' +
-        '<span class="v">' + (e.valores && e.valores[0] ? String(e.valores[0]).slice(0,120) : '(sin valor)') + '</span>' +
+        '<span class="k" style="color:var(--acc);">' + esc(e.votos) + ' votos</span>' +
+        '<span class="v">' + (e.valores && e.valores[0] ? esc(String(e.valores[0]).slice(0,120)) : '(sin valor)') + '</span>' +
         '</div>'
       ).join('');
     }
@@ -4914,31 +4914,31 @@ async function cargarPanelAdmin(){
     $('adminStats').textContent = '✖ ' + e.message;
   }
 
-  // ===== SUGERENCIAS DEL AGENTE =====
-  try{
-    const rSug = await fetch(CONFIG.ANIA_API + '/ania/public/sugerencias.json');
-    const historial = rSug.ok ? await rSug.json() : [];
-    const box = $('adminSugerencias');
-    if (!historial.length){
-      box.innerHTML = '<div class="empty">Sin análisis todavía</div>';
-    } else {
-      const ult = historial[0];
-      const fecha = new Date(ult.fecha).toLocaleString('es-ES');
-      let html = '<p class="dim" style="font-size:11px;margin-bottom:8px;">' + fecha + ' · ' + (ult.analizadoPor || '') + '</p>';
-      ult.mejoras.forEach(m => {
-        const color = m.prioridad === 'alta' ? 'var(--danger)' : (m.prioridad === 'media' ? 'var(--amber)' : 'var(--acc)');
-        html += '<div class="memRow" style="padding:10px 2px;border-bottom:1px dashed rgba(45,224,138,.12);">' +
-          '<span class="k" style="color:' + color + ';">' + m.prioridad.toUpperCase() + '</span>' +
-          '<span class="v"><b style="color:var(--text);">' + m.titulo + '</b><br>' +
-          '<span style="color:var(--dim);font-size:11px;">[' + m.categoria + '] ' + m.descripcion + '</span><br>' +
-          '<span style="color:var(--acc2);font-size:11px;font-style:italic;">→ ' + m.como + '</span></span>' +
-          '</div>';
-      });
-      box.innerHTML = html;
-    }
-  }catch(eSug){
-    $('adminSugerencias').innerHTML = '<div class="empty">Error al leer sugerencias</div>';
+// ===== SUGERENCIAS DEL AGENTE =====
+try{
+  const rSug = await fetch(CONFIG.ANIA_API + '/ania/public/sugerencias.json');
+  const historial = rSug.ok ? await rSug.json() : [];
+  const box = $('adminSugerencias');
+  if (!historial.length){
+    box.innerHTML = '<div class="empty">Sin análisis todavía</div>';
+  } else {
+    const ult = historial[0];
+    const fecha = esc(new Date(ult.fecha).toLocaleString('es-ES'));
+    let html = '<p class="dim" style="font-size:11px;margin-bottom:8px;">' + fecha + ' · ' + esc(ult.analizadoPor || '') + '</p>';
+    (ult.mejoras || []).forEach(m => {
+      const color = m.prioridad === 'alta' ? 'var(--danger)' : (m.prioridad === 'media' ? 'var(--amber)' : 'var(--acc)');
+      html += '<div class="memRow" style="padding:10px 2px;border-bottom:1px dashed rgba(45,224,138,.12);">' +
+        '<span class="k" style="color:' + color + ';">' + esc((m.prioridad || '').toUpperCase()) + '</span>' +
+        '<span class="v"><b style="color:var(--text);">' + esc(m.titulo || '') + '</b><br>' +
+        '<span style="color:var(--dim);font-size:11px;">[' + esc(m.categoria || '') + '] ' + esc(m.descripcion || '') + '</span><br>' +
+        '<span style="color:var(--acc2);font-size:11px;font-style:italic;">→ ' + esc(m.como || '') + '</span></span>' +
+        '</div>';
+    });
+    box.innerHTML = html;
   }
+}catch(eSug){
+  $('adminSugerencias').innerHTML = '<div class="empty">Error al leer sugerencias</div>';
+}
 
   // ===== REPORTE DE SEGURIDAD =====
   try{
