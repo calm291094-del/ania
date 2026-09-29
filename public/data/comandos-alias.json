@@ -1,0 +1,8 @@
+{
+  "tareas": ["/tareas", "/tasks", "/mis_tareas", "/pendientes"],
+  "agregar_tarea": ["/agregar_tarea", "/añadir_tarea", "/nueva_tarea"],
+  "estado_emocional": ["/emocion", "/estado_emocional", "/como_estas"],
+  "modelo": ["/modelo", "/ia", "/neural"],
+  "ayuda": ["/help", "/ayuda", "/comandos"],
+  "conexion": ["/conexion", "/ip", "/url"]
+}
