@@ -7,7 +7,11 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const TOKEN = process.env.ANIA_TOKEN || 'cambia-esta-clave';   // ← CÁMBIALA
+const TOKEN = process.env.ANIA_TOKEN;
+if (!TOKEN){
+  console.error('✗ Falta la variable ANIA_TOKEN en el entorno');
+  process.exit(1);
+}
 const PORT = parseInt(process.env.ANIA_PORT || '8765', 10);
 const SHOTS = path.join(os.homedir(), 'Pictures', 'Ania');
 
