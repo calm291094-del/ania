@@ -15,6 +15,8 @@ const CACHE = 'ania-v10';
 const RUNTIME = 'ania-runtime-v9';
 const APP_SHELL = [
   './', './index.html', './manifest.json', './icon.svg',
+  './modulos/finanzas.js',
+  './modulos/inventario.js',
   './vendor/notifyx.min.css',
   './vendor/notifyx.min.js',
   './vendor/mediapipe/vision_bundle.mjs',
