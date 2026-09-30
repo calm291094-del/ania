@@ -17,6 +17,8 @@ const APP_SHELL = [
   './', './index.html', './manifest.json', './icon.svg',
   './modulos/finanzas.js',
   './modulos/inventario.js',
+  './modulos/compras.js',
+  './modulos/dashboard.js',
   './vendor/notifyx.min.css',
   './vendor/notifyx.min.js',
   './vendor/mediapipe/vision_bundle.mjs',
