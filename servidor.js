@@ -1,5 +1,6 @@
 // servidor.js · ANIA · backend completo
 const express = require('express');
+const persist = require('./persistencia-local');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -31,6 +32,26 @@ const TOKEN_SECRET  = process.env.ANIA_TOKEN_SECRET;
 const SUPERADMIN_EMAIL = (process.env.SUPERADMIN_EMAIL || '').toLowerCase() || null;
 
 const KEY = crypto.createHash('sha256').update(ANIA_SECRET || 'fallback').digest();
+
+/* ==================== MODO LOCAL / NUBE ==================== */
+const MODO = (process.env.ANIA_MODO || (GITHUB_TOKEN ? 'nube' : 'local')).toLowerCase();
+if (MODO === 'local'){
+  console.log('📁 ANIA · modo LOCAL (persistencia en ./datos/)');
+} else {
+  console.log('☁️  ANIA · modo NUBE (persistencia en GitHub)');
+}
+if (!ANIA_SECRET) console.warn('⚠ ANIA_SECRET no definido: usando clave de desarrollo');
+
+/* ==================== ABSTRACCIÓN DE PERSISTENCIA ==================== */
+async function leer(rel){
+  if (MODO === 'local') return persist.leerCifrado(rel);
+  const f = await ghRead(rel);
+  return f ? decrypt(f.content) : null;
+}
+async function escribir(rel, obj){
+  if (MODO === 'local') return persist.escribirCifrado(rel, obj);
+  await ghWrite(rel, encrypt(obj), 'Ania: ' + rel);
+}
 
 /* ==================== CACHÉ GITHUB ==================== */
 const GHCache = {
@@ -115,9 +136,25 @@ function verifyToken(tok){
   }catch{ return null; }
 }
 async function loadUsers(){
+  if (MODO === 'local') return persist.leerCifrado('usuarios.json') || [];
   const f = await ghRead(P_USERS);
   if (!f) return [];
   try{ return decrypt(f.content) || []; }catch{ return []; }
+}
+async function saveUsers(u){
+  if (MODO === 'local') return persist.escribirCifrado('usuarios.json', u);
+  await ghWrite(P_USERS, encrypt(u), 'Ania: usuarios actualizados');
+}
+
+async function loadMemories(){
+  if (MODO === 'local') return persist.leerCifrado('memorias.json') || {};
+  const f = await ghRead(P_MEMORIES);
+  if (!f) return {};
+  try{ return decrypt(f.content) || {}; }catch{ return {}; }
+}
+async function saveMemories(m){
+  if (MODO === 'local') return persist.escribirCifrado('memorias.json', m);
+  await ghWrite(P_MEMORIES, encrypt(m), 'Ania: memorias actualizadas');
 }
 async function saveUsers(u){ await ghWrite(P_USERS, encrypt(u), 'Ania: usuarios actualizados'); }
 
@@ -439,18 +476,17 @@ app.post('/ania/admin/delete-user', auth, async (req,res)=>{
 
 /* ==================== PROXY DE ARCHIVOS PÚBLICOS ==================== */
 const ARCHIVOS_PERMITIDOS = [
-  'datos/security-report.json',
-  'datos/sugerencias.json',
-  'datos/perfiles.json',
-  'datos/conocimiento.json',
-  'documentos/entrenamiento-ania.json'
+  'security-report.json',
+  'sugerencias.json',
+  'perfiles.json',
+  'conocimiento.json'
 ];
 app.get('/ania/public/:archivo', async (req, res) => {
   try{
-    const archivo = 'datos/' + req.params.archivo;
-    if (!ARCHIVOS_PERMITIDOS.includes(archivo))
+    const soloNombre = req.params.archivo;
+    if (!ARCHIVOS_PERMITIDOS.includes(soloNombre))
       return res.status(403).json({ error:'archivo no permitido' });
-    const f = await ghRead(archivo);
+    const archivo = 'datos/' + soloNombre;
     if (!f) return res.status(404).json({ error:'no encontrado' });
     res.json(JSON.parse(f.content));
   }catch(e){ res.status(500).json({ error:'error al leer archivo' }); }
@@ -498,6 +534,9 @@ app.get('/ania/me/perfil', auth, async (req,res)=>{
     });
   }catch(e){ res.status(500).json({ error:'error al leer perfil' }); }
 });
+
+/* ==================== MÓDULOS DE NEGOCIO ==================== */
+require('./modulos-backend')(app, { auth, leer, escribir, loadUsers });
 
 /* ==================== MIME TYPES ==================== */
 express.static.mime.define({
