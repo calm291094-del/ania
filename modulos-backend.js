@@ -363,33 +363,50 @@ module.exports = function montarModulos(app, deps){
   /* ============================================================
      DASHBOARD · todo lo que necesita la pantalla Jarvis
   ============================================================ */
-  app.get('/ania/dashboard', auth, async (req, res) => {
+app.get('/ania/dashboard', auth, async (req, res) => {
     try{
-      const uid = req.user.id;
+      const uid = req.user?.id;
+      if (!uid) return res.status(401).json({ ok:false, error:'sin usuario en token' });
+
+      console.log('[DASHBOARD] uid:', uid);
+
+      const safeArray = async (rel) => {
+        try{
+          const v = await leer(rel);
+          if (Array.isArray(v)) return v;
+          if (v && typeof v === 'object') return [];   // por si acaso es objeto
+          return [];
+        }catch(err){
+          console.warn('[DASHBOARD] leer() falló en', rel, '→', err.message);
+          return [];
+        }
+      };
+
       const [finanzas, inv, listas] = await Promise.all([
-        leer('finanzas/' + uid + '.json').catch(()=>[]) || [],
-        leer('inventario/' + uid + '.json').catch(()=>[]) || [],
-        leer('compras/' + uid + '.json').catch(()=>[]) || []
+        safeArray('finanzas/' + uid + '.json'),
+        safeArray('inventario/' + uid + '.json'),
+        safeArray('compras/' + uid + '.json')
       ]);
 
       const ahora = new Date();
       const inicioMes = new Date(ahora.getFullYear(), ahora.getMonth(), 1).getTime();
-      const mes = finanzas.filter(m => m.fecha >= inicioMes);
-      const ingresos = mes.filter(m => m.tipo === 'ingreso').reduce((a,m) => a + m.monto, 0);
-      const gastos   = mes.filter(m => m.tipo === 'gasto').reduce((a,m) => a + m.monto, 0);
+      const mes = finanzas.filter(m => m && m.fecha >= inicioMes);
+      const ingresos = mes.filter(m => m.tipo === 'ingreso').reduce((a,m) => a + (Number(m.monto)||0), 0);
+      const gastos   = mes.filter(m => m.tipo === 'gasto').reduce((a,m) => a + (Number(m.monto)||0), 0);
 
       const criticos = inv
-        .filter(p => (p.minimo||0) > 0 && (p.cantidad||0) <= (p.minimo||0))
+        .filter(p => p && (p.minimo||0) > 0 && (p.cantidad||0) <= (p.minimo||0))
         .sort((a,b) => (a.cantidad - a.minimo) - (b.cantidad - b.minimo))
         .slice(0, 8);
 
       const listasPendientes = listas.map(l => ({
-        id: l.id, nombre: l.nombre,
+        id: l.id || null,
+        nombre: l.nombre || '(sin nombre)',
         pendientes: (l.items||[]).filter(i => !i.comprado).length,
         total: (l.items||[]).length
       }));
 
-      res.json({
+      const payload = {
         ok:true,
         balanceMes: {
           ingresos: Math.round(ingresos*100)/100,
@@ -401,8 +418,21 @@ module.exports = function montarModulos(app, deps){
           cantidad: p.cantidad, minimo: p.minimo, unidad: p.unidad
         })),
         listas: listasPendientes
+      };
+
+      console.log('[DASHBOARD] OK · finanzas:', finanzas.length, 'inv:', inv.length, 'listas:', listas.length);
+      res.json(payload);
+
+    }catch(e){
+      console.error('[DASHBOARD] ✖ ERROR:', e.message);
+      console.error(e.stack);
+      res.status(500).json({
+        ok:false,
+        error: 'error al cargar dashboard',
+        debug: e.message,
+        stack: (e.stack||'').split('\n').slice(0,5).join(' | ')
       });
-    }catch(e){ res.status(500).json({ error:'error al cargar dashboard' }); }
+    }
   });
 
   console.log('✓ Módulos backend ANIA montados (finanzas · inventario · compras · dashboard)');
