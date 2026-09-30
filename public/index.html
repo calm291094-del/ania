@@ -551,6 +551,7 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
     <button class="dbtn" id="btnPerfil" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2"/></svg>PERFIL</button>
     <button class="dbtn" id="btnDashboard" style="color:var(--acc2);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>PANEL</button>
     <button class="dbtn" id="btnJarvis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/></svg>JARVIS</button>
+    <button class="dbtn" id="btnJarvisMode2" title="Modo Jarvis estético"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>HUD</button>
     <button class="dbtn" id="btnSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/></svg>AJUSTES</button>
   </nav>
 </div>
@@ -656,6 +657,17 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
     <div id="diag">Pulsa para escanear.</div>
     <button class="bigbtn" id="runDiag">ESCANEAR</button>
     <hr>
+
+    <hr>
+    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">MODO JARVIS</h2>
+    <p class="dim" id="jarvisInfo">HUD, sonidos, paleta cian y reactor denso. Atajos: H=HUD · J=Panel · F=Finanzas · I=Inventario · C=Compras.</p>
+    <button class="bigbtn" id="btnJarvisMode">ACTIVAR MODO JARVIS</button>
+
+    <div class="frow" style="margin-top:10px;">
+      <label>DENSIDAD</label>
+      <input type="range" id="densidadRange" min="1" max="3" step="1" value="1">
+      <output id="densidadOut">1</output>
+    </div>
 
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">TEMA VISUAL</h2>
@@ -4844,10 +4856,21 @@ async function respond(raw){
       return personaReply('Ahí tienes tus listas.');
     }
   }
-
   /* DASHBOARD · abrir panel principal */
   if (/mu[eé]strame\s+(?:el\s+)?panel|abre\s+(?:el\s+)?(?:dashboard|panel\s+principal)|c[oó]mo\s+va\s+todo|resumen\s+general/.test(low)){
     if (window.Dashboard){ Dashboard.abrir(); return personaReply('Panel principal.'); }
+  }
+
+  /* MODO JARVIS */
+  if (window.JarvisUI){
+    if (/activa\s+(?:el\s+)?modo\s+jarvis|pon\s+(?:el\s+)?modo\s+jarvis|jarvis\s+on/.test(low)){
+      JarvisUI.activar();
+      return personaReply('Modo JARVIS activado. HUD en línea, sonidos calibrados.');
+    }
+    if (/desactiva\s+(?:el\s+)?modo\s+jarvis|jarvis\s+off|quita\s+el\s+hud/.test(low)){
+      JarvisUI.desactivar();
+      return personaReply('Modo JARVIS apagado.');
+    }
   }
 
   /* ---- cortesía ---- */
@@ -6383,6 +6406,7 @@ setTimeout(() => CerebroH5.cargar(), 2000);
 <script src="./modulos/inventario.js"></script>
 <script src="./modulos/compras.js"></script>
 <script src="./modulos/dashboard.js"></script>
+<script src="./modulos/jarvis-ui.js"></script>
   
 <script>
   /* Hook del botón JARVIS + tabs del panel */
@@ -6400,6 +6424,43 @@ setTimeout(() => CerebroH5.cargar(), 2000);
       if (b.disabled) return;
       switchJarvisTab(b.dataset.tab);
     });
+
+    // === MODO JARVIS ===
+    const btnJM = document.getElementById('btnJarvisMode');
+    const dr    = document.getElementById('densidadRange');
+    const dOut  = document.getElementById('densidadOut');
+
+    function refrescarBotonJarvis(){
+      if (!btnJM || !window.JarvisUI) return;
+      btnJM.textContent = JarvisUI.on ? 'DESACTIVAR MODO JARVIS' : 'ACTIVAR MODO JARVIS';
+    }
+
+    if (btnJM) btnJM.onclick = ()=>{
+      if (window.JarvisUI) JarvisUI.toggle();
+      setTimeout(refrescarBotonJarvis, 100);
+    };
+
+    // Densidad persistente
+    const densidadGuardada = parseInt(localStorage.getItem('ania_jarvisDensidad') || '1', 10);
+    if (dr){
+      dr.value = densidadGuardada;
+      if (dOut) dOut.value = densidadGuardada;
+      dr.oninput = ()=>{
+        const v = parseInt(dr.value, 10);
+        if (dOut) dOut.value = v;
+        localStorage.setItem('ania_jarvisDensidad', String(v));
+        if (window.JarvisUI) JarvisUI.setDensidad(v);
+      };
+    }
+
+    // Aplicar densidad guardada si Jarvis ya estaba activo
+    if (window.JarvisUI && JarvisUI.on && densidadGuardada > 1){
+      setTimeout(()=> JarvisUI.setDensidad(densidadGuardada), 200);
+    }
+
+    refrescarBotonJarvis();
+    // Refrescar cada segundo por si el usuario cambia desde un atajo
+    setInterval(refrescarBotonJarvis, 1500);
   });
 
   function switchJarvisTab(tab){
