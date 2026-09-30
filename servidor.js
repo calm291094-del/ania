@@ -42,7 +42,7 @@ if (MODO === 'local'){
 }
 if (!ANIA_SECRET) console.warn('⚠ ANIA_SECRET no definido: usando clave de desarrollo');
 
-/* ==================== ABSTRACCIÓN DE PERSISTENCIA ==================== */
+/* ==================== ABSTRACCIÓN DE PERSISTENCIA · CIFRADO ==================== */
 async function leer(rel){
   if (MODO === 'local') return persist.leerCifrado(rel);
   const f = await ghRead(rel);
@@ -51,6 +51,19 @@ async function leer(rel){
 async function escribir(rel, obj){
   if (MODO === 'local') return persist.escribirCifrado(rel, obj);
   await ghWrite(rel, encrypt(obj), 'Ania: ' + rel);
+}
+
+/* ==================== ABSTRACCIÓN DE PERSISTENCIA · JSON PLANO ==================== */
+/* Para archivos no cifrados: conocimiento, admin-log, perfiles, sugerencias, etc. */
+async function leerPlano(rel, fallback){
+  if (MODO === 'local') return persist.leerJSON(rel, fallback);
+  const f = await ghRead(rel);
+  if (!f) return fallback;
+  try{ return JSON.parse(f.content); }catch{ return fallback; }
+}
+async function escribirPlano(rel, obj, msg){
+  if (MODO === 'local') return persist.escribirJSON(rel, obj);
+  await ghWrite(rel, JSON.stringify(obj, null, 2), msg || 'Ania: ' + rel);
 }
 
 /* ==================== CACHÉ GITHUB ==================== */
@@ -156,14 +169,6 @@ async function saveMemories(m){
   if (MODO === 'local') return persist.escribirCifrado('memorias.json', m);
   await ghWrite(P_MEMORIES, encrypt(m), 'Ania: memorias actualizadas');
 }
-async function saveUsers(u){ await ghWrite(P_USERS, encrypt(u), 'Ania: usuarios actualizados'); }
-
-async function loadMemories(){
-  const f = await ghRead(P_MEMORIES);
-  if (!f) return {};
-  try{ return decrypt(f.content) || {}; }catch{ return {}; }
-}
-async function saveMemories(m){ await ghWrite(P_MEMORIES, encrypt(m), 'Ania: memorias actualizadas'); }
 
 function auth(req,res,next){
   const t = (req.headers.authorization || '').replace(/^Bearer\s+/,'');
@@ -175,15 +180,14 @@ function auth(req,res,next){
 /* ==================== ADMIN LOG ==================== */
 async function logAdmin(accion, adminUser, target, detalles){
   try{
-    let lista = [];
-    try{ const f = await ghRead(P_ADMIN_LOG); if (f) lista = JSON.parse(f.content) || []; }catch{}
+    let lista = await leerPlano(P_ADMIN_LOG, []) || [];
     lista.unshift({
       t: Date.now(), accion,
       admin: { id: adminUser.id, usuario: adminUser.usuario, rol: adminUser.rol },
       target: target || null, detalles: detalles || ''
     });
     if (lista.length > 200) lista = lista.slice(0, 200);
-    await ghWrite(P_ADMIN_LOG, JSON.stringify(lista, null, 2), 'Ania: log admin ' + accion);
+    await escribirPlano(P_ADMIN_LOG, lista, 'Ania: log admin ' + accion);
   }catch(e){ console.error('✗ logAdmin:', e.message); }
 }
 
@@ -203,8 +207,19 @@ app.use('/ania', (req, res, next) => {
   if (req.path === '/health') return next();
   return limiterGeneral(req, res, next);
 });
-app.get('/ania/health', (req,res)=> res.json({ ok:true, t:Date.now() }));
+app.get('/ania/health', (req,res)=> res.json({ ok:true, t:Date.now(), modo: MODO }));
 app.get('/ania/ping', (req,res)=> res.json({ mensaje:'Ania backend activo' }));
+
+/* ==================== TOKEN DEL AGENTE (solo modo local) ==================== */
+/* Permite que el frontend en localhost obtenga automáticamente el token del agente
+   sin que el usuario tenga que copiarlo de la consola. */
+app.get('/ania/local-token', (req, res) => {
+  if (MODO !== 'local') return res.status(404).json({ error:'no disponible en este modo' });
+  const host = (req.hostname || '').toLowerCase();
+  if (!['localhost', '127.0.0.1', '::1'].includes(host))
+    return res.status(403).json({ error:'solo accesible desde localhost' });
+  res.json({ token: process.env.ANIA_TOKEN || null });
+});
 
 /* ==================== REGISTRO ==================== */
 app.post('/ania/register', limiterRegister, async (req,res)=>{
@@ -267,7 +282,7 @@ app.post('/ania/login', limiterLogin, async (req,res)=>{
 
 /* ==================== CONOCIMIENTO ==================== */
 app.get('/ania/knowledge', async (req,res)=>{
-  try{ const f = await ghRead(P_KNOWLEDGE); res.json(f ? JSON.parse(f.content) : []); }
+  try{ res.json(await leerPlano(P_KNOWLEDGE, []) || []); }
   catch{ res.json([]); }
 });
 
@@ -277,8 +292,7 @@ app.post('/ania/knowledge', auth, async (req,res)=>{
     if (!clave || !valor) return res.status(400).json({ error:'falta clave o valor' });
     if (String(clave).length > 200 || String(valor).length > 1000)
       return res.status(400).json({ error:'texto demasiado largo' });
-    let lista = [];
-    try{ const f = await ghRead(P_KNOWLEDGE); if (f) lista = JSON.parse(f.content); }catch{}
+    let lista = await leerPlano(P_KNOWLEDGE, []) || [];
     const k = String(clave).toLowerCase().trim();
     const existing = lista.find(e => e.clave === k);
     if (existing){
@@ -288,7 +302,7 @@ app.post('/ania/knowledge', auth, async (req,res)=>{
       lista.push({ clave:k, valores:[String(valor)], categoria:categoria||'general', votos:1, t:Date.now() });
     }
     if (lista.length > 2000) lista = lista.slice(-2000);
-    await ghWrite(P_KNOWLEDGE, JSON.stringify(lista, null, 2), 'Ania: conocimiento actualizado');
+    await escribirPlano(P_KNOWLEDGE, lista, 'Ania: conocimiento actualizado');
     res.json({ ok:true, total:lista.length });
   }catch(e){ res.status(500).json({ error:'error al guardar conocimiento' }); }
 });
@@ -350,8 +364,7 @@ app.get('/ania/admin/knowledge-stats', auth, async (req,res)=>{
       return res.status(403).json({ error:'solo administradores' });
     const users = await loadUsers();
     const memorias = await loadMemories();
-    let kb = [];
-    try{ const f = await ghRead(P_KNOWLEDGE); if (f) kb = JSON.parse(f.content); }catch{}
+    const kb = await leerPlano(P_KNOWLEDGE, []) || [];
     res.json({
       totalUsuarios: users.length,
       totalMemorias: Object.keys(memorias).length,
@@ -383,8 +396,7 @@ app.get('/ania/admin/log', auth, async (req,res)=>{
   try{
     if (req.user.rol !== 'admin' && req.user.rol !== 'superadmin')
       return res.status(403).json({ error:'solo administradores' });
-    let lista = [];
-    try{ const f = await ghRead(P_ADMIN_LOG); if (f) lista = JSON.parse(f.content) || []; }catch{}
+    const lista = await leerPlano(P_ADMIN_LOG, []) || [];
     res.json({ ok:true, total:lista.length, log:lista.slice(0, 50) });
   }catch(e){ res.status(500).json({ error:'error al leer log' }); }
 });
@@ -487,23 +499,19 @@ app.get('/ania/public/:archivo', async (req, res) => {
     if (!ARCHIVOS_PERMITIDOS.includes(soloNombre))
       return res.status(403).json({ error:'archivo no permitido' });
     const archivo = 'datos/' + soloNombre;
-    if (!f) return res.status(404).json({ error:'no encontrado' });
-    res.json(JSON.parse(f.content));
+    const datos = await leerPlano(archivo, null);
+    if (datos === null) return res.status(404).json({ error:'no encontrado' });
+    res.json(datos);
   }catch(e){ res.status(500).json({ error:'error al leer archivo' }); }
 });
 
 /* ==================== ENTRENAMIENTO V5 ==================== */
 app.get('/ania/entrenamiento', async (req, res) => {
   try {
-    // El archivo está en datos/entrenamiento-ania.json
-    let f = await ghRead('datos/entrenamiento-ania.json');
-    if (!f) {
-      // Fallback: por si algún día lo mueves a documentos/
-      f = await ghRead('documentos/entrenamiento-ania.json');
-    }
-    if (!f) return res.status(404).json({ error: 'entrenamiento no encontrado' });
+    let datos = await leerPlano('datos/entrenamiento-ania.json', null);
+    if (!datos) datos = await leerPlano('documentos/entrenamiento-ania.json', null);
+    if (!datos) return res.status(404).json({ error: 'entrenamiento no encontrado' });
 
-    const datos = JSON.parse(f.content);
     const entradas = Array.isArray(datos.entrenamiento) ? datos.entrenamiento.length : 0;
     console.log('📚 Entrenamiento servido:', entradas, 'entradas');
     res.json(datos);
@@ -513,13 +521,11 @@ app.get('/ania/entrenamiento', async (req, res) => {
   }
 });
 
-
 /* ==================== PERFIL DEL USUARIO ==================== */
 app.get('/ania/me/perfil', auth, async (req,res)=>{
   try{
-    const f = await ghRead('datos/perfiles.json');
-    if (!f) return res.json({ ok:false, error:'sin perfil generado' });
-    const perfiles = JSON.parse(f.content);
+    const perfiles = await leerPlano('datos/perfiles.json', null);
+    if (!perfiles) return res.json({ ok:false, error:'sin perfil generado' });
     const miPerfil = perfiles[req.user.id];
     if (!miPerfil) return res.json({ ok:false, error:'sin perfil generado' });
     const mem = await loadMemories();
@@ -536,7 +542,12 @@ app.get('/ania/me/perfil', auth, async (req,res)=>{
 });
 
 /* ==================== MÓDULOS DE NEGOCIO ==================== */
-require('./modulos-backend')(app, { auth, leer, escribir, loadUsers });
+try {
+  require('./modulos-backend')(app, { auth, leer, escribir, loadUsers });
+} catch (e) {
+  console.warn('⚠ modulos-backend.js no disponible:', e.message);
+  console.warn('  Finanzas / Inventario / Compras / Dashboard estarán deshabilitados.');
+}
 
 /* ==================== MIME TYPES ==================== */
 express.static.mime.define({
@@ -577,4 +588,11 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: 'error interno' });
 });
 
-app.listen(PORT, '0.0.0.0', () => console.log('ANIA backend · puerto ' + PORT));
+/* ==================== ARRANQUE ==================== */
+app.listen(PORT, '0.0.0.0', () => {
+  console.log('ANIA backend · puerto ' + PORT + ' · modo ' + MODO);
+  if (MODO === 'local') {
+    console.log('   Datos cifrados en: ./datos/');
+    console.log('   (Borrar .ania-secrets.json invalida el cifrado)');
+  }
+});
