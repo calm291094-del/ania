@@ -549,6 +549,7 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
     <button class="dbtn" id="btnInstall"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 7v7"/><path d="M9.5 11.5 12 14l2.5-2.5"/></svg>INSTALAR</button>
     <button class="dbtn" id="btnAdmin" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>ADMIN</button>
     <button class="dbtn" id="btnPerfil" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2"/></svg>PERFIL</button>
+    <button class="dbtn" id="btnJarvis" style="color:var(--acc2);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M12 8v8"/></svg>JARVIS</button>
     <button class="dbtn" id="btnSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/></svg>AJUSTES</button>
   </nav>
 </div>
@@ -811,6 +812,23 @@ header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1p
     <p class="dim" id="perfilPie" style="font-size:10px;margin-top:14px;text-align:center;">
       Este perfil se actualiza automáticamente cada día con tu actividad. Solo tú puedes verlo.
     </p>
+  </div>
+</div>
+
+<!-- ============ PANEL JARVIS · módulos de negocio ============ -->
+<div class="overlay" id="jarvisModal">
+  <div class="modal" style="width:min(1100px,100%);max-width:1100px;">
+    <h2>PANEL JARVIS
+      <button class="xbtn" data-close style="margin-left:auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </h2>
+    <div id="jarvisTabs" style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
+      <button class="chip jarvisTab" data-tab="finanzas" style="border-color:var(--line2);color:var(--acc2);">💰 FINANZAS</button>
+      <button class="chip jarvisTab" data-tab="inventario">📦 INVENTARIO</button>
+    </div>
+    <div id="jarvisContenido">
+      <div id="panelFinanzas"></div>
+      <div id="panelInventario" style="display:none;"></div>
+    </div>
   </div>
 </div>
   
@@ -4662,6 +4680,85 @@ async function respond(raw){
   if(/chiste/.test(low)) return personaReply(freshPick('jokes', JOKES));
   if(/consejo|un\s+tip/.test(low)) return personaReply('Regla 32: café bien hecho y cinco minutos de silencio.');
 
+  /* ============================================================
+     MÓDULOS DE NEGOCIO · comandos de voz (Fase Jarvis)
+  ============================================================ */
+
+  /* FINANZAS */
+  if (window.Finanzas){
+    m = low.match(/\bgast[eé]\s+(\d+(?:[.,]\d+)?)\s*(?:en\s+|de\s+)?(.+)?$/);
+    if (m){
+      const monto = parseFloat(m[1].replace(',', '.'));
+      const cat = (m[2] || 'general').trim().slice(0, 40);
+      try{
+        await Finanzas.registrarGasto(monto, cat);
+        return personaReply(`Anotado: gasto de ${monto} en ${cat}.`);
+      }catch(e){ return personaReply('No pude guardar el gasto: ' + e.message); }
+    }
+    m = low.match(/\b(?:ingres[eé]|gan[eé]|cobr[eé]|recib[ií])\s+(\d+(?:[.,]\d+)?)\s*(?:de\s+|en\s+)?(.+)?$/);
+    if (m){
+      const monto = parseFloat(m[1].replace(',', '.'));
+      const cat = (m[2] || 'general').trim().slice(0, 40);
+      try{
+        await Finanzas.registrarIngreso(monto, cat);
+        return personaReply(`Ingreso de ${monto} registrado (${cat}).`);
+      }catch(e){ return personaReply('No pude guardar: ' + e.message); }
+    }
+    if (/c[oó]mo\s+va\s+el\s+mes|balance|mis\s+finanzas|c[oó]mo\s+van\s+las\s+cuentas|cu[aá]nto\s+llevo/.test(low)){
+      try{ return personaReply(await Finanzas.resumenTexto()); }
+      catch(e){ return personaReply('No pude leer las finanzas.'); }
+    }
+  }
+
+  /* INVENTARIO */
+  if (window.Inventario){
+    m = low.match(/\bvend[ií]\s+(\d+(?:[.,]\d+)?)\s+(?:de\s+|unidades?\s+de\s+)?(.+)$/);
+    if (m){
+      const cant = parseFloat(m[1].replace(',', '.'));
+      const nombre = m[2].trim();
+      try{
+        const prods = await Inventario.listar(nombre);
+        const p = prods.find(x => x.nombre.toLowerCase().includes(nombre.toLowerCase()));
+        if (!p) return personaReply(`No encuentro "${nombre}" en el inventario.`);
+        await Inventario.mover(p.id, 'salida', cant, 'venta por voz', true);
+        return personaReply(`Venta registrada: ${cant} ${p.unidad} de ${p.nombre}. Ingreso sumado a finanzas.`);
+      }catch(e){ return personaReply(e.message); }
+    }
+    m = low.match(/\b(?:a[nñ]ad[ií]|agreg[ué]|met[ií]|ingres[eé])\s+(\d+(?:[.,]\d+)?)\s+(?:de\s+|unidades?\s+de\s+)?(.+?)(?:\s+al?\s+inventario)?$/);
+    if (m){
+      const cant = parseFloat(m[1].replace(',', '.'));
+      const nombre = m[2].trim();
+      try{
+        const prods = await Inventario.listar(nombre);
+        const p = prods.find(x => x.nombre.toLowerCase().includes(nombre.toLowerCase()));
+        if (!p) return personaReply(`No encuentro "${nombre}". Créalo primero en el panel JARVIS.`);
+        await Inventario.mover(p.id, 'entrada', cant);
+        return personaReply(`Entrada: ${cant} ${p.unidad} de ${p.nombre}.`);
+      }catch(e){ return personaReply(e.message); }
+    }
+    m = low.match(/\b(?:cu[aá]nto|cu[aá]nta)\s+(?:me\s+queda\s+de\s+|hay\s+de\s+|tengo\s+de\s+)(.+)$/);
+    if (m){
+      const nombre = m[1].trim();
+      try{
+        const prods = await Inventario.listar(nombre);
+        if (!prods.length) return personaReply(`No encuentro "${nombre}".`);
+        const p = prods[0];
+        return personaReply(`${p.nombre}: ${p.cantidad} ${p.unidad} (mínimo ${p.minimo}).`);
+      }catch(e){ return personaReply('No pude consultar.'); }
+    }
+    if (/stock\s+cr[ií]tico|qu[eé]\s+falta|bajo\s+stock|qu[eé]\s+(?:hay\s+que\s+)?reponer|alerta\s+stock/.test(low)){
+      try{
+        const criticos = await Inventario.bajoStock();
+        if (!criticos.length) return personaReply('Sin alertas de stock. Todo en orden.');
+        return personaReply('⚠ Bajo stock:\n' + criticos.map(p => `· ${p.nombre}: ${p.cantidad}/${p.minimo} ${p.unidad}`).join('\n'));
+      }catch(e){ return personaReply('No pude consultar.'); }
+    }
+    if (/c[oó]mo\s+va\s+el\s+inventario|resumen\s+(?:del\s+)?inventario/.test(low)){
+      try{ return personaReply(await Inventario.resumenTexto()); }
+      catch(e){ return personaReply('No pude leer el inventario.'); }
+    }
+  }
+
   /* ---- cortesía ---- */
   if(/adios|chao|hasta\s+luego/.test(low)) return personaReply('Hasta pronto. Que mañana sea bonito.');
   if(/^hola|^buenas|^hey/.test(low)){
@@ -6188,6 +6285,36 @@ const CerebroH5 = {
 // Cargar el cerebro al arrancar
 setTimeout(() => CerebroH5.cargar(), 2000);
 </script>
-  
+
+<!-- ============ MÓDULOS JARVIS ============ -->
+<script src="./modulos/finanzas.js"></script>
+<script src="./modulos/inventario.js"></script>
+<script>
+  /* Hook del botón JARVIS + tabs del panel */
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const btn = document.getElementById('btnJarvis');
+    if (btn) btn.onclick = ()=>{
+      openModal('jarvisModal');
+      switchJarvisTab('finanzas');
+    };
+    document.querySelectorAll('.jarvisTab').forEach(b => b.onclick = ()=>{
+      if (b.disabled) return;
+      switchJarvisTab(b.dataset.tab);
+    });
+  });
+  function switchJarvisTab(tab){
+    document.querySelectorAll('.jarvisTab').forEach(b => {
+      const on = b.dataset.tab === tab;
+      b.style.borderColor = on ? 'var(--line2)' : 'var(--line)';
+      b.style.color = on ? 'var(--acc2)' : 'var(--dim)';
+    });
+    const f = document.getElementById('panelFinanzas');
+    const i = document.getElementById('panelInventario');
+    if (f) f.style.display = tab === 'finanzas' ? 'block' : 'none';
+    if (i) i.style.display = tab === 'inventario' ? 'block' : 'none';
+    if (tab === 'finanzas' && window.Finanzas) Finanzas.renderPanel();
+    if (tab === 'inventario' && window.Inventario) Inventario.renderPanel();
+  }
+</script>
 </body>
 </html>
