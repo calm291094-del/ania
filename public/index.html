@@ -6409,104 +6409,7 @@ setTimeout(() => CerebroH5.cargar(), 2000);
 <script src="./modulos/jarvis-ui.js"></script>
   
 <script>
-  /* Hook del botón JARVIS + tabs del panel */
-  document.addEventListener('DOMContentLoaded', ()=>{
-    const btnJ = document.getElementById('btnJarvis');
-    if (btnJ) btnJ.onclick = ()=>{
-      openModal('jarvisModal');
-      switchJarvisTab('finanzas');
-    };
-    const btnD = document.getElementById('btnDashboard');
-    if (btnD) btnD.onclick = ()=>{
-      if (window.Dashboard) Dashboard.abrir();
-    };
-    document.querySelectorAll('.jarvisTab').forEach(b => b.onclick = ()=>{
-      if (b.disabled) return;
-      switchJarvisTab(b.dataset.tab);
-    });
-
-    // === MODO JARVIS ===
-    const btnJM = document.getElementById('btnJarvisMode');
-    const dr    = document.getElementById('densidadRange');
-    const dOut  = document.getElementById('densidadOut');
-
-    function refrescarBotonJarvis(){
-      if (!btnJM || !window.JarvisUI) return;
-      btnJM.textContent = JarvisUI.on ? 'DESACTIVAR MODO JARVIS' : 'ACTIVAR MODO JARVIS';
-    }
-
-    if (btnJM) btnJM.onclick = ()=>{
-      if (window.JarvisUI) JarvisUI.toggle();
-      setTimeout(refrescarBotonJarvis, 100);
-    };
-
-    // Densidad persistente
-    const densidadGuardada = parseInt(localStorage.getItem('ania_jarvisDensidad') || '1', 10);
-    if (dr){
-      dr.value = densidadGuardada;
-      if (dOut) dOut.value = densidadGuardada;
-      dr.oninput = ()=>{
-        const v = parseInt(dr.value, 10);
-        if (dOut) dOut.value = v;
-        localStorage.setItem('ania_jarvisDensidad', String(v));
-        if (window.JarvisUI) JarvisUI.setDensidad(v);
-      };
-    }
-
-    // Aplicar densidad guardada si Jarvis ya estaba activo
-    if (window.JarvisUI && JarvisUI.on && densidadGuardada > 1){
-      setTimeout(()=> JarvisUI.setDensidad(densidadGuardada), 200);
-    }
-
-    refrescarBotonJarvis();
-    // Refrescar cada segundo por si el usuario cambia desde un atajo
-    setInterval(refrescarBotonJarvis, 1500);
-
-    // === BOTÓN RÁPIDO DEL DOCK (HUD) ===
-    const btnJM2 = document.getElementById('btnJarvisMode2');
-    if (btnJM2) btnJM2.onclick = ()=>{
-      if (window.JarvisUI) JarvisUI.toggle();
-    };
-  });
-
-    // === MODO JARVIS ===
-    const btnJM = document.getElementById('btnJarvisMode');
-    const dr    = document.getElementById('densidadRange');
-    const dOut  = document.getElementById('densidadOut');
-
-    function refrescarBotonJarvis(){
-      if (!btnJM || !window.JarvisUI) return;
-      btnJM.textContent = JarvisUI.on ? 'DESACTIVAR MODO JARVIS' : 'ACTIVAR MODO JARVIS';
-    }
-
-    if (btnJM) btnJM.onclick = ()=>{
-      if (window.JarvisUI) JarvisUI.toggle();
-      setTimeout(refrescarBotonJarvis, 100);
-    };
-
-    // Densidad persistente
-    const densidadGuardada = parseInt(localStorage.getItem('ania_jarvisDensidad') || '1', 10);
-    if (dr){
-      dr.value = densidadGuardada;
-      if (dOut) dOut.value = densidadGuardada;
-      dr.oninput = ()=>{
-        const v = parseInt(dr.value, 10);
-        if (dOut) dOut.value = v;
-        localStorage.setItem('ania_jarvisDensidad', String(v));
-        if (window.JarvisUI) JarvisUI.setDensidad(v);
-      };
-    }
-
-    // Aplicar densidad guardada si Jarvis ya estaba activo
-    if (window.JarvisUI && JarvisUI.on && densidadGuardada > 1){
-      setTimeout(()=> JarvisUI.setDensidad(densidadGuardada), 200);
-    }
-
-    refrescarBotonJarvis();
-    // Refrescar cada segundo por si el usuario cambia desde un atajo
-    setInterval(refrescarBotonJarvis, 1500);
-  });
-
+  /* Hook del botón JARVIS + tabs del panel + Modo Jarvis */
   function switchJarvisTab(tab){
     document.querySelectorAll('.jarvisTab').forEach(b => {
       const on = b.dataset.tab === tab;
@@ -6523,6 +6426,66 @@ setTimeout(() => CerebroH5.cargar(), 2000);
     if (tab === 'inventario' && window.Inventario) Inventario.renderPanel();
     if (tab === 'compras'    && window.Compras)    Compras.renderPanel();
   }
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    // ---- Botones del dock ----
+    const btnJ = document.getElementById('btnJarvis');
+    if (btnJ) btnJ.onclick = ()=>{
+      openModal('jarvisModal');
+      switchJarvisTab('finanzas');
+    };
+
+    const btnD = document.getElementById('btnDashboard');
+    if (btnD) btnD.onclick = ()=>{
+      if (window.Dashboard) Dashboard.abrir();
+    };
+
+    const btnJM2 = document.getElementById('btnJarvisMode2');
+    if (btnJM2) btnJM2.onclick = ()=>{
+      if (window.JarvisUI) JarvisUI.toggle();
+    };
+
+    // ---- Tabs del panel Jarvis ----
+    document.querySelectorAll('.jarvisTab').forEach(b => b.onclick = ()=>{
+      if (b.disabled) return;
+      switchJarvisTab(b.dataset.tab);
+    });
+
+    // ---- Modo Jarvis (botón en Ajustes) ----
+    const btnJM = document.getElementById('btnJarvisMode');
+    const dr    = document.getElementById('densidadRange');
+    const dOut  = document.getElementById('densidadOut');
+
+    function refrescarBotonJarvis(){
+      if (!btnJM || !window.JarvisUI) return;
+      btnJM.textContent = JarvisUI.on ? 'DESACTIVAR MODO JARVIS' : 'ACTIVAR MODO JARVIS';
+    }
+
+    if (btnJM) btnJM.onclick = ()=>{
+      if (window.JarvisUI) JarvisUI.toggle();
+      setTimeout(refrescarBotonJarvis, 100);
+    };
+
+    // ---- Densidad persistente ----
+    const densidadGuardada = parseInt(localStorage.getItem('ania_jarvisDensidad') || '1', 10);
+    if (dr){
+      dr.value = densidadGuardada;
+      if (dOut) dOut.value = densidadGuardada;
+      dr.oninput = ()=>{
+        const v = parseInt(dr.value, 10);
+        if (dOut) dOut.value = v;
+        localStorage.setItem('ania_jarvisDensidad', String(v));
+        if (window.JarvisUI) JarvisUI.setDensidad(v);
+      };
+    }
+
+    if (window.JarvisUI && JarvisUI.on && densidadGuardada > 1){
+      setTimeout(()=> JarvisUI.setDensidad(densidadGuardada), 200);
+    }
+
+    refrescarBotonJarvis();
+    setInterval(refrescarBotonJarvis, 1500);
+  });
 </script>
 </body>
 </html>
