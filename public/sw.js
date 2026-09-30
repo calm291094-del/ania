@@ -19,6 +19,7 @@ const APP_SHELL = [
   './modulos/inventario.js',
   './modulos/compras.js',
   './modulos/dashboard.js',
+  './modulos/jarvis-ui.js',
   './vendor/notifyx.min.css',
   './vendor/notifyx.min.js',
   './vendor/mediapipe/vision_bundle.mjs',
