@@ -6461,6 +6461,50 @@ setTimeout(() => CerebroH5.cargar(), 2000);
     refrescarBotonJarvis();
     // Refrescar cada segundo por si el usuario cambia desde un atajo
     setInterval(refrescarBotonJarvis, 1500);
+
+    // === BOTÓN RÁPIDO DEL DOCK (HUD) ===
+    const btnJM2 = document.getElementById('btnJarvisMode2');
+    if (btnJM2) btnJM2.onclick = ()=>{
+      if (window.JarvisUI) JarvisUI.toggle();
+    };
+  });
+
+    // === MODO JARVIS ===
+    const btnJM = document.getElementById('btnJarvisMode');
+    const dr    = document.getElementById('densidadRange');
+    const dOut  = document.getElementById('densidadOut');
+
+    function refrescarBotonJarvis(){
+      if (!btnJM || !window.JarvisUI) return;
+      btnJM.textContent = JarvisUI.on ? 'DESACTIVAR MODO JARVIS' : 'ACTIVAR MODO JARVIS';
+    }
+
+    if (btnJM) btnJM.onclick = ()=>{
+      if (window.JarvisUI) JarvisUI.toggle();
+      setTimeout(refrescarBotonJarvis, 100);
+    };
+
+    // Densidad persistente
+    const densidadGuardada = parseInt(localStorage.getItem('ania_jarvisDensidad') || '1', 10);
+    if (dr){
+      dr.value = densidadGuardada;
+      if (dOut) dOut.value = densidadGuardada;
+      dr.oninput = ()=>{
+        const v = parseInt(dr.value, 10);
+        if (dOut) dOut.value = v;
+        localStorage.setItem('ania_jarvisDensidad', String(v));
+        if (window.JarvisUI) JarvisUI.setDensidad(v);
+      };
+    }
+
+    // Aplicar densidad guardada si Jarvis ya estaba activo
+    if (window.JarvisUI && JarvisUI.on && densidadGuardada > 1){
+      setTimeout(()=> JarvisUI.setDensidad(densidadGuardada), 200);
+    }
+
+    refrescarBotonJarvis();
+    // Refrescar cada segundo por si el usuario cambia desde un atajo
+    setInterval(refrescarBotonJarvis, 1500);
   });
 
   function switchJarvisTab(tab){
