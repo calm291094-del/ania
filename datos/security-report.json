@@ -1,5 +1,5 @@
 {
-  "fecha": "2026-09-30T11:00:02.079Z",
+  "fecha": "2026-10-01T11:27:15.748Z",
   "analizadoPor": "Ania Security Agent v2",
   "hallazgos": [
     {
@@ -9,6 +9,55 @@
     },
     {
       "tipo": "codigo",
+      "regla": "NOSQL-002",
+      "severidad": "alto",
+      "descripcion": "Passing user input directly to Mongoose query enables NoSQL operator injection (e.g., $ne, $gt).",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "NOSQL-002",
+      "severidad": "alto",
+      "descripcion": "Passing user input directly to Mongoose query enables NoSQL operator injection (e.g., $ne, $gt).",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "NOSQL-002",
+      "severidad": "alto",
+      "descripcion": "Passing user input directly to Mongoose query enables NoSQL operator injection (e.g., $ne, $gt).",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "NOSQL-002",
+      "severidad": "alto",
+      "descripcion": "Passing user input directly to Mongoose query enables NoSQL operator injection (e.g., $ne, $gt).",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-001",
+      "severidad": "medio",
+      "descripcion": "Error details sent to client, potentially exposing stack traces.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
       "regla": "AUTH-001",
       "severidad": "alto",
       "descripcion": "Route handler for `.delete()` has no authentication middleware.",
@@ -33,6 +82,13 @@
       "regla": "AUTH-001",
       "severidad": "alto",
       "descripcion": "Route handler for `.post()` has no authentication middleware.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "Async operation without error handling may cause unhandled promise rejection.",
       "ubicacion": "desconocida"
     },
     {
@@ -152,6 +208,132 @@
       "regla": "DOM-005",
       "severidad": "alto",
       "descripcion": "A \"message\" event handler does not validate event.origin.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "Async operation without error handling may cause unhandled promise rejection.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "Async operation without error handling may cause unhandled promise rejection.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "Async operation without error handling may cause unhandled promise rejection.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DOM-001",
+      "severidad": "alto",
+      "descripcion": "Assigning a dynamic value to `.innerHTML` can introduce DOM-based XSS.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DOM-001",
+      "severidad": "alto",
+      "descripcion": "Assigning a dynamic value to `.innerHTML` can introduce DOM-based XSS.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DOM-001",
+      "severidad": "alto",
+      "descripcion": "Assigning a dynamic value to `.innerHTML` can introduce DOM-based XSS.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DOM-001",
+      "severidad": "alto",
+      "descripcion": "Assigning a dynamic value to `.innerHTML` can introduce DOM-based XSS.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "Async operation without error handling may cause unhandled promise rejection.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DOM-001",
+      "severidad": "alto",
+      "descripcion": "Assigning a dynamic value to `.innerHTML` can introduce DOM-based XSS.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DOM-001",
+      "severidad": "alto",
+      "descripcion": "Assigning a dynamic value to `.innerHTML` can introduce DOM-based XSS.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "Async operation without error handling may cause unhandled promise rejection.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DOM-001",
+      "severidad": "alto",
+      "descripcion": "Assigning a dynamic value to `.innerHTML` can introduce DOM-based XSS.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DOM-001",
+      "severidad": "alto",
+      "descripcion": "Assigning a dynamic value to `.innerHTML` can introduce DOM-based XSS.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
       "ubicacion": "desconocida"
     },
     {
@@ -353,8 +535,8 @@
   ],
   "resumen": {
     "critico": 2,
-    "alto": 24,
-    "medio": 3,
-    "bajo": 20
+    "alto": 36,
+    "medio": 4,
+    "bajo": 33
   }
 }
