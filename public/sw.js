@@ -1,40 +1,59 @@
-/* ANIA v10 · service worker "OFFLINE-FOREVER"
-   Estrategia:
-   1. INSTALACIÓN TOLERANTE: cada recurso se cachea por separado. Si uno falla,
-      el resto queda guardado (addAll atómico era el bug: si icon.svg faltaba,
-      NO se cacheaba NADA → offline salía página de error).
-   2. NAVEGACIÓN: caché SIEMPRE primero (instantáneo, offline garantizado,
-      ignora ?source=pwa de Android) + actualización en 2º plano con red.
-   3. FUENTES DE GOOGLE cacheadas → offline se ve idéntico.
-   4. modelos/ (GGUF) jamás al caché · documentos/ red-primero ·
-      engine/ y modelos de IA: caché de runtime (offline tras 1er uso).
-   REGLA DE ACTUALIZACIÓN: cuando cambies index.html, sube este archivo
-   con CACHE incrementado (ania-v9 → ania-v10). */
-
+/* ANIA v10 · service worker "OFFLINE-FOREVER" */
 const CACHE = 'ania-v10';
-const RUNTIME = 'ania-runtime-v10';
+const RUNTIME = 'ania-runtime-v9';
 
 const APP_SHELL = [
   './', './index.html', './manifest.json', './icon.svg',
+
   // CSS
-  './css/base.css', './css/logo.css', './css/chat.css', './css/overlays.css',
+  './css/base.css',
+  './css/logo.css',
+  './css/chat.css',
+  './css/overlays.css',
+  './css/dock.css',
+
   // JS core
-  './js/00-core.js', './js/01-lingua.js', './js/02-ui.js',
-  './js/03-canvas.js', './js/04-audio.js', './js/05-stt.js',
-  './js/06-mind.js', './js/07-localmind.js', './js/08-brain.js',
-  './js/09-features.js', './js/10-api.js', './js/11-chat.js',
-  './js/12-respond.js', './js/13-admin.js', './js/14-boot.js',
+  './js/00-core.js',
+  './js/01-lingua.js',
+  './js/02-ui.js',
+  './js/03-canvas.js',
+  './js/04-audio.js',
+  './js/05-stt.js',
+  './js/06-mind.js',
+  './js/07-localmind.js',
+  './js/08-brain.js',
+  './js/09-features.js',
+  './js/10-api.js',
+  './js/11-chat.js',
+  './js/12-respond.js',
+  './js/13-admin.js',
+  './js/14-boot.js',
+  './js/15-dock.js',
+
   // Módulos Jarvis
-  './modulos/finanzas.js', './modulos/inventario.js',
-  './modulos/compras.js', './modulos/dashboard.js', './modulos/jarvis-ui.js',
+  './modulos/finanzas.js',
+  './modulos/inventario.js',
+  './modulos/compras.js',
+  './modulos/dashboard.js',
+  './modulos/jarvis-ui.js',
+
   // Data
-  './data/entrenamiento.json', './data/comandos-alias.json',
+  './data/entrenamiento.json',
+  './data/comandos-alias.json',
+
   // Vendor
-  './vendor/notifyx.min.css', './vendor/notifyx.min.js',
-  './vendor/h5wasm/h5wasm.js', './vendor/vosk.min.js',
+  './vendor/notifyx.min.css',
+  './vendor/notifyx.min.js',
+  './vendor/h5wasm/h5wasm.js',
+  './vendor/vosk.min.js',
   './vendor/mediapipe/vision_bundle.mjs',
+  './vendor/mediapipe-wasm/vision_wasm_internal.js',
+  './vendor/mediapipe-wasm/vision_wasm_internal.wasm',
+  './vendor/mediapipe-wasm/vision_wasm_nosimd_internal.js',
+  './vendor/mediapipe-wasm/vision_wasm_nosimd_internal.wasm',
   './vendor/transformers/transformers.min.js',
-  './vendor/wllama/index.mjs', './vendor/wllama/wllama.wasm',
+  './vendor/wllama/index.mjs',
+  './vendor/wllama/wllama.wasm',
   './fonts/share-tech-mono.woff2',
   './models/hand_landmarker.task'
 ];
@@ -51,19 +70,15 @@ const AI_PREFIXES = [
 ];
 const FONT_PREFIXES = ['https://fonts.googleapis.com/', 'https://fonts.gstatic.com/'];
 
-/* ---------- INSTALACIÓN: tolerante + verificación ---------- */
 self.addEventListener('install', e => {
   e.waitUntil((async () => {
     const c = await caches.open(CACHE);
-    /* cada archivo por separado: un 404 NO tumba la instalación */
     await Promise.all(APP_SHELL.map(async url => {
       try{ await c.add(new Request(url, {cache:'reload'})); }
       catch(err){ console.warn('[SW] no pude cachear:', url); }
     }));
-    /* fuente de Google (opcional: si falla, offline cae a monospace) */
     try{ await c.add(new Request(FONT_CSS, {cache:'reload', mode:'no-cors'})); }
     catch(err){ console.warn('[SW] fuente CSS sin cachear'); }
-    /* verificación del núcleo: si index.html no quedó, reintento */
     if(!await c.match('./index.html') && !await c.match('./')){
       try{ await c.add(new Request('./index.html', {cache:'reload'})); }
       catch(e2){ console.error('[SW] CRÍTICO: index.html no se pudo cachear'); }
@@ -72,7 +87,6 @@ self.addEventListener('install', e => {
   })());
 });
 
-/* ---------- ACTIVACIÓN: limpieza + aviso a la app ---------- */
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {
     const keys = await caches.keys();
@@ -82,36 +96,28 @@ self.addEventListener('activate', e => {
         .map(k => caches.delete(k))
     );
     await self.clients.claim();
-    /* avisa a Ania: modo offline garantizado */
     const cs = await self.clients.matchAll({includeUncontrolled:true, type:'window'});
     cs.forEach(cl => cl.postMessage({type:'ANIA_OFFLINE_READY', cache: CACHE}));
   })());
 });
 
-/* ---------- MENSAJES desde la app ---------- */
 self.addEventListener('message', e => {
   if(e.data === 'SKIP_WAITING' || (e.data && e.data.type === 'SKIP_WAITING')) self.skipWaiting();
 });
 
-/* ---------- FETCH: el corazón del offline ---------- */
 self.addEventListener('fetch', e => {
   const req = e.request;
   if(req.method !== 'GET') return;
   const url = new URL(req.url);
 
-  /* GGUF (cientos de MB): jamás al caché, red directa */
   if(url.origin === location.origin && url.pathname.includes('/modelos/')) return;
 
-  /* ===== NAVEGACIÓN: abrir la app =====
-     Caché SIEMPRE primero (funciona sin internet, ignora ?source=pwa)
-     y refresco en segundo plano cuando hay red. */
   if(req.mode === 'navigate' || req.destination === 'document'){
     e.respondWith((async () => {
       const c = await caches.open(CACHE);
       const hit = (await c.match('./index.html', {ignoreSearch:true}))
                 || (await c.match('./', {ignoreSearch:true}))
                 || (await c.match(req, {ignoreSearch:true}));
-      /* actualización silenciosa en 2º plano */
       fetch('./index.html', {cache:'reload'}).then(async res => {
         if(res.ok) await c.put('./index.html', res);
       }).catch(()=>{});
@@ -131,7 +137,6 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  /* ===== FUENTES DE GOOGLE: caché-primero ===== */
   if(FONT_PREFIXES.some(p => url.href.startsWith(p))){
     e.respondWith((async () => {
       const c = await caches.open(RUNTIME);
@@ -146,10 +151,8 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  /* ===== cross-origin que no es IA → sin interceptar (Pollinations etc.) ===== */
   if(url.origin !== location.origin && !AI_PREFIXES.some(p => url.href.startsWith(p))) return;
 
-  /* ===== MODELOS DE IA (whisper/mediapipe/wllama): runtime ===== */
   if(AI_PREFIXES.some(p => url.href.startsWith(p))){
     e.respondWith((async () => {
       const c = await caches.open(RUNTIME);
@@ -163,9 +166,6 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  /* ===== mismo origen ===== */
-
-  /* engine/ (runtime IA local): caché-primero */
   if(url.pathname.includes('/engine/')){
     e.respondWith((async () => {
       const c = await caches.open(RUNTIME);
@@ -178,7 +178,6 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  /* documentos/ (entrenamiento actualizable): red-primero */
   if(url.pathname.includes('/documentos/')){
     e.respondWith((async () => {
       try{
@@ -193,8 +192,6 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  /* resto del app shell: stale-while-revalidate
-     (sirve caché instantáneo + actualiza por debajo si hay red) */
   e.respondWith((async () => {
     const c = await caches.open(CACHE);
     const hit = await c.match(req, {ignoreSearch:true});
