@@ -5,12 +5,14 @@ ANIA · Lanzador local todo-en-uno
 Arranca el servidor web + el agente PC y abre la app en el navegador.
 
 Uso:
-    python ania.py               → instala si hace falta y arranca (modo local)
+    python ania.py               → modo local (cifrado en ./datos/) + navegador
+    python ania.py --desktop     → modo local + ventana nativa (pywebview)
     python ania.py --no-install  → arranca sin instalar (ya tienes node_modules)
     python ania.py --no-agent    → arranca sin el agente PC
     python ania.py --cloud       → usa GitHub como persistencia (requiere GITHUB_TOKEN)
 
 Requiere: Python 3.8+ y Node.js 18+
+Opcional: pywebview (para --desktop) → pip install pywebview
 """
 
 import os
@@ -94,7 +96,6 @@ def check_archivos():
         err(f'Faltan archivos críticos: {", ".join(faltantes)}')
         print('  Asegúrate de ejecutar ania.py desde la raíz del proyecto.')
         sys.exit(1)
-    # Aviso si falta el módulo de persistencia local
     if not (RAIZ / 'persistencia-local.js').exists():
         warn('No encuentro persistencia-local.js — el modo local no funcionará.')
         warn('Créalo o usa: python ania.py --cloud')
@@ -300,6 +301,28 @@ def parar_todo(sig=None, frame=None):
     sys.exit(0)
 
 
+# ==================== DELEGACIÓN A DESKTOP ====================
+def delegar_a_desktop():
+    """Lanza ania-desktop.py con los argumentos restantes."""
+    script = RAIZ / 'ania-desktop.py'
+    if not script.exists():
+        err('No encuentro ania-desktop.py.')
+        print('  Crea el archivo o usa: python ania.py  (modo navegador)')
+        sys.exit(1)
+    log('Delegando a ania-desktop.py (ventana nativa)...')
+    import runpy
+    # Filtrar --desktop y reenviar el resto
+    args_restantes = [a for a in sys.argv[1:] if a != '--desktop']
+    sys.argv = [str(script)] + args_restantes
+    try:
+        runpy.run_path(str(script), run_name='__main__')
+    except SystemExit:
+        raise
+    except Exception as e:
+        err(f'Error en ania-desktop.py: {e}')
+        sys.exit(1)
+
+
 # ==================== MAIN ====================
 def main():
     print()
@@ -313,6 +336,12 @@ def main():
     no_install = '--no-install' in sys.argv
     no_agent   = '--no-agent'   in sys.argv
     cloud      = '--cloud'      in sys.argv
+    desktop    = '--desktop'    in sys.argv
+
+    # 0. Modo desktop: delegar a ania-desktop.py
+    if desktop:
+        delegar_a_desktop()
+        return
 
     # 1. Verificar archivos críticos
     check_archivos()
@@ -398,9 +427,7 @@ def main():
         print()
         print(f'{C.AMBAR}⚠  Token del agente PC:{C.FIN}')
         print(f'   {C.NEGRITA}{secretos["ANIA_TOKEN"]}{C.FIN}')
-        print(f'   Si el agente no se conecta automáticamente, abre la consola')
-        print(f'   del navegador (F12) y ejecuta:')
-        print(f'   {C.GRIS}store.set("agentToken", "{secretos["ANIA_TOKEN"]}"){C.FIN}')
+        print(f'   El navegador lo obtiene automáticamente vía /ania/local-token.')
         print()
 
     if modo == 'LOCAL':
