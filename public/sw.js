@@ -12,27 +12,33 @@
    con CACHE incrementado (ania-v9 → ania-v10). */
 
 const CACHE = 'ania-v10';
-const RUNTIME = 'ania-runtime-v9';
+const RUNTIME = 'ania-runtime-v10';
+
 const APP_SHELL = [
   './', './index.html', './manifest.json', './icon.svg',
-  './modulos/finanzas.js',
-  './modulos/inventario.js',
-  './modulos/compras.js',
-  './modulos/dashboard.js',
-  './modulos/jarvis-ui.js',
-  './vendor/notifyx.min.css',
-  './vendor/notifyx.min.js',
+  // CSS
+  './css/base.css', './css/logo.css', './css/chat.css', './css/overlays.css',
+  // JS core
+  './js/00-core.js', './js/01-lingua.js', './js/02-ui.js',
+  './js/03-canvas.js', './js/04-audio.js', './js/05-stt.js',
+  './js/06-mind.js', './js/07-localmind.js', './js/08-brain.js',
+  './js/09-features.js', './js/10-api.js', './js/11-chat.js',
+  './js/12-respond.js', './js/13-admin.js', './js/14-boot.js',
+  // Módulos Jarvis
+  './modulos/finanzas.js', './modulos/inventario.js',
+  './modulos/compras.js', './modulos/dashboard.js', './modulos/jarvis-ui.js',
+  // Data
+  './data/entrenamiento.json', './data/comandos-alias.json',
+  // Vendor
+  './vendor/notifyx.min.css', './vendor/notifyx.min.js',
+  './vendor/h5wasm/h5wasm.js', './vendor/vosk.min.js',
   './vendor/mediapipe/vision_bundle.mjs',
-  './vendor/mediapipe-wasm/vision_wasm_internal.js',
-  './vendor/mediapipe-wasm/vision_wasm_internal.wasm',
-  './vendor/mediapipe-wasm/vision_wasm_nosimd_internal.js',
-  './vendor/mediapipe-wasm/vision_wasm_nosimd_internal.wasm',
   './vendor/transformers/transformers.min.js',
-  './vendor/wllama/index.mjs',
-  './vendor/wllama/wllama.wasm',
+  './vendor/wllama/index.mjs', './vendor/wllama/wllama.wasm',
   './fonts/share-tech-mono.woff2',
   './models/hand_landmarker.task'
 ];
+
 const FONT_CSS = 'https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap';
 
 const AI_PREFIXES = [
