@@ -1,0 +1,116 @@
+/* ============================================================
+   BASE · ANIA
+   Variables, reset, tipografía, boot, login, header, pills
+============================================================ */
+
+@font-face {
+  font-family: 'Share Tech Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/share-tech-mono.woff2') format('woff2');
+}
+
+:root{
+  --bg:#040806;--bg2:#071009;--panel:#08150f;
+  --line:rgba(45,224,138,.20);--line2:rgba(45,224,138,.45);
+  --text:#cfeede;--dim:#79a88f;
+  --acc:#2de08a;--acc2:#39ff9b;
+  --amber:#ffb547;--danger:#ff5470;
+  --mono:'Share Tech Mono','Courier New',ui-monospace,Menlo,Consolas,monospace;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+
+body{
+  background:var(--bg);color:var(--text);font-family:var(--mono);
+  overflow:hidden;overscroll-behavior:none;
+  background-image:radial-gradient(rgba(45,224,138,.05) 1px,transparent 1px);
+  background-size:26px 26px;
+}
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:900;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px);
+  opacity:.35;
+}
+
+button{font-family:var(--mono);cursor:pointer;color:var(--acc);background:transparent;border:1px solid var(--line);border-radius:6px;}
+button:active{transform:translateY(1px);}
+button:focus-visible{outline:1px solid var(--acc2);outline-offset:2px;}
+svg{display:block;}
+
+#bgfx{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+/* ==================== BOOT ==================== */
+#boot{
+  position:fixed;inset:0;z-index:1000;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px;transition:opacity .6s;overflow-y:auto;
+}
+#boot.hide{opacity:0;pointer-events:none;}
+#bootBox{width:min(560px,100%);}
+#bootTitle{letter-spacing:.55em;font-size:clamp(26px,8vw,44px);color:var(--acc2);text-align:center;margin-bottom:26px;}
+#bootTitle small{display:block;letter-spacing:.3em;font-size:11px;color:var(--dim);margin-top:8px;}
+#bootLog{min-height:310px;font-size:13px;line-height:1.75;color:var(--dim);}
+#bootLog .ok{color:var(--acc);}
+
+#loginBox{margin-top:22px;display:none;flex-direction:column;gap:10px;}
+#loginBox input{background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:16px;padding:12px 13px;width:100%;}
+#loginBox input:focus{outline:none;border-color:var(--line2);}
+#registerBox input{background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:15px;padding:11px 13px;width:100%;}
+#registerBox input:focus{outline:none;border-color:var(--line2);}
+#registerBox input::placeholder{color:#3d5a4b;}
+#loginMsg{font-size:11px;color:var(--dim);min-height:16px;}
+#loginMsg.err{color:var(--danger);}
+.lbtn{
+  padding:12px;font-size:13px;letter-spacing:.3em;border-color:var(--line2);color:var(--acc2);
+  background:rgba(45,224,138,.06);border-radius:0;
+  clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);
+}
+.lbtn.dim{color:var(--dim);border-color:var(--line);background:transparent;font-size:11px;letter-spacing:.2em;padding:10px;}
+#bootStart{
+  display:none;margin:26px auto 0;padding:14px 34px;font-size:15px;letter-spacing:.35em;
+  border-color:var(--line2);color:var(--acc2);background:rgba(45,224,138,.06);
+  clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);
+  animation:breathe 2.4s ease-in-out infinite;
+}
+@keyframes breathe{50%{background:rgba(45,224,138,.14);}}
+
+/* ==================== APP + HEADER ==================== */
+#app{
+  display:flex;flex-direction:column;height:100dvh;max-width:760px;margin:0 auto;
+  padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom);
+}
+header{display:flex;align-items:center;gap:8px;padding:10px 6px;border-bottom:1px solid var(--line);flex:0 0 auto;flex-wrap:wrap;}
+
+/* ==================== PILLS Y HEADER RIGHT ==================== */
+.pill{font-size:10px;letter-spacing:.14em;border:1px solid var(--line);border-radius:999px;padding:3px 9px;color:var(--dim);white-space:nowrap;}
+.pill .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--acc);margin-right:5px;animation:blink 1.6s steps(1) infinite;}
+.pill.off{color:var(--amber);border-color:rgba(255,181,71,.4);}
+.pill.off .dot{background:var(--amber);animation:none;}
+.pill.idle{opacity:.55;}
+.pill.idle .dot{animation:none;}
+#syncPill,#agentPill,#brainPill,#earsPill,#hudPill,#relayPill,#mindPill{display:none;}
+
+#headRight{margin-left:auto;display:flex;gap:8px;align-items:center;font-size:11px;color:var(--dim);}
+#clock{color:var(--text);letter-spacing:.1em;}
+#batt{display:none;font-size:10px;color:var(--dim);}
+#weatherChip{display:flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--dim);font-size:11px;background:transparent;}
+#weatherChip:active{border-color:var(--line2);}
+#weatherChip svg{width:13px;height:13px;}
+#operator{display:none;font-size:10px;letter-spacing:.14em;color:var(--amber);border:1px solid rgba(255,181,71,.35);border-radius:999px;padding:3px 9px;white-space:nowrap;}
+@media(min-width:700px){#syncPill{display:inline-flex;}}
+
+/* ==================== CORE ZONE (reactor) ==================== */
+#coreZone{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;padding:8px 0 2px;}
+#reactorWrap{position:relative;width:min(56vw,225px);height:min(56vw,225px);}
+#reactor{width:100%;height:100%;}
+#phase{font-size:10px;letter-spacing:.4em;color:var(--dim);margin-top:2px;user-select:none;}
+#phase.amber{color:var(--amber);}
+
+@media(min-width:700px){#reactorWrap{width:240px;height:240px;}}
+
+/* ==================== HELPERS GLOBALES ==================== */
+@keyframes blink{50%{opacity:0;}}
+.empty{padding:30px 10px;text-align:center;color:var(--dim);font-size:12px;letter-spacing:.15em;line-height:2;}
