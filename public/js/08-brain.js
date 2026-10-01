@@ -89,9 +89,6 @@ const Brain = {
     for(const p of ['./vendor/wllama/index.mjs','./engine/wllama.mjs','./engine/index.js']){
       try{ const m = await import(p); this.Wllama = m.Wllama || m.default; if(this.Wllama) break; }catch(e){}
     }
-    if(!this.Wllama && !isOffline()){
-      try{ const m = await import(CONFIG.WLLAMA_CDN); this.Wllama = m.Wllama || m.default; }catch(e){}
-    }
     if(!this.Wllama && interactive){
       const file = await this.pickFile('engineFiles', f=>/\.mjs$|\.js$/.test(f.name));
       if(file){
