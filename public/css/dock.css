@@ -1,99 +1,148 @@
 /* ============================================================
    DOCK · FAB + Drawer tipo "control center"
+   Runas dinámicas: Tensei Slime × Overlord
    Estética: hacker + isekai oscuro + HUD
 ============================================================ */
 
-/* ==================== FAB (botón flotante) ==================== */
+/* ==================== FAB con runa mágica ==================== */
 #dockFab{
   position:fixed;
   left:50%;
   bottom:calc(18px + env(safe-area-inset-bottom));
   transform:translateX(-50%);
   z-index:500;
-  width:60px;height:60px;
+  width:72px;height:72px;
   display:grid;place-items:center;
   border-radius:50%;
   background:
-    radial-gradient(circle at 30% 30%, rgba(45,224,138,.25), transparent 60%),
+    radial-gradient(circle at 30% 30%, var(--rune-glow, rgba(45,224,138,.25)), transparent 62%),
+    radial-gradient(circle at 70% 70%, rgba(4,8,6,.95), rgba(2,5,3,1)),
     linear-gradient(135deg, rgba(8,21,15,.95), rgba(4,8,6,1));
-  border:1.5px solid var(--line2);
-  color:var(--acc2);
+  border:1.5px solid var(--rune-color, var(--line2));
+  color:var(--rune-color, var(--acc2));
   cursor:pointer;
   transition:
     transform .35s cubic-bezier(.2,.9,.3,1),
-    border-color .3s,
-    box-shadow .35s;
+    border-color .5s,
+    box-shadow .5s;
   box-shadow:
-    0 8px 24px -8px rgba(0,0,0,.6),
-    0 0 20px -6px rgba(45,224,138,.4),
-    inset 0 0 12px rgba(45,224,138,.08);
+    0 8px 24px -8px rgba(0,0,0,.7),
+    0 0 22px -6px var(--rune-glow, rgba(45,224,138,.4)),
+    inset 0 0 14px rgba(45,224,138,.06);
   -webkit-tap-highlight-color:transparent;
+  overflow:hidden;
+  padding:4px;
 }
+
+/* Anillo exterior punteado que gira muy lento (decoración) */
 #dockFab::before{
   content:'';
-  position:absolute;inset:-4px;
+  position:absolute;inset:-5px;
   border-radius:50%;
-  border:1px dashed rgba(45,224,138,.35);
-  animation:dockFabSpin 12s linear infinite;
+  border:1px dashed var(--rune-color, rgba(45,224,138,.35));
+  opacity:.6;
+  animation:dockFabSpin 40s linear infinite;
   pointer-events:none;
 }
+
+/* Halo pulsante */
 #dockFab::after{
   content:'';
-  position:absolute;inset:-12px;
+  position:absolute;inset:-14px;
   border-radius:50%;
-  background:radial-gradient(circle, rgba(45,224,138,.18), transparent 70%);
+  background:radial-gradient(circle, var(--rune-glow, rgba(45,224,138,.18)), transparent 70%);
   opacity:0;
-  transition:opacity .35s;
+  transition:opacity .5s;
   pointer-events:none;
   z-index:-1;
 }
 #dockFab:hover::after,
 #dockFab.open::after{ opacity:1; }
+
 #dockFab:active{ transform:translateX(-50%) scale(.94); }
-#dockFab svg{
-  width:26px;height:26px;
+
+/* ===== SVG de la runa ===== */
+#dockFab .rune-svg{
+  width:100%;height:100%;
+  display:block;
+  overflow:visible;
+}
+
+/* Anillo exterior de 8 runas — gira lento */
+#dockFab .rune-ring{
+  animation:runeRingSpin var(--rune-speed, 24s) linear infinite;
+}
+@keyframes runeRingSpin{
+  from{ transform:rotate(0deg); }
+  to{ transform:rotate(360deg); }
+}
+
+/* Cuando el drawer está abierto, el anillo gira más rápido */
+#dockFab.open .rune-ring{
+  animation-duration:calc(var(--rune-speed, 24s) / 3);
+}
+
+/* La runa central respira */
+#dockFab text[filter]{
+  animation:runeCentralPulse 3.4s ease-in-out infinite;
+  transform-origin:50px 50px;
+}
+@keyframes runeCentralPulse{
+  0%,100%{ opacity:.85; }
+  50%    { opacity:1; }
+}
+
+/* Estado abierto: se invierte a "X" con la runa atenuada */
+#dockFab.open .rune-svg{
+  opacity:.45;
+  transition:opacity .3s;
+}
+#dockFab.open svg{
+  transform:rotate(135deg);
   transition:transform .4s cubic-bezier(.2,.9,.3,1);
-  filter:drop-shadow(0 0 6px rgba(45,224,138,.5));
 }
-#dockFab.open{
-  border-color:var(--acc2);
-  box-shadow:
-    0 8px 30px -6px rgba(0,0,0,.7),
-    0 0 32px -4px rgba(45,224,138,.65),
-    inset 0 0 18px rgba(45,224,138,.15);
-}
-#dockFab.open svg{ transform:rotate(135deg); }
 
 /* Pulso suave cuando está cerrado */
 @keyframes fabPulse{
   0%,100%{
     box-shadow:
-      0 8px 24px -8px rgba(0,0,0,.6),
-      0 0 20px -6px rgba(45,224,138,.4),
-      inset 0 0 12px rgba(45,224,138,.08);
+      0 8px 24px -8px rgba(0,0,0,.7),
+      0 0 22px -6px var(--rune-glow, rgba(45,224,138,.4)),
+      inset 0 0 14px rgba(45,224,138,.06);
   }
   50%{
     box-shadow:
-      0 8px 24px -8px rgba(0,0,0,.6),
-      0 0 30px -4px rgba(45,224,138,.7),
-      inset 0 0 16px rgba(45,224,138,.16);
+      0 8px 24px -8px rgba(0,0,0,.7),
+      0 0 32px -4px var(--rune-glow, rgba(45,224,138,.7)),
+      inset 0 0 20px rgba(45,224,138,.14);
   }
 }
-#dockFab:not(.open){ animation:fabPulse 3.2s ease-in-out infinite; }
+#dockFab:not(.open){ animation:fabPulse 3.6s ease-in-out infinite; }
+
+/* Al abrir, se detiene el pulso */
+#dockFab.open{ animation:none; }
 
 @keyframes dockFabSpin{ to{ transform:rotate(360deg); } }
+
+/* Cuando Jarvis está activo, refuerza el glow de la runa */
+body.jarvis-on #dockFab{
+  box-shadow:
+    0 8px 24px -8px rgba(0,0,0,.7),
+    0 0 34px -4px var(--rune-glow, rgba(159,220,255,.7)),
+    inset 0 0 20px rgba(159,220,255,.15);
+}
 
 /* ==================== BACKDROP ==================== */
 #dockBackdrop{
   position:fixed;inset:0;
   z-index:490;
   background:
-    radial-gradient(ellipse at bottom, rgba(45,224,138,.08), transparent 60%),
-    rgba(2,5,3,.84);
+    radial-gradient(ellipse at bottom, var(--rune-glow, rgba(45,224,138,.08)), transparent 60%),
+    rgba(2,5,3,.86);
   backdrop-filter:blur(6px);
   -webkit-backdrop-filter:blur(6px);
   opacity:0;pointer-events:none;
-  transition:opacity .3s;
+  transition:opacity .35s;
 }
 #dockBackdrop.on{ opacity:1;pointer-events:auto; }
 
@@ -106,12 +155,12 @@
   max-height:82dvh;
   z-index:495;
   background:linear-gradient(180deg, rgba(8,21,15,.94) 0%, rgba(4,8,6,.99) 100%);
-  border:1px solid var(--line2);
+  border:1px solid var(--rune-color, var(--line2));
   border-bottom:none;
   border-radius:22px 22px 0 0;
   box-shadow:
     0 -20px 60px -20px rgba(0,0,0,.85),
-    0 0 40px -10px rgba(45,224,138,.3);
+    0 0 40px -10px var(--rune-glow, rgba(45,224,138,.3));
   transition:transform .4s cubic-bezier(.2,.9,.3,1);
   display:flex;flex-direction:column;
   overflow:hidden;
@@ -124,8 +173,8 @@
   content:'';
   position:absolute;inset:0;
   background-image:
-    linear-gradient(rgba(45,224,138,.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(45,224,138,.05) 1px, transparent 1px);
+    linear-gradient(var(--rune-glow, rgba(45,224,138,.05)) 1px, transparent 1px),
+    linear-gradient(90deg, var(--rune-glow, rgba(45,224,138,.05)) 1px, transparent 1px);
   background-size:32px 32px;
   pointer-events:none;
   opacity:.7;
@@ -137,7 +186,7 @@
 #dockDrawer::after{
   content:'';
   position:absolute;left:0;right:0;top:0;height:1px;
-  background:linear-gradient(90deg, transparent, var(--acc2), transparent);
+  background:linear-gradient(90deg, transparent, var(--rune-color, var(--acc2)), transparent);
   opacity:.7;
   animation:dockScan 5s ease-in-out infinite;
   pointer-events:none;
@@ -152,7 +201,7 @@
 /* Grab handle */
 #dockGrab{
   width:46px;height:4px;border-radius:2px;
-  background:linear-gradient(90deg, transparent, var(--line2), transparent);
+  background:linear-gradient(90deg, transparent, var(--rune-color, var(--line2)), transparent);
   margin:10px auto 6px;
   flex:0 0 auto;position:relative;z-index:1;
 }
@@ -162,19 +211,22 @@
   display:flex;align-items:center;justify-content:space-between;
   padding:4px 20px 14px;
   flex:0 0 auto;position:relative;z-index:1;
-  border-bottom:1px dashed rgba(45,224,138,.15);
+  border-bottom:1px dashed var(--rune-glow, rgba(45,224,138,.15));
 }
 #dockTitle{
   font-size:11px;letter-spacing:.4em;
-  color:var(--acc2);text-transform:uppercase;
+  color:var(--rune-color, var(--acc2));
+  text-transform:uppercase;
   display:flex;align-items:center;gap:8px;
+  transition:color .5s;
 }
 #dockTitle::before{
-  content:'◆';color:var(--acc);font-size:8px;
+  content:'◆';color:var(--rune-color, var(--acc));font-size:8px;
   animation:blink 1.8s steps(1) infinite;
 }
 #dockSubtitle{
-  font-size:9px;letter-spacing:.25em;color:var(--dim);
+  font-size:9px;letter-spacing:.25em;
+  color:var(--dim);
 }
 
 /* Body scrollable */
@@ -184,11 +236,11 @@
   padding:16px 18px 20px;
   position:relative;z-index:1;
   scrollbar-width:thin;
-  scrollbar-color:rgba(45,224,138,.35) transparent;
+  scrollbar-color:var(--rune-glow, rgba(45,224,138,.35)) transparent;
 }
 #dockBody::-webkit-scrollbar{ width:5px; }
 #dockBody::-webkit-scrollbar-thumb{
-  background:rgba(45,224,138,.3);border-radius:3px;
+  background:var(--rune-glow, rgba(45,224,138,.3));border-radius:3px;
 }
 
 /* Grid */
@@ -200,7 +252,7 @@
 @media (min-width:480px){ .dock-grid{ grid-template-columns:repeat(4, 1fr); } }
 @media (min-width:600px){ .dock-grid{ grid-template-columns:repeat(5, 1fr); } }
 
-/* Separador de sección */
+/* Separador */
 .dock-section{
   grid-column:1/-1;
   display:flex;align-items:center;gap:10px;
@@ -212,9 +264,9 @@
 .dock-section::before,
 .dock-section::after{
   content:'';flex:1;height:1px;
-  background:linear-gradient(90deg, transparent, rgba(45,224,138,.25), transparent);
+  background:linear-gradient(90deg, transparent, var(--rune-glow, rgba(45,224,138,.25)), transparent);
 }
-.dock-section span{ color:var(--acc);font-size:7px; }
+.dock-section span{ color:var(--rune-color, var(--acc));font-size:7px; }
 
 /* Item */
 .dock-item{
@@ -225,7 +277,7 @@
   padding:14px 6px 10px;
   border-radius:12px;
   background:linear-gradient(135deg, rgba(8,21,15,.65), rgba(4,8,6,.9));
-  border:1px solid rgba(45,224,138,.18);
+  border:1px solid var(--rune-glow, rgba(45,224,138,.18));
   color:var(--dim);
   font-family:var(--mono);
   font-size:9px;
@@ -241,21 +293,20 @@
 .dock-item:hover,
 .dock-item:focus-visible{
   transform:translateY(-2px);
-  border-color:var(--line2);
-  color:var(--acc2);
+  border-color:var(--rune-color, var(--line2));
+  color:var(--rune-color, var(--acc2));
   box-shadow:
-    0 8px 24px -10px rgba(45,224,138,.5),
-    inset 0 0 20px rgba(45,224,138,.08);
+    0 8px 24px -10px var(--rune-glow, rgba(45,224,138,.5)),
+    inset 0 0 20px var(--rune-glow, rgba(45,224,138,.08));
   outline:none;
 }
 .dock-item:active{ transform:translateY(0) scale(.96); }
 
-/* Esquinas HUD en cada item */
 .dock-item::before,
 .dock-item::after{
   content:'';position:absolute;
   width:8px;height:8px;
-  border:1px solid var(--acc);
+  border:1px solid var(--rune-color, var(--acc));
   opacity:0;transition:opacity .25s;
 }
 .dock-item::before{ top:4px;left:4px;border-right:none;border-bottom:none; }
@@ -269,17 +320,17 @@
 }
 .dock-item .dock-icon svg{
   width:22px;height:22px;
-  filter:drop-shadow(0 0 6px rgba(45,224,138,.4));
+  filter:drop-shadow(0 0 6px var(--rune-glow, rgba(45,224,138,.4)));
   transition:filter .25s;
 }
 .dock-item:hover .dock-icon svg{
-  filter:drop-shadow(0 0 10px rgba(57,255,155,.9));
+  filter:drop-shadow(0 0 10px var(--rune-glow, rgba(57,255,155,.9)));
 }
 .dock-item .dock-label{
   font-size:8.5px;letter-spacing:.18em;line-height:1;
 }
 
-/* Badge (tareas pendientes) */
+/* Badge */
 .dock-item .badge{
   position:absolute;
   top:5px;right:6px;
@@ -294,13 +345,13 @@
 }
 .dock-item .badge.on{ display:block; }
 
-/* Punto de "instalable" — se conserva con #btnInstall.can::before */
+/* Instalable */
 #btnInstall::before{
   content:'';position:absolute;
   top:6px;right:6px;
   width:7px;height:7px;border-radius:50%;
-  background:var(--acc2);
-  box-shadow:0 0 8px var(--acc2);
+  background:var(--rune-color, var(--acc2));
+  box-shadow:0 0 8px var(--rune-color, var(--acc2));
   animation:blink 1.4s steps(1) infinite;
   display:none;
 }
@@ -309,7 +360,7 @@
 /* Footer */
 #dockFoot{
   padding:12px 20px 16px;
-  border-top:1px dashed rgba(45,224,138,.15);
+  border-top:1px dashed var(--rune-glow, rgba(45,224,138,.15));
   display:flex;align-items:center;justify-content:space-between;
   font-size:9px;letter-spacing:.2em;
   color:var(--dim);
@@ -328,33 +379,35 @@
   font-family:var(--mono);
 }
 #dockFoot .dock-close:hover{
-  border-color:var(--line2);color:var(--acc2);
+  border-color:var(--rune-color, var(--line2));
+  color:var(--rune-color, var(--acc2));
 }
 
-/* Esquinas decorativas del drawer */
+/* Esquinas decorativas */
 .dock-corner{
   position:absolute;
   width:20px;height:20px;
-  border:2px solid var(--acc2);
+  border:2px solid var(--rune-color, var(--acc2));
   opacity:.7;
-  filter:drop-shadow(0 0 4px var(--acc2));
+  filter:drop-shadow(0 0 4px var(--rune-glow, var(--acc2)));
   pointer-events:none;
   z-index:2;
+  transition:border-color .5s, filter .5s;
 }
 .dock-corner.tl{ top:10px;left:12px;border-right:none;border-bottom:none;border-radius:6px 0 0 0; }
 .dock-corner.tr{ top:10px;right:12px;border-left:none;border-bottom:none;border-radius:0 6px 0 0; }
 
-/* Ajuste del layout: la app respira arriba del FAB */
+/* La app respira arriba del FAB */
 #app{
-  padding-bottom:calc(84px + env(safe-area-inset-bottom));
+  padding-bottom:calc(96px + env(safe-area-inset-bottom));
 }
 
-/* En modo Jarvis el FAB se tiñe de cian */
+/* Modo Jarvis */
 body.jarvis-on #dockFab{
-  border-color:var(--acc2);
+  border-color:var(--rune-color, var(--acc2));
   box-shadow:
     0 8px 24px -8px rgba(0,0,0,.6),
-    0 0 30px -6px var(--acc2),
+    0 0 30px -6px var(--rune-glow, var(--acc2)),
     inset 0 0 15px rgba(159,220,255,.15);
 }
 
@@ -364,4 +417,5 @@ body.jarvis-on #dockFab{
   #dockBody{ padding:10px 14px 12px; }
   .dock-item{ padding:10px 4px 8px; }
   .dock-item .dock-icon svg{ width:18px;height:18px; }
+  #dockFab{ width:64px;height:64px; }
 }
