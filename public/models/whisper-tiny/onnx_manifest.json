@@ -1,0 +1,79 @@
+{
+  "model_key": "whisper-tiny_plain-int8",
+  "compute_type": "int8",
+  "architecture": "whisper",
+  "graphs": [
+    {
+      "filename": "whisper-tiny-decoder-plain-int8.onnx",
+      "role": "decoder_merged",
+      "sha256": "603b5ef642770efe70ddcb323eafa0a474edd724b0d2eaf090380d3f3dee0d73",
+      "size_mb": 49.06,
+      "inputs": [
+        "input_ids",
+        "encoder_hidden_states",
+        "past_key_values.0.decoder.key",
+        "past_key_values.0.decoder.value",
+        "past_key_values.0.encoder.key",
+        "past_key_values.0.encoder.value",
+        "past_key_values.1.decoder.key",
+        "past_key_values.1.decoder.value",
+        "past_key_values.1.encoder.key",
+        "past_key_values.1.encoder.value",
+        "past_key_values.2.decoder.key",
+        "past_key_values.2.decoder.value",
+        "past_key_values.2.encoder.key",
+        "past_key_values.2.encoder.value",
+        "past_key_values.3.decoder.key",
+        "past_key_values.3.decoder.value",
+        "past_key_values.3.encoder.key",
+        "past_key_values.3.encoder.value",
+        "use_cache_branch"
+      ],
+      "outputs": [
+        "logits",
+        "present.0.decoder.key",
+        "present.0.decoder.value",
+        "present.0.encoder.key",
+        "present.0.encoder.value",
+        "present.1.decoder.key",
+        "present.1.decoder.value",
+        "present.1.encoder.key",
+        "present.1.encoder.value",
+        "present.2.decoder.key",
+        "present.2.decoder.value",
+        "present.2.encoder.key",
+        "present.2.encoder.value",
+        "present.3.decoder.key",
+        "present.3.decoder.value",
+        "present.3.encoder.key",
+        "present.3.encoder.value"
+      ],
+      "external_data": []
+    },
+    {
+      "filename": "whisper-tiny-encoder-plain-int8.onnx",
+      "role": "encoder",
+      "sha256": "270d99555fae6a3df39b94eb24938fcfc42b16b7df1b219c2202ae52b51faa23",
+      "size_mb": 11.32,
+      "inputs": [
+        "input_features"
+      ],
+      "outputs": [
+        "last_hidden_state"
+      ],
+      "external_data": []
+    }
+  ],
+  "tokenizer_file": "tokenizer.json",
+  "logits_vocab_size": 51865,
+  "kv": {
+    "num_layers": 4,
+    "num_heads": 6,
+    "head_dim": 64,
+    "has_cross_attention": true,
+    "dtype": "float32"
+  },
+  "exposes_cross_qk": false,
+  "extra": {},
+  "version": 2
+}
