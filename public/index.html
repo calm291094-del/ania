@@ -9,22 +9,22 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>ANIA · Edición Jarvis</title>
 
-<!-- Icono -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23040806'/%3E%3Ccircle cx='50' cy='50' r='26' fill='%232de08a'/%3E%3Ccircle cx='50' cy='50' r='9' fill='%23040806'/%3E%3C/svg%3E">
 
-<!-- Vendor (sin defer — los usan nuestros módulos) -->
+<!-- Vendor -->
 <link rel="stylesheet" href="./vendor/notifyx.min.css">
 <script src="./vendor/notifyx.min.js"></script>
 <script src="./vendor/h5wasm/h5wasm.js"></script>
 <script src="./vendor/vosk.min.js"></script>
 
-<!-- CSS propio: orden base → logo → chat → overlays -->
+<!-- CSS propio -->
 <link rel="stylesheet" href="./css/base.css">
 <link rel="stylesheet" href="./css/logo.css">
 <link rel="stylesheet" href="./css/chat.css">
 <link rel="stylesheet" href="./css/overlays.css">
+<link rel="stylesheet" href="./css/dock.css">
 
-<!-- JS propio: defer para ejecutar en orden tras parsear el DOM -->
+<!-- JS propio -->
 <script defer src="./js/00-core.js"></script>
 <script defer src="./js/01-lingua.js"></script>
 <script defer src="./js/02-ui.js"></script>
@@ -40,14 +40,17 @@
 <script defer src="./js/12-respond.js"></script>
 <script defer src="./js/13-admin.js"></script>
 
-<!-- Módulos Jarvis (frontend) -->
+<!-- Módulos Jarvis -->
 <script defer src="./modulos/finanzas.js"></script>
 <script defer src="./modulos/inventario.js"></script>
 <script defer src="./modulos/compras.js"></script>
 <script defer src="./modulos/dashboard.js"></script>
 <script defer src="./modulos/jarvis-ui.js"></script>
 
-<!-- Arranque final (usa todo lo anterior) -->
+<!-- Dock control-center -->
+<script defer src="./js/15-dock.js"></script>
+
+<!-- Arranque -->
 <script defer src="./js/14-boot.js"></script>
 </head>
 <body>
@@ -134,23 +137,106 @@
     <input id="userInput" placeholder="Escribe o habla a Ania..." enterkeyhint="send" spellcheck="false">
     <button type="submit" class="ibtn" title="Enviar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg></button>
   </form>
-
-  <nav id="dock">
-    <button class="dbtn" id="btnTasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>AGENDA<span class="badge" id="taskBadge"></span></button>
-    <button class="dbtn" id="btnMem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a4 4 0 0 1 4 4c2.5.5 4 2.4 4 4.8 0 2-1.2 3.7-3 4.4L16 21H8l-1-4.8c-1.8-.7-3-2.4-3-4.4 0-2.4 1.5-4.3 4-4.8A4 4 0 0 1 12 3z"/><path d="M9 13h.01M15 13h.01M10 17h4"/></svg>MEMORIA</button>
-    <button class="dbtn" id="btnDiary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3z"/><path d="M8 8h8M8 12h8M8 16h4"/></svg>DIARIO</button>
-    <button class="dbtn" id="btnLib"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h7M8 11h7"/></svg>BIBLIOTECA</button>
-    <button class="dbtn" id="btnInstall"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 7v7"/><path d="M9.5 11.5 12 14l2.5-2.5"/></svg>INSTALAR</button>
-    <button class="dbtn" id="btnAdmin" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>ADMIN</button>
-    <button class="dbtn" id="btnPerfil" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2"/></svg>PERFIL</button>
-    <button class="dbtn" id="btnDashboard" style="color:var(--acc2);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>PANEL</button>
-    <button class="dbtn" id="btnJarvis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/></svg>JARVIS</button>
-    <button class="dbtn" id="btnJarvisMode2" title="Modo Jarvis estético"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>HUD</button>
-    <button class="dbtn" id="btnSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/></svg>AJUSTES</button>
-  </nav>
 </div>
 
-<div id="moodBubble" title="Estado emocional de Ania" style="position:fixed;bottom:calc(90px + env(safe-area-inset-bottom));right:16px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg, rgba(8,21,15,.9), rgba(4,8,6,.95));border:2px solid var(--line2);display:none;place-items:center;font-size:24px;z-index:450;box-shadow:0 4px 16px rgba(45,224,138,.35);cursor:pointer;transition:transform .3s, border-color .3s;">😊</div>
+<!-- ============ DOCK · FAB + Drawer tipo control-center ============ -->
+<button id="dockFab" title="Abrir menú" aria-label="Abrir menú de ANIA">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 2v6M12 16v6M2 12h6M16 12h6"/>
+    <circle cx="12" cy="12" r="3"/>
+  </svg>
+</button>
+
+<div id="dockBackdrop"></div>
+
+<div id="dockDrawer" role="dialog" aria-modal="true" aria-label="Menú de ANIA">
+  <span class="dock-corner tl"></span>
+  <span class="dock-corner tr"></span>
+
+  <div id="dockGrab"></div>
+
+  <div id="dockHead">
+    <span id="dockTitle">NÚCLEO ANIA</span>
+    <span id="dockSubtitle">v10 · JARVIS</span>
+  </div>
+
+  <div id="dockBody">
+    <div class="dock-grid">
+
+      <!-- SECCIÓN: DATOS -->
+      <div class="dock-section"><span>◆</span>DATOS<span>◆</span></div>
+
+      <button class="dock-item" id="btnTasks" title="Agenda">
+        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg></span>
+        <span class="dock-label">Agenda</span>
+        <span class="badge" id="taskBadge"></span>
+      </button>
+
+      <button class="dock-item" id="btnMem" title="Memoria">
+        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a4 4 0 0 1 4 4c2.5.5 4 2.4 4 4.8 0 2-1.2 3.7-3 4.4L16 21H8l-1-4.8c-1.8-.7-3-2.4-3-4.4 0-2.4 1.5-4.3 4-4.8A4 4 0 0 1 12 3z"/><path d="M9 13h.01M15 13h.01M10 17h4"/></svg></span>
+        <span class="dock-label">Memoria</span>
+      </button>
+
+      <button class="dock-item" id="btnDiary" title="Diario">
+        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3z"/><path d="M8 8h8M8 12h8M8 16h4"/></svg></span>
+        <span class="dock-label">Diario</span>
+      </button>
+
+      <button class="dock-item" id="btnLib" title="Biblioteca">
+        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h7M8 11h7"/></svg></span>
+        <span class="dock-label">Biblioteca</span>
+      </button>
+
+      <!-- SECCIÓN: NÚCLEO -->
+      <div class="dock-section"><span>◆</span>NÚCLEO<span>◆</span></div>
+
+      <button class="dock-item" id="btnDashboard" title="Panel principal">
+        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
+        <span class="dock-label">Panel</span>
+      </button>
+
+      <button class="dock-item" id="btnJarvis" title="Módulos Jarvis">
+        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/></svg></span>
+        <span class="dock-label">Jarvis</span>
+      </button>
+
+      <button class="dock-item" id="btnJarvisMode2" title="Modo Jarvis estético">
+        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span>
+        <span class="dock-label">HUD</span>
+      </button>
+
+      <button class="dock-item" id="btnSettings" title="Ajustes">
+        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/></svg></span>
+        <span class="dock-label">Ajustes</span>
+      </button>
+
+      <!-- SECCIÓN: OPERADOR -->
+      <div class="dock-section"><span>◆</span>OPERADOR<span>◆</span></div>
+
+      <button class="dock-item" id="btnInstall" title="Instalar app">
+        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 7v7"/><path d="M9.5 11.5 12 14l2.5-2.5"/></svg></span>
+        <span class="dock-label">Instalar</span>
+      </button>
+
+      <button class="dock-item" id="btnPerfil" style="display:none;" title="Mi perfil">
+        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2"/></svg></span>
+        <span class="dock-label">Perfil</span>
+      </button>
+
+      <button class="dock-item" id="btnAdmin" style="display:none;" title="Administración">
+        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        <span class="dock-label">Admin</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="dockFoot">
+    <span>PAN · CAFÉ · ANIME</span>
+    <button class="dock-close" id="dockClose">CERRAR</button>
+  </div>
+</div>
+
+<div id="moodBubble" title="Estado emocional de Ania" style="position:fixed;bottom:calc(120px + env(safe-area-inset-bottom));right:16px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg, rgba(8,21,15,.9), rgba(4,8,6,.95));border:2px solid var(--line2);display:none;place-items:center;font-size:24px;z-index:450;box-shadow:0 4px 16px rgba(45,224,138,.35);cursor:pointer;transition:transform .3s, border-color .3s;">😊</div>
 <button id="ambBtn" title="Detener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.2 11.2A3.9 3.9 0 0 0 6.5 19z"/></svg></button>
 
 <div id="backdrop"></div>
