@@ -150,3 +150,79 @@
   .aut-form-row { flex-wrap: wrap; }
   .aut-form-row label { flex: 0 0 100%; margin-bottom: 4px; }
 }
+
+/* ---------- Sensores en vivo ---------- */
+.aut-sensores {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.aut-sensor {
+  background: linear-gradient(135deg, rgba(8,21,15,.6), rgba(4,8,6,.85));
+  border: 1px solid rgba(45,224,138,.2);
+  border-radius: 10px;
+  padding: 10px 6px;
+  text-align: center;
+}
+.aut-sensor-num {
+  font-size: 16px;
+  color: var(--acc2);
+  letter-spacing: .05em;
+  margin-bottom: 4px;
+  text-shadow: 0 0 12px rgba(45,224,138,.4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.aut-sensor-lbl {
+  font-size: 8px;
+  letter-spacing: .15em;
+  color: var(--dim);
+  text-transform: uppercase;
+}
+
+/* ---------- Lugares guardados ---------- */
+.aut-lugares {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.aut-lugar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: rgba(8,21,15,.4);
+  border-left: 2px solid var(--acc);
+  border-radius: 4px;
+  font-size: 11px;
+}
+.aut-lugar b { color: var(--acc2); }
+.aut-lugar-radio {
+  margin-left: auto;
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: .05em;
+}
+.aut-lugar-actions {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.aut-lugar-actions input {
+  flex: 1;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 7px 9px;
+  border-radius: 5px;
+  min-width: 0;
+}
+.aut-lugar-actions input:focus {
+  outline: none;
+  border-color: var(--line2);
+}
