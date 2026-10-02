@@ -1,5 +1,6 @@
 /* ============================================================
    12-RESPOND · el gran cerebro: respond() + send() + comandos de voz
+   v2 · Cerebro H5 movido ANTES de búsquedas externas
 ============================================================ */
 'use strict';
 
@@ -81,7 +82,7 @@ async function respond(raw){
     return personaReply(Learned.count() ? Learned.count()+' cosas:\n'+Learned.list.slice(-5).map(l=>'· '+l.texto).join('\n') : 'Aún nada. «aprende que [...]»');
   }
 
-  /* ---- cerebro ---- */
+  /* ---- cerebro (GGUF) ---- */
   if(/carga\s+(?:el\s+)?cerebro|cargar\s+gguf/.test(low)){ await Brain.loadLocal(true); return; }
   if(/pi[eé]nsalo|usa\s+(?:el\s+)?cerebro|opina/.test(low)){
     setPhase('thinking');
@@ -316,7 +317,20 @@ async function respond(raw){
     }
   }
 
-  /* ---- búsqueda ---- */
+  /* ================================================================
+     ⭐ CEREBRO H5 (PRIORIDAD SOBRE BÚSQUEDAS EXTERNAS) ⭐
+     Se ejecuta ANTES de cualquier búsqueda en internet. Si tiene una
+     entrada con score >= 30, responde con ella y no toca Wikipedia.
+  ================================================================ */
+  if (typeof CerebroH5 !== 'undefined' && CerebroH5.cargado) {
+    const respH5 = CerebroH5.responder(raw);
+    if (respH5){
+      console.log('[respond] H5 catch:', raw.slice(0,50));
+      return personaReply(respH5);
+    }
+  }
+
+  /* ---- búsqueda (solo si el H5 no encontró nada) ---- */
   m = low.match(/(?:busca|buscame|informacion\s+(?:de|sobre))\s+(.+)/);
   if(m) return doSearch(m[1].trim());
   m = low.match(/(?:quien\s+(?:es|fue)|que\s+(?:es|fue)|hablame\s+de)\s+(.+)/);
@@ -340,13 +354,7 @@ async function respond(raw){
     Episodio.log.push({ t: Date.now(), role:'you', text: raw, emocion: analisisEmo.emocion, intensidad: analisisEmo.intensidad });
   }
 
-  /* ---- Cerebro H5 ---- */
-  if (typeof CerebroH5 !== 'undefined' && CerebroH5.cargado) {
-    const respH5 = CerebroH5.responder(raw);
-    if (respH5) return personaReply(respH5);
-  }
-
-  /* ---- entrenamiento exacto ---- */
+  /* ---- entrenamiento exacto (JSON interno) ---- */
   const trained = trainMatch(low);
   if(trained) return personaReply(trained);
 
