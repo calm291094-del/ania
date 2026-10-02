@@ -615,9 +615,16 @@ const Autonomo = {
 
     await Promise.all([ this._leerBateria(), this._leerUbicacion(), this._leerClima() ]);
 
-    // ⭐ Suscribirse a push si hay permiso
-    if (typeof Notification !== 'undefined' && Notification.permission === 'granted'){
-      this.suscribirPush().catch(()=>{});
+    // ⭐ Suscribirse a push (pide permiso si hace falta)
+    if (typeof Notification !== 'undefined'){
+      if (Notification.permission === 'granted'){
+        this.suscribirPush().catch(()=>{});
+      } else if (Notification.permission === 'default'){
+        // Pedir permiso UNA vez, y si lo concede, suscribir
+        Notification.requestPermission().then(p => {
+          if (p === 'granted') this.suscribirPush().catch(()=>{});
+        });
+      }
     }
 
     setTimeout(() => this.tick('boot'), 15000);
