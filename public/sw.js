@@ -11,6 +11,7 @@ const APP_SHELL = [
   './css/chat.css',
   './css/overlays.css',
   './css/dock.css',
+  './css/autonomo.css',
 
   // JS core
   './js/00-core.js',
