@@ -1,5 +1,6 @@
 /* ============================================================
-   11-CHAT · burbujas, sheets, modales, historial de chat
+   11-CHAT · burbujas, sheets, modales, historial de chat,
+             constructor enriquecido de respuestas (v2)
 ============================================================ */
 'use strict';
 
@@ -27,6 +28,7 @@ function addChat(kind, text){
   }, 13);
   return span;
 }
+
 function addImageLine(src, caption){
   const line = document.createElement('div');
   line.className = 'line ania';
@@ -40,24 +42,93 @@ function addImageLine(src, caption){
   if(caption){ const p = document.createElement('div'); p.style.marginTop='4px'; p.textContent = caption; span.appendChild(p); }
   scrollChat();
 }
+
 function reply(text, say){
   if (typeof hideThinking === 'function') hideThinking();
   addChat('ania', text);
   Episodio.push('ania', text);
   speak(say!==undefined ? say : stripP(text).slice(0,340));
 }
+
+/* ============================================================
+   personaReply · versión enriquecida v2
+   - Adapta según emoción detectada
+   - Evita repetir la respuesta anterior
+   - Añade gestos físicos aleatorios
+   - Añade pregunta de vuelta cuando hace falta
+   - Hace callbacks al tema anterior (contexto)
+============================================================ */
 function personaReply(text, say){
   if (typeof hideThinking === 'function') hideThinking();
-  try {
+
+  // ── 1. Adaptar a la emoción del último mensaje del usuario
+  let emocionActual = 'neutral';
+  try{
     const ultimo = Episodio.log.filter(l => l.role === 'you').slice(-1)[0];
-    if (ultimo && ultimo.emocion) {
+    if (ultimo && ultimo.emocion){
+      emocionActual = ultimo.emocion;
       text = EMO_V2.adaptarRespuesta(text, ultimo.emocion, ultimo.intensidad);
     }
-  } catch(e) {}
-  if(Math.random() < 0.25 && text.length < 400) addChat('act', pick(P.acciones));
+  }catch(e){}
+
+  // ── 2. Evitar repetir la última respuesta
+  if (typeof Contexto !== 'undefined' && Contexto.respuestaRepetida(text)){
+    const giros = [
+      'Mmm, te lo digo de otra forma: ',
+      'Pensándolo mejor: ',
+      'Otra vez con más detalle: ',
+      'Reformulando: '
+    ];
+    const giro = giros[Math.floor(Math.random() * giros.length)];
+    text = giro + text.charAt(0).toLowerCase() + text.slice(1);
+  }
+
+  // ── 3. Gesto físico ocasional (25% de las veces, solo si no es muy largo)
+  const añadirGesto = Math.random() < 0.25 && text.length < 400;
+  if (añadirGesto){
+    try{ addChat('act', pick(P.acciones)); }catch(e){}
+  }
+
+  // ── 4. Pregunta de vuelta (mantiene la conversación viva)
+  let pregunta = null;
+  if (typeof Contexto !== 'undefined'){
+    if (Contexto.rachaSinPregunta >= 3){
+      // Forzar pregunta si lleva 3+ sin preguntar
+      pregunta = pick(P.preguntasVuelta);
+      Contexto.rachaSinPregunta = 0;
+    } else if (Math.random() < 0.35 && !text.includes('?')){
+      // 35% de las veces, pregunta aleatoria si la respuesta no pregunta ya
+      pregunta = pick(P.preguntasVuelta);
+      Contexto.rachaSinPregunta = 0;
+    } else {
+      Contexto.rachaSinPregunta++;
+    }
+  }
+
+  if (pregunta){
+    text = text.trim() + '\n\n' + pregunta;
+  }
+
+  // ── 5. Callback al tema anterior (10% de las veces, si aplica)
+  if (typeof Contexto !== 'undefined' && Math.random() < 0.10){
+    const temaDom = Contexto.temaDominante();
+    const temaAnt = Contexto.temaAnterior(temaDom);
+    if (temaAnt && P.callbacks[temaAnt] && !text.includes(temaAnt)){
+      text += ' ' + P.callbacks[temaAnt];
+    }
+  }
+
+  // ── 6. Enviar y registrar en contexto
   reply(text, say);
+
+  if (typeof Contexto !== 'undefined'){
+    const ultimoUser = Episodio.log.filter(l => l.role === 'you').slice(-1)[0];
+    Contexto.registrar(ultimoUser ? ultimoUser.text : '', text, emocionActual);
+  }
 }
+
 function sysLine(text){ addChat('sys', text); }
+
 function renderChips(list){
   const box = $('chips'); box.innerHTML='';
   list.forEach(c=>{
@@ -106,6 +177,9 @@ $('wipeMem').onclick = ()=>{
   Mind.d = {nombre:null, gustos:[], hechos:[], visitas:0, primerDia:null, ultimoDia:null};
   Episodio.log = []; store.set('episodio', []);
   Mind.save(); setOperator(); S.confirmWipe=false;
+  if (typeof Contexto !== 'undefined'){
+    Contexto.turnos = []; Contexto.temas = []; Contexto.ultimaRespuesta = '';
+  }
   personaReply('Mente limpia. ¿Quién eres?');
 };
 $('clearDiary').onclick = ()=>{ store.set('diary', []); renderDiary(); };
@@ -152,7 +226,9 @@ if (!window.__aniaLearnPatched){
   const _reply_orig = reply;
   reply = function(text, say){
     const lastUser = Episodio.log.filter(l=>l.role==='you').slice(-1)[0];
-    if (lastUser) learnFromExchange(lastUser.text, text).catch(()=>{});
+    if (lastUser && typeof learnFromExchange === 'function'){
+      learnFromExchange(lastUser.text, text).catch(()=>{});
+    }
     return _reply_orig(text, say);
   };
 }
@@ -165,6 +241,7 @@ $('inputBar').addEventListener('submit', e=>{
   $('userInput').value='';
   send(v);
 });
+
 $('imgFile').addEventListener('change', e=>{
   const f = e.target.files[0];
   e.target.value = '';
@@ -182,6 +259,7 @@ $('imgFile').addEventListener('change', e=>{
 /* ---------- Atajos de teclado ---------- */
 const COMMANDS = ['piénsalo','carga el cerebro','oído local','abre el hud','conecta la sesión','¿qué hablamos de ','mira esta foto','prepara mi día','ponme música','abre mi pc','captura','busca en la pc ','¿qué hora es?','¿cómo está el clima?','¿qué fase tiene la luna?','recuérdame ','mis tareas','adivina mi personaje','entrena con mis documentos','siempre escúchame','respáldame','diagnóstico','ayuda','chiste'];
 let histIdx = -1, tabMatches = null;
+
 $('userInput').addEventListener('keydown', e=>{
   const ui = $('userInput');
   const hist = store.get('cmdHistory', []);
@@ -206,6 +284,7 @@ $('userInput').addEventListener('keydown', e=>{
     ui.value = list[(idxIn>=0 ? (idxIn+1)%list.length : 0)];
   }
 });
+
 addEventListener('keydown', e=>{
   if(e.ctrlKey && e.key.toLowerCase()==='k'){ e.preventDefault(); $('userInput').focus(); }
   else if(e.key==='Escape'){
@@ -232,6 +311,7 @@ function blobManifest(){
 if(/^https/.test(location.protocol)){
   fetch('manifest.json', {method:'HEAD'}).then(r=>{ r.ok ? addManifestLink('manifest.json') : blobManifest(); }).catch(blobManifest);
 } else blobManifest();
+
 let deferPrompt = null;
 addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); deferPrompt = e; $('btnInstall').classList.add('can'); });
 $('btnInstall').onclick = ()=> openModal('installModal');
