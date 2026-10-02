@@ -1,5 +1,6 @@
 // servidor.js · ANIA · backend completo
 const express = require('express');
+const webpush = require('web-push');
 const persist = require('./persistencia-local');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -32,6 +33,18 @@ const TOKEN_SECRET  = process.env.ANIA_TOKEN_SECRET;
 const SUPERADMIN_EMAIL = (process.env.SUPERADMIN_EMAIL || '').toLowerCase() || null;
 
 const KEY = crypto.createHash('sha256').update(ANIA_SECRET || 'fallback').digest();
+
+/* ==================== VAPID (PUSH) ==================== */
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:ania@ejemplo.com';
+
+if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+  console.log('🔔 VAPID configurado');
+} else {
+  console.warn('⚠ VAPID no configurado — push deshabilitado');
+}
 
 /* ==================== MODO LOCAL / NUBE ==================== */
 const MODO = (process.env.ANIA_MODO || (GITHUB_TOKEN ? 'nube' : 'local')).toLowerCase();
@@ -278,6 +291,80 @@ app.post('/ania/login', limiterLogin, async (req,res)=>{
     console.error('login:', e);
     res.status(500).json({ error:'error al iniciar sesión' });
   }
+});
+
+/* ==================== NOTIFICACIONES PUSH ==================== */
+app.get('/ania/push/vapid-public-key', (req, res) => {
+  if (!VAPID_PUBLIC_KEY) return res.status(503).json({ error: 'Push no configurado' });
+  res.json({ publicKey: VAPID_PUBLIC_KEY });
+});
+
+app.post('/ania/push/subscribe', auth, async (req, res) => {
+  try{
+    const sub = req.body;
+    if (!sub || !sub.endpoint) return res.status(400).json({ error: 'Suscripción inválida' });
+
+    const suscripciones = await leer('push_suscripciones.json') || {};
+    if (!suscripciones[req.user.id]) suscripciones[req.user.id] = [];
+
+    const existe = suscripciones[req.user.id].some(s => s.endpoint === sub.endpoint);
+    if (!existe) {
+      suscripciones[req.user.id].push({
+        ...sub,
+        deviceId: sub.deviceId || 'unknown',
+        createdAt: Date.now()
+      });
+      await escribir('push_suscripciones.json', suscripciones);
+    }
+    res.json({ ok: true });
+  }catch(e){ console.error('push subscribe:', e); res.status(500).json({ error: 'Error' }); }
+});
+
+app.post('/ania/push/unsubscribe', auth, async (req, res) => {
+  try{
+    const { endpoint } = req.body;
+    const suscripciones = await leer('push_suscripciones.json') || {};
+    if (suscripciones[req.user.id]) {
+      suscripciones[req.user.id] = suscripciones[req.user.id].filter(s => s.endpoint !== endpoint);
+      await escribir('push_suscripciones.json', suscripciones);
+    }
+    res.json({ ok: true });
+  }catch(e){ res.status(500).json({ error: 'Error' }); }
+});
+
+app.post('/ania/push/send', auth, async (req, res) => {
+  try{
+    const { titulo, cuerpo, tag, userId } = req.body || {};
+    const targetUserId = userId || req.user.id;
+    const suscripciones = await leer('push_suscripciones.json') || {};
+    const subs = suscripciones[targetUserId] || [];
+
+    if (!subs.length) return res.status(404).json({ error: 'Sin dispositivos suscritos' });
+
+    const payload = JSON.stringify({
+      titulo: titulo || 'ANIA',
+      cuerpo: cuerpo || 'Nuevo mensaje',
+      tag: tag || 'ania-push'
+    });
+
+    const resultados = await Promise.allSettled(
+      subs.map(sub => webpush.sendNotification(sub, payload)
+        .catch(err => ({ caducada: sub.endpoint, err: err.statusCode }))
+      )
+    );
+
+    // Limpiar suscripciones caducadas (410 Gone)
+    const caducadas = resultados
+      .filter(r => r.status === 'fulfilled' && r.value && r.value.caducada && (r.value.err === 410 || r.value.err === 404))
+      .map(r => r.value.caducada);
+
+    if (caducadas.length){
+      suscripciones[targetUserId] = suscripciones[targetUserId].filter(s => !caducadas.includes(s.endpoint));
+      await escribir('push_suscripciones.json', suscripciones);
+    }
+
+    res.json({ ok: true, enviadas: subs.length });
+  }catch(e){ console.error('push send:', e); res.status(500).json({ error: 'Error' }); }
 });
 
 /* ==================== CONOCIMIENTO ==================== */
