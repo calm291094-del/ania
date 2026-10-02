@@ -1,6 +1,7 @@
 /* ============================================================
    16-AUTONOMO · Núcleo autónomo de ANIA
-   v2 · + historial, toggles por regla, panel UI
+   v3 · reglas built-in + reglas custom persistentes + parser NL
+   Ciclo: Observar → Decidir → Actuar
 ============================================================ */
 'use strict';
 
@@ -10,6 +11,7 @@ const Autonomo = {
   INTERVALO_MS: 60 * 1000,
   ultimoCiclo: 0,
 
+  /* ---------------- Cola de tareas ---------------- */
   cola: [],
   MAX_COLA: 30,
 
@@ -30,6 +32,7 @@ const Autonomo = {
     try { this.cola = store.get('autonomo_cola', []); }catch(e){ this.cola = []; }
   },
 
+  /* ---------------- Estado de reglas ---------------- */
   estados: {},
   _cargarEstados(){
     try { this.estados = store.get('autonomo_estados', {}); }catch(e){ this.estados = {}; }
@@ -39,6 +42,7 @@ const Autonomo = {
     try { store.set('autonomo_estados', this.estados); }catch(e){}
   },
 
+  /* ---------------- Toggles (activar/pausar por regla) ---------------- */
   reglasDesactivadas: [],
   _cargarToggles(){
     try { this.reglasDesactivadas = store.get('autonomo_reglas_off', []); }catch(e){ this.reglasDesactivadas = []; }
@@ -58,6 +62,7 @@ const Autonomo = {
     return !this.reglasDesactivadas.includes(id);
   },
 
+  /* ---------------- Historial ---------------- */
   historial: [],
   MAX_HISTORIAL: 30,
   _cargarHistorial(){
@@ -75,6 +80,7 @@ const Autonomo = {
     try { store.set('autonomo_historial', this.historial); }catch(e){}
   },
 
+  /* ---------------- SENSORES ---------------- */
   sensor: {
     leer(){
       const ahora = new Date();
@@ -99,6 +105,7 @@ const Autonomo = {
     }
   },
 
+  /* ---------------- REGLAS BUILT-IN ---------------- */
   reglas: [
     {
       id: 'buenos-dias',
@@ -184,6 +191,187 @@ const Autonomo = {
     }
   ],
 
+  /* ---------------- REGLAS CUSTOM PERSISTENTES ---------------- */
+  reglasCustom: [],
+  _reglasBuiltIn: [],
+
+  _cargarReglasCustom(){
+    try { this.reglasCustom = store.get('autonomo_reglas_custom', []); }catch(e){ this.reglasCustom = []; }
+    this.reglasCustom = this.reglasCustom.map(r => this._rehidratarRegla(r)).filter(Boolean);
+  },
+
+  _guardarReglasCustom(){
+    const serializables = this.reglasCustom.filter(Boolean).map(r => ({
+      id: r.id,
+      descripcion: r.descripcion,
+      cuandoStr: r._cuandoStr,
+      accionTipo: r.accion.tipo,
+      accionTitulo: r.accion.titulo,
+      accionCuerpoStr: r._cuerpoStr,
+      accionTextoStr: r._textoStr,
+      minIntervalo: r.minIntervalo || 0,
+      t: r.t || Date.now()
+    }));
+    try { store.set('autonomo_reglas_custom', serializables); }catch(e){}
+  },
+
+  _rehidratarRegla(r){
+    try {
+      const cuando = new Function('s', 'return (' + r.cuandoStr + ')(s)');
+      const accion = { tipo: r.accionTipo };
+      if (r.accionTitulo) accion.titulo = r.accionTitulo;
+      if (r.accionCuerpoStr) accion.cuerpo = new Function('s', 'return (' + r.accionCuerpoStr + ')(s)');
+      if (r.accionTextoStr) accion.texto = new Function('s', 'return (' + r.accionTextoStr + ')(s)');
+      return {
+        id: r.id,
+        descripcion: r.descripcion,
+        cuando,
+        accion,
+        minIntervalo: r.minIntervalo || 0,
+        _cuandoStr: r.cuandoStr,
+        _cuerpoStr: r.accionCuerpoStr,
+        _textoStr: r.accionTextoStr,
+        _custom: true,
+        t: r.t
+      };
+    } catch(e) {
+      console.warn('[Autónomo] Regla custom inválida:', r.id, e.message);
+      return null;
+    }
+  },
+
+  agregarReglaCustom(regla){
+    if (!regla || !regla.id) return false;
+    this.reglasCustom = this.reglasCustom.filter(r => r && r.id !== regla.id);
+    this.reglasCustom.push(regla);
+    this._guardarReglasCustom();
+    this._reconstruirReglas();
+    console.log('[Autónomo] ➕ Regla custom:', regla.id);
+    this.renderPanel();
+    return true;
+  },
+
+  eliminarReglaCustom(id){
+    const antes = this.reglasCustom.length;
+    this.reglasCustom = this.reglasCustom.filter(r => r && r.id !== id);
+    if (this.reglasCustom.length < antes){
+      this._guardarReglasCustom();
+      this._reconstruirReglas();
+      this.renderPanel();
+      return true;
+    }
+    return false;
+  },
+
+  _reconstruirReglas(){
+    if (!this._reglasBuiltIn.length){
+      this._reglasBuiltIn = this.reglas.filter(r => !r._custom);
+    }
+    this.reglas = [...this._reglasBuiltIn, ...this.reglasCustom.filter(Boolean)];
+  },
+
+  /* ---------------- PARSER DE LENGUAJE NATURAL ---------------- */
+  parsearReglaNatural(texto){
+    if (!texto || texto.length < 8) return null;
+    const low = texto.toLowerCase().trim();
+
+    let hora = null, minuto = 0;
+    let dias = null;
+    let tipo = 'notificar';
+    let textoAccion = '';
+    const id = 'custom-' + Date.now().toString(36);
+
+    // Hora
+    const horaMatch = low.match(/(?:a\s+las?\s+|a\s+la\s+)(\d{1,2})(?::(\d{2}))?\s*(am|pm|de la mañana|de la tarde|de la noche)?/);
+    if (horaMatch){
+      hora = parseInt(horaMatch[1]);
+      minuto = horaMatch[2] ? parseInt(horaMatch[2]) : 0;
+      const sufijo = horaMatch[3] || '';
+      if ((sufijo.includes('pm') || sufijo.includes('tarde') || sufijo.includes('noche')) && hora < 12) hora += 12;
+      if ((sufijo.includes('am') || sufijo.includes('mañana')) && hora === 12) hora = 0;
+    } else {
+      const delayMatch = low.match(/en\s+(\d+)\s+(minutos?|min|horas?|h)\b/);
+      if (delayMatch){
+        const n = parseInt(delayMatch[1]);
+        const ms = /^h/.test(delayMatch[2]) ? n * 60 * 60 * 1000 : n * 60 * 1000;
+        const fechaObj = new Date(Date.now() + ms);
+        hora = fechaObj.getHours();
+        minuto = fechaObj.getMinutes();
+      }
+    }
+
+    if (hora === null) return null;
+
+    // Días
+    if (/(todos\s+los\s+d[ií]as?|cada\s+d[ií]a|diario)/.test(low)) dias = 'daily';
+    else if (/(lunes)/.test(low)) dias = 1;
+    else if (/(martes)/.test(low)) dias = 2;
+    else if (/(mi[eé]rcoles)/.test(low)) dias = 3;
+    else if (/(jueves)/.test(low)) dias = 4;
+    else if (/(viernes)/.test(low)) dias = 5;
+    else if (/(s[aá]bado)/.test(low)) dias = 6;
+    else if (/(domingo)/.test(low)) dias = 0;
+    else if (/(fines?\s+de\s+semana)/.test(low)) dias = 'weekend';
+    else if (/(entre\s+semana|d[ií]as?\s+de\s+semana|laborables?)/.test(low)) dias = 'weekday';
+
+    // Acción
+    const accionMatch = low.match(/(?:av[ií]same\s+(?:de\s+|que\s+)?|recu[eé]rdame\s+|dime\s+|notif[ií]came\s+)(.+)/);
+    if (accionMatch){
+      textoAccion = accionMatch[1].trim();
+      textoAccion = textoAccion.charAt(0).toUpperCase() + textoAccion.slice(1);
+    }
+    if (!textoAccion) textoAccion = texto.replace(/^(?:ania,?\s*)?/i, '').slice(0, 120);
+
+    // `cuando` como string
+    let cuandoStr;
+    if (dias === 'daily'){
+      cuandoStr = `(s) => s.horaNum === ${hora} && s.minuto >= ${minuto} && s.minuto < ${minuto + 5}`;
+    } else if (dias === 'weekend'){
+      cuandoStr = `(s) => (s.diaSemana === 0 || s.diaSemana === 6) && s.horaNum === ${hora} && s.minuto >= ${minuto} && s.minuto < ${minuto + 5}`;
+    } else if (dias === 'weekday'){
+      cuandoStr = `(s) => s.diaSemana >= 1 && s.diaSemana <= 5 && s.horaNum === ${hora} && s.minuto >= ${minuto} && s.minuto < ${minuto + 5}`;
+    } else if (typeof dias === 'number'){
+      cuandoStr = `(s) => s.diaSemana === ${dias} && s.horaNum === ${hora} && s.minuto >= ${minuto} && s.minuto < ${minuto + 5}`;
+    } else {
+      cuandoStr = `(s) => s.horaNum === ${hora} && s.minuto >= ${minuto} && s.minuto < ${minuto + 5}`;
+    }
+
+    // Acción como string
+    const cuerpoStr = `(s) => ${JSON.stringify(textoAccion)}`;
+    const textoStr = `(s) => ${JSON.stringify('⏰ ' + textoAccion)}`;
+
+    // Descripción legible
+    const diasNombre = {
+      'daily': 'todos los días', 'weekend': 'fines de semana', 'weekday': 'días laborables',
+      0: 'domingos', 1: 'lunes', 2: 'martes', 3: 'miércoles', 4: 'jueves', 5: 'viernes', 6: 'sábados'
+    };
+    const diaStr = diasNombre[dias] || 'todos los días';
+    const horaFmt = String(hora).padStart(2, '0') + ':' + String(minuto).padStart(2, '0');
+    const descripcion = `${textoAccion} (${diaStr} a las ${horaFmt})`;
+
+    return {
+      id,
+      descripcion,
+      cuandoStr,
+      accionTipo: tipo,
+      accionTitulo: 'ANIA · Recordatorio',
+      accionCuerpoStr: cuerpoStr,
+      accionTextoStr: textoStr,
+      minIntervalo: 20 * 60 * 60 * 1000,
+      t: Date.now()
+    };
+  },
+
+  crearReglaDesdeTexto(texto){
+    const raw = this.parsearReglaNatural(texto);
+    if (!raw) return null;
+    const regla = this._rehidratarRegla(raw);
+    if (!regla) return null;
+    this.agregarReglaCustom(regla);
+    return regla;
+  },
+
+  /* ---------------- EFECTORES ---------------- */
   efector: {
     async ejecutar(accion, sensores){
       if (!accion || !accion.tipo) return false;
@@ -248,6 +436,7 @@ const Autonomo = {
     }
   },
 
+  /* ---------------- PLANIFICADOR ---------------- */
   planificador: {
     decidir(sensores, reglas, estados, desactivadas){
       const ahora = Date.now();
@@ -267,6 +456,7 @@ const Autonomo = {
     }
   },
 
+  /* ---------------- CICLO PRINCIPAL ---------------- */
   async tick(razon = 'timer'){
     if (!this.activo) return;
     const ahora = Date.now();
@@ -297,11 +487,14 @@ const Autonomo = {
     }
   },
 
+  /* ---------------- INICIALIZACIÓN ---------------- */
   async init(){
     this.cargarCola();
     this._cargarEstados();
     this._cargarToggles();
     this._cargarHistorial();
+    this._cargarReglasCustom();
+    this._reconstruirReglas();
     this.activo = store.get('autonomo_activo', true);
     console.log('🌙 Autónomo iniciado · reglas:', this.reglas.length, '· activo:', this.activo);
 
@@ -360,6 +553,7 @@ const Autonomo = {
       activo: this.activo,
       reglas: this.reglas.length,
       reglasActivas: this.reglas.filter(r => this.reglaActiva(r.id)).length,
+      reglasCustom: this.reglasCustom.length,
       cola: this.cola.length,
       ultimoCiclo: this.ultimoCiclo ? new Date(this.ultimoCiclo).toLocaleString('es-ES') : 'nunca',
       ejecuciones: this.historial.length
@@ -372,6 +566,7 @@ const Autonomo = {
     await this.tick('manual');
   },
 
+  /* ---------------- UI ---------------- */
   renderPanel(){
     const cont = document.getElementById('panelAutonomo');
     if (!cont) return;
@@ -383,10 +578,11 @@ const Autonomo = {
       const activa = this.reglaActiva(r.id);
       const ult = this.estados[r.id];
       const hace = ult ? this._tiempoRel(ahora - ult) : 'nunca';
+      const esCustom = r._custom ? '<span style="color:var(--amber);font-size:9px;margin-left:6px;">★</span>' : '';
       return `
         <div class="aut-regla ${activa ? '' : 'off'}">
           <div class="aut-regla-head">
-            <span class="aut-regla-id">${esc(r.id)}</span>
+            <span class="aut-regla-id">${esc(r.id)}${esCustom}</span>
             <button class="aut-toggle ${activa ? 'on' : 'off'}" data-regla="${esc(r.id)}">
               ${activa ? '● ACTIVA' : '○ PAUSADA'}
             </button>
@@ -437,7 +633,7 @@ const Autonomo = {
         <button class="aut-btn" id="autLimpiar">🗑 LIMPIAR HISTORIAL</button>
       </div>
 
-      <div class="aut-section-title">Reglas</div>
+      <div class="aut-section-title">Reglas (${info.reglasCustom} personalizadas)</div>
       <div class="aut-reglas">${reglasHTML}</div>
 
       <div class="aut-section-title">Últimas ejecuciones</div>
