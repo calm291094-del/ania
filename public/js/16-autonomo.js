@@ -683,6 +683,28 @@ async suscribirPush(){
     return false;
   }
 },
+
+async sincronizarReglas(){
+  if (!window.SyncGitHub || !SyncGitHub.configurado()){
+    if (typeof toast === 'function') toast('Configura el token GitHub en Ajustes', true);
+    return;
+  }
+  const locales = this.reglasCustom.map(r => ({
+    id: r.id, descripcion: r.descripcion,
+    cuandoStr: r._cuandoStr, accionesRaw: r._accionesRaw,
+    minIntervalo: r.minIntervalo, t: r.t
+  }));
+  const merge = await SyncGitHub.sincronizar(locales);
+  if (merge){
+    this.reglasCustom = merge.map(r => this._rehidratarRegla(r)).filter(Boolean);
+    this._guardarReglasCustom();
+    this._reconstruirReglas();
+    this.renderPanel();
+    if (typeof toast === 'function') toast('🔄 Reglas sincronizadas: ' + merge.length);
+  } else {
+    if (typeof toast === 'function') toast('Error al sincronizar', true);
+  }
+},
    
   async forzarTick(){ console.log('[Autónomo] Forzando tick manual...'); this.ultimoCiclo = 0; await this.tick('manual'); },
 
@@ -832,6 +854,7 @@ async suscribirPush(){
         <button class="aut-btn" id="autToggle">${info.activo ? '⏸ PAUSAR' : '▶ REANUDAR'}</button>
         <button class="aut-btn" id="autTick">🔄 FORZAR TICK</button>
         <button class="aut-btn" id="autLimpiar">🗑 LIMPIAR HIST.</button>
+        <button class="aut-btn" id="autSyncGitHub" title="Sincronizar con GitHub">☁️ SYNC GITHUB</button>
       </div>
 
       <div class="aut-section-title">Sensores en vivo</div>
@@ -959,6 +982,8 @@ async suscribirPush(){
     if (btnToggle) btnToggle.onclick = () => { this.activo ? this.desactivar() : this.reactivar(); };
     const btnTick = document.getElementById('autTick');
     if (btnTick) btnTick.onclick = () => this.forzarTick();
+    const btnSyncGH = document.getElementById('autSyncGitHub');
+    if (btnSyncGH) btnSyncGH.onclick = () => this.sincronizarReglas();
     const btnLimpiar = document.getElementById('autLimpiar');
     if (btnLimpiar) btnLimpiar.onclick = () => { this.historial = []; store.set('autonomo_historial', []); this.renderPanel(); toast('Historial limpiado'); };
     const btnNew = document.getElementById('autNewRegla');
