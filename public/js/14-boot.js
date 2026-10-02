@@ -1,7 +1,91 @@
 /* ============================================================
    14-BOOT · arranque, boot, jarvis hooks, video, chips
+   v3 · incluye Background Sync + Núcleo Autónomo
 ============================================================ */
 'use strict';
+
+/* ============================================================
+   REGISTRO DE BACKGROUND SYNC
+   Se llama desde el boot, justo después de que el usuario
+   interactúe con la app.
+============================================================ */
+async function registrarBackgroundSync(){
+  if (!('serviceWorker' in navigator)) {
+    console.log('[BG-Sync] Service Worker no disponible');
+    return false;
+  }
+  try {
+    const reg = await navigator.serviceWorker.ready;
+
+    // 1) Periodicsync (más potente, pero requiere permiso y Chrome/Edge)
+    if ('periodicSync' in reg){
+      try {
+        const permiso = await navigator.permissions.query({ name: 'periodic-background-sync' });
+        if (permiso.state === 'granted'){
+          await reg.periodicSync.register('ania-autonomo', {
+            minInterval: 15 * 60 * 1000
+          });
+          console.log('⏰ periodicSync registrado (cada 15 min aprox)');
+        } else {
+          console.log('⏰ periodicSync sin permiso (', permiso.state, ')');
+        }
+      } catch(e){
+        console.warn('⏰ periodicSync no se pudo registrar:', e.message);
+      }
+    } else {
+      console.log('⏰ periodicSync no soportado en este navegador');
+    }
+
+    // 2) Background sync (se dispara al volver online)
+    if ('sync' in reg){
+      try {
+        await reg.sync.register('ania-sync-cola');
+        await reg.sync.register('ania-sync-tareas');
+        console.log('🔄 Background Sync registrado');
+      } catch(e){
+        console.warn('🔄 sync.register falló:', e.message);
+      }
+    }
+
+    // 3) Escuchar mensajes del SW
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      const d = event.data;
+      if (!d) return;
+      if (d.type === 'ANIA_BACKGROUND_TASK'){
+        console.log('🌙 SW despertó:', d.tarea);
+        // Notificar al módulo Autónomo si existe
+        if (window.Autonomo && typeof Autonomo.trigger === 'function'){
+          Autonomo.trigger(d.tarea);
+        } else {
+          // Fallback: procesar cola offline si aplica
+          if (d.tarea === 'sync-cola' && typeof procesarColaOffline === 'function'){
+            procesarColaOffline();
+          }
+          if (d.tarea === 'sync-tareas' && typeof Sync !== 'undefined' && Sync.fullSync){
+            Sync.fullSync();
+          }
+        }
+      }
+    });
+
+    return true;
+  } catch(e){
+    console.warn('[BG-Sync] Error:', e.message);
+    return false;
+  }
+}
+
+/* ---------- Función helper: pedir al SW que ejecute una tarea ahora ---------- */
+async function ejecutarTareaSW(tipo){
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    if (reg.active){
+      reg.active.postMessage({ type: 'EJECUTAR_TAREA_AHORA', tarea: tipo });
+    }
+  } catch(e){
+    console.warn('[BG-Sync] No pude pedir tarea al SW:', e.message);
+  }
+}
 
 /* ---------- Switch de tabs del panel Jarvis ---------- */
 function switchJarvisTab(tab){
@@ -150,6 +234,7 @@ const BOOTLINES = [
   '» cerebro razonador (tool-calling) .. OK',
   '» LOCALMIND: conversación offline ... OK',
   '» OÍDO local · HUD · sesión multi ... OK',
+  '» BACKGROUND SYNC · autonomía ....... OK',
   '» esperando credenciales del operador _'
 ];
 
@@ -226,7 +311,7 @@ $('bootStart').onclick = async ()=>{
   setTimeout(()=>{
     personaReply(msg, msg.slice(0,300));
     const chipsPers = store.get('chipsPersonalizados', null);
-    renderChips(chipsPers || ['Piénsalo: ¿qué opinas del café?','¿Qué hablamos de café?','Ponme música','Prepara mi día','Advinia mi personaje']);
+    renderChips(chipsPers || ['Piénsalo: ¿qué opinas del café?','¿Qué hablamos de café?','Ponme música','Prepara mi día','Adivina mi personaje']);
   }, 500);
 
   setTimeout(()=>{ ChatHistory.restore(); }, 800);
@@ -236,4 +321,21 @@ $('bootStart').onclick = async ()=>{
   setTimeout(()=>{
     renderChips(['Piénsalo: opina del café','Dibújame un panda espacial','Aprende que me gusta madrugar','Pomodoro de 25','Trivia','Ponme música']);
   }, 1200);
+
+  // ⭐ Fase 1 · Activar Background Sync tras el arranque
+  setTimeout(() => {
+    registrarBackgroundSync().then(ok => {
+      if (ok) toast('Autonomía en segundo plano activada');
+    });
+  }, 3000);
+
+  // ⭐ Fase 2 · Iniciar el núcleo autónomo
+  setTimeout(() => {
+    if (window.Autonomo && typeof Autonomo.init === 'function'){
+      Autonomo.init();
+      sysLine('🌙 Núcleo autónomo iniciado · ' + Autonomo.reglas.length + ' reglas activas');
+    } else {
+      console.warn('[Boot] Autonomo no disponible — revisa que 16-autonomo.js esté cargado');
+    }
+  }, 5000);
 };
