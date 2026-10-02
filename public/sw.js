@@ -1,4 +1,4 @@
-/* ANIA v10 · service worker "OFFLINE-FOREVER" */
+/* ANIA v11 · service worker "OFFLINE-FOREVER" + BACKGROUND SYNC + PUSH */
 const CACHE = 'ania-v10';
 const RUNTIME = 'ania-runtime-v9';
 
@@ -20,6 +20,7 @@ const APP_SHELL = [
   './js/04-audio.js',
   './js/05-stt.js',
   './js/06-mind.js',
+  './js/06b-contexto.js',
   './js/07-localmind.js',
   './js/08-brain.js',
   './js/09-features.js',
@@ -70,6 +71,7 @@ const AI_PREFIXES = [
 ];
 const FONT_PREFIXES = ['https://fonts.googleapis.com/', 'https://fonts.gstatic.com/'];
 
+/* ==================== INSTALACIÓN ==================== */
 self.addEventListener('install', e => {
   e.waitUntil((async () => {
     const c = await caches.open(CACHE);
@@ -87,12 +89,16 @@ self.addEventListener('install', e => {
   })());
 });
 
+/* ==================== ACTIVACIÓN ==================== */
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {
     const keys = await caches.keys();
     await Promise.all(
       keys
-        .filter(k => (k.startsWith('ania-') && k !== CACHE) || (k.startsWith('ania-runtime-') && k !== RUNTIME))
+        .filter(k => (k.startsWith('ania-') && k !== CACHE) ||
+                     (k.startsWith('ania-runtime-') && k !== RUNTIME) ||
+                     (k.startsWith('ania-whisper-') && k !== 'ania-whisper-model') ||
+                     (k.startsWith('ania-cerebro-') && k !== 'ania-cerebro-h5'))
         .map(k => caches.delete(k))
     );
     await self.clients.claim();
@@ -101,10 +107,7 @@ self.addEventListener('activate', e => {
   })());
 });
 
-self.addEventListener('message', e => {
-  if(e.data === 'SKIP_WAITING' || (e.data && e.data.type === 'SKIP_WAITING')) self.skipWaiting();
-});
-
+/* ==================== FETCH ==================== */
 self.addEventListener('fetch', e => {
   const req = e.request;
   if(req.method !== 'GET') return;
@@ -112,6 +115,39 @@ self.addEventListener('fetch', e => {
 
   if(url.origin === location.origin && url.pathname.includes('/modelos/')) return;
 
+  // ⭐ Cerebro H5 desde caché dedicada
+  if (url.origin === location.origin && url.pathname.endsWith('/models/cerebro.h5')){
+    e.respondWith((async () => {
+      const c = await caches.open('ania-cerebro-h5');
+      const hit = await c.match(req, {ignoreSearch:true});
+      if (hit) return hit;
+      try {
+        const res = await fetch(req);
+        if (res.ok){ try { await c.put(req, res.clone()); }catch(e){} }
+        return res;
+      } catch(err){ return new Response('Cerebro offline', { status: 503 }); }
+    })());
+    return;
+  }
+
+  // ⭐ Whisper ONNX desde caché dedicada
+  if (url.origin === location.origin &&
+      url.pathname.includes('/models/whisper-tiny/') &&
+      url.pathname.endsWith('.onnx')){
+    e.respondWith((async () => {
+      const c = await caches.open('ania-whisper-model');
+      const hit = await c.match(req, {ignoreSearch:true});
+      if (hit) return hit;
+      try {
+        const res = await fetch(req);
+        if (res.ok){ try { await c.put(req, res.clone()); }catch(e){} }
+        return res;
+      } catch(err){ return new Response('Modelo offline', { status: 503 }); }
+    })());
+    return;
+  }
+
+  // Navegación
   if(req.mode === 'navigate' || req.destination === 'document'){
     e.respondWith((async () => {
       const c = await caches.open(CACHE);
@@ -205,4 +241,147 @@ self.addEventListener('fetch', e => {
     try{ const cp = res.clone(); await c.put(req, cp); }catch(e2){}
     return res;
   })());
+});
+
+/* ============================================================
+   BACKGROUND SYNC · Autonomía de ANIA
+   Permite que el SW despierte y ejecute tareas en segundo plano.
+============================================================ */
+
+/* ---------- SYNC: cuando el navegador detecta conexión ---------- */
+self.addEventListener('sync', (event) => {
+  console.log('[SW] sync event:', event.tag);
+  if (event.tag === 'ania-sync-cola'){
+    event.waitUntil(ejecutarTareaSegundoPlano('sync-cola'));
+  }
+  if (event.tag === 'ania-sync-tareas'){
+    event.waitUntil(ejecutarTareaSegundoPlano('sync-tareas'));
+  }
+});
+
+/* ---------- PERIODIC SYNC: cuando el navegador decide despertar ---------- */
+self.addEventListener('periodicsync', (event) => {
+  console.log('[SW] periodicsync:', event.tag);
+  if (event.tag === 'ania-autonomo'){
+    event.waitUntil(ejecutarTareaSegundoPlano('autonomo'));
+  }
+});
+
+/* ---------- PUSH: notificaciones desde el servidor ---------- */
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch(e){}
+  const titulo = data.titulo || 'ANIA';
+  const cuerpo = data.cuerpo || 'Nuevo mensaje';
+  event.waitUntil(
+    self.registration.showNotification(titulo, {
+      body: cuerpo,
+      icon: './icon.svg',
+      badge: './icon.svg',
+      tag: data.tag || 'ania-push',
+      vibrate: [200, 100, 200],
+      data: { url: data.url || '/' }
+    })
+  );
+});
+
+/* ---------- Click en notificación ---------- */
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || '/';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(lista => {
+      for (const c of lista){
+        if (c.url.includes(location.origin) && 'focus' in c){
+          c.focus();
+          if (c.navigate) c.navigate(url);
+          return;
+        }
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(url);
+    })
+  );
+});
+
+/* ---------- Ejecutor de tareas en segundo plano ---------- */
+async function ejecutarTareaSegundoPlano(tipo){
+  try {
+    const lista = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of lista){
+      c.postMessage({ type: 'ANIA_BACKGROUND_TASK', tarea: tipo, t: Date.now() });
+    }
+    console.log('[SW] Tarea de segundo plano:', tipo, '· clientes notificados:', lista.length);
+  } catch(e){
+    console.error('[SW] Error en tarea de segundo plano:', e);
+  }
+}
+
+/* ---------- Registrar periodicSync ---------- */
+async function registrarPeriodicSync(){
+  if (!('periodicSync' in self.registration)){
+    console.warn('[SW] periodicSync no soportado');
+    return false;
+  }
+  try {
+    const estado = await navigator.permissions.query({ name: 'periodic-background-sync' });
+    if (estado.state !== 'granted'){
+      console.warn('[SW] permiso periodicSync no concedido');
+      return false;
+    }
+    await self.registration.periodicSync.register('ania-autonomo', {
+      minInterval: 15 * 60 * 1000
+    });
+    console.log('[SW] periodicSync registrado: ania-autonomo');
+    return true;
+  } catch(e){
+    console.error('[SW] Error registrando periodicSync:', e);
+    return false;
+  }
+}
+
+/* ==================== MENSAJES DEL CLIENTE ==================== */
+self.addEventListener('message', (event) => {
+  const d = event.data;
+  if (!d) return;
+
+  if (d === 'SKIP_WAITING' || (d && d.type === 'SKIP_WAITING')){
+    self.skipWaiting();
+    return;
+  }
+
+  if (d.type === 'REGISTRAR_PERIODIC_SYNC'){
+    registrarPeriodicSync().then(ok => {
+      if (event.ports && event.ports[0]) event.ports[0].postMessage({ ok });
+    });
+    return;
+  }
+
+  if (d.type === 'REGISTRAR_SYNC'){
+    self.registration.sync.register(d.tag || 'ania-sync-cola')
+      .then(() => {
+        if (event.ports && event.ports[0]) event.ports[0].postMessage({ ok: true });
+      })
+      .catch(err => {
+        console.warn('[SW] sync.register falló:', err);
+        if (event.ports && event.ports[0]) event.ports[0].postMessage({ ok: false, error: err.message });
+      });
+    return;
+  }
+
+  if (d.type === 'MOSTRAR_NOTIFICACION'){
+    const { titulo, cuerpo, tag } = d;
+    self.registration.showNotification(titulo || 'ANIA', {
+      body: cuerpo || '',
+      icon: './icon.svg',
+      badge: './icon.svg',
+      tag: tag || 'ania',
+      vibrate: [180, 80, 180]
+    });
+    return;
+  }
+
+  if (d.type === 'EJECUTAR_TAREA_AHORA'){
+    ejecutarTareaSegundoPlano(d.tarea || 'manual');
+    return;
+  }
 });
