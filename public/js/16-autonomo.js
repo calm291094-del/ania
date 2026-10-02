@@ -597,12 +597,18 @@ const Autonomo = {
 
     await Promise.all([ this._leerBateria(), this._leerUbicacion(), this._leerClima() ]);
 
+    // ⭐ Suscribirse a push si hay permiso
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted'){
+      this.suscribirPush().catch(()=>{});
+    }
+
     setTimeout(() => this.tick('boot'), 15000);
     if (this.ciclo) clearInterval(this.ciclo);
     this.ciclo = setInterval(() => this.tick('timer'), this.INTERVALO_MS);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) this.tick('visibilidad'); });
     window.addEventListener('online', () => this.tick('online'));
   },
+   
   desactivar(){ this.activo = false; store.set('autonomo_activo', false); if (this.ciclo) clearInterval(this.ciclo); console.log('[Autónomo] ⏸ Desactivado'); this.renderPanel(); },
   reactivar(){ this.activo = true; store.set('autonomo_activo', true); this.init(); console.log('[Autónomo] ▶️ Reactivado'); this.renderPanel(); },
   trigger(tipo){
