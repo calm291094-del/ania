@@ -1,6 +1,6 @@
 /* ============================================================
    12-RESPOND · el gran cerebro: respond() + send() + comandos de voz
-   v2 · Cerebro H5 movido ANTES de búsquedas externas
+   v3 · H5 antes de búsquedas + comandos de autonomía
 ============================================================ */
 'use strict';
 
@@ -142,6 +142,13 @@ async function respond(raw){
 
   /* ---- tareas ---- */
   if(/(recordame|recuerda|anota|apunta|agenda|tarea:|recordatorio)/.test(low) && !/tareas?$|pendiente/.test(low)){
+    // Primero intentar como regla autónoma si menciona día/hora recurrente
+    if (window.Autonomo && /(?:cada|todos?\s+los?\s+|el\s+)?(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|d[ií]a)/i.test(raw) && /(?:a\s+las?\s+\d|en\s+\d+\s+(?:min|hora))/i.test(raw)){
+      const regla = Autonomo.crearReglaDesdeTexto(raw);
+      if (regla){
+        return personaReply(`Regla creada: «${regla.descripcion}». La ejecutaré automáticamente.`);
+      }
+    }
     const p = parseTask(t);
     const recur = parseRecur(low);
     if(recur && !p.when){ const d = new Date(); d.setHours(9,0,0,0); if(d <= Date.now()) d.setDate(d.getDate()+1); p.when = d.getTime(); }
@@ -319,8 +326,6 @@ async function respond(raw){
 
   /* ================================================================
      ⭐ CEREBRO H5 (PRIORIDAD SOBRE BÚSQUEDAS EXTERNAS) ⭐
-     Se ejecuta ANTES de cualquier búsqueda en internet. Si tiene una
-     entrada con score >= 30, responde con ella y no toca Wikipedia.
   ================================================================ */
   if (typeof CerebroH5 !== 'undefined' && CerebroH5.cargado) {
     const respH5 = CerebroH5.responder(raw);
@@ -385,51 +390,6 @@ async function respond(raw){
     if(re.test(low)){ lastKB = kb; return personaReply(pick(kb)+' Di «cuéntame más».'); }
   }
 
-  /* ---- NÚCLEO AUTÓNOMO · comandos de voz ---- */
-  if (window.Autonomo){
-    // Consultar estado
-    if (/que\s+has\s+hecho|que\s+hiciste|autonomia|autonomo|estado\s+autonomo|que\s+estas\s+haciendo\s+sola/.test(low)){
-      const info = Autonomo.info();
-      const últimas = Autonomo.historial.slice(0, 3).map(h =>
-        '· ' + new Date(h.t).toLocaleTimeString('es-ES', {hour:'2-digit',minute:'2-digit'}) +
-        ' — ' + h.desc
-      ).join('\n');
-      const estado = info.activo ? '🟢 activo' : '⏸ pausado';
-      return personaReply(
-        `Núcleo autónomo ${estado}.\n` +
-        `· ${info.reglasActivas}/${info.reglas} reglas activas\n` +
-        `· ${info.ejecuciones} ejecuciones registradas\n` +
-        `· Último ciclo: ${info.ultimoCiclo}\n\n` +
-        (últimas ? 'Últimas acciones:\n' + últimas : 'Sin acciones registradas todavía.')
-      );
-    }
-
-    // Activar / desactivar
-    if (/desactiva\s+(?:la\s+)?autonomia|para\s+(?:el\s+)?autonomo|pausa\s+autonomia/.test(low)){
-      Autonomo.desactivar();
-      return personaReply('Núcleo autónomo pausado. Sigo disponible por chat.');
-    }
-    if (/activa\s+(?:la\s+)?autonomia|reactiva\s+(?:el\s+)?autonomo|reanuda\s+autonomia/.test(low)){
-      Autonomo.reactivar();
-      return personaReply('Núcleo autónomo reactivado. Vuelvo a trabajar en segundo plano.');
-    }
-
-    // Forzar tick manual
-    if (/ejecuta\s+(?:las\s+)?reglas\s+ahora|fuerza\s+(?:el\s+)?tick|corre\s+autonomia/.test(low)){
-      await Autonomo.forzarTick();
-      return personaReply('Tick forzado. Revisa el panel de autonomía para ver qué se disparó.');
-    }
-
-    // Listar reglas
-    if (/que\s+reglas\s+tienes|lista\s+(?:las\s+)?reglas|muestra\s+(?:las\s+)?reglas/.test(low)){
-      const lista = Autonomo.reglas.map(r => {
-        const on = Autonomo.reglaActiva(r.id) ? '✓' : '○';
-        return `${on} ${r.id}: ${r.descripcion}`;
-      }).join('\n');
-      return personaReply('Mis reglas autónomas:\n\n' + lista);
-    }
-  }
-   
   /* ---- sistema ---- */
   if(/que\s+sabes\s+hacer|ayuda|comandos/.test(low)){
     renderChips(['Piénsalo: ¿qué opinas del café?','Oído local','Abre el hud','Prepara mi día','Ponme música','Adivina mi personaje']);
@@ -448,6 +408,77 @@ async function respond(raw){
   if(/adivina\s+personaje/.test(low)){ akStart(); return; }
   if(/chiste/.test(low)) return personaReply(freshPick('jokes', JOKES));
   if(/consejo|un\s+tip/.test(low)) return personaReply('Regla 32: café bien hecho y cinco minutos de silencio.');
+
+  /* ============================================================
+     NÚCLEO AUTÓNOMO · comandos de voz
+  ============================================================ */
+  if (window.Autonomo){
+    // Crear regla por lenguaje natural (recuérdame cada X...)
+    if (/recu[eé]rdame\s+/i.test(raw) && /(?:cada|todos?\s+los?\s+|el\s+)?(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo|d[ií]a)/i.test(raw) && /(?:a\s+las?\s+\d|en\s+\d+\s+(?:min|hora))/i.test(raw)){
+      const regla = Autonomo.crearReglaDesdeTexto(raw);
+      if (regla){
+        return personaReply(`Regla creada: «${regla.descripcion}». La ejecutaré automáticamente.`);
+      }
+      return personaReply('No pude interpretar la regla. Prueba: «cada lunes a las 9 avísame de revisar el informe».');
+    }
+
+    // Ver estado del núcleo
+    if (/que\s+has\s+hecho|que\s+hiciste|autonomia|autonomo|estado\s+autonomo|que\s+estas\s+haciendo\s+sola/.test(low)){
+      const info = Autonomo.info();
+      const últimas = Autonomo.historial.slice(0, 3).map(h =>
+        '· ' + new Date(h.t).toLocaleTimeString('es-ES', {hour:'2-digit',minute:'2-digit'}) +
+        ' — ' + h.desc
+      ).join('\n');
+      const estado = info.activo ? '🟢 activo' : '⏸ pausado';
+      return personaReply(
+        `Núcleo autónomo ${estado}.\n` +
+        `· ${info.reglasActivas}/${info.reglas} reglas activas (${info.reglasCustom} personalizadas)\n` +
+        `· ${info.ejecuciones} ejecuciones registradas\n` +
+        `· Último ciclo: ${info.ultimoCiclo}\n\n` +
+        (últimas ? 'Últimas acciones:\n' + últimas : 'Sin acciones registradas todavía.')
+      );
+    }
+
+    // Activar / desactivar
+    if (/desactiva\s+(?:la\s+)?autonomia|para\s+(?:el\s+)?autonomo|pausa\s+autonomia/.test(low)){
+      Autonomo.desactivar();
+      return personaReply('Núcleo autónomo pausado. Sigo disponible por chat.');
+    }
+    if (/activa\s+(?:la\s+)?autonomia|reactiva\s+(?:el\s+)?autonomo|reanuda\s+autonomia/.test(low)){
+      Autonomo.reactivar();
+      return personaReply('Núcleo autónomo reactivado. Vuelvo a trabajar en segundo plano.');
+    }
+
+    // Forzar tick
+    if (/ejecuta\s+(?:las\s+)?reglas\s+ahora|fuerza\s+(?:el\s+)?tick|corre\s+autonomia/.test(low)){
+      await Autonomo.forzarTick();
+      return personaReply('Tick forzado. Revisa el panel de autonomía para ver qué se disparó.');
+    }
+
+    // Listar reglas (todas o solo custom)
+    if (/mis\s+reglas\s+(?:custom|personalizadas)|reglas\s+que\s+cre[eé]/.test(low)){
+      const custom = Autonomo.reglasCustom.filter(Boolean);
+      if (!custom.length) return personaReply('No tienes reglas personalizadas. Prueba: «recuérdame cada lunes a las 9 avísame de revisar el informe».');
+      const lista = custom.map(r => '· ' + r.descripcion).join('\n');
+      return personaReply('Tus reglas personalizadas:\n' + lista);
+    }
+    if (/que\s+reglas\s+tienes|lista\s+(?:las\s+)?reglas|muestra\s+(?:las\s+)?reglas/.test(low)){
+      const lista = Autonomo.reglas.map(r => {
+        const on = Autonomo.reglaActiva(r.id) ? '✓' : '○';
+        return `${on} ${r.id}: ${r.descripcion}`;
+      }).join('\n');
+      return personaReply('Mis reglas autónomas:\n\n' + lista);
+    }
+
+    // Eliminar regla custom
+    m = low.match(/borra\s+(?:la\s+)?regla\s+(custom-\w+|[\w-]+)/);
+    if (m){
+      if (Autonomo.eliminarReglaCustom(m[1])){
+        return personaReply('Regla eliminada.');
+      }
+      return personaReply('No encontré esa regla.');
+    }
+  }
 
   /* ============================================================
      MÓDULOS DE NEGOCIO · comandos de voz (Fase Jarvis)
