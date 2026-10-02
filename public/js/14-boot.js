@@ -157,6 +157,21 @@ document.addEventListener('DOMContentLoaded', ()=>{
       b.onclick = ()=>{ applyEssence(b.dataset.es); toast('Esencia cambiada'); };
     }
   });
+
+  // ⭐ Hook: pintar el panel autónomo cada vez que se abre Ajustes
+  const btnSettingsHook = document.getElementById('btnSettings');
+  if (btnSettingsHook){
+    const _onclickOriginal = btnSettingsHook.onclick;
+    btnSettingsHook.onclick = function(e){
+      if (typeof _onclickOriginal === 'function') _onclickOriginal.call(this, e);
+      setTimeout(() => {
+        if (window.Autonomo && typeof Autonomo.renderPanel === 'function'){
+          Autonomo.renderPanel();
+        }
+      }, 80);
+    };
+  }
+   
 });
 
 /* ---------- Generador de video ---------- */
