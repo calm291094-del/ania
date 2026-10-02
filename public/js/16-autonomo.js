@@ -480,8 +480,26 @@ const Autonomo = {
     },
     async _notificar(accion, sensores){
       const cuerpo = typeof accion.cuerpo === 'function' ? accion.cuerpo(sensores) : (accion.cuerpo || '');
-      if (typeof notify === 'function') notify(accion.titulo || 'ANIA', cuerpo, { tag: accion.tag || 'autonomo', important: false });
-      if (typeof addChat === 'function') addChat('sys', '🌙 ' + (accion.titulo || 'ANIA') + ' · ' + cuerpo);
+      const titulo = accion.titulo || 'ANIA';
+  
+      // Notificación local
+      if (typeof notify === 'function') notify(titulo, cuerpo, { tag: accion.tag || 'autonomo', important: false });
+      if (typeof addChat === 'function') addChat('sys', '🌙 ' + titulo + ' · ' + cuerpo);
+  
+      // ⭐ Push remoto
+      try {
+        if (AniaAPI && AniaAPI.token) {
+          await fetch(CONFIG.ANIA_API + '/ania/push/send', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + AniaAPI.token
+            },
+            body: JSON.stringify({ titulo, cuerpo, tag: accion.tag || 'autonomo' })
+          });
+        }
+      } catch(e) { /* silencioso */ }
+  
       console.log('[Autónomo] 📬 Notificado:', cuerpo);
       return true;
     },
@@ -627,6 +645,45 @@ const Autonomo = {
       ejecuciones: this.historial.length
     };
   },
+
+async suscribirPush(){
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    console.log('[Push] No soportado');
+    return false;
+  }
+  try {
+    const r = await fetch(CONFIG.ANIA_API + '/ania/push/vapid-public-key');
+    if (!r.ok) { console.warn('[Push] Servidor no configurado'); return false; }
+    const { publicKey } = await r.json();
+    
+    const keyBytes = Uint8Array.from(atob(publicKey.replace(/-/g,'+').replace(/_/g,'/')), c => c.charCodeAt(0));
+    
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: keyBytes
+    });
+    
+    await fetch(CONFIG.ANIA_API + '/ania/push/subscribe', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + (AniaAPI.token || '')
+      },
+      body: JSON.stringify({
+        ...sub.toJSON(),
+        deviceId: typeof DEVICE_ID !== 'undefined' ? DEVICE_ID : 'unknown'
+      })
+    });
+    
+    console.log('🔔 Push suscrito');
+    return true;
+  } catch(e) {
+    console.warn('[Push] Error:', e.message);
+    return false;
+  }
+},
+   
   async forzarTick(){ console.log('[Autónomo] Forzando tick manual...'); this.ultimoCiclo = 0; await this.tick('manual'); },
 
   /* ---------------- EJECUTAR PRESET ---------------- */
