@@ -226,3 +226,140 @@
   outline: none;
   border-color: var(--line2);
 }
+
+/* ---------- Presets avanzados ---------- */
+.aut-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.aut-preset {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: linear-gradient(90deg, rgba(45,224,138,.08), rgba(8,21,15,.5));
+  border: 1px solid rgba(45,224,138,.25);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--mono);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color .2s, background .2s, transform .2s;
+}
+.aut-preset:hover {
+  border-color: var(--line2);
+  background: linear-gradient(90deg, rgba(45,224,138,.16), rgba(8,21,15,.7));
+  transform: translateX(2px);
+}
+.aut-preset:active { transform: translateX(0); }
+.aut-preset-icon {
+  font-size: 22px;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 0 6px rgba(45,224,138,.4));
+}
+.aut-preset-info { flex: 1; min-width: 0; }
+.aut-preset-name {
+  font-size: 12px;
+  color: var(--acc2);
+  letter-spacing: .08em;
+  margin-bottom: 2px;
+}
+.aut-preset-desc {
+  font-size: 9.5px;
+  color: var(--dim);
+  letter-spacing: .04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.aut-preset-badge {
+  font-size: 14px;
+  color: var(--acc);
+  flex: 0 0 auto;
+}
+
+/* ---------- Formulario de múltiples acciones ---------- */
+.aut-form-acciones-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 9.5px;
+  letter-spacing: .18em;
+  color: var(--dim);
+  text-transform: uppercase;
+  margin-top: 14px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed rgba(45,224,138,.2);
+}
+.aut-btn-mini {
+  font-size: 9px;
+  padding: 3px 9px;
+  border-radius: 4px;
+  background: rgba(45,224,138,.1);
+  border: 1px solid var(--line2);
+  color: var(--acc2);
+  font-family: var(--mono);
+  cursor: pointer;
+  letter-spacing: .1em;
+}
+.aut-btn-mini:hover { background: rgba(45,224,138,.2); }
+
+.aut-acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+.aut-accion {
+  background: rgba(4,8,6,.6);
+  border: 1px solid rgba(45,224,138,.15);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.aut-accion-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.aut-accion-num {
+  flex: 0 0 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(45,224,138,.15);
+  color: var(--acc2);
+  font-size: 11px;
+  display: grid;
+  place-items: center;
+  font-family: var(--mono);
+}
+.aut-accion-tipo {
+  flex: 1;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  min-width: 0;
+}
+.aut-accion-tipo:focus,
+.aut-accion-input:focus {
+  outline: none;
+  border-color: var(--line2);
+}
+.aut-accion-input {
+  width: 100%;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 6px 8px;
+  border-radius: 4px;
+}
