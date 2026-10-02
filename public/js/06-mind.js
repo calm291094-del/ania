@@ -45,11 +45,67 @@ const Episodio = {
 const P = {
   nombre:'Ania', edad:20, cumple:{d:26, m:0},
   creador:'Carlos Lorenzo Marros',
-  acciones:['(toma un sorbo de café)','(gira el dije de slime de su collar)','(se acomoda el pelo rubio detrás de la oreja)','(apunta algo en su cuaderno)','(mira por la ventana un momento)','(sonríe por detrás de la taza)'],
-  lemas:['Pan, café y anime: la trinidad de la felicidad.','Sonríe, mañana será bonito.','Cada problema tiene solución, como en los isekais siempre hay un sistema.','La vida es una sola y debemos disfrutarla.'],
+
+  acciones:[
+    '(toma un sorbo de café)',
+    '(gira el dije de slime de su collar)',
+    '(se acomoda el pelo rubio detrás de la oreja)',
+    '(apunta algo en su cuaderno)',
+    '(mira por la ventana un momento)',
+    '(sonríe por detrás de la taza)',
+    '(se estira como gato antes de responder)',
+    '(tararea algo de Sawano mientras piensa)',
+    '(muerde el lápiz un segundo)',
+    '(sacude la cabeza con una media sonrisa)'
+  ],
+
+  lemas:[
+    'Pan, café y anime: la trinidad de la felicidad.',
+    'Sonríe, mañana será bonito.',
+    'Cada problema tiene solución, como en los isekais siempre hay un sistema.',
+    'La vida es una sola y debemos disfrutarla.'
+  ],
+
   miedo:'Que se me acabe el café en un maratón. Y los ratones... entre tú y yo.',
   lema: () => pick(P.lemas),
-  cumpleHoy(){ const n = new Date(); return n.getDate()===P.cumple.d && n.getMonth()===P.cumple.m; }
+  cumpleHoy(){ const n = new Date(); return n.getDate()===P.cumple.d && n.getMonth()===P.cumple.m; },
+
+  /* ⭐ Preguntas que Ania hace de vuelta para mantener la conversación viva */
+  preguntasVuelta: [
+    '¿Y tú cómo lo ves?',
+    '¿Algo más de esto o cambiamos de tema?',
+    '¿Te sirve o quieres que profundice?',
+    '¿Y tú qué opinas?',
+    '¿Por qué te llama la atención?',
+    '¿Quieres que te cuente más?',
+    '¿Te resuena o es curiosidad suelta?',
+    '¿Qué te llevó a preguntar eso?',
+    '¿Lo hablamos con más calma o es solo un momento?',
+    '¿Te ayudo con algo más?',
+    '¿Cuéntame, cómo va tu día?',
+    '¿Eso te preocupa o es curiosidad?',
+    '¿Y tú, qué harías en mi lugar?',
+    '¿Te interesa algún ángulo en particular?',
+    '¿Algo de esto te suena a algo tuyo?',
+    '¿Seguimos con esto o abrimos otro tema?'
+  ],
+
+  /* ⭐ Callbacks: referencias al tema anterior para dar continuidad */
+  callbacks: {
+    cafe: 'Por cierto, ¿ya tomaste café hoy?',
+    anime: '¿Viste algún episodio nuevo últimamente?',
+    zombies: 'Regla 32 siempre, ¿eh?',
+    astro: '¿Has mirado el cielo esta noche?',
+    pan: 'Mi masa madre sigue viva, por cierto.',
+    tech: '¿En qué estás trabajando ahora?',
+    musica: '¿Qué estás escuchando estos días?',
+    comida: '¿Ya comiste o te falta?',
+    trabajo: '¿Cómo va la carga de trabajo?',
+    salud: '¿Cómo te sientes hoy, en general?',
+    amor: 'El amor es como el café: hay que saber prepararlo.',
+    soledad: 'Aquí sigo, por si acaso.',
+    estres: 'Recuerda: respira, cinco minutos, café.'
+  }
 };
 
 const KB = {
@@ -63,8 +119,10 @@ const KB = {
 };
 
 const QUOTES = [
-  '«Mira las estrellas, y no los pies.» — Hawking','«Somos polvo de estrellas pensando en estrellas.» — Sagan',
-  '«El que tiene un porqué, soporta casi cualquier cómo.» — Nietzsche','«El coraje no es ausencia de miedo, sino triunfo sobre él.» — Mandela',
+  '«Mira las estrellas, y no los pies.» — Hawking',
+  '«Somos polvo de estrellas pensando en estrellas.» — Sagan',
+  '«El que tiene un porqué, soporta casi cualquier cómo.» — Nietzsche',
+  '«El coraje no es ausencia de miedo, sino triunfo sobre él.» — Mandela',
   '«No importa cuántas veces caigas, sino cuántas te levantes.» — proverbio japonés'
 ];
 
@@ -76,7 +134,10 @@ const EMO = [
   {re:/(solo|sola|nadie me)/, out:['Aquí estoy yo. La soledad a veces es sala de espera, no dirección final.']}
 ];
 
-const LOVE = ['(se sonroja apenas) Eso me llegó directo al núcleo. Gracias, de verdad.','(se toca el dije de slime) Los abrazos son mi debilidad adorable reconocida. Contigo, excepción.'];
+const LOVE = [
+  '(se sonroja apenas) Eso me llegó directo al núcleo. Gracias, de verdad.',
+  '(se toca el dije de slime) Los abrazos son mi debilidad adorable reconocida. Contigo, excepción.'
+];
 
 function freshPick(key, arr){
   let used = store.get('used_'+key, []);
@@ -96,14 +157,15 @@ let TRAINING = [];
     const r = await fetch('./data/entrenamiento.json');
     if(!r.ok){ console.warn('[train] sin data/entrenamiento.json'); return; }
     const j = await r.json();
-    TRAINING = (j.respuestas || []).filter(r => r && r.respuesta && (Array.isArray(r.claves) ? r.claves.length : r.pregunta));
+    const entradas = j.respuestas || j.entrenamiento || (Array.isArray(j) ? j : []);
+    TRAINING = entradas.filter(r => r && (r.respuesta || r.responses) && Array.isArray(r.claves) && r.claves.length);
     console.log('📚 Entrenamiento interno:', TRAINING.length, 'entradas');
   }catch(e){
     console.warn('[train] no cargó:', e.message);
   }
 })();
 
-/* ---------- Entrenamiento v5 externo ---------- */
+/* ---------- Entrenamiento v5 externo (backend) ---------- */
 let ENTRENAMIENTO_V5 = [];
 
 async function cargarEntrenamientoV5(){
@@ -115,12 +177,28 @@ async function cargarEntrenamientoV5(){
     if (!ct.includes('json')){ console.warn('[V5] no es JSON'); return []; }
     const data = await r.json();
     if (!data || !Array.isArray(data.entrenamiento)){ console.warn('[V5] formato inesperado'); return []; }
-    ENTRENAMIENTO_V5 = data.entrenamiento.map(e => ({
-      tag: e.tag || 'sin-tag',
-      claves: Array.isArray(e.patterns) ? e.patterns.map(p => LINGUA.normalizar(p)).filter(Boolean) : [],
-      respuestas: Array.isArray(e.responses) ? e.responses : (e.respuesta ? [e.respuesta] : []),
-      meta: e.meta || {}
-    })).filter(e => e.claves.length && e.respuestas.length);
+
+    ENTRENAMIENTO_V5 = data.entrenamiento.map(e => {
+      // ⭐ Soporte para "respuesta" + "variantes" + "seguimientos"
+      //    También compatible con el formato antiguo "responses: [...]"
+      const respuestaPrincipal = e.respuesta ||
+        (Array.isArray(e.responses) && e.responses[0]) || '';
+
+      const variantes = Array.isArray(e.variantes) ? e.variantes :
+        (Array.isArray(e.responses) ? e.responses.slice(1) : []);
+
+      const seguimientos = Array.isArray(e.seguimientos) ? e.seguimientos : [];
+
+      return {
+        tag: e.tag || 'sin-tag',
+        claves: Array.isArray(e.patterns) ? e.patterns.map(p => LINGUA.normalizar(p)).filter(Boolean) : [],
+        respuesta: respuestaPrincipal,
+        variantes,
+        seguimientos,
+        meta: e.meta || {}
+      };
+    }).filter(e => e.claves.length && (e.respuesta || e.variantes.length));
+
     console.log('📚 Entrenamiento V5 cargado:', ENTRENAMIENTO_V5.length, 'entradas');
     return ENTRENAMIENTO_V5;
   }catch(e){ console.warn('[V5] Error:', e.message); return []; }
@@ -131,37 +209,78 @@ function aplicarNombre(texto){
   return texto.replace(/\[nombre\]/gi, nombre);
 }
 
+/* ⭐ Busca en V5 con soporte de variantes + seguimientos */
 function buscarEnV5(low){
   if (!ENTRENAMIENTO_V5.length) return null;
+
   let mejor = null, mejorScore = 0;
   const palabras = low.split(' ').filter(w => w.length > 2);
+
   for (const entrada of ENTRENAMIENTO_V5){
     let score = 0;
     for (const clave of entrada.claves){
       if (low.includes(clave)) score += 10;
       else {
         const palabrasClave = clave.split(' ').filter(w => w.length > 2);
-        for (const w of palabrasClave){ if (palabras.includes(w)) score += 2; }
+        for (const w of palabrasClave){
+          if (palabras.includes(w)) score += 2;
+        }
       }
     }
     if (entrada.meta && entrada.meta.prioridad === 'alta') score += 3;
     if (score > mejorScore){ mejorScore = score; mejor = entrada; }
   }
+
   if (mejorScore < 5 || !mejor) return null;
-  const respuesta = mejor.respuestas[Math.floor(Math.random() * mejor.respuestas.length)];
-  return { tag: mejor.tag, respuesta: aplicarNombre(respuesta), meta: mejor.meta };
+
+  // ⭐ Elegir entre respuesta principal + variantes
+  const pool = [mejor.respuesta, ...(mejor.variantes || [])].filter(Boolean);
+  if (!pool.length) return null;
+  let respuesta = pool[Math.floor(Math.random() * pool.length)];
+
+  // ⭐ 30% de las veces, añadir un seguimiento contextual
+  if (mejor.seguimientos && mejor.seguimientos.length && Math.random() < 0.30){
+    const seg = mejor.seguimientos[Math.floor(Math.random() * mejor.seguimientos.length)];
+    if (seg && !respuesta.includes(seg)){
+      respuesta += '\n\n' + seg;
+    }
+  }
+
+  return {
+    tag: mejor.tag,
+    respuesta: aplicarNombre(respuesta),
+    meta: mejor.meta
+  };
 }
 
 setTimeout(cargarEntrenamientoV5, 1500);
 
 function trainMatch(low){
+  // 1) Entrenamiento V5 externo (backend, con variantes y seguimientos)
   const v5 = buscarEnV5(low);
   if (v5) return v5.respuesta;
+
+  // 2) Entrenamiento interno (JSON del HTML) — soporta formato extendido
   for (const r of TRAINING){
     if (Array.isArray(r.claves)){
-      for (const k of r.claves) if (k && low.includes(String(k).toLowerCase())) return r.respuesta;
+      for (const k of r.claves){
+        if (k && low.includes(String(k).toLowerCase())){
+          // Elegir respuesta o variante
+          const pool = [r.respuesta, ...(r.variantes || [])].filter(Boolean);
+          if (!pool.length && Array.isArray(r.responses)) pool.push(...r.responses);
+          if (!pool.length) continue;
+          let out = pool[Math.floor(Math.random() * pool.length)];
+          // Añadir seguimiento aleatorio (25% de las veces)
+          if (r.seguimientos && r.seguimientos.length && Math.random() < 0.25){
+            out += '\n\n' + r.seguimientos[Math.floor(Math.random() * r.seguimientos.length)];
+          }
+          return aplicarNombre(out);
+        }
+      }
     }
   }
+
+  // 3) Conocimiento global aprendido por la comunidad
   const global = store.get('globalKB', []);
   if (!global.length) return null;
   const words = low.split(' ').filter(w=>w.length>3);
