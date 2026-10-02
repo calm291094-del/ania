@@ -1,6 +1,6 @@
 /* ============================================================
    16-AUTONOMO · Núcleo autónomo de ANIA
-   v4 · + formulario visual + plantillas + más acciones
+   v5 · + sensores avanzados: batería, ubicación, clima
 ============================================================ */
 'use strict';
 
@@ -58,61 +58,209 @@ const Autonomo = {
     try { store.set('autonomo_historial', this.historial); }catch(e){}
   },
 
-  /* ---------------- Sensores ---------------- */
+  /* ============================================================
+     SENSORES AVANZADOS
+     Cada sensor cachea su valor y se actualiza periódicamente.
+  ============================================================ */
+
+  /* Sensor de batería (nativo) */
+  _bateria: { nivel: null, cargando: null, t: 0 },
+  async _leerBateria(){
+    try {
+      if (navigator.getBattery){
+        const b = await navigator.getBattery();
+        this._bateria = {
+          nivel: b.level,
+          cargando: b.charging,
+          t: Date.now()
+        };
+        // Suscribir a cambios futuros si aún no lo hemos hecho
+        if (!this._bateriaSuscrito){
+          this._bateriaSuscrito = true;
+          b.addEventListener('levelchange', () => {
+            this._bateria.nivel = b.level;
+            this._bateria.t = Date.now();
+          });
+          b.addEventListener('chargingchange', () => {
+            this._bateria.cargando = b.charging;
+            this._bateria.t = Date.now();
+          });
+        }
+      }
+    } catch(e) {}
+    return this._bateria;
+  },
+
+  /* Sensor de ubicación (geolocalización + lugares guardados) */
+  _ubicacion: { lat: null, lon: null, lugar: null, t: 0 },
+  _lugares: [],  // [{ nombre: 'casa', lat, lon, radio: 200 }]
+
+  async _leerUbicacion(){
+    // Cachear por 5 min
+    if (this._ubicacion.lat && Date.now() - this._ubicacion.t < 5 * 60 * 1000){
+      return this._ubicacion;
+    }
+    try {
+      if (!navigator.geolocation) return this._ubicacion;
+
+      const pos = await new Promise((res, rej) => {
+        navigator.geolocation.getCurrentPosition(res, rej, {
+          timeout: 8000, maximumAge: 60000, enableHighAccuracy: false
+        });
+      });
+
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+
+      // Detectar si estamos en un lugar guardado
+      let lugar = null;
+      for (const l of this._lugares){
+        const d = this._distancia(lat, lon, l.lat, l.lon);
+        if (d < (l.radio || 200)){
+          lugar = l.nombre;
+          break;
+        }
+      }
+
+      this._ubicacion = { lat, lon, lugar, t: Date.now() };
+    } catch(e){ /* sin permiso o sin señal */ }
+    return this._ubicacion;
+  },
+
+  _distancia(lat1, lon1, lat2, lon2){
+    // Haversine simplificado en metros
+    const R = 6371000;
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(Δφ/2)**2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  },
+
+  /* Sensor de clima (con caché) */
+  _clima: { llueve: false, temp: null, codigo: null, t: 0 },
+  async _leerClima(){
+    if (Date.now() - this._clima.t < 20 * 60 * 1000 && this._clima.t > 0){
+      return this._clima;
+    }
+    try {
+      if (typeof geoCache !== 'function' || typeof getWeather !== 'function') return this._clima;
+      const g = geoCache();
+      if (!g) return this._clima;
+      const d = await getWeather(g);
+      const code = d.current.weather_code;
+      this._clima = {
+        llueve: code >= 51 && code <= 82,
+        temp: Math.round(d.current.temperature_2m),
+        codigo: code,
+        t: Date.now()
+      };
+    } catch(e){}
+    return this._clima;
+  },
+
+  /* Sensor de ubicación del sol (aproximado) */
+  _leerSol(){
+    const ahora = new Date();
+    const hora = ahora.getHours();
+    return {
+      esDeDia: hora >= 6 && hora < 20,
+      esNoche: hora >= 20 || hora < 6,
+      esAmanecer: hora >= 6 && hora < 8,
+      esAtardecer: hora >= 19 && hora < 21
+    };
+  },
+
+  /* ---------------- SENSOR PRINCIPAL ---------------- */
   sensor: {
     leer(){
       const ahora = new Date();
+      const sol = Autonomo._leerSol();
       return {
+        // Tiempo
         hora: ahora, horaNum: ahora.getHours(), minuto: ahora.getMinutes(),
         diaSemana: ahora.getDay(), fecha: ahora.toDateString(),
+        // Red y visibilidad
         online: navigator.onLine, visible: !document.hidden,
+        // Usuario y estado
         usuario: (typeof Mind !== 'undefined' && Mind.nombre()) || null,
         colaOffline: (typeof OfflineQueue !== 'undefined' && OfflineQueue.count()) || 0,
         tareasPendientes: (typeof tasks !== 'undefined' && Array.isArray(tasks))
           ? tasks.filter(t => !t.done).length : 0,
         tareasVencidas: (typeof tasks !== 'undefined' && Array.isArray(tasks))
           ? tasks.filter(t => !t.done && t.when && t.when < Date.now()).length : 0,
-        bateria: (typeof S !== 'undefined' && S.batt) ? S.batt : null,
         sesionActiva: (typeof Session !== 'undefined' && !!Session),
-        cerebroListo: (typeof Brain !== 'undefined' && Brain.localReady)
+        cerebroListo: (typeof Brain !== 'undefined' && Brain.localReady),
+        // ⭐ NUEVOS · sensores avanzados
+        bateria: Autonomo._bateria,
+        ubicacion: Autonomo._ubicacion,
+        clima: Autonomo._clima,
+        sol
       };
     }
   },
 
-  /* ---------------- Reglas built-in ---------------- */
+  /* ---------------- REGLAS BUILT-IN ---------------- */
   reglas: [
-    { id: 'buenos-dias', descripcion: 'Saluda al usuario entre 7:00 y 9:00',
+    {
+      id: 'buenos-dias',
+      descripcion: 'Saluda al usuario entre 7:00 y 9:00',
       cuando: (s) => s.horaNum >= 7 && s.horaNum < 9 && s.visible && s.sesionActiva,
-      accion: { tipo: 'notificar', titulo: 'ANIA · Buenos días',
-        cuerpo: () => {
+      accion: {
+        tipo: 'notificar', titulo: 'ANIA · Buenos días',
+        cuerpo: (s) => {
           const nombre = Mind.nombre() ? ', ' + Mind.nombre() : '';
-          const tareas = (typeof tasks !== 'undefined') ? tasks.filter(t => !t.done).length : 0;
-          return `Buenos días${nombre}. ${tareas > 0 ? 'Tienes ' + tareas + ' pendientes.' : 'Agenda libre.'}`;
-        } },
-      minIntervalo: 12 * 60 * 60 * 1000 },
-    { id: 'sync-al-reconectar', descripcion: 'Sincronizar cola offline al volver online',
+          const tareas = s.tareasPendientes;
+          const clima = s.clima.temp !== null ? ` · ${s.clima.temp}°C` : '';
+          const lluvia = s.clima.llueve ? ' · llueve, paraguas' : '';
+          return `Buenos días${nombre}${clima}${lluvia}. ${tareas > 0 ? 'Tienes ' + tareas + ' pendientes.' : 'Agenda libre.'}`;
+        }
+      },
+      minIntervalo: 12 * 60 * 60 * 1000
+    },
+    {
+      id: 'sync-al-reconectar',
+      descripcion: 'Sincronizar cola offline al volver online',
       cuando: (s) => s.online && s.colaOffline > 0,
-      accion: { tipo: 'sincronizar' }, minIntervalo: 2 * 60 * 1000 },
-    { id: 'tareas-vencidas', descripcion: 'Recordar tareas vencidas (cada 4h)',
+      accion: { tipo: 'sincronizar' },
+      minIntervalo: 2 * 60 * 1000
+    },
+    {
+      id: 'tareas-vencidas',
+      descripcion: 'Recordar tareas vencidas (cada 4h)',
       cuando: (s) => s.tareasVencidas > 0 && s.visible && s.horaNum >= 9 && s.horaNum < 22,
-      accion: { tipo: 'notificar', titulo: 'ANIA · Tareas vencidas',
-        cuerpo: (s) => `Tienes ${s.tareasVencidas} tarea(s) vencida(s). Di «mis tareas».` },
-      minIntervalo: 4 * 60 * 60 * 1000 },
-    { id: 'cafe-manana', descripcion: 'Preguntar por el café a las 10 AM',
+      accion: {
+        tipo: 'notificar', titulo: 'ANIA · Tareas vencidas',
+        cuerpo: (s) => `Tienes ${s.tareasVencidas} tarea(s) vencida(s). Di «mis tareas» para verlas.`
+      },
+      minIntervalo: 4 * 60 * 60 * 1000
+    },
+    {
+      id: 'cafe-manana',
+      descripcion: 'Preguntar por el café a las 10 AM',
       cuando: (s) => s.horaNum === 10 && s.diaSemana !== 0 && s.visible && s.sesionActiva,
       accion: { tipo: 'mensaje', texto: () => pick([
         '¿Ya tomaste café? Es la hora perfecta para el primero bueno.',
         'Diez de la mañana: pausa de café, orden ejecutiva.',
         'Mi termómetro interno dice que toca un café.']) },
-      minIntervalo: 20 * 60 * 60 * 1000 },
-    { id: 'cierre-dia', descripcion: 'Resumen suave antes de dormir (22:30-23:59)',
+      minIntervalo: 20 * 60 * 60 * 1000
+    },
+    {
+      id: 'cierre-dia',
+      descripcion: 'Resumen suave antes de dormir (22:30-23:59)',
       cuando: (s) => (s.horaNum === 22 && s.minuto >= 30) || s.horaNum === 23,
-      accion: { tipo: 'notificar', titulo: 'ANIA · Cierre del día',
+      accion: {
+        tipo: 'notificar', titulo: 'ANIA · Cierre del día',
         cuerpo: (s) => s.tareasPendientes > 0
           ? `Quedan ${s.tareasPendientes} pendientes para mañana. Descansa bien.`
-          : 'Día cerrado. Mañana seguimos.' },
-      minIntervalo: 20 * 60 * 60 * 1000 },
-    { id: 'saludo-autonomo', descripcion: 'Rompe el silencio tras 3h sin hablar',
+          : 'Día cerrado. Mañana seguimos.'
+      },
+      minIntervalo: 20 * 60 * 60 * 1000
+    },
+    {
+      id: 'saludo-autonomo',
+      descripcion: 'Rompe el silencio tras 3h sin hablar',
       cuando: (s) => {
         if (!s.visible || !s.sesionActiva) return false;
         const ultimo = (typeof S !== 'undefined' && S.lastUserTs) || 0;
@@ -122,7 +270,63 @@ const Autonomo = {
         'Silencio prolongado... ¿todo bien por ahí?',
         'Hace rato que no hablamos. Aquí sigo, por si acaso.',
         '¿Pausa larga o te perdí de vista?']) },
-      minIntervalo: 6 * 3600 * 1000 }
+      minIntervalo: 6 * 3600 * 1000
+    },
+    /* ⭐ NUEVAS REGLAS con sensores avanzados */
+    {
+      id: 'bateria-baja',
+      descripcion: 'Avisar si la batería baja de 20% sin cargar',
+      cuando: (s) => s.bateria.nivel !== null && s.bateria.nivel < 0.2 && !s.bateria.cargando,
+      accion: {
+        tipo: 'notificar', titulo: 'ANIA · Batería baja',
+        cuerpo: (s) => `Batería al ${Math.round(s.bateria.nivel*100)}%. Conéctame antes de que me despida.`
+      },
+      minIntervalo: 30 * 60 * 1000
+    },
+    {
+      id: 'bateria-cargando',
+      descripcion: 'Confirmar cuando se empieza a cargar',
+      cuando: (s) => s.bateria.cargando === true && s.bateria.nivel !== null && s.bateria.nivel < 0.5,
+      accion: {
+        tipo: 'mensaje',
+        texto: (s) => `Bien, cargando al ${Math.round(s.bateria.nivel*100)}%. Gracias.`
+      },
+      minIntervalo: 2 * 60 * 60 * 1000
+    },
+    {
+      id: 'aviso-lluvia',
+      descripcion: 'Avisar si llueve y no lo hemos hecho hoy',
+      cuando: (s) => s.clima.llueve === true && s.visible && s.horaNum >= 7 && s.horaNum < 22,
+      accion: {
+        tipo: 'notificar', titulo: 'ANIA · Llueve',
+        cuerpo: () => 'Está lloviendo afuera. Paraguas y abrigo.'
+      },
+      minIntervalo: 6 * 60 * 60 * 1000
+    },
+    {
+      id: 'llegada-casa',
+      descripcion: 'Saludo al llegar a casa',
+      cuando: (s) => s.ubicacion.lugar === 'casa' && s.sesionActiva && s.visible,
+      accion: {
+        tipo: 'mensaje',
+        texto: () => pick([
+          'Bienvenido a casa. ¿Cómo estuvo el día?',
+          'En casa otra vez. El café está listo imaginariamente.',
+          'Llegaste. Descansa un poco.'
+        ])
+      },
+      minIntervalo: 4 * 60 * 60 * 1000
+    },
+    {
+      id: 'salida-casa',
+      descripcion: 'Recordatorio al salir de casa',
+      cuando: (s) => s.ubicacion.lugar !== 'casa' && s.ubicacion.lat !== null && s.sesionActiva && s.visible,
+      accion: {
+        tipo: 'notificar', titulo: 'ANIA · Saliendo',
+        cuerpo: () => '¿Llevas todo? Llaves, móvil, cartera.'
+      },
+      minIntervalo: 4 * 60 * 60 * 1000
+    }
   ],
 
   /* ---------------- Reglas custom persistentes ---------------- */
@@ -158,7 +362,7 @@ const Autonomo = {
         _textoStr: r.accionTextoStr, _accionExtra: r.accionExtra || null,
         _custom: true, t: r.t
       };
-    } catch(e) { console.warn('[Autónomo] Regla custom inválida:', r.id, e.message); return null; }
+    } catch(e){ console.warn('[Autónomo] Regla custom inválida:', r.id, e.message); return null; }
   },
   agregarReglaCustom(regla){
     if (!regla || !regla.id) return false;
@@ -184,6 +388,26 @@ const Autonomo = {
   _reconstruirReglas(){
     if (!this._reglasBuiltIn.length) this._reglasBuiltIn = this.reglas.filter(r => !r._custom);
     this.reglas = [...this._reglasBuiltIn, ...this.reglasCustom.filter(Boolean)];
+  },
+
+  /* ---------------- Lugares guardados (geofencing) ---------------- */
+  _cargarLugares(){ try { this._lugares = store.get('autonomo_lugares', []); }catch(e){ this._lugares = []; } },
+  _guardarLugares(){ try { store.set('autonomo_lugares', this._lugares); }catch(e){} },
+  guardarLugarActual(nombre, radio = 200){
+    if (!this._ubicacion.lat) return false;
+    this._lugares = this._lugares.filter(l => l.nombre !== nombre);
+    this._lugares.push({
+      nombre, lat: this._ubicacion.lat, lon: this._ubicacion.lon, radio
+    });
+    this._guardarLugares();
+    console.log('[Autónomo] 📍 Lugar guardado:', nombre);
+    return true;
+  },
+  eliminarLugar(nombre){
+    const antes = this._lugares.length;
+    this._lugares = this._lugares.filter(l => l.nombre !== nombre);
+    if (this._lugares.length < antes){ this._guardarLugares(); return true; }
+    return false;
   },
 
   /* ---------------- Parser NL ---------------- */
@@ -341,6 +565,13 @@ const Autonomo = {
     this.ultimoCiclo = ahora;
 
     try{
+      // Actualizar sensores avanzados en paralelo (no bloqueante)
+      await Promise.all([
+        this._leerBateria(),
+        this._leerUbicacion(),
+        this._leerClima()
+      ]);
+
       const sensores = this.sensor.leer();
       while (this.cola.length > 0){
         const t = this.sacarTarea();
@@ -364,9 +595,17 @@ const Autonomo = {
     this._cargarToggles();
     this._cargarHistorial();
     this._cargarReglasCustom();
+    this._cargarLugares();
     this._reconstruirReglas();
     this.activo = store.get('autonomo_activo', true);
     console.log('🌙 Autónomo iniciado · reglas:', this.reglas.length, '· activo:', this.activo);
+
+    // Lectura inicial de sensores avanzados
+    await Promise.all([
+      this._leerBateria(),
+      this._leerUbicacion(),
+      this._leerClima()
+    ]);
 
     setTimeout(() => this.tick('boot'), 15000);
     if (this.ciclo) clearInterval(this.ciclo);
@@ -395,7 +634,7 @@ const Autonomo = {
   async forzarTick(){ console.log('[Autónomo] Forzando tick manual...'); this.ultimoCiclo = 0; await this.tick('manual'); },
 
   /* ============================================================
-     UI · Panel + formulario + plantillas
+     UI · Panel + formulario + plantillas + lugares
   ============================================================ */
   _formState: { dia: 'daily', hora: 9, minuto: 0, tipo: 'notificar', texto: '', toolName: '', url: '' },
 
@@ -405,7 +644,11 @@ const Autonomo = {
     { icon: '🌙', nombre: 'Cierre del día', dia: 'daily', hora: 22, minuto: 30, tipo: 'mensaje', texto: 'Cierre del día. Revisa pendientes y descansa.' },
     { icon: '📋', nombre: 'Revisar tareas', dia: 'weekday', hora: 9, minuto: 0, tipo: 'notificar', texto: 'Revisa tus tareas del día.' },
     { icon: '🎵', nombre: 'Pausa musical', dia: 'daily', hora: 16, minuto: 30, tipo: 'musica', texto: '' },
-    { icon: '📚', nombre: 'Leer 30 min', dia: 'daily', hora: 21, minuto: 0, tipo: 'notificar', texto: 'Hora de leer 30 minutos.' }
+    { icon: '📚', nombre: 'Leer 30 min', dia: 'daily', hora: 21, minuto: 0, tipo: 'notificar', texto: 'Hora de leer 30 minutos.' },
+    /* ⭐ NUEVAS · con sensores */
+    { icon: '🔋', nombre: 'Cargar móvil', dia: 'daily', hora: 22, minuto: 0, tipo: 'notificar', texto: 'Pon el móvil a cargar antes de dormir.' },
+    { icon: '☔', nombre: 'Paraguas', dia: 'weekday', hora: 7, minuto: 30, tipo: 'notificar', texto: 'Si va a llover, coge el paraguas.' },
+    { icon: '🧘', nombre: 'Pausa mental', dia: 'daily', hora: 14, minuto: 0, tipo: 'notificar', texto: '5 minutos de respiración y vuelta al ruedo.' }
   ],
 
   renderPanel(){
@@ -414,6 +657,18 @@ const Autonomo = {
 
     const info = this.info();
     const ahora = Date.now();
+    const bat = this._bateria;
+    const ubi = this._ubicacion;
+    const cli = this._clima;
+
+    // Sensores en tarjetas
+    const sensorBat = bat.nivel !== null
+      ? `${Math.round(bat.nivel*100)}%${bat.cargando ? '⚡' : ''}`
+      : '—';
+    const sensorUbi = ubi.lugar || (ubi.lat ? 'activo' : '—');
+    const sensorCli = cli.temp !== null
+      ? `${cli.temp}°${cli.llueve ? ' ☔' : ''}`
+      : '—';
 
     const reglasHTML = this.reglas.map(r => {
       const activa = this.reglaActiva(r.id);
@@ -458,6 +713,17 @@ const Autonomo = {
 
     const formHTML = this.formVisible ? this._renderForm() : '';
 
+    // Sección de lugares guardados
+    const lugaresHTML = this._lugares.length
+      ? this._lugares.map(l => `
+          <div class="aut-lugar">
+            <span>📍 <b>${esc(l.nombre)}</b></span>
+            <span class="aut-lugar-radio">${l.radio}m</span>
+            <button class="aut-del" data-del-lugar="${esc(l.nombre)}">✕</button>
+          </div>
+        `).join('')
+      : '<div class="empty" style="padding:10px 0;font-size:10px;">Sin lugares guardados</div>';
+
     cont.innerHTML = `
       <div class="aut-stats">
         <div class="aut-stat"><div class="aut-stat-num">${info.activo ? '🟢' : '⏸'}</div><div class="aut-stat-lbl">${info.activo ? 'Activo' : 'Pausado'}</div></div>
@@ -470,6 +736,20 @@ const Autonomo = {
         <button class="aut-btn" id="autToggle">${info.activo ? '⏸ PAUSAR' : '▶ REANUDAR'}</button>
         <button class="aut-btn" id="autTick">🔄 FORZAR TICK</button>
         <button class="aut-btn" id="autLimpiar">🗑 LIMPIAR HIST.</button>
+      </div>
+
+      <div class="aut-section-title">Sensores en vivo</div>
+      <div class="aut-sensores">
+        <div class="aut-sensor"><div class="aut-sensor-num">${sensorBat}</div><div class="aut-sensor-lbl">🔋 Batería</div></div>
+        <div class="aut-sensor"><div class="aut-sensor-num">${sensorUbi}</div><div class="aut-sensor-lbl">📍 Ubicación</div></div>
+        <div class="aut-sensor"><div class="aut-sensor-num">${sensorCli}</div><div class="aut-sensor-lbl">🌤️ Clima</div></div>
+      </div>
+
+      <div class="aut-section-title">Lugares guardados</div>
+      <div class="aut-lugares">${lugaresHTML}</div>
+      <div class="aut-lugar-actions">
+        <input type="text" id="autLugarNombre" placeholder="Nombre (casa, trabajo...)" maxlength="20">
+        <button class="aut-btn" id="autLugarGuardar" style="flex:0 0 auto;">📍 GUARDAR AQUÍ</button>
       </div>
 
       <div class="aut-section-title">Plantillas rápidas</div>
@@ -573,9 +853,31 @@ const Autonomo = {
     const btnNew = document.getElementById('autNewRegla');
     if (btnNew) btnNew.onclick = () => { this.formVisible = !this.formVisible; this.renderPanel(); };
 
+    // Guardar lugar actual
+    const btnLugarGuardar = document.getElementById('autLugarGuardar');
+    if (btnLugarGuardar){
+      btnLugarGuardar.onclick = async () => {
+        const inp = document.getElementById('autLugarNombre');
+        const nombre = (inp && inp.value.trim()) || '';
+        if (!nombre){ if (typeof toast === 'function') toast('Escribe un nombre', true); return; }
+        await this._leerUbicacion();
+        if (!this._ubicacion.lat){ if (typeof toast === 'function') toast('Sin ubicación. Activa el GPS.', true); return; }
+        this.guardarLugarActual(nombre, 200);
+        if (inp) inp.value = '';
+        this.renderPanel();
+        if (typeof toast === 'function') toast('📍 Lugar guardado: ' + nombre);
+      };
+    }
+
     cont.querySelectorAll('[data-regla]').forEach(b => b.onclick = () => this.toggleRegla(b.dataset.regla));
     cont.querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
       if (confirm('¿Eliminar esta regla?')) this.eliminarReglaCustom(b.dataset.del);
+    });
+    cont.querySelectorAll('[data-del-lugar]').forEach(b => b.onclick = () => {
+      if (confirm('¿Eliminar este lugar?')){
+        this.eliminarLugar(b.dataset.delLugar);
+        this.renderPanel();
+      }
     });
     cont.querySelectorAll('[data-plant]').forEach(b => b.onclick = () => {
       const p = this.PLANTILLAS[parseInt(b.dataset.plant)];
@@ -624,14 +926,11 @@ const Autonomo = {
 
   _guardarDesdeForm(){
     const s = this._formState;
-
-    // Validaciones
     if (s.hora < 0 || s.hora > 23) return alert('Hora inválida (0-23)');
     if (s.minuto < 0 || s.minuto > 59) return alert('Minuto inválido (0-59)');
     if ((s.tipo === 'notificar' || s.tipo === 'mensaje') && !s.texto.trim()) return alert('Escribe el texto');
     if (s.tipo === 'abrirUrl' && !s.url.trim()) return alert('Escribe la URL');
 
-    // Construir cuandoStr
     let cuandoStr;
     const h = s.hora, m = s.minuto;
     if (s.dia === 'daily') cuandoStr = `(s) => s.horaNum === ${h} && s.minuto >= ${m} && s.minuto < ${m + 5}`;
@@ -639,7 +938,6 @@ const Autonomo = {
     else if (s.dia === 'weekday') cuandoStr = `(s) => s.diaSemana >= 1 && s.diaSemana <= 5 && s.horaNum === ${h} && s.minuto >= ${m} && s.minuto < ${m + 5}`;
     else cuandoStr = `(s) => s.diaSemana === ${s.dia} && s.horaNum === ${h} && s.minuto >= ${m} && s.minuto < ${m + 5}`;
 
-    // Construir acción
     const accion = { tipo: s.tipo };
     let cuerpoStr = null, textoStr = null, extra = null;
 
@@ -658,7 +956,6 @@ const Autonomo = {
       extra = { tool: s.toolName || 'hora', args: {} };
     }
 
-    // Descripción legible
     const diasNombre = { 'daily': 'todos los días', 'weekend': 'fines de semana', 'weekday': 'laborables', 0: 'domingos', 1: 'lunes', 2: 'martes', 3: 'miércoles', 4: 'jueves', 5: 'viernes', 6: 'sábados' };
     const diaStr = diasNombre[s.dia] || 'todos los días';
     const horaFmt = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
