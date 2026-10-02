@@ -65,7 +65,7 @@ function brainSystem(){
   return 'Eres Ania: 20 años, creada por Carlos Lorenzo Marros, egresada de la Academia Eden. Ánimo: '+mood().tag+'. Te gustan café, pan, isekai, zombies, astronomía, tecnología. Usuario: '+(Mind.nombre()||'desconocido')+'. Respondes SIEMPRE en español, máximo 4 frases, sin markdown.\nHERRAMIENTAS:\n'+TOOLS.map(t=>'- '+t.n+': '+t.d).join('\n')+'\nSi necesitas una herramienta responde SOLO con: TOOL {"n":"nombre","args":{...}}. Si no, responde como Ania.';
 }
 
-/* ---------- Brain ---------- */
+/* ---------- Brain (GGUF / nube) ---------- */
 const Brain = {
   Wllama:null, wl:null, localReady:false, modelName:'', busy:false, ctx:2048, shortMem:[],
   paint(){
@@ -334,75 +334,204 @@ const HUD = {
 $('hudClose').onclick = ()=> HUD.close();
 $('btnHud').onclick = ()=> HUD.open();
 
-/* ---------- CerebroH5 (h5wasm) ---------- */
+/* ============================================================
+   CEREBRO H5 · carga robusta desde múltiples variantes locales
+   Sin dependencia de Releases ni CDNs externos.
+
+   Estrategia de carga (se prueba en orden):
+     1. ./models/cerebro.h5            → archivo completo
+     2. ./models/cerebro.zip           → ZIP con un único .h5 dentro
+     3. ./models/cerebro.part1, .part2 → .h5 partido en trozos
+     4. ./models/cerebro.zip.part1,…   → .zip partido en trozos
+   El primero que exista y sea válido se carga. Todo desde el repo.
+============================================================ */
+
+/* --- Utilidades de fetch binario (evita confundir 404 HTML con un archivo real) --- */
+async function _fetchBinario(url){
+  try{
+    const r = await fetch(url, { cache: 'default' });
+    if (!r.ok) return null;
+    const ct = (r.headers.get('content-type') || '').toLowerCase();
+    // Si el server devuelve HTML, es el fallback SPA → no es un archivo real
+    if (ct.includes('html')) return null;
+    const blob = await r.blob();
+    if (blob.size < 512) return null;   // demasiado pequeño para ser un .h5
+    return new Uint8Array(await blob.arrayBuffer());
+  }catch(e){ return null; }
+}
+
+/* --- Une varias partes en un único Uint8Array --- */
+function _unirPartes(partes){
+  const total = partes.reduce((a,b) => a + b.length, 0);
+  const out = new Uint8Array(total);
+  let off = 0;
+  for (const p of partes){ out.set(p, off); off += p.length; }
+  return out;
+}
+
+/* --- Descomprime un ZIP con un único archivo (deflate-raw nativo) --- */
+async function _descomprimirZip(zipBytes){
+  const dv = new DataView(zipBytes.buffer, zipBytes.byteOffset, zipBytes.byteLength);
+  for (let i = 0; i < zipBytes.length - 30; i++){
+    if (dv.getUint32(i, true) !== 0x04034b50) continue;  // "PK\x03\x04"
+    const method = dv.getUint16(i + 8,  true);
+    const csize  = dv.getUint32(i + 18, true);
+    const nlen   = dv.getUint16(i + 26, true);
+    const elen   = dv.getUint16(i + 28, true);
+    const inicio = i + 30 + nlen + elen;
+    const comp   = zipBytes.slice(inicio, inicio + csize);
+    if (method === 0) return comp;                          // sin compresión
+    if (method === 8){                                       // deflate-raw
+      const ds = new DecompressionStream('deflate-raw');
+      const stream = new Blob([comp]).stream().pipeThrough(ds);
+      return new Uint8Array(await new Response(stream).arrayBuffer());
+    }
+    throw new Error('Método de compresión ZIP no soportado (' + method + ')');
+  }
+  throw new Error('ZIP sin archivo válido');
+}
+
+/* --- Carga el buffer del cerebro probando todas las variantes --- */
+async function _cargarBufferCerebro(){
+  const log = (m, ...a) => console.log('[H5]', m, ...a);
+
+  // ── 1. cerebro.h5 directo ──────────────────────────────
+  {
+    const b = await _fetchBinario('./models/cerebro.h5');
+    if (b){ log('cerebro.h5 directo ·', (b.length/1048576).toFixed(2), 'MB'); return b; }
+  }
+
+  // ── 2. cerebro.zip directo ─────────────────────────────
+  {
+    const z = await _fetchBinario('./models/cerebro.zip');
+    if (z){
+      log('cerebro.zip descargado ·', (z.length/1048576).toFixed(2), 'MB');
+      const b = await _descomprimirZip(z);
+      log('cerebro descomprimido ·', (b.length/1048576).toFixed(2), 'MB');
+      return b;
+    }
+  }
+
+  // ── 3. cerebro.partN (h5 partido) ──────────────────────
+  {
+    const partes = [];
+    for (let i = 1; i <= 20; i++){
+      const p = await _fetchBinario('./models/cerebro.part' + i);
+      if (!p) break;
+      partes.push(p);
+    }
+    if (partes.length >= 2){
+      const b = _unirPartes(partes);
+      log('cerebro.h5 unido desde', partes.length, 'partes ·', (b.length/1048576).toFixed(2), 'MB');
+      return b;
+    }
+  }
+
+  // ── 4. cerebro.zip.partN (zip partido) ─────────────────
+  {
+    const partes = [];
+    for (let i = 1; i <= 20; i++){
+      const p = await _fetchBinario('./models/cerebro.zip.part' + i);
+      if (!p) break;
+      partes.push(p);
+    }
+    if (partes.length >= 2){
+      const zipUnido = _unirPartes(partes);
+      log('cerebro.zip unido desde', partes.length, 'partes ·', (zipUnido.length/1048576).toFixed(2), 'MB');
+      const b = await _descomprimirZip(zipUnido);
+      log('cerebro descomprimido ·', (b.length/1048576).toFixed(2), 'MB');
+      return b;
+    }
+  }
+
+  return null;
+}
+
+/* ---------- CerebroH5 ---------- */
 const CerebroH5 = {
   cargado: false, tags: [], substitutions: {}, userName: null,
   ultimaRespIndex: {}, totalPatterns: 0,
 
   async cargar() {
     if (this.cargado) return true;
-    if (typeof h5wasm === 'undefined') { console.warn('[H5] h5wasm no disponible'); return false; }
-    try {
+    if (typeof h5wasm === 'undefined'){ console.warn('[H5] h5wasm no disponible'); return false; }
+
+    try{
       await h5wasm.ready;
-      const resp = await fetch('./models/cerebro.h5');
-      if (!resp.ok) { console.warn('[H5] cerebro.h5 no encontrado'); return false; }
-      const buf = new Uint8Array(await resp.arrayBuffer());
+
+      const buf = await _cargarBufferCerebro();
+      if (!buf){
+        console.warn('[H5] cerebro no encontrado. Sube cerebro.h5, cerebro.zip o partes al repo en public/models/');
+        return false;
+      }
+
       const FS = h5wasm.FS;
-      try { FS.unlink('/_ania.h5'); } catch(e) {}
+      try{ FS.unlink('/_ania.h5'); }catch(e){}
       FS.writeFile('/_ania.h5', buf);
+
       const file = new h5wasm.File('/_ania.h5', 'r');
       this.file = file;
+
       this._cargarSubstituciones(file);
       this._cargarTags(file);
+
       this.cargado = true;
       console.log(`🧠 Cerebro H5 cargado: ${this.tags.length} tags, ${this.totalPatterns} patrones`);
       return true;
-    } catch(e) { console.warn('[H5] Error al cargar cerebro:', e.message); return false; }
+    }catch(e){
+      console.warn('[H5] Error al cargar cerebro:', e.message);
+      return false;
+    }
   },
+
   _h5Keys(obj) {
     if (!obj) return [];
-    try {
+    try{
       const k = obj.keys();
       if (Array.isArray(k)) return k;
       if (k && k[Symbol.iterator]) return Array.from(k);
-    } catch(e) {}
+    }catch(e){}
     return [];
   },
+
   _h5Get(obj, key) {
     if (!obj) return null;
-    try { const h = obj.get(key); if (h) return h; } catch(e) {}
-    try { const h = obj[key]; if (h && typeof h !== 'function') return h; } catch(e) {}
+    try{ const h = obj.get(key); if (h) return h; }catch(e){}
+    try{ const h = obj[key]; if (h && typeof h !== 'function') return h; }catch(e){}
     return null;
   },
+
   _leerTexto(ds) {
     if (!ds) return '';
-    try {
+    try{
       const v = ds.value;
       if (v == null) return '';
       if (typeof v === 'string') return v;
       if (v instanceof Uint8Array) return new TextDecoder().decode(v);
-      if (Array.isArray(v)) {
+      if (Array.isArray(v)){
         if (v.length && typeof v[0] === 'number') return new TextDecoder().decode(new Uint8Array(v));
         return v.join('\n');
       }
       return String(v);
-    } catch(e) { return ''; }
+    }catch(e){ return ''; }
   },
+
   _cargarSubstituciones(file) {
-    try {
+    try{
       const gCfg = this._h5Get(file, 'configuracion'); if (!gCfg) return;
       const gMini = this._h5Get(gCfg, 'mini_lenguaje_natural_humano'); if (!gMini) return;
       const gNorm = this._h5Get(gMini, 'normalizacion_emocional'); if (!gNorm) return;
-      for (const k of this._h5Keys(gNorm)) {
+      for (const k of this._h5Keys(gNorm)){
         const ds = this._h5Get(gNorm, k);
         const v = this._leerTexto(ds).trim();
         if (v) this.substitutions[k.toLowerCase()] = v.toLowerCase();
       }
-    } catch(e) {}
+    }catch(e){}
   },
+
   _cargarTags(file) {
     const gE = this._h5Get(file, 'entrenamiento'); if (!gE) return;
-    for (const tagName of this._h5Keys(gE)) {
+    for (const tagName of this._h5Keys(gE)){
       const gTag = this._h5Get(gE, tagName); if (!gTag) continue;
       const patternsTxt = this._leerTexto(this._h5Get(gTag, 'patterns'));
       const patterns = patternsTxt ? patternsTxt.split('\n').filter(p => p.trim()) : [];
@@ -411,19 +540,21 @@ const CerebroH5 = {
       if (respTxt) responses = respTxt.split('\n---\n').filter(r => r.trim());
       if (!patterns.length || !responses.length) continue;
       let meta = {};
-      try { const mj = this._leerTexto(this._h5Get(gTag, 'meta_json')); if (mj) meta = JSON.parse(mj); } catch(e) {}
+      try{ const mj = this._leerTexto(this._h5Get(gTag, 'meta_json')); if (mj) meta = JSON.parse(mj); }catch(e){}
       this.tags.push({ tag: tagName, patterns, patternsNorm: patterns.map(p => this._normalizar(p)), responses, meta });
       this.totalPatterns += patterns.length;
     }
   },
+
   _normalizar(texto) {
     if (!texto) return '';
     let t = String(texto).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    if (Object.keys(this.substitutions).length) {
+    if (Object.keys(this.substitutions).length){
       t = t.replace(/\b\w+\b/g, w => this.substitutions[w] || w);
     }
     return t.replace(/[¿?¡!.,;:()"']/g, ' ').replace(/\s+/g, ' ').trim();
   },
+
   _puntuar(input, patron) {
     if (!patron || !input) return 0;
     if (input === patron) return 100;
@@ -437,23 +568,25 @@ const CerebroH5 = {
     if (!overlap) return 0;
     return (overlap / pw.length) * 60;
   },
+
   buscar(input) {
     if (!this.cargado) return null;
     const norm = this._normalizar(input);
     if (!norm) return null;
     let mejor = null, mejorScore = 0;
-    for (const t of this.tags) {
+    for (const t of this.tags){
       let max = 0;
-      for (const p of t.patternsNorm) {
+      for (const p of t.patternsNorm){
         const s = this._puntuar(norm, p);
         if (s > max) max = s;
         if (max >= 100) break;
       }
       if (t.meta?.prioridad === 'alta') max *= 1.15;
-      if (max > mejorScore) { mejorScore = max; mejor = t; }
+      if (max > mejorScore){ mejorScore = max; mejor = t; }
     }
     return mejorScore >= 30 ? { tag: mejor, score: mejorScore } : null;
   },
+
   _extraerNombre(input) {
     const re = [
       /me llamo\s+([a-záéíóúñ]+)/i,
@@ -461,12 +594,13 @@ const CerebroH5 = {
       /puedes llamarme\s+([a-záéíóúñ]+)/i,
       /^soy\s+([a-záéíóúñ]+)$/i
     ];
-    for (const r of re) {
+    for (const r of re){
       const m = input.match(r);
       if (m) return m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
     }
     return null;
   },
+
   _elegirResp(tag) {
     const list = tag.responses;
     if (list.length === 1) return list[0];
@@ -476,6 +610,7 @@ const CerebroH5 = {
     this.ultimaRespIndex[tag.tag] = idx;
     return list[idx];
   },
+
   responder(input) {
     const nombre = this._extraerNombre(input);
     if (nombre) this.userName = nombre;
@@ -487,4 +622,5 @@ const CerebroH5 = {
     return texto;
   }
 };
+
 setTimeout(() => CerebroH5.cargar(), 2000);
