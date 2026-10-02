@@ -385,6 +385,51 @@ async function respond(raw){
     if(re.test(low)){ lastKB = kb; return personaReply(pick(kb)+' Di «cuéntame más».'); }
   }
 
+  /* ---- NÚCLEO AUTÓNOMO · comandos de voz ---- */
+  if (window.Autonomo){
+    // Consultar estado
+    if (/que\s+has\s+hecho|que\s+hiciste|autonomia|autonomo|estado\s+autonomo|que\s+estas\s+haciendo\s+sola/.test(low)){
+      const info = Autonomo.info();
+      const últimas = Autonomo.historial.slice(0, 3).map(h =>
+        '· ' + new Date(h.t).toLocaleTimeString('es-ES', {hour:'2-digit',minute:'2-digit'}) +
+        ' — ' + h.desc
+      ).join('\n');
+      const estado = info.activo ? '🟢 activo' : '⏸ pausado';
+      return personaReply(
+        `Núcleo autónomo ${estado}.\n` +
+        `· ${info.reglasActivas}/${info.reglas} reglas activas\n` +
+        `· ${info.ejecuciones} ejecuciones registradas\n` +
+        `· Último ciclo: ${info.ultimoCiclo}\n\n` +
+        (últimas ? 'Últimas acciones:\n' + últimas : 'Sin acciones registradas todavía.')
+      );
+    }
+
+    // Activar / desactivar
+    if (/desactiva\s+(?:la\s+)?autonomia|para\s+(?:el\s+)?autonomo|pausa\s+autonomia/.test(low)){
+      Autonomo.desactivar();
+      return personaReply('Núcleo autónomo pausado. Sigo disponible por chat.');
+    }
+    if (/activa\s+(?:la\s+)?autonomia|reactiva\s+(?:el\s+)?autonomo|reanuda\s+autonomia/.test(low)){
+      Autonomo.reactivar();
+      return personaReply('Núcleo autónomo reactivado. Vuelvo a trabajar en segundo plano.');
+    }
+
+    // Forzar tick manual
+    if (/ejecuta\s+(?:las\s+)?reglas\s+ahora|fuerza\s+(?:el\s+)?tick|corre\s+autonomia/.test(low)){
+      await Autonomo.forzarTick();
+      return personaReply('Tick forzado. Revisa el panel de autonomía para ver qué se disparó.');
+    }
+
+    // Listar reglas
+    if (/que\s+reglas\s+tienes|lista\s+(?:las\s+)?reglas|muestra\s+(?:las\s+)?reglas/.test(low)){
+      const lista = Autonomo.reglas.map(r => {
+        const on = Autonomo.reglaActiva(r.id) ? '✓' : '○';
+        return `${on} ${r.id}: ${r.descripcion}`;
+      }).join('\n');
+      return personaReply('Mis reglas autónomas:\n\n' + lista);
+    }
+  }
+   
   /* ---- sistema ---- */
   if(/que\s+sabes\s+hacer|ayuda|comandos/.test(low)){
     renderChips(['Piénsalo: ¿qué opinas del café?','Oído local','Abre el hud','Prepara mi día','Ponme música','Adivina mi personaje']);
