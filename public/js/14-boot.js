@@ -152,6 +152,26 @@ document.addEventListener('DOMContentLoaded', ()=>{
   refrescarBotonJarvis();
   setInterval(refrescarBotonJarvis, 1500);
 
+// ⭐ Hook del token GitHub
+setTimeout(() => {
+  const btn = document.getElementById('btnGuardarGhToken');
+  const inp = document.getElementById('ghTokenInput');
+  const st  = document.getElementById('ghTokenStatus');
+  if (!btn || !inp) return;
+  if (window.SyncGitHub && st){
+    st.textContent = SyncGitHub.configurado() ? '✅ Token configurado' : '⚠ Sin token';
+  }
+  btn.onclick = () => {
+    const t = inp.value.trim();
+    if (!t){ if (st) st.textContent = '❌ Token vacío'; return; }
+    if (window.SyncGitHub){
+      SyncGitHub.setToken(t);
+      if (st) st.textContent = '✅ Token guardado';
+      if (typeof toast === 'function') toast('Token GitHub guardado');
+    }
+  };
+}, 2000);
+   
   document.querySelectorAll('.esBtn').forEach(b => {
     if (b.dataset.es){
       b.onclick = ()=>{ applyEssence(b.dataset.es); toast('Esencia cambiada'); };
