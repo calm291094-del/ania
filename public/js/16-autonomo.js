@@ -1,6 +1,6 @@
 /* ============================================================
    16-AUTONOMO · Núcleo autónomo de ANIA
-   v2 · + historial de ejecuciones, toggles por regla, panel UI
+   v2 · + historial, toggles por regla, panel UI
 ============================================================ */
 'use strict';
 
@@ -10,7 +10,6 @@ const Autonomo = {
   INTERVALO_MS: 60 * 1000,
   ultimoCiclo: 0,
 
-  /* ---------------- Cola de tareas ---------------- */
   cola: [],
   MAX_COLA: 30,
 
@@ -31,7 +30,6 @@ const Autonomo = {
     try { this.cola = store.get('autonomo_cola', []); }catch(e){ this.cola = []; }
   },
 
-  /* ---------------- Estado de reglas ---------------- */
   estados: {},
   _cargarEstados(){
     try { this.estados = store.get('autonomo_estados', {}); }catch(e){ this.estados = {}; }
@@ -41,7 +39,6 @@ const Autonomo = {
     try { store.set('autonomo_estados', this.estados); }catch(e){}
   },
 
-  /* ⭐ NUEVO · Toggles de reglas (activas/desactivadas por usuario) */
   reglasDesactivadas: [],
   _cargarToggles(){
     try { this.reglasDesactivadas = store.get('autonomo_reglas_off', []); }catch(e){ this.reglasDesactivadas = []; }
@@ -55,13 +52,12 @@ const Autonomo = {
     else this.reglasDesactivadas.push(id);
     this._guardarToggles();
     this.renderPanel();
-    return this.reglasDesactivadas.indexOf(id) === -1; // true = activa
+    return this.reglasDesactivadas.indexOf(id) === -1;
   },
   reglaActiva(id){
     return !this.reglasDesactivadas.includes(id);
   },
 
-  /* ⭐ NUEVO · Historial de ejecuciones (últimas 30) */
   historial: [],
   MAX_HISTORIAL: 30,
   _cargarHistorial(){
@@ -79,7 +75,6 @@ const Autonomo = {
     try { store.set('autonomo_historial', this.historial); }catch(e){}
   },
 
-  /* ---------------- SENSORES ---------------- */
   sensor: {
     leer(){
       const ahora = new Date();
@@ -104,7 +99,6 @@ const Autonomo = {
     }
   },
 
-  /* ---------------- REGLAS ---------------- */
   reglas: [
     {
       id: 'buenos-dias',
@@ -190,7 +184,6 @@ const Autonomo = {
     }
   ],
 
-  /* ---------------- EFECTORES ---------------- */
   efector: {
     async ejecutar(accion, sensores){
       if (!accion || !accion.tipo) return false;
@@ -255,7 +248,6 @@ const Autonomo = {
     }
   },
 
-  /* ---------------- PLANIFICADOR ---------------- */
   planificador: {
     decidir(sensores, reglas, estados, desactivadas){
       const ahora = Date.now();
@@ -275,7 +267,6 @@ const Autonomo = {
     }
   },
 
-  /* ---------------- CICLO PRINCIPAL ---------------- */
   async tick(razon = 'timer'){
     if (!this.activo) return;
     const ahora = Date.now();
@@ -285,13 +276,11 @@ const Autonomo = {
     try{
       const sensores = this.sensor.leer();
 
-      // Cola pendiente
       while (this.cola.length > 0){
         const t = this.sacarTarea();
         if (t) await this.efector.ejecutar(t.accion, sensores);
       }
 
-      // Reglas
       const reglasADisparar = this.planificador.decidir(
         sensores, this.reglas, this.estados, this.reglasDesactivadas
       );
@@ -301,14 +290,13 @@ const Autonomo = {
         this._guardarEstado(regla.id, Date.now());
         this._registrarEjecucion(regla, ok);
         console.log('[Autónomo] ✅ Regla disparada:', regla.id);
-        if (typeof this.renderPanel === 'function') this.renderPanel();
+        this.renderPanel();
       }
     }catch(e){
       console.error('[Autónomo] Error en tick:', e.message);
     }
   },
 
-  /* ---------------- INICIALIZACIÓN ---------------- */
   async init(){
     this.cargarCola();
     this._cargarEstados();
@@ -334,7 +322,7 @@ const Autonomo = {
     store.set('autonomo_activo', false);
     if (this.ciclo) clearInterval(this.ciclo);
     console.log('[Autónomo] ⏸ Desactivado');
-    if (typeof this.renderPanel === 'function') this.renderPanel();
+    this.renderPanel();
   },
 
   reactivar(){
@@ -342,7 +330,7 @@ const Autonomo = {
     store.set('autonomo_activo', true);
     this.init();
     console.log('[Autónomo] ▶️ Reactivado');
-    if (typeof this.renderPanel === 'function') this.renderPanel();
+    this.renderPanel();
   },
 
   trigger(tipo){
@@ -384,10 +372,6 @@ const Autonomo = {
     await this.tick('manual');
   },
 
-  /* ============================================================
-     ⭐ NUEVO · Panel de control (UI)
-     Pinta el estado del núcleo en #panelAutonomo (dentro de Ajustes)
-  ============================================================ */
   renderPanel(){
     const cont = document.getElementById('panelAutonomo');
     if (!cont) return;
@@ -395,7 +379,6 @@ const Autonomo = {
     const info = this.info();
     const ahora = Date.now();
 
-    // Reglas con estado
     const reglasHTML = this.reglas.map(r => {
       const activa = this.reglaActiva(r.id);
       const ult = this.estados[r.id];
@@ -417,7 +400,6 @@ const Autonomo = {
       `;
     }).join('');
 
-    // Historial
     const histHTML = this.historial.slice(0, 8).map(h => {
       const cuando = this._tiempoRel(ahora - h.t);
       return `
@@ -462,7 +444,6 @@ const Autonomo = {
       <div class="aut-hist">${histHTML}</div>
     `;
 
-    // Handlers
     const btnToggle = document.getElementById('autToggle');
     if (btnToggle) btnToggle.onclick = () => {
       info.activo ? this.desactivar() : this.reactivar();
