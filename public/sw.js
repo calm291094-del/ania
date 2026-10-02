@@ -28,9 +28,10 @@ const APP_SHELL = [
   './js/11-chat.js',
   './js/12-respond.js',
   './js/13-admin.js',
-  './js/14-boot.js',
   './js/15-dock.js',
-
+  './js/16-autonomo.js',
+  './js/14-boot.js',
+  
   // Módulos Jarvis
   './modulos/finanzas.js',
   './modulos/inventario.js',
