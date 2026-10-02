@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>ANIA · Generador VAPID</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{background:#040806;color:#cfeede;font-family:'Courier New',monospace;padding:20px;max-width:800px;margin:0 auto;}
+h1{color:#39ff9b;letter-spacing:.3em;font-size:20px;}
+button{background:rgba(45,224,138,.1);border:1px solid rgba(45,224,138,.5);color:#39ff9b;font-family:inherit;padding:12px 24px;border-radius:6px;cursor:pointer;font-size:14px;letter-spacing:.15em;margin:10px 0;}
+button:hover{background:rgba(45,224,138,.2);}
+.box{background:rgba(8,21,15,.7);border:1px solid rgba(45,224,138,.3);border-radius:8px;padding:14px;margin:10px 0;}
+.label{font-size:11px;color:#79a88f;letter-spacing:.15em;margin-bottom:6px;text-transform:uppercase;}
+.value{word-break:break-all;font-size:12px;color:#39ff9b;background:#020504;padding:10px;border-radius:4px;user-select:all;cursor:pointer;}
+.note{color:#ffb547;font-size:12px;margin-top:20px;line-height:1.6;}
+.copy-ok{color:#39ff9b;font-size:11px;margin-top:4px;}
+</style>
+</head>
+<body>
+
+<h1>ANIA · GENERADOR VAPID</h1>
+<p style="color:#79a88f;font-size:13px;">Genera el par de claves VAPID que necesita tu servidor para enviar notificaciones push.</p>
+
+<button id="btnGen">🔑 GENERAR CLAVES</button>
+
+<div id="result" style="display:none;">
+  <div class="box">
+    <div class="label">Public Key (VAPID_PUBLIC_KEY)</div>
+    <div class="value" id="pub" onclick="copy('pub')"></div>
+    <div class="copy-ok" id="pub-ok"></div>
+  </div>
+  <div class="box">
+    <div class="label">Private Key (VAPID_PRIVATE_KEY) — NO COMPARTIR</div>
+    <div class="value" id="priv" onclick="copy('priv')"></div>
+    <div class="copy-ok" id="priv-ok"></div>
+  </div>
+  <div class="note">
+    ⚠️ <b>Guarda estas claves.</b> Cópialas a Render como variables de entorno:
+    <br>· <b>VAPID_PUBLIC_KEY</b> = la de arriba
+    <br>· <b>VAPID_PRIVATE_KEY</b> = la de abajo
+    <br>· <b>VAPID_SUBJECT</b> = mailto:tu-email@ejemplo.com
+    <br><br>
+    Pulsa sobre cualquier valor para copiarlo.
+  </div>
+</div>
+
+<script>
+async function generar(){
+  const btn = document.getElementById('btnGen');
+  btn.disabled = true;
+  btn.textContent = 'Generando...';
+  
+  try{
+    const keyPair = await crypto.subtle.generateKey(
+      { name: 'ECDSA', namedCurve: 'P-256' },
+      true,
+      ['sign', 'verify']
+    );
+    
+    const publicKeyRaw = await crypto.subtle.exportKey('raw', keyPair.publicKey);
+    const privateKeyJwk = await crypto.subtle.exportKey('jwk', keyPair.privateKey);
+    
+    const b64url = (bytes) => btoa(String.fromCharCode(...bytes))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    
+    const publicKey = b64url(new Uint8Array(publicKeyRaw));
+    
+    // Private key: leer d del JWK (ya está en base64url)
+    const d = privateKeyJwk.d.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = d + '='.repeat((4 - d.length % 4) % 4);
+    const privateKey = b64url(Uint8Array.from(atob(padded), c => c.charCodeAt(0)));
+    
+    document.getElementById('pub').textContent = publicKey;
+    document.getElementById('priv').textContent = privateKey;
+    document.getElementById('result').style.display = 'block';
+    btn.textContent = '✅ CLAVES GENERADAS';
+  }catch(e){
+    alert('Error: ' + e.message);
+    btn.disabled = false;
+    btn.textContent = '🔑 GENERAR CLAVES';
+  }
+}
+
+function copy(id){
+  const el = document.getElementById(id);
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    const ok = document.getElementById(id + '-ok');
+    ok.textContent = '✓ Copiado';
+    setTimeout(() => ok.textContent = '', 1500);
+  });
+}
+
+document.getElementById('btnGen').onclick = generar;
+</script>
+</body>
+</html>
