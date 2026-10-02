@@ -1,0 +1,187 @@
+/* ============================================================
+   AUTONOMO · Panel de control del núcleo autónomo
+============================================================ */
+
+#panelAutonomo {
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+/* ---------- Stats ---------- */
+.aut-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.aut-stat {
+  background: linear-gradient(135deg, rgba(8,21,15,.6), rgba(4,8,6,.85));
+  border: 1px solid rgba(45,224,138,.18);
+  border-radius: 10px;
+  padding: 10px 6px;
+  text-align: center;
+}
+.aut-stat-num {
+  font-size: 18px;
+  color: var(--acc2);
+  letter-spacing: .05em;
+  line-height: 1.2;
+  margin-bottom: 2px;
+  text-shadow: 0 0 12px rgba(45,224,138,.4);
+}
+.aut-stat-lbl {
+  font-size: 8.5px;
+  letter-spacing: .18em;
+  color: var(--dim);
+  text-transform: uppercase;
+}
+
+/* ---------- Acciones ---------- */
+.aut-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.aut-btn {
+  flex: 1 1 auto;
+  min-width: 100px;
+  padding: 8px 10px;
+  font-size: 10px;
+  letter-spacing: .18em;
+  background: rgba(45,224,138,.06);
+  border: 1px solid var(--line);
+  color: var(--acc2);
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--mono);
+  transition: border-color .2s, background .2s;
+}
+.aut-btn:hover {
+  border-color: var(--line2);
+  background: rgba(45,224,138,.12);
+}
+.aut-btn:active {
+  transform: translateY(1px);
+}
+
+/* ---------- Título de sección ---------- */
+.aut-section-title {
+  font-size: 10px;
+  letter-spacing: .28em;
+  color: var(--acc);
+  text-transform: uppercase;
+  margin: 14px 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed rgba(45,224,138,.15);
+}
+
+/* ---------- Reglas ---------- */
+.aut-reglas {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.aut-regla {
+  background: rgba(8,21,15,.5);
+  border: 1px solid rgba(45,224,138,.15);
+  border-radius: 8px;
+  padding: 10px 12px;
+  transition: opacity .2s, border-color .2s;
+}
+.aut-regla.off {
+  opacity: .45;
+}
+.aut-regla-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.aut-regla-id {
+  font-size: 11px;
+  color: var(--acc2);
+  letter-spacing: .1em;
+}
+.aut-toggle {
+  font-size: 9px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--dim);
+  font-family: var(--mono);
+  cursor: pointer;
+  letter-spacing: .1em;
+}
+.aut-toggle.on {
+  color: var(--acc2);
+  border-color: var(--line2);
+  background: rgba(45,224,138,.08);
+}
+.aut-toggle.off {
+  color: var(--amber);
+  border-color: rgba(255,181,71,.4);
+}
+.aut-regla-desc {
+  font-size: 11px;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+.aut-regla-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: .08em;
+}
+
+/* ---------- Historial ---------- */
+.aut-hist {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.aut-hist-item {
+  display: grid;
+  grid-template-columns: 60px 1fr auto;
+  gap: 8px;
+  padding: 6px 8px;
+  background: rgba(8,21,15,.35);
+  border-left: 2px solid var(--acc);
+  border-radius: 4px;
+  font-size: 10.5px;
+  align-items: center;
+}
+.aut-hist-item.fail {
+  border-left-color: var(--danger);
+  opacity: .7;
+}
+.aut-hist-hora {
+  color: var(--dim);
+  font-size: 9px;
+  letter-spacing: .05em;
+}
+.aut-hist-desc {
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.aut-hist-tipo {
+  font-size: 8.5px;
+  color: var(--acc);
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border: 1px solid rgba(45,224,138,.25);
+  border-radius: 3px;
+}
+
+/* ---------- Responsive ---------- */
+@media(max-width: 500px){
+  .aut-stats { grid-template-columns: repeat(2, 1fr); }
+  .aut-hist-item { grid-template-columns: 50px 1fr; }
+  .aut-hist-tipo { display: none; }
+}
