@@ -1,5 +1,5 @@
 {
-  "fecha": "2026-10-02T10:57:17.194Z",
+  "fecha": "2026-10-03T10:16:41.758Z",
   "analizadoPor": "Ania Security Agent v2",
   "hallazgos": [
     {
@@ -240,6 +240,20 @@
     },
     {
       "tipo": "codigo",
+      "regla": "AUTH-001",
+      "severidad": "alto",
+      "descripcion": "Route handler for `.put()` has no authentication middleware.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "AUTH-001",
+      "severidad": "alto",
+      "descripcion": "Route handler for `.put()` has no authentication middleware.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
       "regla": "ERR-003",
       "severidad": "bajo",
       "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
@@ -264,6 +278,20 @@
       "regla": "DOM-005",
       "severidad": "alto",
       "descripcion": "A \"message\" event handler does not validate event.origin.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
       "ubicacion": "desconocida"
     },
     {
@@ -593,6 +621,55 @@
       "regla": "DOM-001",
       "severidad": "alto",
       "descripcion": "Assigning a dynamic value to `.innerHTML` can introduce DOM-based XSS.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "CMDI-002",
+      "severidad": "critico",
+      "descripcion": "new Function() usage detected. This is equivalent to eval() and should be avoided.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "CMDI-002",
+      "severidad": "critico",
+      "descripcion": "new Function() usage detected. This is equivalent to eval() and should be avoided.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "CMDI-002",
+      "severidad": "critico",
+      "descripcion": "new Function() usage detected. This is equivalent to eval() and should be avoided.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DOM-001",
+      "severidad": "alto",
+      "descripcion": "Assigning a dynamic value to `.innerHTML` can introduce DOM-based XSS.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DOM-003",
+      "severidad": "alto",
+      "descripcion": "`window.open()` with dynamic input can cause an open redirect or execute a javascript: URI.",
+      "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "ERR-003",
+      "severidad": "bajo",
+      "descripcion": "No process.on('unhandledRejection') handler found. Unhandled promise rejections can crash the process.",
       "ubicacion": "desconocida"
     },
     {
@@ -916,12 +993,19 @@
       "severidad": "bajo",
       "descripcion": "Dependency \"basesec\" is declared but never imported in source files.",
       "ubicacion": "desconocida"
+    },
+    {
+      "tipo": "codigo",
+      "regla": "DEP-003",
+      "severidad": "bajo",
+      "descripcion": "Dependency \"web-push\" is declared but never imported in source files.",
+      "ubicacion": "desconocida"
     }
   ],
   "resumen": {
-    "critico": 2,
-    "alto": 65,
+    "critico": 5,
+    "alto": 69,
     "medio": 8,
-    "bajo": 55
+    "bajo": 60
   }
 }
