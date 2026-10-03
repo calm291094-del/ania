@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Reemplazar tokens manuales por JWT oficial",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Crear tokens con una librería confiable evita errores de firma y expiración. Garantiza que la validación sea estándar y comprobada.",
+        "como": "Incorpora jsonwebtoken, sustituye makeToken y verifyToken por sus funciones y ajusta el middleware auth para usar el token JWT."
+      },
+      {
+        "titulo": "Forzar HTTPS y redirigir tráfico HTTP",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "El servidor expone datos sin cifrar, lo que permite intercepciones y ataques Man‑in‑the‑Middle. HTTPS protege la confidencialidad e integridad de las peticiones.",
+        "como": "Configura un proxy inverso (Nginx, Cloudflare) o usa express-enforces-ssl y redirige todas las rutas a https antes de procesar."
+      },
+      {
+        "titulo": "Capturar y registrar errores de fetch a GitHub",
+        "categoria": "bug",
+        "prioridad": "alta",
+        "descripcion": "Las llamadas a la API de GitHub pueden fallar sin que el código maneje el error, dejando al cliente sin respuesta clara. El registro facilita la depuración.",
+        "como": "EnghRead y ghWrite envolver en try/catch, devolver mensajes de error estructurados y usar console.error con stack trace."
+      },
+      {
+        "titulo": "Permitir TTL configurable y uso de ETag en caché GitHub",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "Un TTL fijo de 30 s puede no adaptarse a cambios frecuentes o a cargas altas. Usar ETag permite invalidar solo cuando el contenido cambia.",
+        "como": "Añade variable de entorno TTL_GH_CACHE, usa la cabecera ETag en la respuesta y actualiza GHCache solo cuando el ETag difiere."
+      },
+      {
+        "titulo": "Controlar roles de usuario en rutas administrativas",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "Sin verificación de rol, cualquier usuario autenticado puede ejecutar acciones de administrador, comprometiendo la integridad de los datos.",
+        "como": "Crear middleware checkRole('admin') que compruebe req.user.rol, y usarlo en todas las rutas de administración, registrando la acción en logAdmin."
+      }
+    ],
+    "fecha": "2026-10-03T08:53:44.855Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 19401,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Rate limiting en login",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -186,52 +233,5 @@
     ],
     "duracionMs": 14939,
     "fuente": "ia"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Rate limiting en login",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Sin límite de intentos, un atacante puede probar contraseñas por fuerza bruta. Añadir throttling protege las cuentas.",
-        "como": "Instalar express-rate-limit y aplicar 5 intentos por 15 min por IP en /ania/login. Guardar bloqueos en memoria."
-      },
-      {
-        "titulo": "Validación de email",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Se aceptan correos sin verificar. Un typo bloquea la cuenta para siempre y permite registros falsos.",
-        "como": "Enviar email de confirmación con token temporal al registrarse. Marcar usuario como verificado tras el clic."
-      },
-      {
-        "titulo": "HTTPS forzado en cookies",
-        "categoria": "seguridad",
-        "prioridad": "media",
-        "descripcion": "Los tokens viajan en headers pero no se fuerza HTTPS. En redes públicas podría haber interceptación.",
-        "como": "Añadir middleware que redirija HTTP a HTTPS en producción. En Render ya es automático, pero validar."
-      },
-      {
-        "titulo": "Compresión gzip",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "Las respuestas JSON viajan sin comprimir. Reducir tamaño mejora tiempos de carga en móvil.",
-        "como": "Añadir middleware compression de Express con umbral de 1KB. Beneficio doble si se cachean respuestas."
-      },
-      {
-        "titulo": "Exportar memoria del usuario",
-        "categoria": "feature",
-        "prioridad": "baja",
-        "descripcion": "El usuario no puede descargar sus datos. La portabilidad de datos es un derecho y mejora la confianza.",
-        "como": "Endpoint GET /ania/me/export que devuelva JSON con toda su memoria. Botón en Ajustes."
-      }
-    ],
-    "fecha": "2026-09-28T09:24:38.507Z",
-    "analizadoPor": "Ania Auto-Agent v3 (fallback-local (la IA no respondió))",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 61170,
-    "fuente": "fallback"
   }
 ]
