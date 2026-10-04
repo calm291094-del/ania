@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Centralizar manejo de errores asíncronos",
+        "categoria": "bug",
+        "prioridad": "alta",
+        "descripcion": "Las promesas sin catch provocan que el servidor quede sin respuesta o se caiga silenciosamente.",
+        "como": "Agregar middleware de error global y envolver rutas con try/catch o usar express-async-errors para propagarlos."
+      },
+      {
+        "titulo": "Reemplazar token personalizado por JWT",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "El token actual no utiliza hashing estándar ni verificación de expiración segura, aumentando riesgo de falsificación.",
+        "como": "Instalar jsonwebtoken, firmar con HMAC y validar con middleware en cada ruta protegida."
+      },
+      {
+        "titulo": "Validar y cargar variables de entorno con dotenv",
+        "categoria": "bug",
+        "prioridad": "alta",
+        "descripcion": "Variables críticas pueden quedar undefined, generando fallos en producción sin avisos claros.",
+        "como": "Instalar dotenv, cargar .env en inicio y lanzar error explícito si ANIA_SECRET, GITHUB_TOKEN, VAPID keys faltan."
+      },
+      {
+        "titulo": "Añadir validación de payloads de entrada",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "Los endpoints aceptan datos sin comprobar, lo que puede provocar inyecciones o estados inesperados.",
+        "como": "Usar express-validator o Joi para validar campos obligatorios, tipos y formatos antes de procesar."
+      },
+      {
+        "titulo": "Optimizar caché y manejo de GitHub API",
+        "categoria": "rendimiento",
+        "prioridad": "alta",
+        "descripcion": "Cada acceso a GitHub realiza peticiones sin limitar la frecuencia, generando latencia y posibles límites de tasa.",
+        "como": "Implementar LRU-cache con TTL configurable, manejar códigos 429/403, y usar paginación para archivos grandes."
+      }
+    ],
+    "fecha": "2026-10-04T09:22:48.837Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 30228,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Reemplazar tokens manuales por JWT oficial",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -185,53 +232,6 @@
       "package.json"
     ],
     "duracionMs": 21471,
-    "fuente": "ia"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Reemplazar token personalizado por JWT estándar",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "El token creado manualmente no garantiza la integridad ni la expiración correcta, lo que puede llevar a vulnerabilidades de falsificación.",
-        "como": "Utilizar la librería jsonwebtoken para firmar, verificar y manejar expiraciones de forma segura, reduciendo la superficie de ataque."
-      },
-      {
-        "titulo": "Cachear usuarios y memorias en memoria",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "Cada petición de login o registro lee y descifra los archivos completos desde GitHub, generando latencia y consumo de API.",
-        "como": "Almacenar los datos en un objeto Map con TTL, invalidando solo cuando se detecta una escritura, para acelerar respuestas y limitar llamadas externas."
-      },
-      {
-        "titulo": "Mejorar la retroalimentación de validaciones de formulario",
-        "categoria": "ux",
-        "prioridad": "media",
-        "descripcion": "Los mensajes de error son genéricos y no indican al usuario la causa exacta de la falla (p.ej. email duplicado).",
-        "como": "Mostrar mensajes específicos y destacar los campos inválidos en el frontend, ayudando al usuario a corregir los datos rápidamente."
-      },
-      {
-        "titulo": "Corregir error de sintaxis en la ruta de login",
-        "categoria": "bug",
-        "prioridad": "alta",
-        "descripcion": "Falta un paréntesis de cierre en la respuesta de error de login, provocando un error de compilación y bloqueando la ruta.",
-        "como": "Añadir el paréntesis faltante y probar la ruta para asegurar que responde correctamente a credenciales inválidas."
-      },
-      {
-        "titulo": "Implementar flujo de restablecimiento de contraseña por email",
-        "categoria": "feature",
-        "prioridad": "media",
-        "descripcion": "Actualmente no existe forma de recuperar una contraseña olvidada, lo que limita la usabilidad y la retención de usuarios.",
-        "como": "Utilizar nodemailer para enviar un enlace de restablecimiento con un token único, y crear nuevas rutas para generar y validar ese token."
-      }
-    ],
-    "fecha": "2026-09-29T09:29:42.638Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 14939,
     "fuente": "ia"
   }
 ]
