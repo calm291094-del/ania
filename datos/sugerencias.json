@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Centralizar y validar variables de entorno",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Verificar que todas las claves críticas estén definidas al arrancar el servidor. Abortarse si falta alguna, evitando comportamientos impredecibles.",
+        "como": "Implementar una función que recorra las variables requeridas, lance un error claro y termine el proceso cuando falte alguna."
+      },
+      {
+        "titulo": "Cachear usuarios y memorias en memoria",
+        "categoria": "rendimiento",
+        "prioridad": "alta",
+        "descripcion": "Almacenar en caché los resultados de lectura de usuarios y memorias durante su vida útil para reducir llamadas a GitHub.",
+        "como": "Usar un Map con TTL, invalidar la entrada cuando se escriba y devolver datos de la caché cuando estén vigentes."
+      },
+      {
+        "titulo": "Manejo de errores de GitHub con backoff exponencial",
+        "categoria": "bug",
+        "prioridad": "media",
+        "descripcion": "Capturar fallos de la API y reintentar automáticamente con backoff, evitando bloqueos por sobrecarga de peticiones.",
+        "como": "Aplicar un algoritmo de reintentos con retardos crecientes y limitar el número de intentos para que no se quede en bucle infinito."
+      },
+      {
+        "titulo": "Forzar HTTPS y HSTS",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Configurar helmet para obligar el uso de HTTPS y enviar el encabezado HSTS, protegiendo la conexión de downgrade attacks.",
+        "como": "Añadir helmet({ hsts:{ maxAge:31536000, includeSubDomains:true } }) y mantener app.set('trust proxy',1) para proxies."
+      },
+      {
+        "titulo": "Validar y sanitizar entradas de registro/login",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "Comprobar longitud, patrones y sanitizar datos antes de almacenarlos, reduciendo riesgo de inyección y ataques de XSS.",
+        "como": "Utilizar express-validator, validar campos y escapar caracteres especiales antes de procesar la solicitud."
+      }
+    ],
+    "fecha": "2026-10-05T10:02:46.601Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 21581,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Centralizar manejo de errores asíncronos",
         "categoria": "bug",
         "prioridad": "alta",
@@ -185,53 +232,6 @@
       "package.json"
     ],
     "duracionMs": 22019,
-    "fuente": "ia"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Validación de variables de entorno al arranque",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "El servidor no comprueba que GITHUB_TOKEN, ANIA_SECRET y TOKEN_SECRET estén definidos, lo que puede provocar fallos de autenticación y exponer errores sensibles.",
-        "como": "Añadir una función que verifique todas las variables requeridas al iniciar la aplicación y lance un error claro si falta alguna."
-      },
-      {
-        "titulo": "Cacheo local de usuarios y memorias",
-        "categoria": "rendimiento",
-        "prioridad": "alta",
-        "descripcion": "Cada petición lee y escribe los archivos de usuarios y memorias directamente en GitHub, generando latencia y consumo innecesario de API.",
-        "como": "Mantener un Map en memoria con TTL para los datos cargados y invalidarlo cuando se escriben, reduciendo llamadas a GitHub."
-      },
-      {
-        "titulo": "Sanitización de entradas de usuario",
-        "categoria": "seguridad",
-        "prioridad": "media",
-        "descripcion": "Los campos de nombre y correo se aceptan tal cual, lo que permite XSS o inyección de datos maliciosos en la base de datos.",
-        "como": "Aplicar regex estrictos o una librería de sanitización antes de almacenar los valores, y escapar al mostrarlos."
-      },
-      {
-        "titulo": "Endpoint de recuperación de contraseña",
-        "categoria": "feature",
-        "prioridad": "media",
-        "descripcion": "No existe una forma de resetear la contraseña, limitando la experiencia del usuario y la seguridad del sistema.",
-        "como": "Crear un endpoint que envíe un token único por email, verifique su validez y permita cambiar la contraseña de forma segura."
-      },
-      {
-        "titulo": "Forzar HTTPS y HSTS con Helmet",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Helmet está configurado sin HSTS, lo que deja la aplicación vulnerable a ataques de downgrade HTTPS.",
-        "como": "Agregar la opción hsts a Helmet con un maxAge adecuado y usar app.set('trust proxy', 1) para que la política se aplique correctamente."
-      }
-    ],
-    "fecha": "2026-09-30T09:21:10.085Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 21471,
     "fuente": "ia"
   }
 ]
