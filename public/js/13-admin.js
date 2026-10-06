@@ -77,10 +77,8 @@ $('registerBox').addEventListener('submit', async (e)=>{
 async function cargarPerfilYPersonalizar(){
   if (!Session || !Session.id) return;
   try{
-    const r = await fetch(CONFIG.ANIA_API + '/ania/public/perfiles.json');
-    if (!r.ok) return;
-    const perfiles = await r.json();
-    const p = perfiles[Session.id];
+    const d = await AniaAPI.req('/ania/me/perfil');
+    const p = d.ok ? d.perfil : null;
     if (!p) return;
     store.set('miPerfil', p);
     aplicarPersonalizacion(p);
