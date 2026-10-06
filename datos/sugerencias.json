@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Validar variables de entorno críticas al arrancar",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Revisar que ANIA_SECRET, GITHUB_TOKEN y VAPID keys existan antes de iniciar el servidor, evitando fallos silenciosos y exposiciones de datos por defecto.",
+        "como": "Añadir una función de inicialización que verifique cada variable, loguee un mensaje claro y cierre el proceso si falta alguna."
+      },
+      {
+        "titulo": "Capturar errores asincrónicos en las rutas",
+        "categoria": "bug",
+        "prioridad": "alta",
+        "descripcion": "Los handlers que usan async/await pueden lanzar promesas no capturadas, provocando que el servidor quede sin respuesta a la petición.",
+        "como": "Implementar un middleware que envuelva cada ruta con try/catch o usar la librería express-async-errors para que los errores se propaguen al error‑handler global."
+      },
+      {
+        "titulo": "Hacer configurable el TTL del caché GitHub",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "El tiempo de vida actual del caché es fijo (30s) y no se adapta a cambios de uso o volumen, pudiendo provocar lecturas innecesarias o datos obsoletos.",
+        "como": "Exponer una variable de entorno (GH_CACHE_TTL) y usarla al inicializar GHCache, permitiendo ajustes sin recompilar el código."
+      },
+      {
+        "titulo": "Reemplazar scrypt por Argon2 en el hash de contraseñas",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "scryptSync es síncrono y menos configurable; Argon2 ofrece mayor resistencia a ataques de GPU y permite ajustar memoria y tiempo de ejecución.",
+        "como": "Instalar la librería argon2, cambiar hashPass y checkPass para usar argon2.hash y argon2.verify, y migrar las contraseñas existentes mediante un proceso de rehash al primer login."
+      },
+      {
+        "titulo": "Reactivar y reforzar la política de seguridad de contenido (CSP) de Helmet",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "Al desactivar CSP se expone a ataques de inyección de scripts; habilitar una política mínima protege contra XSS y clickjacking.",
+        "como": "Eliminar la opción contentSecurityPolicy: false y definir un CSP razonable con directivas como default-src 'self'; script-src 'self' 'nonce-<nonce>'; report-uri para monitoreo."
+      }
+    ],
+    "fecha": "2026-10-06T09:48:10.536Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 19911,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Centralizar y validar variables de entorno",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -186,52 +233,5 @@
     ],
     "duracionMs": 24052,
     "fuente": "fallback"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Externalizar secretos con dotenv",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Los secretos (ANIA_SECRET, TOKEN_SECRET, GITHUB_TOKEN) están codificados, lo que expone el riesgo de filtración accidental. Externalizarlos reduce la superficie de ataque y facilita la rotación de claves.",
-        "como": "Instalar la librería dotenv, crear un archivo .env con las variables y cargarlo al inicio con require('dotenv').config(); luego usar process.env sin hardcode."
-      },
-      {
-        "titulo": "Usar JWT estándar en lugar de implementación manual",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "La creación y verificación de tokens a mano es propensa a errores y carece de soporte para revocación y audiencias. Una librería estándar garantiza cumplimiento con el estándar y mayor robustez.",
-        "como": "Instalar jsonwebtoken, reemplazar makeToken y verifyToken con jwt.sign(payload, TOKEN_SECRET, {expiresIn:'30d'}); y jwt.verify(token, TOKEN_SECRET) dentro de try/catch."
-      },
-      {
-        "titulo": "Centralizar gestión de errores en Express",
-        "categoria": "bug",
-        "prioridad": "media",
-        "descripcion": "Los errores se registran pero no se envían respuestas coherentes, lo que puede exponer información sensible o resultar en respuestas 500 sin detalle útil.",
-        "como": "Añadir un middleware de error app.use((err,req,res,next)=>{ console.error(err); res.status(err.status||500).json({error:err.message||'error interno'}); }); al final de la cadena de middlewares."
-      },
-      {
-        "titulo": "Validar y sanitizar entradas de usuario",
-        "categoria": "seguridad",
-        "prioridad": "media",
-        "descripcion": "Sin validación, los datos enviados por el cliente pueden contener valores inesperados o maliciosos, permitiendo ataques de inyección o corrupción de datos.",
-        "como": "Incorporar express-validator o lógica manual para comprobar formato de email, longitud de contraseñas y sanitizar campos antes de guardarlos, devolviendo 400 en caso de fallo."
-      },
-      {
-        "titulo": "Optimizar caché de GitHub con TTL y LRU",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "El TTL actual de 30 s provoca demasiadas peticiones a GitHub, ralentizando la respuesta y consumiendo ancho de banda.",
-        "como": "Reemplazar la estructura de Map por lru-cache o node-cache, establecer un TTL mayor (p. ej., 5 min) y limpiar automáticamente entradas expiradas, reduciendo llamadas externas."
-      }
-    ],
-    "fecha": "2026-10-01T09:48:07.655Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 22019,
-    "fuente": "ia"
   }
 ]
