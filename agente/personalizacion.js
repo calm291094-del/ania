@@ -1,5 +1,5 @@
-// agente/personalizacion.js · Ania Personalization Agent v1
-// Analiza la memoria privada de cada usuario y genera perfiles anonimizados
+// agente/personalizacion.js · Ania Personalization Agent v2
+// ⭐ FIX #11 · tolerante a memorias con formatos antiguos
 const fs = require('fs');
 const crypto = require('crypto');
 
@@ -22,7 +22,6 @@ function decrypt(b64){
   return JSON.parse(Buffer.concat([d.update(data), d.final()]).toString('utf8'));
 }
 
-// Detecta temas por palabras clave
 const TEMAS = {
   cafe:      /caf[eé]|espresso|barista|grano|latte/i,
   anime:     /anime|manga|isekai|rimuru|ainz|subaru/i,
@@ -34,7 +33,6 @@ const TEMAS = {
   salud:     /salud|enfermo|m[eé]dico|dolor|ejercicio/i
 };
 
-// Tono del usuario
 function detectarTono(textos){
   const t = textos.join(' ').toLowerCase();
   let formal = 0, informal = 0, emojis = 0, urgente = 0;
@@ -50,7 +48,6 @@ function detectarTono(textos){
   return tono;
 }
 
-// Hora del día más activa
 function detectarHorario(timestamps){
   if (!timestamps.length) return 'variable';
   const horas = timestamps.map(t => new Date(t).getHours());
@@ -61,11 +58,28 @@ function detectarHorario(timestamps){
   return 'madrugada';
 }
 
+/* ⭐ FIX #11 · Normaliza hechos y gustos de cualquier formato */
+function normalizarHechos(arr){
+  if (!Array.isArray(arr)) return [];
+  return arr.map(h => {
+    if (typeof h === 'string') return { valor: h, t: null };
+    if (h && typeof h === 'object') return { valor: h.valor || h.texto || '', t: h.t || null };
+    return { valor: String(h || ''), t: null };
+  }).filter(h => h.valor);
+}
+function normalizarGustos(arr){
+  if (!Array.isArray(arr)) return [];
+  return arr.map(g => {
+    if (typeof g === 'string') return g;
+    if (g && typeof g === 'object') return g.valor || g.texto || '';
+    return String(g || '');
+  }).filter(Boolean);
+}
+
 async function main(){
-  console.log('🧠 Ania Personalization Agent iniciado');
+  console.log('🧠 Ania Personalization Agent v2 iniciado');
   const perfiles = {};
 
-  // 1. Leer usuarios
   if (!fs.existsSync(RUTA_USUARIOS)){
     console.log('⚠ No hay usuarios. Nada que hacer.');
     return;
@@ -74,24 +88,24 @@ async function main(){
   const users = decrypt(usersRaw);
   console.log(`✓ ${users.length} usuarios leídos`);
 
-  // 2. Leer memorias
   let memorias = {};
   if (fs.existsSync(RUTA_MEMORIAS)){
-    try{ memorias = decrypt(fs.readFileSync(RUTA_MEMORIAS, 'utf8')); }catch{}
+    try{ memorias = decrypt(fs.readFileSync(RUTA_MEMORIAS, 'utf8')); }catch(e){}
   }
   console.log(`✓ ${Object.keys(memorias).length} memorias leídas`);
 
-  // 3. Analizar cada usuario
   for (const u of users){
     const mem = memorias[u.id] || {};
-    const hechos = Array.isArray(mem.hechos) ? mem.hechos : [];
-    const gustos = Array.isArray(mem.gustos) ? mem.gustos : [];
 
-    // Textos del usuario (de hechos y gustos)
-    const textos = hechos.map(h => String(h.valor || '')).concat(gustos.map(g => String(g)));
+    // ⭐ FIX #11 · Normalizar
+    const hechos = normalizarHechos(mem.hechos);
+    const gustos = normalizarGustos(mem.gustos);
+
+    const textos = hechos.map(h => String(h.valor))
+      .concat(gustos.map(g => String(g)))
+      .filter(Boolean);
     const timestamps = hechos.map(h => h.t).filter(Boolean);
 
-    // Temas detectados
     const temasContados = {};
     for (const [tema, re] of Object.entries(TEMAS)){
       const n = textos.filter(t => re.test(t)).length;
@@ -100,8 +114,9 @@ async function main(){
     const temasTop = Object.entries(temasContados)
       .sort((a,b)=>b[1]-a[1]).slice(0, 3).map(([t])=>t);
 
-    // Métricas
-    const longitudMedia = textos.length ? Math.round(textos.reduce((a,t)=>a+t.length,0)/textos.length) : 0;
+    const longitudMedia = textos.length
+      ? Math.round(textos.reduce((a,t)=>a+t.length,0)/textos.length)
+      : 0;
 
     perfiles[u.id] = {
       usuario: u.usuario,
@@ -115,12 +130,10 @@ async function main(){
     };
   }
 
-  // 4. Guardar
   if (!fs.existsSync('datos')) fs.mkdirSync('datos');
   fs.writeFileSync(RUTA_PERFILES, JSON.stringify(perfiles, null, 2));
   console.log(`✅ Perfiles guardados en ${RUTA_PERFILES} (${Object.keys(perfiles).length} usuarios)`);
 
-  // 5. Log de resumen
   for (const [id, p] of Object.entries(perfiles)){
     console.log(`  · @${p.usuario} → ${p.temas.join(', ') || 'sin temas'} · ${p.tono} · ${p.horario}`);
   }
