@@ -76,10 +76,11 @@ $('registerBox').addEventListener('submit', async (e)=>{
 /* ---------- Personalización ---------- */
 async function cargarPerfilYPersonalizar(){
   if (!Session || !Session.id) return;
+  if (!AniaAPI.token) return;
   try{
     const d = await AniaAPI.req('/ania/me/perfil');
-    const p = d.ok ? d.perfil : null;
-    if (!p) return;
+    if (!d || !d.ok || !d.perfil) return;
+    const p = d.perfil;
     store.set('miPerfil', p);
     aplicarPersonalizacion(p);
   }catch(e){ console.warn('[Personalización]', e.message); }
