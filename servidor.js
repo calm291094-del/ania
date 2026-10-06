@@ -225,7 +225,22 @@ const limiterGeneral = rateLimit({ windowMs: 15*60*1000, max: 300, standardHeade
 
 /* ==================== MIDDLEWARE ==================== */
 app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false, crossOriginResourcePolicy: { policy:'cross-origin' } }));
-app.use(cors());
+const ORIGENES_PERMITIDOS = [
+  'https://calm291094-del.github.io',
+  'https://ania-oqct.onrender.com',
+  /^http:\/\/localhost:\d+$/,
+  /^http:\/\/127\.0\.0\.1:\d+$/
+];
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true); // curl, apps nativas
+    const ok = ORIGENES_PERMITIDOS.some(o =>
+      typeof o === 'string' ? o === origin : o.test(origin)
+    );
+    cb(ok ? null : new Error('CORS bloqueado'), ok);
+  },
+  credentials: false
+}));
 app.use(express.json({ limit:'2mb' }));
 
 /* ==================== HEALTH ==================== */
