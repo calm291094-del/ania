@@ -6,7 +6,11 @@ const path = require('path');
 const crypto = require('crypto');
 
 const RAIZ = path.join(__dirname, 'datos');
-const SECRET = process.env.ANIA_SECRET || 'ania-local-dev-fallback';
+const SECRET = process.env.ANIA_SECRET;
+if (!SECRET){
+  console.error('✖ FATAL: falta ANIA_SECRET. Ejecuta ania.py para generarlo.');
+  process.exit(1);
+}
 const KEY = crypto.createHash('sha256').update(SECRET).digest();
 
 function asegurarDir(p){
