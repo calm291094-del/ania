@@ -681,7 +681,7 @@ async function _sendCore(text){
   }
 }
 
-async function send(text){
+window.AniaDispatch = async function(text){
   if (!text) return;
   if (isOffline()){
     OfflineQueue.push(text);
@@ -690,6 +690,10 @@ async function send(text){
     return;
   }
   return _sendCore(text);
+};
+
+async function send(text){
+  return window.AniaDispatch(text);
 }
 
 async function procesarColaOffline(){
