@@ -248,16 +248,16 @@ function makeVideo(frase){
 
 /* ---------- Interceptor de comandos de video ---------- */
 (function(){
-  const _sendOriginal = _sendCore;
-  window.send = async function(text){
+  const _origDispatch = window.AniaDispatch;
+  window.AniaDispatch = async function(text){
     const low = LINGUA.normalizar(text);
     const vM = low.match(/video\s+(?:de\s+|con\s+)?(.+)/);
     if (vM){
       const frase = (vM[1] || '').trim();
       if (frase){ makeVideo(frase); return; }
-      return personaReply('Dime que frase quieres en el video.');
+      return personaReply('Dime qué frase quieres en el video.');
     }
-    return _sendOriginal(text);
+    return _origDispatch(text);
   };
 })();
 
