@@ -9,45 +9,22 @@
 
 /* ⭐ FIX #5 · Lista negra de tokens peligrosos para reglas serializadas.
    Se aplica a cuandoStr, cuerpoStr y textoStr antes de pasarlos a new Function().
-   Bloquea acceso a red, filesystem, prototipos y APIs globales sensibles. */
-const _TOKENS_BLOQUEADOS = /\b(
-  eval|
-  Function|
-  fetch|
-  XMLHttpRequest|
-  WebSocket|
-  EventSource|
-  navigator\.sendBeacon|
-  import|
-  require|
-  importScripts|
-  Worker|
-  SharedWorker|
-  ServiceWorker|
-  process|
-  globalThis|
-  window\s*\[|
-  document\s*\[|
-  self\s*\[|
-  top\s*\[|
-  parent\s*\[|
-  opener\s*\[|
-  localStorage|
-  sessionStorage|
-  indexedDB|
-  cookie|
-  postMessage|
-  MessageChannel|
-  BroadcastChannel|
-  constructor|
-  __proto__|
-  prototype|
-  Reflect|
-  Proxy|
-  Promise\s*\.\s*allSettled|
-  Atomics|
-  SharedArrayBuffer
-)\b/x;
+   Bloquea acceso a red, filesystem, prototipos y APIs globales sensibles.
+   ⚠️ JS no soporta el flag /x ni saltos de línea en literales regex —
+      por eso se construye con new RegExp() a partir de un array. */
+const _TOKENS_BLOQUEADOS = new RegExp(
+  '\\b(' + [
+    'eval','Function','fetch','XMLHttpRequest','WebSocket','EventSource',
+    'import','require','importScripts',
+    'Worker','SharedWorker','ServiceWorker',
+    'process','globalThis',
+    'localStorage','sessionStorage','indexedDB','cookie',
+    'postMessage','MessageChannel','BroadcastChannel',
+    'constructor','__proto__','prototype',
+    'Reflect','Proxy','Atomics','SharedArrayBuffer',
+    'navigator','document','window','self','top','parent','opener'
+  ].join('|') + ')\\b'
+);
 
 function _textoSeguro(str){
   if (typeof str !== 'string') return false;
