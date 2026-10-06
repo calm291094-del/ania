@@ -1,115 +1,63 @@
-// agente/seguridad.js · Ania Security Agent v2
-// Realiza auditorías de seguridad con npm audit y basesec
+// agente/seguridad.js · Ania Security Agent v3
+// ⭐ FIX #22 · Solo npm audit (los paquetes basesec/express-sec-audit no existen)
 const { execSync } = require('child_process');
 const fs = require('fs');
 
 const RUTA_REPORTE = 'datos/security-report.json';
 
 async function main(){
-  console.log('🛡️ Ania Security Agent v2 iniciado');
+  console.log('🛡️ Ania Security Agent v3 iniciado');
   const reporte = {
     fecha: new Date().toISOString(),
-    analizadoPor: 'Ania Security Agent v2',
+    analizadoPor: 'Ania Security Agent v3',
     hallazgos: [],
     resumen: { critico: 0, alto: 0, medio: 0, bajo: 0 }
   };
 
-  // 1. Análisis de dependencias (npm audit)
+  /* ---- 1. npm audit ---- */
   console.log('🔍 Analizando dependencias con npm audit...');
-  try {
-    const auditOutput = execSync('npm audit --json', { encoding: 'utf-8', stdio: 'pipe' });
-    const auditData = JSON.parse(auditOutput);
-    if (auditData.vulnerabilities) {
-      for (const [pkg, vuln] of Object.entries(auditData.vulnerabilities)) {
-        const severity = vuln.severity; // low, moderate, high, critical
-        const nivel = { 'critical': 'critico', 'high': 'alto', 'moderate': 'medio', 'low': 'bajo' }[severity] || 'bajo';
+  try{
+    let auditData = null;
+    try{
+      const out = execSync('npm audit --json', { encoding:'utf-8', stdio:'pipe' });
+      auditData = JSON.parse(out);
+    }catch(err){
+      // npm audit devuelve código 1 si hay vulnerabilidades
+      if (err.stdout){
+        try{ auditData = JSON.parse(err.stdout); }catch(e){}
+      }
+    }
+    if (auditData && auditData.vulnerabilities){
+      for (const [pkg, vuln] of Object.entries(auditData.vulnerabilities)){
+        const severity = vuln.severity;
+        const nivel = { 'critical':'critico', 'high':'alto', 'moderate':'medio', 'low':'bajo' }[severity] || 'bajo';
         reporte.hallazgos.push({
           tipo: 'dependencia',
           paquete: pkg,
           severidad: nivel,
-          descripcion: `Vulnerabilidad en ${pkg}: ${vuln.via[0]?.title || 'CVE desconocido'}`,
+          descripcion: `Vulnerabilidad en ${pkg}: ${(vuln.via && vuln.via[0] && vuln.via[0].title) || 'CVE desconocido'}`,
           solucion: vuln.fixAvailable ? 'Actualizar el paquete' : 'No hay fix automático'
         });
         reporte.resumen[nivel]++;
       }
     }
-  } catch (e) {
-    // npm audit devuelve código 1 si hay vulnerabilidades, pero igual parsea el JSON.
-    // Si falla totalmente, lo registramos como error medio.
-    if (e.stdout) {
-      try {
-        const auditData = JSON.parse(e.stdout);
-        // ... procesar igual que arriba ...
-      } catch (parseErr) {}
-    }
+  }catch(e){
     console.error('Error en npm audit:', e.message);
     reporte.hallazgos.push({
-      tipo: 'error',
-      severidad: 'medio',
+      tipo: 'error', severidad: 'medio',
       descripcion: 'No se pudo ejecutar npm audit. Revisa las dependencias manualmente.'
     });
+    reporte.resumen.medio++;
   }
 
-  // 2. Análisis estático de código (basesec)
-  console.log('🔍 Analizando código con basesec...');
-  try {
-    // basesec scan . --format json --output basesec-report.json
-    execSync('npx basesec scan . --format json --output basesec-report.json', { encoding: 'utf-8', stdio: 'pipe' });
-    const basesecReport = JSON.parse(fs.readFileSync('basesec-report.json', 'utf-8'));
-    if (basesecReport.findings) {
-      basesecReport.findings.forEach(finding => {
-        const severity = finding.severity || 'medium';
-        const nivel = { 'critical': 'critico', 'high': 'alto', 'medium': 'medio', 'low': 'bajo' }[severity.toLowerCase()] || 'medio';
-        reporte.hallazgos.push({
-          tipo: 'codigo',
-          regla: finding.ruleId || 'desconocida',
-          severidad: nivel,
-          descripcion: finding.message || 'Hallazgo de seguridad',
-          ubicacion: finding.location?.file ? `${finding.location.file}:${finding.location.line || ''}` : 'desconocida'
-        });
-        reporte.resumen[nivel]++;
-      });
-    }
-    fs.unlinkSync('basesec-report.json'); // Limpiar
-  } catch (e) {
-    console.error('Error en basesec:', e.message);
-    // Si basesec falla, intentamos con express-sec-audit como fallback
-    try {
-      console.log('🔄 Intentando con express-sec-audit...');
-      execSync('npx express-sec-audit . --format json --log-name express-audit.json', { encoding: 'utf-8', stdio: 'pipe' });
-      const expressReport = JSON.parse(fs.readFileSync('express-audit.json', 'utf-8'));
-      if (expressReport.findings) {
-        expressReport.findings.forEach(finding => {
-          const severity = finding.severity || 'medium';
-          const nivel = { 'critical': 'critico', 'high': 'alto', 'medium': 'medio', 'low': 'bajo' }[severity.toLowerCase()] || 'medio';
-          reporte.hallazgos.push({
-            tipo: 'codigo',
-            regla: finding.ruleId || 'desconocida',
-            severidad: nivel,
-            descripcion: finding.message || 'Hallazgo de seguridad',
-            ubicacion: finding.location?.file ? `${finding.location.file}:${finding.location.line || ''}` : 'desconocida'
-          });
-          reporte.resumen[nivel]++;
-        });
-      }
-      fs.unlinkSync('express-audit.json');
-    } catch (e2) {
-      console.error('Error en express-sec-audit:', e2.message);
-      reporte.hallazgos.push({
-        tipo: 'error',
-        severidad: 'bajo',
-        descripcion: 'No se pudo ejecutar el análisis estático de código.'
-      });
-    }
-  }
-
-  // 3. Auditoría de cabeceras (verificación de Helmet)
-  console.log('🔍 Auditando cabeceras de seguridad...');
-  const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
-  if (!packageJson.dependencies.helmet) {
+  /* ---- 2. Auditoría de Helmet ---- */
+  console.log('🔍 Auditando middleware de seguridad...');
+  let packageJson = {};
+  try{ packageJson = JSON.parse(fs.readFileSync('package.json', 'utf-8')); }catch(e){}
+  const deps = packageJson.dependencies || {};
+  if (!deps.helmet){
     reporte.hallazgos.push({
-      tipo: 'configuracion',
-      severidad: 'alto',
+      tipo: 'configuracion', severidad: 'alto',
       descripcion: 'Falta el middleware Helmet para cabeceras de seguridad.',
       solucion: 'Ejecuta: npm install helmet && app.use(helmet())'
     });
@@ -117,8 +65,42 @@ async function main(){
   } else {
     console.log('✅ Helmet está instalado.');
   }
+  if (!deps['express-rate-limit']){
+    reporte.hallazgos.push({
+      tipo: 'configuracion', severidad: 'medio',
+      descripcion: 'Falta express-rate-limit: los endpoints sensibles pueden ser atacados por fuerza bruta.',
+      solucion: 'Ejecuta: npm install express-rate-limit'
+    });
+    reporte.resumen.medio++;
+  } else {
+    console.log('✅ Rate limiting instalado.');
+  }
 
-  // Guardar reporte
+  /* ---- 3. Búsqueda de patrones peligrosos en el código ---- */
+  console.log('🔍 Buscando patrones peligrosos en el código...');
+  const RIESGOS = [
+    { re: /\beval\s*\(/, desc: 'Uso de eval() detectado', sev: 'alto' },
+    { re: /new\s+Function\s*\(/, desc: 'Uso de new Function() detectado', sev: 'medio' },
+    { re: /child_process.*exec\s*\([^,]+,\s*\(\s*\)/, desc: 'exec() sin validación puede ser inyección', sev: 'alto' },
+    { re: /TOKEN_SECRET\s*\|\|\s*['"]x['"]/, desc: 'Fallback inseguro en TOKEN_SECRET', sev: 'critico' },
+    { re: /ANIA_SECRET\s*\|\|\s*['"]fallback['"]/, desc: 'Fallback inseguro en ANIA_SECRET', sev: 'critico' }
+  ];
+  const ARCHIVOS = ['servidor.js', 'modulos-backend.js', 'persistencia-local.js', 'agente/ania-agent.js'];
+  for (const f of ARCHIVOS){
+    if (!fs.existsSync(f)) continue;
+    const src = fs.readFileSync(f, 'utf8');
+    for (const r of RIESGOS){
+      if (r.re.test(src)){
+        reporte.hallazgos.push({
+          tipo: 'codigo', severidad: r.sev,
+          descripcion: `${r.desc} en ${f}`,
+          solucion: 'Revisar y refactorizar'
+        });
+        reporte.resumen[r.sev]++;
+      }
+    }
+  }
+
   if (!fs.existsSync('datos')) fs.mkdirSync('datos');
   fs.writeFileSync(RUTA_REPORTE, JSON.stringify(reporte, null, 2));
   console.log(`✅ Reporte guardado en ${RUTA_REPORTE}`);
