@@ -55,6 +55,19 @@ if (MODO === 'local'){
 }
 if (!ANIA_SECRET) console.warn('⚠ ANIA_SECRET no definido: usando clave de desarrollo');
 
+// ⭐ AÑADIR ESTE BLOQUE:
+if (MODO !== 'local'){
+  const faltantes = [];
+  if (!ANIA_SECRET)      faltantes.push('ANIA_SECRET');
+  if (!TOKEN_SECRET)     faltantes.push('ANIA_TOKEN_SECRET');
+  if (!GITHUB_TOKEN)     faltantes.push('GITHUB_TOKEN');
+  if (faltantes.length){
+    console.error('✖ FATAL: faltan variables obligatorias en modo nube:', faltantes.join(', '));
+    console.error('  Genera con: openssl rand -base64 48');
+    process.exit(1);
+  }
+}
+
 /* ==================== ABSTRACCIÓN DE PERSISTENCIA · CIFRADO ==================== */
 async function leer(rel){
   if (MODO === 'local') return persist.leerCifrado(rel);
