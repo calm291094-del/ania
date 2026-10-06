@@ -1,6 +1,5 @@
 // servidor-local.js · ANIA · servidor Express mínimo para uso doméstico
 // Sin rate-limit, bind a 127.0.0.1, cierre limpio vía /ania/shutdown.
-// Reutiliza la misma lógica de negocio que servidor.js pero con menos overhead.
 const express = require('express');
 const persist = require('./persistencia-local');
 const path = require('path');
@@ -8,20 +7,23 @@ const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
-const HOST = '127.0.0.1';  // solo local, nunca expuesto a la red
+const HOST = '127.0.0.1';
 const PUBLIC_DIR = path.join(__dirname, 'public');
 
 /* ==================== CONFIG ==================== */
 const P_KNOWLEDGE = 'datos/conocimiento.json';
 const P_ADMIN_LOG = 'datos/admin-log.json';
 
+/* ⭐ FIX #2 · Sin fallbacks silenciosos */
 const ANIA_SECRET  = process.env.ANIA_SECRET;
 const TOKEN_SECRET = process.env.ANIA_TOKEN_SECRET;
+const SUPERADMIN_EMAIL = (process.env.SUPERADMIN_EMAIL || '').toLowerCase() || null;
+
 if (!ANIA_SECRET || !TOKEN_SECRET){
-  console.error('✖ Faltan secretos. Arranca con python ania.py para generarlos automáticamente.');
+  console.error('✖ Faltan ANIA_SECRET o ANIA_TOKEN_SECRET.');
+  console.error('  Arranca con: python ania.py  (los genera automáticamente)');
   process.exit(1);
 }
-const SUPERADMIN_EMAIL = (process.env.SUPERADMIN_EMAIL || '').toLowerCase() || null;
 
 const KEY = crypto.createHash('sha256').update(ANIA_SECRET).digest();
 
@@ -30,18 +32,10 @@ process.on('unhandledRejection', (r) => console.error('⚠ Unhandled:', r));
 process.on('uncaughtException', (e) => console.error('⚠ Uncaught:', e.message));
 
 /* ==================== PERSISTENCIA ==================== */
-async function leer(rel){
-  return persist.leerCifrado(rel);
-}
-async function escribir(rel, obj){
-  return persist.escribirCifrado(rel, obj);
-}
-async function leerPlano(rel, fallback){
-  return persist.leerJSON(rel, fallback);
-}
-async function escribirPlano(rel, obj, msg){
-  return persist.escribirJSON(rel, obj);
-}
+async function leer(rel){ return persist.leerCifrado(rel); }
+async function escribir(rel, obj){ return persist.escribirCifrado(rel, obj); }
+async function leerPlano(rel, fallback){ return persist.leerJSON(rel, fallback); }
+async function escribirPlano(rel, obj, msg){ return persist.escribirJSON(rel, obj); }
 
 /* ==================== CIFRADO ==================== */
 function encrypt(obj){
@@ -84,18 +78,10 @@ function verifyToken(tok){
     return p.exp < Date.now() ? null : p;
   }catch{ return null; }
 }
-async function loadUsers(){
-  return persist.leerCifrado('usuarios.json') || [];
-}
-async function saveUsers(u){
-  return persist.escribirCifrado('usuarios.json', u);
-}
-async function loadMemories(){
-  return persist.leerCifrado('memorias.json') || {};
-}
-async function saveMemories(m){
-  return persist.escribirCifrado('memorias.json', m);
-}
+async function loadUsers(){ return persist.leerCifrado('usuarios.json') || []; }
+async function saveUsers(u){ return persist.escribirCifrado('usuarios.json', u); }
+async function loadMemories(){ return persist.leerCifrado('memorias.json') || {}; }
+async function saveMemories(m){ return persist.escribirCifrado('memorias.json', m); }
 
 function auth(req,res,next){
   const t = (req.headers.authorization || '').replace(/^Bearer\s+/,'');
@@ -129,7 +115,7 @@ app.use((req, res, next) => {
 app.get('/ania/health', (req,res)=> res.json({ ok:true, t:Date.now(), modo:'local-desktop' }));
 app.get('/ania/ping', (req,res)=> res.json({ mensaje:'Ania desktop activa' }));
 
-/* ==================== SHUTDOWN (solo desde localhost) ==================== */
+/* ==================== SHUTDOWN ==================== */
 app.post('/ania/shutdown', (req, res) => {
   const host = (req.hostname || '').toLowerCase();
   if (!['localhost', '127.0.0.1', '::1'].includes(host))
@@ -408,6 +394,7 @@ app.post('/ania/admin/delete-user', auth, async (req,res)=>{
 });
 
 /* ==================== PÚBLICOS ==================== */
+/* ⭐ FIX #1 · perfiles.json eliminado */
 const ARCHIVOS_PERMITIDOS = ['security-report.json','sugerencias.json','conocimiento.json'];
 app.get('/ania/public/:archivo', async (req, res) => {
   try{
