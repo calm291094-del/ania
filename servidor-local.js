@@ -15,8 +15,12 @@ const PUBLIC_DIR = path.join(__dirname, 'public');
 const P_KNOWLEDGE = 'datos/conocimiento.json';
 const P_ADMIN_LOG = 'datos/admin-log.json';
 
-const ANIA_SECRET  = process.env.ANIA_SECRET  || 'ania-local-dev-secret';
-const TOKEN_SECRET = process.env.ANIA_TOKEN_SECRET || 'ania-local-dev-token';
+const ANIA_SECRET  = process.env.ANIA_SECRET;
+const TOKEN_SECRET = process.env.ANIA_TOKEN_SECRET;
+if (!ANIA_SECRET || !TOKEN_SECRET){
+  console.error('✖ Faltan secretos. Arranca con python ania.py para generarlos automáticamente.');
+  process.exit(1);
+}
 const SUPERADMIN_EMAIL = (process.env.SUPERADMIN_EMAIL || '').toLowerCase() || null;
 
 const KEY = crypto.createHash('sha256').update(ANIA_SECRET).digest();
