@@ -1,8 +1,58 @@
 /* ============================================================
    16-AUTONOMO · Núcleo autónomo de ANIA
-   v6 · acciones encadenadas + condiciones compuestas + presets
+   v7 · acciones encadenadas + condiciones compuestas + presets
+      + ⭐ FIX #5: sanitización de new Function() (tokens bloqueados)
+      + ⭐ FIX #5b: DSL declarativo (grupo JSON) preferido sobre strings
+      + ⭐ FIX #5c: sincronizarReglas preserva grupo y valida al descargar
 ============================================================ */
 'use strict';
+
+/* ⭐ FIX #5 · Lista negra de tokens peligrosos para reglas serializadas.
+   Se aplica a cuandoStr, cuerpoStr y textoStr antes de pasarlos a new Function().
+   Bloquea acceso a red, filesystem, prototipos y APIs globales sensibles. */
+const _TOKENS_BLOQUEADOS = /\b(
+  eval|
+  Function|
+  fetch|
+  XMLHttpRequest|
+  WebSocket|
+  EventSource|
+  navigator\.sendBeacon|
+  import|
+  require|
+  importScripts|
+  Worker|
+  SharedWorker|
+  ServiceWorker|
+  process|
+  globalThis|
+  window\s*\[|
+  document\s*\[|
+  self\s*\[|
+  top\s*\[|
+  parent\s*\[|
+  opener\s*\[|
+  localStorage|
+  sessionStorage|
+  indexedDB|
+  cookie|
+  postMessage|
+  MessageChannel|
+  BroadcastChannel|
+  constructor|
+  __proto__|
+  prototype|
+  Reflect|
+  Proxy|
+  Promise\s*\.\s*allSettled|
+  Atomics|
+  SharedArrayBuffer
+)\b/x;
+
+function _textoSeguro(str){
+  if (typeof str !== 'string') return false;
+  return !_TOKENS_BLOQUEADOS.test(str);
+}
 
 const Autonomo = {
   activo: true,
@@ -230,7 +280,7 @@ const Autonomo = {
     if (!grupo || !grupo.condiciones || !grupo.condiciones.length) return true;
     const resultados = grupo.condiciones.map(c => this.evaluarCondicion(sensores, c));
     if (grupo.modo === 'or') return resultados.some(r => r);
-    return resultados.every(r => r); // 'and' por defecto
+    return resultados.every(r => r);
   },
 
   /* ============================================================
@@ -365,58 +415,142 @@ const Autonomo = {
   ],
 
   /* ============================================================
-     REGLAS CUSTOM PERSISTENTES (con acciones múltiples)
+     REGLAS CUSTOM PERSISTENTES
   ============================================================ */
   reglasCustom: [],
   _reglasBuiltIn: [],
 
   _cargarReglasCustom(){
     try { this.reglasCustom = store.get('autonomo_reglas_custom', []); }catch(e){ this.reglasCustom = []; }
+    const antes = this.reglasCustom.length;
     this.reglasCustom = this.reglasCustom.map(r => this._rehidratarRegla(r)).filter(Boolean);
+    const rechazadas = antes - this.reglasCustom.length;
+    if (rechazadas > 0){
+      console.warn(`[Autónomo] ⚠ ${rechazadas} regla(s) rechazada(s) por seguridad`);
+      this._guardarReglasCustom();
+    }
   },
+
+  /* ⭐ FIX #5c · Preserva grupo y cuandoStr */
   _guardarReglasCustom(){
-    const s = this.reglasCustom.filter(Boolean).map(r => ({
-      id: r.id, descripcion: r.descripcion,
-      cuandoStr: r._cuandoStr,
-      accionesRaw: r._accionesRaw,           // array serializable
-      minIntervalo: r.minIntervalo || 0, t: r.t || Date.now()
-    }));
+    const s = this.reglasCustom.filter(Boolean).map(r => {
+      const out = {
+        id: r.id,
+        descripcion: r.descripcion,
+        accionesRaw: r._accionesRaw,
+        minIntervalo: r.minIntervalo || 0,
+        t: r.t || Date.now()
+      };
+      if (r.grupo) out.grupo = r.grupo;
+      if (r._cuandoStr) out.cuandoStr = r._cuandoStr;
+      return out;
+    });
     try { store.set('autonomo_reglas_custom', s); }catch(e){}
   },
+
+  /* ⭐ FIX #5 · Rehidratación con sanitización de tokens */
   _rehidratarRegla(r){
+    if (!r || typeof r !== 'object') return null;
     try {
-      const cuando = new Function('s', 'return (' + r.cuandoStr + ')(s)');
+      /* ---------- CONDICIÓN ---------- */
+      let cuando = null;
+
+      // Prioridad 1: DSL declarativo (grupo JSON) — 100% seguro
+      if (r.grupo && Array.isArray(r.grupo.condiciones)){
+        const grupo = r.grupo;
+        cuando = (sensores) => this.evaluarGrupo(sensores, grupo);
+      }
+      // Prioridad 2: cuandoStr (compatibilidad) — sanitizado
+      else if (typeof r.cuandoStr === 'string' && r.cuandoStr.length > 0){
+        if (!_textoSeguro(r.cuandoStr)){
+          console.warn('[Autónomo] ✖ Regla rechazada (tokens inseguros en cuandoStr):', r.id);
+          return null;
+        }
+        cuando = new Function('s', 'return (' + r.cuandoStr + ')(s)');
+      } else {
+        console.warn('[Autónomo] ✖ Regla sin condición:', r.id);
+        return null;
+      }
+
+      /* ---------- ACCIONES ---------- */
+      let accionesRaw = r.accionesRaw;
 
       // Compatibilidad con formato viejo (accion singular)
-      let accionesRaw = r.accionesRaw;
       if (!accionesRaw && r.accionTipo){
         accionesRaw = [{
-          tipo: r.accionTipo, titulo: r.accionTitulo,
-          cuerpoStr: r.accionCuerpoStr, textoStr: r.accionTextoStr,
+          tipo: r.accionTipo,
+          titulo: r.accionTitulo,
+          cuerpoStr: r.accionCuerpoStr,
+          textoStr: r.accionTextoStr,
           extra: r.accionExtra || null
         }];
       }
-      if (!accionesRaw) return null;
+      if (!Array.isArray(accionesRaw) || !accionesRaw.length) return null;
 
-      const acciones = accionesRaw.map(a => {
+      const acciones = [];
+      for (const a of accionesRaw){
+        if (!a || typeof a.tipo !== 'string') continue;
         const acc = { tipo: a.tipo };
-        if (a.titulo) acc.titulo = a.titulo;
-        if (a.cuerpoStr) acc.cuerpo = new Function('s', 'return (' + a.cuerpoStr + ')(s)');
-        if (a.textoStr) acc.texto = new Function('s', 'return (' + a.textoStr + ')(s)');
-        if (a.extra) Object.assign(acc, a.extra);
-        return acc;
-      });
+        if (a.titulo) acc.titulo = String(a.titulo).slice(0, 100);
+
+        if (typeof a.cuerpoStr === 'string' && a.cuerpoStr.length){
+          if (!_textoSeguro(a.cuerpoStr)){
+            console.warn('[Autónomo] ✖ Acción rechazada (cuerpoStr inseguro) en regla', r.id);
+            continue;
+          }
+          try{
+            acc.cuerpo = new Function('s', 'return (' + a.cuerpoStr + ')(s)');
+          }catch(e){
+            console.warn('[Autónomo] cuerpoStr inválido en', r.id, e.message);
+            continue;
+          }
+        }
+        if (typeof a.textoStr === 'string' && a.textoStr.length){
+          if (!_textoSeguro(a.textoStr)){
+            console.warn('[Autónomo] ✖ Acción rechazada (textoStr inseguro) en regla', r.id);
+            continue;
+          }
+          try{
+            acc.texto = new Function('s', 'return (' + a.textoStr + ')(s)');
+          }catch(e){
+            console.warn('[Autónomo] textoStr inválido en', r.id, e.message);
+            continue;
+          }
+        }
+        if (a.extra && typeof a.extra === 'object'){
+          // El extra solo se permite con claves conocidas
+          const PERMITIDAS = ['que','ms','freq','dur','url','tool','args','tag'];
+          for (const k of PERMITIDAS){
+            if (k in a.extra) acc[k] = a.extra[k];
+          }
+        }
+        acciones.push(acc);
+      }
+
+      if (!acciones.length){
+        console.warn('[Autónomo] ✖ Regla sin acciones válidas:', r.id);
+        return null;
+      }
 
       return {
-        id: r.id, descripcion: r.descripcion, cuando,
-        acciones,                          // array
-        accion: acciones[0],               // compat con código viejo
-        minIntervalo: r.minIntervalo || 0,
-        _cuandoStr: r.cuandoStr, _accionesRaw: accionesRaw,
-        _custom: true, t: r.t
+        id: String(r.id),
+        descripcion: String(r.descripcion || r.id).slice(0, 200),
+        cuando,
+        acciones,
+        accion: acciones[0],
+        minIntervalo: Math.max(0, Math.min(30 * 24 * 3600 * 1000, r.minIntervalo || 0)),
+        grupo: r.grupo || null,
+        _cuandoStr: typeof r.cuandoStr === 'string' ? r.cuandoStr : null,
+        _accionesRaw: accionesRaw,
+        _custom: true,
+        t: r.t || Date.now()
       };
-    } catch(e){ console.warn('[Autónomo] Regla inválida:', r.id, e.message); return null; }
+    } catch(e){
+      console.warn('[Autónomo] Regla inválida:', r && r.id, e.message);
+      return null;
+    }
   },
+
   agregarReglaCustom(regla){
     if (!regla || !regla.id) return false;
     this.reglasCustom = this.reglasCustom.filter(r => r && r.id !== regla.id);
@@ -427,6 +561,7 @@ const Autonomo = {
     this.renderPanel();
     return true;
   },
+
   eliminarReglaCustom(id){
     const antes = this.reglasCustom.length;
     this.reglasCustom = this.reglasCustom.filter(r => r && r.id !== id);
@@ -438,6 +573,7 @@ const Autonomo = {
     }
     return false;
   },
+
   _reconstruirReglas(){
     if (!this._reglasBuiltIn.length) this._reglasBuiltIn = this.reglas.filter(r => !r._custom);
     this.reglas = [...this._reglasBuiltIn, ...this.reglasCustom.filter(Boolean)];
@@ -460,7 +596,7 @@ const Autonomo = {
     return false;
   },
 
-  /* ---------------- EFECTORES (con delay) ---------------- */
+  /* ---------------- EFECTORES ---------------- */
   efector: {
     async ejecutar(accion, sensores){
       if (!accion || !accion.tipo) return false;
@@ -481,12 +617,10 @@ const Autonomo = {
     async _notificar(accion, sensores){
       const cuerpo = typeof accion.cuerpo === 'function' ? accion.cuerpo(sensores) : (accion.cuerpo || '');
       const titulo = accion.titulo || 'ANIA';
-  
-      // Notificación local
+
       if (typeof notify === 'function') notify(titulo, cuerpo, { tag: accion.tag || 'autonomo', important: false });
       if (typeof addChat === 'function') addChat('sys', '🌙 ' + titulo + ' · ' + cuerpo);
-  
-      // ⭐ Push remoto
+
       try {
         if (AniaAPI && AniaAPI.token) {
           await fetch(CONFIG.ANIA_API + '/ania/push/send', {
@@ -499,7 +633,7 @@ const Autonomo = {
           });
         }
       } catch(e) { /* silencioso */ }
-  
+
       console.log('[Autónomo] 📬 Notificado:', cuerpo);
       return true;
     },
@@ -535,7 +669,13 @@ const Autonomo = {
       return true;
     },
     _abrirUrl(accion){
-      try { window.open(accion.url, '_blank'); return true; } catch(e){ return false; }
+      try {
+        // ⭐ Validación adicional: solo http(s)
+        const url = String(accion.url || '');
+        if (!/^https?:\/\//i.test(url)) return false;
+        window.open(url, '_blank', 'noopener,noreferrer');
+        return true;
+      } catch(e){ return false; }
     },
     async _esperar(accion){
       const ms = Math.max(0, Math.min(30000, accion.ms || 1000));
@@ -544,7 +684,7 @@ const Autonomo = {
     }
   },
 
-  /* ---------------- Planificador (soporta acciones múltiples) ---------------- */
+  /* ---------------- Planificador ---------------- */
   planificador: {
     decidir(sensores, reglas, estados, desactivadas){
       const ahora = Date.now();
@@ -590,7 +730,6 @@ const Autonomo = {
     }catch(e){ console.error('[Autónomo] Error en tick:', e.message); }
   },
 
-  /* Ejecuta acciones en secuencia (para esperar entre ellas) */
   async _ejecutarAcciones(acciones, sensores){
     if (!acciones || !acciones.length) return false;
     let okGlobal = true;
@@ -615,12 +754,10 @@ const Autonomo = {
 
     await Promise.all([ this._leerBateria(), this._leerUbicacion(), this._leerClima() ]);
 
-    // ⭐ Suscribirse a push (pide permiso si hace falta)
     if (typeof Notification !== 'undefined'){
       if (Notification.permission === 'granted'){
         this.suscribirPush().catch(()=>{});
       } else if (Notification.permission === 'default'){
-        // Pedir permiso UNA vez, y si lo concede, suscribir
         Notification.requestPermission().then(p => {
           if (p === 'granted') this.suscribirPush().catch(()=>{});
         });
@@ -633,9 +770,21 @@ const Autonomo = {
     document.addEventListener('visibilitychange', () => { if (!document.hidden) this.tick('visibilidad'); });
     window.addEventListener('online', () => this.tick('online'));
   },
-   
-  desactivar(){ this.activo = false; store.set('autonomo_activo', false); if (this.ciclo) clearInterval(this.ciclo); console.log('[Autónomo] ⏸ Desactivado'); this.renderPanel(); },
-  reactivar(){ this.activo = true; store.set('autonomo_activo', true); this.init(); console.log('[Autónomo] ▶️ Reactivado'); this.renderPanel(); },
+
+  desactivar(){
+    this.activo = false;
+    store.set('autonomo_activo', false);
+    if (this.ciclo) clearInterval(this.ciclo);
+    console.log('[Autónomo] ⏸ Desactivado');
+    this.renderPanel();
+  },
+  reactivar(){
+    this.activo = true;
+    store.set('autonomo_activo', true);
+    this.init();
+    console.log('[Autónomo] ▶️ Reactivado');
+    this.renderPanel();
+  },
   trigger(tipo){
     console.log('[Autónomo] 🌙 SW trigger:', tipo);
     if (tipo === 'autonomo') return this.tick('sw-periodic');
@@ -653,67 +802,88 @@ const Autonomo = {
     };
   },
 
-async suscribirPush(){
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    console.log('[Push] No soportado');
-    return false;
-  }
-  try {
-    const r = await fetch(CONFIG.ANIA_API + '/ania/push/vapid-public-key');
-    if (!r.ok) { console.warn('[Push] Servidor no configurado'); return false; }
-    const { publicKey } = await r.json();
-    
-    const keyBytes = Uint8Array.from(atob(publicKey.replace(/-/g,'+').replace(/_/g,'/')), c => c.charCodeAt(0));
-    
-    const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: keyBytes
-    });
-    
-    await fetch(CONFIG.ANIA_API + '/ania/push/subscribe', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + (AniaAPI.token || '')
-      },
-      body: JSON.stringify({
-        ...sub.toJSON(),
-        deviceId: typeof DEVICE_ID !== 'undefined' ? DEVICE_ID : 'unknown'
-      })
-    });
-    
-    console.log('🔔 Push suscrito');
-    return true;
-  } catch(e) {
-    console.warn('[Push] Error:', e.message);
-    return false;
-  }
-},
+  async suscribirPush(){
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      console.log('[Push] No soportado');
+      return false;
+    }
+    try {
+      const r = await fetch(CONFIG.ANIA_API + '/ania/push/vapid-public-key');
+      if (!r.ok) { console.warn('[Push] Servidor no configurado'); return false; }
+      const { publicKey } = await r.json();
 
-async sincronizarReglas(){
-  if (!window.SyncGitHub || !SyncGitHub.configurado()){
-    if (typeof toast === 'function') toast('Configura el token GitHub en Ajustes', true);
-    return;
-  }
-  const locales = this.reglasCustom.map(r => ({
-    id: r.id, descripcion: r.descripcion,
-    cuandoStr: r._cuandoStr, accionesRaw: r._accionesRaw,
-    minIntervalo: r.minIntervalo, t: r.t
-  }));
-  const merge = await SyncGitHub.sincronizar(locales);
-  if (merge){
-    this.reglasCustom = merge.map(r => this._rehidratarRegla(r)).filter(Boolean);
-    this._guardarReglasCustom();
-    this._reconstruirReglas();
-    this.renderPanel();
-    if (typeof toast === 'function') toast('🔄 Reglas sincronizadas: ' + merge.length);
-  } else {
-    if (typeof toast === 'function') toast('Error al sincronizar', true);
-  }
-},
-   
-  async forzarTick(){ console.log('[Autónomo] Forzando tick manual...'); this.ultimoCiclo = 0; await this.tick('manual'); },
+      const keyBytes = Uint8Array.from(atob(publicKey.replace(/-/g,'+').replace(/_/g,'/')), c => c.charCodeAt(0));
+
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: keyBytes
+      });
+
+      await fetch(CONFIG.ANIA_API + '/ania/push/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + (AniaAPI.token || '')
+        },
+        body: JSON.stringify({
+          ...sub.toJSON(),
+          deviceId: typeof DEVICE_ID !== 'undefined' ? DEVICE_ID : 'unknown'
+        })
+      });
+
+      console.log('🔔 Push suscrito');
+      return true;
+    } catch(e) {
+      console.warn('[Push] Error:', e.message);
+      return false;
+    }
+  },
+
+  /* ⭐ FIX #5c · Sincroniza preservando grupo y validando al descargar */
+  async sincronizarReglas(){
+    if (!window.SyncGitHub || !SyncGitHub.configurado()){
+      if (typeof toast === 'function') toast('Configura el token GitHub en Ajustes', true);
+      return;
+    }
+
+    const locales = this.reglasCustom.map(r => {
+      const out = {
+        id: r.id,
+        descripcion: r.descripcion,
+        accionesRaw: r._accionesRaw,
+        minIntervalo: r.minIntervalo,
+        t: r.t
+      };
+      if (r.grupo) out.grupo = r.grupo;
+      if (r._cuandoStr) out.cuandoStr = r._cuandoStr;
+      return out;
+    });
+
+    const merge = await SyncGitHub.sincronizar(locales);
+    if (merge){
+      const antes = merge.length;
+      // La rehidratación rechaza reglas con tokens peligrosos automáticamente
+      this.reglasCustom = merge.map(r => this._rehidratarRegla(r)).filter(Boolean);
+      const rechazadas = antes - this.reglasCustom.length;
+      this._guardarReglasCustom();
+      this._reconstruirReglas();
+      this.renderPanel();
+      if (typeof toast === 'function'){
+        let msg = '🔄 Reglas sincronizadas: ' + this.reglasCustom.length;
+        if (rechazadas > 0) msg += ' (' + rechazadas + ' rechazadas por seguridad)';
+        toast(msg);
+      }
+    } else {
+      if (typeof toast === 'function') toast('Error al sincronizar', true);
+    }
+  },
+
+  async forzarTick(){
+    console.log('[Autónomo] Forzando tick manual...');
+    this.ultimoCiclo = 0;
+    await this.tick('manual');
+  },
 
   /* ---------------- EJECUTAR PRESET ---------------- */
   async ejecutarPreset(id){
@@ -726,12 +896,12 @@ async sincronizarReglas(){
     if (typeof toast === 'function') toast('🎬 ' + p.nombre);
     return true;
   },
+
   instalarPreset(id){
     const p = this.PRESETS.find(x => x.id === id);
     if (!p) return false;
     if (p.disparador === 'manual') return this.ejecutarPreset(id);
 
-    // Crear regla custom desde el preset programado
     const accionesRaw = p.acciones.map(a => {
       const out = { tipo: a.tipo };
       if (a.titulo) out.titulo = a.titulo;
@@ -764,7 +934,7 @@ async sincronizarReglas(){
   ============================================================ */
   _formState: {
     dia: 'daily', hora: 9, minuto: 0,
-    acciones: [{ tipo: 'notificar', texto: '' }]  // array
+    acciones: [{ tipo: 'notificar', texto: '' }]
   },
 
   PLANTILLAS: [
@@ -906,7 +1076,6 @@ async sincronizarReglas(){
     ];
     const opcionesDias = dias.map(([v, l]) => `<option value="${v}" ${s.dia == v ? 'selected' : ''}>${l}</option>`).join('');
 
-    // Renderizar acciones
     const accionesHTML = s.acciones.map((acc, i) => this._renderAccion(acc, i)).join('');
 
     return `
@@ -1053,7 +1222,6 @@ async sincronizarReglas(){
       if (min) this._formState.minuto = parseInt(min.value) || 0;
     };
 
-    // Cambios de tipo de acción (cada uno distinto)
     document.querySelectorAll('.aut-accion-tipo').forEach(sel => {
       sel.onchange = () => {
         const idx = parseInt(sel.dataset.idx);
@@ -1063,7 +1231,6 @@ async sincronizarReglas(){
       };
     });
 
-    // Inputs de detalle
     document.querySelectorAll('.aut-accion-input').forEach(inp => {
       inp.oninput = inp.onchange = () => {
         const idx = parseInt(inp.dataset.idx);
@@ -1072,7 +1239,6 @@ async sincronizarReglas(){
       };
     });
 
-    // Eliminar acción
     document.querySelectorAll('[data-del-accion]').forEach(b => {
       b.onclick = () => {
         syncSimple();
@@ -1102,20 +1268,56 @@ async sincronizarReglas(){
     toast('Plantilla cargada: ' + p.nombre);
   },
 
+  /* ⭐ FIX #5b · Genera grupo JSON (seguro) + cuandoStr (compat) */
   _guardarDesdeForm(){
     const s = this._formState;
     if (s.hora < 0 || s.hora > 23) return alert('Hora inválida');
     if (s.minuto < 0 || s.minuto > 59) return alert('Minuto inválido');
     if (!s.acciones.length) return alert('Añade al menos una acción');
 
-    let cuandoStr;
     const h = s.hora, m = s.minuto;
-    if (s.dia === 'daily') cuandoStr = `(s) => s.horaNum === ${h} && s.minuto >= ${m} && s.minuto < ${m + 5}`;
-    else if (s.dia === 'weekend') cuandoStr = `(s) => (s.diaSemana === 0 || s.diaSemana === 6) && s.horaNum === ${h} && s.minuto >= ${m} && s.minuto < ${m + 5}`;
-    else if (s.dia === 'weekday') cuandoStr = `(s) => s.diaSemana >= 1 && s.diaSemana <= 5 && s.horaNum === ${h} && s.minuto >= ${m} && s.minuto < ${m + 5}`;
-    else cuandoStr = `(s) => s.diaSemana === ${s.dia} && s.horaNum === ${h} && s.minuto >= ${m} && s.minuto < ${m + 5}`;
+    const mFin = m + 5;
 
-    // Serializar acciones
+    /* ---------- Generar GRUPO JSON (seguro, sin eval) ---------- */
+    let grupo;
+    if (s.dia === 'daily'){
+      grupo = { modo:'and', condiciones:[
+        { sensor:'hora',   op:'eq',  valor: h },
+        { sensor:'minuto', op:'gte', valor: m },
+        { sensor:'minuto', op:'lt',  valor: mFin }
+      ]};
+    } else if (s.dia === 'weekend'){
+      grupo = { modo:'and', condiciones:[
+        { sensor:'diaSemana', op:'eq',  valor: 0 },
+        { sensor:'hora',      op:'eq',  valor: h },
+        { sensor:'minuto',    op:'gte', valor: m },
+        { sensor:'minuto',    op:'lt',  valor: mFin }
+      ]};
+    } else if (s.dia === 'weekday'){
+      grupo = { modo:'and', condiciones:[
+        { sensor:'diaSemana', op:'gte', valor: 1 },
+        { sensor:'diaSemana', op:'lte', valor: 5 },
+        { sensor:'hora',      op:'eq',  valor: h },
+        { sensor:'minuto',    op:'gte', valor: m },
+        { sensor:'minuto',    op:'lt',  valor: mFin }
+      ]};
+    } else {
+      grupo = { modo:'and', condiciones:[
+        { sensor:'diaSemana', op:'eq',  valor: s.dia },
+        { sensor:'hora',      op:'eq',  valor: h },
+        { sensor:'minuto',    op:'gte', valor: m },
+        { sensor:'minuto',    op:'lt',  valor: mFin }
+      ]};
+    }
+
+    /* ---------- cuandoStr de respaldo (compat) ---------- */
+    let cuandoStr;
+    if (s.dia === 'daily') cuandoStr = `(s) => s.horaNum === ${h} && s.minuto >= ${m} && s.minuto < ${mFin}`;
+    else if (s.dia === 'weekend') cuandoStr = `(s) => (s.diaSemana === 0 || s.diaSemana === 6) && s.horaNum === ${h} && s.minuto >= ${m} && s.minuto < ${mFin}`;
+    else if (s.dia === 'weekday') cuandoStr = `(s) => s.diaSemana >= 1 && s.diaSemana <= 5 && s.horaNum === ${h} && s.minuto >= ${m} && s.minuto < ${mFin}`;
+    else cuandoStr = `(s) => s.diaSemana === ${s.dia} && s.horaNum === ${h} && s.minuto >= ${m} && s.minuto < ${mFin}`;
+
+    /* ---------- Serializar acciones ---------- */
     const accionesRaw = s.acciones.map(acc => {
       const out = { tipo: acc.tipo };
       if (acc.tipo === 'notificar'){
@@ -1145,7 +1347,9 @@ async sincronizarReglas(){
 
     const raw = {
       id: 'custom-' + Date.now().toString(36),
-      descripcion, cuandoStr,
+      descripcion,
+      grupo,          // ⭐ DSL seguro (tiene prioridad)
+      cuandoStr,      // compat
       accionesRaw,
       minIntervalo: 20 * 60 * 60 * 1000,
       t: Date.now()
