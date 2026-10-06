@@ -161,7 +161,8 @@ const Sync = {
     try{
       const c = new AbortController();
       const t = setTimeout(()=>c.abort(), 7000);
-      const r = await fetch(CONFIG.BACKEND_URL+'/health', {signal:c.signal});
+      // ⭐ FIX #7 · /health → /ania/health
+      const r = await fetch(CONFIG.BACKEND_URL+'/ania/health', {signal:c.signal});
       clearTimeout(t);
       this.online = r.ok;
     }catch{ this.online = false; }
