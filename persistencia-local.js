@@ -1,14 +1,16 @@
 // persistencia-local.js · ANIA · almacenamiento local-first
 // Escribe y lee archivos cifrados (AES-256-GCM) o JSON plano desde ./datos/
-// Se usa cuando ANIA_MODO=local o cuando no hay GITHUB_TOKEN.
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
 const RAIZ = path.join(__dirname, 'datos');
+
+/* ⭐ FIX #2 · Sin fallback silencioso */
 const SECRET = process.env.ANIA_SECRET;
 if (!SECRET){
-  console.error('✖ FATAL: falta ANIA_SECRET. Ejecuta ania.py para generarlo.');
+  console.error('✖ FATAL: falta ANIA_SECRET.');
+  console.error('  Arranca con: python ania.py  (lo genera automáticamente)');
   process.exit(1);
 }
 const KEY = crypto.createHash('sha256').update(SECRET).digest();
@@ -18,7 +20,6 @@ function asegurarDir(p){
 }
 
 function rutaAbs(rel){
-  // Seguridad: evitar escapes con ../
   const limpio = String(rel).replace(/\\/g, '/').replace(/^\/+/, '');
   if (limpio.includes('..')) throw new Error('ruta inválida: ' + rel);
   return path.join(RAIZ, limpio);
@@ -45,10 +46,10 @@ function escribirJSON(rel, obj){
   asegurarDir(path.dirname(abs));
   const tmp = abs + '.tmp.' + process.pid;
   fs.writeFileSync(tmp, JSON.stringify(obj, null, 2));
-  fs.renameSync(tmp, abs);   // rename es atómico
+  fs.renameSync(tmp, abs);
 }
 
-/* ---------- Cifrado AES-256-GCM (mismo formato que la nube) ---------- */
+/* ---------- Cifrado AES-256-GCM ---------- */
 function leerCifrado(rel){
   const abs = rutaAbs(rel);
   if (!fs.existsSync(abs)) return null;
