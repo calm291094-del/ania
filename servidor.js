@@ -577,7 +577,6 @@ app.post('/ania/admin/delete-user', auth, async (req,res)=>{
 const ARCHIVOS_PERMITIDOS = [
   'security-report.json',
   'sugerencias.json',
-  'perfiles.json',
   'conocimiento.json'
 ];
 app.get('/ania/public/:archivo', async (req, res) => {
