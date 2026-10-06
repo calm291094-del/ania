@@ -1,7 +1,4 @@
 // modulos-backend.js · ANIA · endpoints de negocio
-// Finanzas · Inventario · Compras · Dashboard
-// Se monta desde servidor.js con:
-//   require('./modulos-backend')(app, { auth, leer, escribir, loadUsers });
 const crypto = require('crypto');
 
 module.exports = function montarModulos(app, deps){
@@ -94,8 +91,6 @@ module.exports = function montarModulos(app, deps){
         serieDiaria[d] = serieDiaria[d] || { ingreso: 0, gasto: 0 };
         serieDiaria[d][m.tipo] += m.monto;
       });
-      const totalIngresos = Object.values(serieDiaria).reduce((a,d) => a + d.ingreso, 0);
-      const totalGastos   = Object.values(serieDiaria).reduce((a,d) => a + d.gasto, 0);
       res.json({
         ok:true, desde, hasta,
         ingresos: Math.round(ingresos * 100) / 100,
@@ -186,7 +181,7 @@ module.exports = function montarModulos(app, deps){
 
   app.post('/ania/inventario/movimiento', auth, async (req, res) => {
     try{
-      const { productoId, tipo, cantidad, nota, precio } = req.body || {};
+      const { productoId, tipo, cantidad, nota } = req.body || {};
       if (!['entrada','salida','ajuste'].includes(tipo))
         return res.status(400).json({ error:'tipo inválido (entrada|salida|ajuste)' });
       const c = num(cantidad);
@@ -205,13 +200,14 @@ module.exports = function montarModulos(app, deps){
       }
       prod.actualizado = Date.now();
 
-      // Si es una venta (salida con precio), registra también el ingreso en finanzas
-      if (tipo === 'salida' && precio && prod.precio){
+      /* ⭐ FIX #10 · Usa siempre el precio del producto (no el del body) */
+      if (tipo === 'salida' && prod.precio){
         const finanzas = await leer('finanzas/' + req.user.id + '.json') || [];
+        const monto = Math.round(prod.precio * c * 100) / 100;
         finanzas.push({
           id: crypto.randomUUID(),
           tipo: 'ingreso',
-          monto: Math.round(prod.precio * c * 100) / 100,
+          monto,
           categoria: 'ventas',
           nota: 'Venta: ' + prod.nombre + ' x' + c,
           fecha: Date.now(),
@@ -361,20 +357,17 @@ module.exports = function montarModulos(app, deps){
   });
 
   /* ============================================================
-     DASHBOARD · todo lo que necesita la pantalla Jarvis
+     DASHBOARD
   ============================================================ */
-app.get('/ania/dashboard', auth, async (req, res) => {
+  app.get('/ania/dashboard', auth, async (req, res) => {
     try{
       const uid = req.user?.id;
       if (!uid) return res.status(401).json({ ok:false, error:'sin usuario en token' });
-
-      console.log('[DASHBOARD] uid:', uid);
 
       const safeArray = async (rel) => {
         try{
           const v = await leer(rel);
           if (Array.isArray(v)) return v;
-          if (v && typeof v === 'object') return [];   // por si acaso es objeto
           return [];
         }catch(err){
           console.warn('[DASHBOARD] leer() falló en', rel, '→', err.message);
@@ -406,7 +399,7 @@ app.get('/ania/dashboard', auth, async (req, res) => {
         total: (l.items||[]).length
       }));
 
-      const payload = {
+      res.json({
         ok:true,
         balanceMes: {
           ingresos: Math.round(ingresos*100)/100,
@@ -418,20 +411,13 @@ app.get('/ania/dashboard', auth, async (req, res) => {
           cantidad: p.cantidad, minimo: p.minimo, unidad: p.unidad
         })),
         listas: listasPendientes
-      };
-
-      console.log('[DASHBOARD] OK · finanzas:', finanzas.length, 'inv:', inv.length, 'listas:', listas.length);
-      res.json(payload);
+      });
 
     }catch(e){
+      /* ⭐ FIX #6 · Sin exponer stack/debug al cliente */
       console.error('[DASHBOARD] ✖ ERROR:', e.message);
       console.error(e.stack);
-      res.status(500).json({
-        ok:false,
-        error: 'error al cargar dashboard',
-        debug: e.message,
-        stack: (e.stack||'').split('\n').slice(0,5).join(' | ')
-      });
+      res.status(500).json({ ok:false, error: 'error al cargar dashboard' });
     }
   });
 
