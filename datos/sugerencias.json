@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Forzar HTTPS y HSTS",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Redirige todas las peticiones HTTP a HTTPS y habilita la política de seguridad de transporte.",
+        "como": "Añade el middleware `express-enforces-ssl` y configura `helmet` para HSTS."
+      },
+      {
+        "titulo": "Validación y sanitización de datos de usuario",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "Comprueba que los campos de registro y login cumplan los requisitos y evita inyecciones.",
+        "como": "Integra `express-validator` en los endpoints de registro/login y devuelve errores claros."
+      },
+      {
+        "titulo": "Cacheo mejorado de GitHub con TTL más grande y reintentos",
+        "categoria": "rendimiento",
+        "prioridad": "alta",
+        "descripcion": "Reduce llamadas a la API de GitHub y recupera datos de manera resiliente.",
+        "como": "Aumenta el TTL a 60000 ms y añade lógica de reintentos con backoff exponencial en `ghRead`/`ghWrite`."
+      },
+      {
+        "titulo": "Separar rutas y usar middleware de errores asíncronos",
+        "categoria": "bug",
+        "prioridad": "media",
+        "descripcion": "Facilita el mantenimiento y evita colapso por promesas sin capturar.",
+        "como": "Crea routers en archivos distintos y utiliza `express-async-errors` para propagar errores."
+      },
+      {
+        "titulo": "Carga y validación de variables de entorno con dotenv",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "Asegura que todas las claves sensibles estén presentes antes de arrancar.",
+        "como": "Añade `dotenv.config()` y comprueba la existencia de `GITHUB_TOKEN`, `ANIA_SECRET`, etc., abortando si faltan."
+      }
+    ],
+    "fecha": "2026-10-08T10:03:20.430Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 17563,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Rate limiting en login",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -185,53 +232,6 @@
       "package.json"
     ],
     "duracionMs": 30228,
-    "fuente": "ia"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Reemplazar tokens manuales por JWT oficial",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Crear tokens con una librería confiable evita errores de firma y expiración. Garantiza que la validación sea estándar y comprobada.",
-        "como": "Incorpora jsonwebtoken, sustituye makeToken y verifyToken por sus funciones y ajusta el middleware auth para usar el token JWT."
-      },
-      {
-        "titulo": "Forzar HTTPS y redirigir tráfico HTTP",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "El servidor expone datos sin cifrar, lo que permite intercepciones y ataques Man‑in‑the‑Middle. HTTPS protege la confidencialidad e integridad de las peticiones.",
-        "como": "Configura un proxy inverso (Nginx, Cloudflare) o usa express-enforces-ssl y redirige todas las rutas a https antes de procesar."
-      },
-      {
-        "titulo": "Capturar y registrar errores de fetch a GitHub",
-        "categoria": "bug",
-        "prioridad": "alta",
-        "descripcion": "Las llamadas a la API de GitHub pueden fallar sin que el código maneje el error, dejando al cliente sin respuesta clara. El registro facilita la depuración.",
-        "como": "EnghRead y ghWrite envolver en try/catch, devolver mensajes de error estructurados y usar console.error con stack trace."
-      },
-      {
-        "titulo": "Permitir TTL configurable y uso de ETag en caché GitHub",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "Un TTL fijo de 30 s puede no adaptarse a cambios frecuentes o a cargas altas. Usar ETag permite invalidar solo cuando el contenido cambia.",
-        "como": "Añade variable de entorno TTL_GH_CACHE, usa la cabecera ETag en la respuesta y actualiza GHCache solo cuando el ETag difiere."
-      },
-      {
-        "titulo": "Controlar roles de usuario en rutas administrativas",
-        "categoria": "seguridad",
-        "prioridad": "media",
-        "descripcion": "Sin verificación de rol, cualquier usuario autenticado puede ejecutar acciones de administrador, comprometiendo la integridad de los datos.",
-        "como": "Crear middleware checkRole('admin') que compruebe req.user.rol, y usarlo en todas las rutas de administración, registrando la acción en logAdmin."
-      }
-    ],
-    "fecha": "2026-10-03T08:53:44.855Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 19401,
     "fuente": "ia"
   }
 ]
