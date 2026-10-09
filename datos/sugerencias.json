@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Validar variables de entorno al inicio",
+        "categoria": "bug",
+        "prioridad": "alta",
+        "descripcion": "Las variables esenciales pueden faltar sin que la app se detenga, provocando fallos inesperados en producción.",
+        "como": "Añadir una función de chequeo que recorra las variables requeridas y lance un error con mensaje claro si falta alguna; ejecutar esta función antes de montar middlewares."
+      },
+      {
+        "titulo": "Centralizar la persistencia en un módulo independiente",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "El código duplicado de lectura/escritura local y GitHub complica el mantenimiento y genera sobrecarga innecesaria.",
+        "como": "Crear un archivo persistencia.js exportando funciones load, save, delete, y usarlo en todas las rutas; envolver cada operación con try/catch y registrar errores."
+      },
+      {
+        "titulo": "Habilitar límites dinámicos vía configuración",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "Los valores hardcodeados de rate‑limit hacen difícil ajustar la política según el tráfico real.",
+        "como": "Leer los parámetros de límite (windowMs, max) desde un fichero de configuración o variables de entorno y pasar esos valores a express‑rate‑limit."
+      },
+      {
+        "titulo": "Aplicar rate‑limit a la suscripción Push y rutas críticas",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Las rutas de suscripción y cambio de credenciales son vulnerables a ataques de fuerza bruta.",
+        "como": "Crear un middleware específico con express‑rate‑limit y aplicarlo a los endpoints /subscribe, /reset-password, y /login."
+      },
+      {
+        "titulo": "Reemplazar tokens manuales por JWT estándar",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "El esquema de token personalizado carece de pruebas de firma y puede ser más propenso a errores de implementación.",
+        "como": "Instalar jsonwebtoken, generar tokens con payload y expiración, verificar con jwt.verify, y eliminar las funciones makeToken/verifyToken."
+      }
+    ],
+    "fecha": "2026-10-09T10:06:32.850Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 9680,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Forzar HTTPS y HSTS",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -185,53 +232,6 @@
       "package.json"
     ],
     "duracionMs": 21581,
-    "fuente": "ia"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Centralizar manejo de errores asíncronos",
-        "categoria": "bug",
-        "prioridad": "alta",
-        "descripcion": "Las promesas sin catch provocan que el servidor quede sin respuesta o se caiga silenciosamente.",
-        "como": "Agregar middleware de error global y envolver rutas con try/catch o usar express-async-errors para propagarlos."
-      },
-      {
-        "titulo": "Reemplazar token personalizado por JWT",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "El token actual no utiliza hashing estándar ni verificación de expiración segura, aumentando riesgo de falsificación.",
-        "como": "Instalar jsonwebtoken, firmar con HMAC y validar con middleware en cada ruta protegida."
-      },
-      {
-        "titulo": "Validar y cargar variables de entorno con dotenv",
-        "categoria": "bug",
-        "prioridad": "alta",
-        "descripcion": "Variables críticas pueden quedar undefined, generando fallos en producción sin avisos claros.",
-        "como": "Instalar dotenv, cargar .env en inicio y lanzar error explícito si ANIA_SECRET, GITHUB_TOKEN, VAPID keys faltan."
-      },
-      {
-        "titulo": "Añadir validación de payloads de entrada",
-        "categoria": "seguridad",
-        "prioridad": "media",
-        "descripcion": "Los endpoints aceptan datos sin comprobar, lo que puede provocar inyecciones o estados inesperados.",
-        "como": "Usar express-validator o Joi para validar campos obligatorios, tipos y formatos antes de procesar."
-      },
-      {
-        "titulo": "Optimizar caché y manejo de GitHub API",
-        "categoria": "rendimiento",
-        "prioridad": "alta",
-        "descripcion": "Cada acceso a GitHub realiza peticiones sin limitar la frecuencia, generando latencia y posibles límites de tasa.",
-        "como": "Implementar LRU-cache con TTL configurable, manejar códigos 429/403, y usar paginación para archivos grandes."
-      }
-    ],
-    "fecha": "2026-10-04T09:22:48.837Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 30228,
     "fuente": "ia"
   }
 ]
