@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Agregar middleware express.json()",
+        "categoria": "bug",
+        "prioridad": "alta",
+        "descripcion": "Sin este middleware, las peticiones con cuerpo JSON no se procesan correctamente, resultando en errores 400.",
+        "como": "Inserta app.use(express.json()); al principio de la configuración de middlewares."
+      },
+      {
+        "titulo": "Implementar CSP con Helmet",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Deshabilitar contentSecurityPolicy permite inyección de scripts externos.",
+        "como": "Configura helmet({contentSecurityPolicy:{directives:{defaultSrc:[\"'self'\"],scriptSrc:[\"'self'\"]}}});"
+      },
+      {
+        "titulo": "Cachear datos de usuarios y memorias",
+        "categoria": "rendimiento",
+        "prioridad": "alta",
+        "descripcion": "Cada llamada a loadUsers/ loadMemories provoca una petición GitHub, aumentando latencia.",
+        "como": "Almacena los resultados en un Map con TTL y revisa antes de hacer ghRead."
+      },
+      {
+        "titulo": "Usar librería JWT en vez de HMAC manual",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "El manejo manual de tokens puede introducir errores de expiración y firma.",
+        "como": "Reemplaza makeToken y verifyToken con jsonwebtoken.sign/verify usando TOKEN_SECRET."
+      },
+      {
+        "titulo": "Manejo de error cuando VAPID no está configurado",
+        "categoria": "bug",
+        "prioridad": "media",
+        "descripcion": "Actualmente el servidor sigue funcionando sin VAPID, pero las notificaciones fallan sin aviso.",
+        "como": "Añade una ruta de verificación que devuelva 503 si VAPID no está disponible, o registra una advertencia y desactiva push."
+      }
+    ],
+    "fecha": "2026-10-10T09:27:26.272Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 20238,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Validar variables de entorno al inicio",
         "categoria": "bug",
         "prioridad": "alta",
@@ -185,53 +232,6 @@
       "package.json"
     ],
     "duracionMs": 19911,
-    "fuente": "ia"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Centralizar y validar variables de entorno",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Verificar que todas las claves críticas estén definidas al arrancar el servidor. Abortarse si falta alguna, evitando comportamientos impredecibles.",
-        "como": "Implementar una función que recorra las variables requeridas, lance un error claro y termine el proceso cuando falte alguna."
-      },
-      {
-        "titulo": "Cachear usuarios y memorias en memoria",
-        "categoria": "rendimiento",
-        "prioridad": "alta",
-        "descripcion": "Almacenar en caché los resultados de lectura de usuarios y memorias durante su vida útil para reducir llamadas a GitHub.",
-        "como": "Usar un Map con TTL, invalidar la entrada cuando se escriba y devolver datos de la caché cuando estén vigentes."
-      },
-      {
-        "titulo": "Manejo de errores de GitHub con backoff exponencial",
-        "categoria": "bug",
-        "prioridad": "media",
-        "descripcion": "Capturar fallos de la API y reintentar automáticamente con backoff, evitando bloqueos por sobrecarga de peticiones.",
-        "como": "Aplicar un algoritmo de reintentos con retardos crecientes y limitar el número de intentos para que no se quede en bucle infinito."
-      },
-      {
-        "titulo": "Forzar HTTPS y HSTS",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Configurar helmet para obligar el uso de HTTPS y enviar el encabezado HSTS, protegiendo la conexión de downgrade attacks.",
-        "como": "Añadir helmet({ hsts:{ maxAge:31536000, includeSubDomains:true } }) y mantener app.set('trust proxy',1) para proxies."
-      },
-      {
-        "titulo": "Validar y sanitizar entradas de registro/login",
-        "categoria": "seguridad",
-        "prioridad": "media",
-        "descripcion": "Comprobar longitud, patrones y sanitizar datos antes de almacenarlos, reduciendo riesgo de inyección y ataques de XSS.",
-        "como": "Utilizar express-validator, validar campos y escapar caracteres especiales antes de procesar la solicitud."
-      }
-    ],
-    "fecha": "2026-10-05T10:02:46.601Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 21581,
     "fuente": "ia"
   }
 ]
