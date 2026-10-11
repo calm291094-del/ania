@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Cache GitHub con política LRU",
+        "categoria": "rendimiento",
+        "prioridad": "alta",
+        "descripcion": "Reduce las llamadas a la API de GitHub y mejora la latencia de lectura. Mantiene en memoria los archivos más usados durante más tiempo.",
+        "como": "Implementar un Map con LRU que limite el número de entradas. Actualizar GHCache.get y set para manejar la política."
+      },
+      {
+        "titulo": "Reforzar CORS y CSP en Helmet",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Evita que sitios maliciosos inyecten scripts o hagan peticiones no autorizadas. Proporciona una política de recursos estricta.",
+        "como": "Configurar helmet con contentSecurityPolicy y referrerPolicy adecuados. Definir cors con origen permitido y no permitir credenciales."
+      },
+      {
+        "titulo": "Sanitizar y validar datos de entrada",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "Previene inyección de XSS y ataques de inyección SQL en los endpoints. Garantiza que los datos cumplan el esquema esperado.",
+        "como": "Agregar middleware de validación con Joi o express-validator. Sanitizar strings antes de guardarlos y escapar al mostrar."
+      },
+      {
+        "titulo": "Añadir pruebas unitarias a cifrado y autenticación",
+        "categoria": "bug",
+        "prioridad": "media",
+        "descripcion": "Asegura que las funciones de encrypt/decrypt y token sigan funcionando tras cambios. Detecta regresiones tempranas.",
+        "como": "Usar Jest para testear encrypt/decrypt con casos de borde y falsificaciones. Testear makeToken/verifyToken con expiración y firmas inválidas."
+      },
+      {
+        "titulo": "Manejo consistente de errores y logs",
+        "categoria": "bug",
+        "prioridad": "baja",
+        "descripcion": "Elimina la exposición de mensajes internos al cliente y mejora la trazabilidad de fallos. Evita que errores no controlados arruinen la API.",
+        "como": "Centralizar la lógica de error en middleware. Utilizar winston o pino para registrar errores con contexto y nivel."
+      }
+    ],
+    "fecha": "2026-10-11T09:42:10.040Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 26753,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Agregar middleware express.json()",
         "categoria": "bug",
         "prioridad": "alta",
@@ -186,52 +233,5 @@
     ],
     "duracionMs": 26157,
     "fuente": "fallback"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Validar variables de entorno críticas al arrancar",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Revisar que ANIA_SECRET, GITHUB_TOKEN y VAPID keys existan antes de iniciar el servidor, evitando fallos silenciosos y exposiciones de datos por defecto.",
-        "como": "Añadir una función de inicialización que verifique cada variable, loguee un mensaje claro y cierre el proceso si falta alguna."
-      },
-      {
-        "titulo": "Capturar errores asincrónicos en las rutas",
-        "categoria": "bug",
-        "prioridad": "alta",
-        "descripcion": "Los handlers que usan async/await pueden lanzar promesas no capturadas, provocando que el servidor quede sin respuesta a la petición.",
-        "como": "Implementar un middleware que envuelva cada ruta con try/catch o usar la librería express-async-errors para que los errores se propaguen al error‑handler global."
-      },
-      {
-        "titulo": "Hacer configurable el TTL del caché GitHub",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "El tiempo de vida actual del caché es fijo (30s) y no se adapta a cambios de uso o volumen, pudiendo provocar lecturas innecesarias o datos obsoletos.",
-        "como": "Exponer una variable de entorno (GH_CACHE_TTL) y usarla al inicializar GHCache, permitiendo ajustes sin recompilar el código."
-      },
-      {
-        "titulo": "Reemplazar scrypt por Argon2 en el hash de contraseñas",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "scryptSync es síncrono y menos configurable; Argon2 ofrece mayor resistencia a ataques de GPU y permite ajustar memoria y tiempo de ejecución.",
-        "como": "Instalar la librería argon2, cambiar hashPass y checkPass para usar argon2.hash y argon2.verify, y migrar las contraseñas existentes mediante un proceso de rehash al primer login."
-      },
-      {
-        "titulo": "Reactivar y reforzar la política de seguridad de contenido (CSP) de Helmet",
-        "categoria": "seguridad",
-        "prioridad": "media",
-        "descripcion": "Al desactivar CSP se expone a ataques de inyección de scripts; habilitar una política mínima protege contra XSS y clickjacking.",
-        "como": "Eliminar la opción contentSecurityPolicy: false y definir un CSP razonable con directivas como default-src 'self'; script-src 'self' 'nonce-<nonce>'; report-uri para monitoreo."
-      }
-    ],
-    "fecha": "2026-10-06T09:48:10.536Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 19911,
-    "fuente": "ia"
   }
 ]
