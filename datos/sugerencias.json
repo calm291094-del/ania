@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Agregar middleware express.json()",
+        "categoria": "bug",
+        "prioridad": "alta",
+        "descripcion": "Permite que Express analice cuerpos JSON de las peticiones. Sin ello, los endpoints que esperan datos en body fallarán.",
+        "como": "Insertar app.use(express.json()); al inicio de la configuración del servidor."
+      },
+      {
+        "titulo": "Reactivar y configurar Content Security Policy",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "CSP bloquea la ejecución de scripts no confiables, reduciendo XSS. Se deshabilitó por comodidad, pero es esencial.",
+        "como": "Eliminar la opción contentSecurityPolicy: false y definir una política segura con directivas de origen."
+      },
+      {
+        "titulo": "Validar variables de entorno críticas en arranque",
+        "categoria": "bug",
+        "prioridad": "alta",
+        "descripcion": "La falta de ANIA_SECRET, TOKEN_SECRET o GITHUB_TOKEN produce errores silenciosos y vulnerabilidades.",
+        "como": "Al iniciar el proceso, comprobar su existencia y terminar con mensaje claro si faltan."
+      },
+      {
+        "titulo": "Utilizar JWT estándar para tokens",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "El esquema personalizado de token carece de firmas robustas y comprobación de expiración. JWT lo resuelve.",
+        "como": "Instalar jsonwebtoken, firmar con HS256 y usar exp, iat, sub en el payload."
+      },
+      {
+        "titulo": "Implementar manejador de errores global",
+        "categoria": "feature",
+        "prioridad": "media",
+        "descripcion": "Los errores asincrónicos pasan desapercibidos y generan respuestas 500 sin formato.",
+        "como": "Añadir middleware app.use((err,req,res,next)=>{ console.error(err); res.status(500).json({error:'error interno'}); });"
+      }
+    ],
+    "fecha": "2026-10-14T08:25:23.036Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 23947,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Rate limiting en login",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -185,53 +232,6 @@
       "package.json"
     ],
     "duracionMs": 20238,
-    "fuente": "ia"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Validar variables de entorno al inicio",
-        "categoria": "bug",
-        "prioridad": "alta",
-        "descripcion": "Las variables esenciales pueden faltar sin que la app se detenga, provocando fallos inesperados en producción.",
-        "como": "Añadir una función de chequeo que recorra las variables requeridas y lance un error con mensaje claro si falta alguna; ejecutar esta función antes de montar middlewares."
-      },
-      {
-        "titulo": "Centralizar la persistencia en un módulo independiente",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "El código duplicado de lectura/escritura local y GitHub complica el mantenimiento y genera sobrecarga innecesaria.",
-        "como": "Crear un archivo persistencia.js exportando funciones load, save, delete, y usarlo en todas las rutas; envolver cada operación con try/catch y registrar errores."
-      },
-      {
-        "titulo": "Habilitar límites dinámicos vía configuración",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "Los valores hardcodeados de rate‑limit hacen difícil ajustar la política según el tráfico real.",
-        "como": "Leer los parámetros de límite (windowMs, max) desde un fichero de configuración o variables de entorno y pasar esos valores a express‑rate‑limit."
-      },
-      {
-        "titulo": "Aplicar rate‑limit a la suscripción Push y rutas críticas",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Las rutas de suscripción y cambio de credenciales son vulnerables a ataques de fuerza bruta.",
-        "como": "Crear un middleware específico con express‑rate‑limit y aplicarlo a los endpoints /subscribe, /reset-password, y /login."
-      },
-      {
-        "titulo": "Reemplazar tokens manuales por JWT estándar",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "El esquema de token personalizado carece de pruebas de firma y puede ser más propenso a errores de implementación.",
-        "como": "Instalar jsonwebtoken, generar tokens con payload y expiración, verificar con jwt.verify, y eliminar las funciones makeToken/verifyToken."
-      }
-    ],
-    "fecha": "2026-10-09T10:06:32.850Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 9680,
     "fuente": "ia"
   }
 ]
