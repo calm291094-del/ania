@@ -11,180 +11,151 @@
 
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23040806'/%3E%3Ccircle cx='50' cy='50' r='26' fill='%232de08a'/%3E%3Ccircle cx='50' cy='50' r='9' fill='%23040806'/%3E%3C/svg%3E">
 
-<!-- ═══ FIX #1 · Silenciar reintentos infinitos WebSocket al agente local (evita spam en consola) ═══ -->
+<!-- ═══════════════════════════════════════════════════════════
+     FIX #1 · Anti-FOUC · CSS crítico inline ANTES de las hojas
+     Elimina el warning "El diseño se forzó antes de que la página
+     se cargara completamente".
+═══════════════════════════════════════════════════════════════ -->
+<style>
+  html,body{
+    background:#040806;color:#cfeede;margin:0;
+    font-family:'Share Tech Mono','Courier New',ui-monospace,monospace;
+    height:100%;overflow:hidden;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;z-index:-1;
+    background:radial-gradient(circle at 50% 40%,#071009 0%,#040806 70%);
+  }
+  #boot{background:#040806;}
+  #bootTitle{letter-spacing:.55em;color:#39ff9b;text-align:center;}
+  #bootLog{color:#79a88f;font-size:13px;}
+</style>
+
+<!-- ═══════════════════════════════════════════════════════════
+     FIX #2 · WebSocket patch · silencia reintentos al agente local
+     (ws://127.0.0.1:8765) cuando no hay agente corriendo.
+     Evita el spam en consola en Firefox/Chrome.
+═══════════════════════════════════════════════════════════════ -->
 <script>
 (function(){
   if (typeof WebSocket === 'undefined') return;
   const OrigWS = window.WebSocket;
-  let localAttempts = 0;
+  let intentosLocal = 0;
   function fakeWS(){
     return {
-      readyState: 3, CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3,
-      addEventListener: function(){}, removeEventListener: function(){},
-      dispatchEvent: function(){ return false; }, send: function(){}, close: function(){},
-      onopen: null, onclose: null, onerror: null, onmessage: null
+      readyState:3, CONNECTING:0, OPEN:1, CLOSING:2, CLOSED:3,
+      addEventListener:function(){}, removeEventListener:function(){},
+      dispatchEvent:function(){ return false; }, send:function(){}, close:function(){},
+      onopen:null, onclose:null, onerror:null, onmessage:null
     };
   }
   function PatchedWS(url, protocols){
-    try {
+    try{
       if (typeof url === 'string' && /^wss?:\/\/(127\.0\.0\.1|localhost):8765\b/.test(url)){
-        localAttempts++;
-        if (localAttempts > 2) return fakeWS();
+        intentosLocal++;
+        if (intentosLocal > 2){ console.info('[WS] agente local no disponible, silenciando'); return fakeWS(); }
       }
-    } catch(e){}
+    }catch(e){}
     return protocols ? new OrigWS(url, protocols) : new OrigWS(url);
   }
   PatchedWS.prototype = OrigWS.prototype;
   PatchedWS.CONNECTING = 0; PatchedWS.OPEN = 1; PatchedWS.CLOSING = 2; PatchedWS.CLOSED = 3;
-  try { window.WebSocket = PatchedWS; } catch(e){}
+  try{ window.WebSocket = PatchedWS; }catch(e){}
 })();
 </script>
 
-<!-- Vendor -->
+<!-- ═══════════════════════════════════════════════════════════
+     FIX #3 · Vosk opcional · si no existe no genera error 404
+═══════════════════════════════════════════════════════════════ -->
+<script>
+(function(){
+  var s = document.createElement('script');
+  s.src = './vendor/vosk.min.js';
+  s.async = true;
+  s.onerror = function(){ console.info('[Vosk] no disponible — voz offline WASM deshabilitada'); };
+  document.head.appendChild(s);
+})();
+</script>
+
+<!-- Vendor obligatorios -->
 <link rel="stylesheet" href="./vendor/notifyx.min.css">
 <script src="./vendor/notifyx.min.js"></script>
 <script src="./vendor/h5wasm/h5wasm.js"></script>
-<script src="./vendor/vosk.min.js"></script>
 
-<!-- CSS propio -->
-<link rel="stylesheet" href="./css/base.css">
-<link rel="stylesheet" href="./css/logo.css">
-<link rel="stylesheet" href="./css/chat.css">
-<link rel="stylesheet" href="./css/overlays.css">
-<link rel="stylesheet" href="./css/dock.css">
-<link rel="stylesheet" href="./css/autonomo.css">
+<!-- ═══════════════════════════════════════════════════════════
+     FIX #4 · CSS con preload + fallback noscript (evita FOUC)
+═══════════════════════════════════════════════════════════════ -->
+<link rel="preload" as="style" href="./css/base.css" onload="this.rel='stylesheet'">
+<link rel="preload" as="style" href="./css/logo.css" onload="this.rel='stylesheet'">
+<link rel="preload" as="style" href="./css/chat.css" onload="this.rel='stylesheet'">
+<link rel="preload" as="style" href="./css/overlays.css" onload="this.rel='stylesheet'">
+<link rel="preload" as="style" href="./css/dock.css" onload="this.rel='stylesheet'">
+<link rel="preload" as="style" href="./css/autonomo.css" onload="this.rel='stylesheet'">
+<noscript>
+  <link rel="stylesheet" href="./css/base.css">
+  <link rel="stylesheet" href="./css/logo.css">
+  <link rel="stylesheet" href="./css/chat.css">
+  <link rel="stylesheet" href="./css/overlays.css">
+  <link rel="stylesheet" href="./css/dock.css">
+  <link rel="stylesheet" href="./css/autonomo.css">
+</noscript>
 
-<!-- ══════════ CSS DEL MINI-OS (inline) ══════════ -->
+<!-- ═══════════════════════════════════════════════════════════
+     CSS DEL MINI-OS (namespace #osDesktop, no interfiere con ANIA)
+═══════════════════════════════════════════════════════════════ -->
 <style id="os-css">
-#osDesktop{
-  position:fixed;inset:0;z-index:800;display:none;
-  font-family:"Segoe UI","Open Sans",Arial,sans-serif;color:#1b1b1b;
-  background:#000;overflow:hidden;
-}
+#osDesktop{position:fixed;inset:0;z-index:800;display:none;font-family:"Segoe UI","Open Sans",Arial,sans-serif;color:#1b1b1b;background:#000;overflow:hidden;}
 #osDesktop.on{display:block;}
 body.os-on #osDesktop{display:block;}
 body.os-on #app{display:none;}
-
-#osWallpaper{
-  position:absolute;inset:0;
-  background:linear-gradient(135deg,#04070d 0%,#0a2038 50%,#0d2b4a 100%);
-  background-size:cover;background-position:center;
-}
+#osWallpaper{position:absolute;inset:0;background:linear-gradient(135deg,#04070d 0%,#0a2038 50%,#0d2b4a 100%);background-size:cover;background-position:center;}
 #osWinLayer{position:absolute;inset:0 0 44px 0;}
-#osIcons{
-  position:absolute;top:14px;left:14px;bottom:56px;
-  display:flex;flex-direction:column;flex-wrap:wrap;align-content:flex-start;
-  gap:6px;z-index:1;
-}
-.os-icon{
-  width:90px;padding:8px 4px;border:1px solid transparent;
-  display:flex;flex-direction:column;align-items:center;gap:6px;
-  cursor:default;border-radius:3px;user-select:none;
-}
+#osIcons{position:absolute;top:14px;left:14px;bottom:56px;display:flex;flex-direction:column;flex-wrap:wrap;align-content:flex-start;gap:6px;z-index:1;}
+.os-icon{width:90px;padding:8px 4px;border:1px solid transparent;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:default;border-radius:3px;user-select:none;}
 .os-icon:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.18);}
 .os-icon.sel{background:rgba(10,132,216,.35);border-color:rgba(140,200,255,.6);}
 .os-icon .ic{height:44px;display:grid;place-items:center;}
-.os-icon span{
-  color:#fff;font-size:12px;text-align:center;text-shadow:0 1px 3px rgba(0,0,0,.9);
-  line-height:1.25;max-height:32px;overflow:hidden;word-break:break-word;
-}
-
-#osTaskbar{
-  position:absolute;left:0;right:0;bottom:0;height:44px;
-  background:rgba(12,16,22,.94);display:flex;align-items:stretch;
-  z-index:450;color:#fff;border-top:1px solid rgba(255,255,255,.08);
-}
-#osStartBtn{
-  width:56px;border:0;cursor:pointer;
-  background:radial-gradient(circle at 50% 30%,#3d9ae8,#0a4d8c 78%);
-  border-right:1px solid rgba(255,255,255,.12);
-  display:grid;place-items:center;
-}
+.os-icon span{color:#fff;font-size:12px;text-align:center;text-shadow:0 1px 3px rgba(0,0,0,.9);line-height:1.25;max-height:32px;overflow:hidden;word-break:break-word;}
+#osTaskbar{position:absolute;left:0;right:0;bottom:0;height:44px;background:rgba(12,16,22,.94);display:flex;align-items:stretch;z-index:450;color:#fff;border-top:1px solid rgba(255,255,255,.08);}
+#osStartBtn{width:56px;border:0;cursor:pointer;background:radial-gradient(circle at 50% 30%,#3d9ae8,#0a4d8c 78%);border-right:1px solid rgba(255,255,255,.12);display:grid;place-items:center;}
 #osStartBtn:hover{filter:brightness(1.18);}
-#osStartBtn .orb{
-  width:27px;height:27px;border-radius:50%;display:grid;place-items:center;
-  font-weight:700;font-size:15px;color:#fff;
-  background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.9),rgba(255,255,255,0) 55%);
-}
+#osStartBtn .orb{width:27px;height:27px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:15px;color:#fff;background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.9),rgba(255,255,255,0) 55%);}
 #osTasks{flex:1;display:flex;align-items:stretch;overflow:hidden;padding-left:6px;}
-.os-task{
-  min-width:46px;padding:0 12px;border:0;background:none;color:#fff;
-  position:relative;display:flex;align-items:center;gap:6px;cursor:pointer;
-  font-size:12px;white-space:nowrap;
-}
+.os-task{min-width:46px;padding:0 12px;border:0;background:none;color:#fff;position:relative;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;}
 .os-task:hover{background:rgba(255,255,255,.12);}
 .os-task.active{background:rgba(255,255,255,.18);}
-.os-task::after{
-  content:'';position:absolute;bottom:0;left:8px;right:8px;height:2px;
-  background:rgba(255,255,255,.45);
-}
+.os-task::after{content:'';position:absolute;bottom:0;left:8px;right:8px;height:2px;background:rgba(255,255,255,.45);}
 .os-task.active::after{height:3px;left:4px;right:4px;background:#0a84d8;}
-#osClock{
-  display:flex;flex-direction:column;justify-content:center;align-items:flex-end;
-  padding:0 14px;font-size:12px;line-height:1.3;cursor:default;
-}
+#osClock{display:flex;flex-direction:column;justify-content:center;align-items:flex-end;padding:0 14px;font-size:12px;line-height:1.3;cursor:default;}
 #osClock:hover{background:rgba(255,255,255,.1);}
-#osExit{
-  width:44px;border:0;background:none;color:#fff;cursor:pointer;font-size:16px;
-}
+#osExit{width:44px;border:0;background:none;color:#fff;cursor:pointer;font-size:16px;}
 #osExit:hover{background:#e81123;}
-
-#osStartMenu{
-  position:absolute;left:0;bottom:44px;width:600px;max-width:96vw;
-  background:rgba(18,22,28,.98);color:#fff;z-index:480;
-  display:none;flex-direction:column;box-shadow:0 -4px 30px rgba(0,0,0,.5);
-}
+#osStartMenu{position:absolute;left:0;bottom:44px;width:600px;max-width:96vw;background:rgba(18,22,28,.98);color:#fff;z-index:480;display:none;flex-direction:column;box-shadow:0 -4px 30px rgba(0,0,0,.5);}
 #osStartMenu.on{display:flex;animation:osSmIn .18s ease-out;}
 @keyframes osSmIn{from{transform:translateY(8px);opacity:0;}}
 .os-sm-row{display:flex;min-height:400px;max-height:min(520px,72vh);}
-.os-sm-rail{
-  width:50px;display:flex;flex-direction:column;align-items:center;
-  padding:10px 0;gap:4px;border-right:1px solid rgba(255,255,255,.08);
-}
-.os-sm-rail button{
-  width:40px;height:40px;border:0;background:none;color:#e8e8e8;
-  font-size:16px;border-radius:3px;cursor:pointer;display:grid;place-items:center;
-}
+.os-sm-rail{width:50px;display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:4px;border-right:1px solid rgba(255,255,255,.08);}
+.os-sm-rail button{width:40px;height:40px;border:0;background:none;color:#e8e8e8;font-size:16px;border-radius:3px;cursor:pointer;display:grid;place-items:center;}
 .os-sm-rail button:hover{background:rgba(255,255,255,.12);}
-.os-sm-user{
-  width:40px;height:40px;border-radius:50%;background:#274b70;
-  display:grid;place-items:center;font-size:16px;margin:6px 0;
-}
+.os-sm-user{width:40px;height:40px;border-radius:50%;background:#274b70;display:grid;place-items:center;font-size:16px;margin:6px 0;}
 .os-sm-apps{flex:1;overflow-y:auto;padding:12px;}
-.os-sm-apps button{
-  display:flex;align-items:center;gap:12px;width:100%;padding:9px 12px;
-  background:none;border:0;color:#eee;font-size:13px;cursor:pointer;
-  border-radius:3px;text-align:left;
-}
+.os-sm-apps button{display:flex;align-items:center;gap:12px;width:100%;padding:9px 12px;background:none;border:0;color:#eee;font-size:13px;cursor:pointer;border-radius:3px;text-align:left;}
 .os-sm-apps button:hover{background:rgba(255,255,255,.12);}
-
-.os-window{
-  position:absolute;display:flex;flex-direction:column;
-  background:#fff;color:#1b1b1b;
-  box-shadow:0 12px 38px rgba(0,0,0,.45),0 0 0 1px rgba(0,0,0,.2);
-  animation:osWinIn .16s ease-out;
-}
+.os-window{position:absolute;display:flex;flex-direction:column;background:#fff;color:#1b1b1b;box-shadow:0 12px 38px rgba(0,0,0,.45),0 0 0 1px rgba(0,0,0,.2);animation:osWinIn .16s ease-out;}
 @keyframes osWinIn{from{transform:scale(.95);opacity:0;}}
 .os-window.closing{transform:scale(.95);opacity:0;transition:.14s;}
 .os-window.maximized{left:0!important;top:0!important;width:100vw!important;height:calc(100vh - 44px)!important;}
 .os-window.minimized{transform:scale(.86) translateY(50px);opacity:0;visibility:hidden;pointer-events:none;}
-.os-titlebar{
-  height:34px;flex:0 0 auto;display:flex;align-items:center;
-  background:#f0f0f0;border-bottom:1px solid #d8d8d8;
-}
+.os-titlebar{height:34px;flex:0 0 auto;display:flex;align-items:center;background:#f0f0f0;border-bottom:1px solid #d8d8d8;}
 .os-window:not(.active) .os-titlebar{opacity:.7;}
 .os-tb-ico{width:34px;display:grid;place-items:center;flex:0 0 auto;}
 .os-tb-title{flex:1;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px;}
 .os-tb-btns{display:flex;height:100%;}
-.os-tb-btn{
-  width:46px;border:0;background:none;color:#1b1b1b;
-  display:grid;place-items:center;cursor:pointer;font-size:14px;
-}
+.os-tb-btn{width:46px;border:0;background:none;color:#1b1b1b;display:grid;place-items:center;cursor:pointer;font-size:14px;}
 .os-tb-btn:hover{background:rgba(0,0,0,.06);}
 .os-tb-btn.close:hover{background:#e81123;color:#fff;}
 .os-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;position:relative;}
 .os-rz{position:absolute;right:0;bottom:0;width:17px;height:17px;cursor:nwse-resize;z-index:5;}
-
 .os-explorer-toolbar{display:flex;align-items:center;gap:4px;padding:6px 8px;background:#f0f0f0;border-bottom:1px solid #d8d8d8;}
 .os-explorer-nav{width:32px;height:30px;border:0;background:none;color:#1b1b1b;cursor:pointer;border-radius:2px;}
 .os-explorer-nav:hover{background:rgba(0,0,0,.06);}
@@ -195,58 +166,37 @@ body.os-on #app{display:none;}
 .os-file.sel{background:rgba(10,132,216,.15);border-color:rgba(10,132,216,.4);}
 .os-file .ic{height:46px;display:grid;place-items:center;}
 .os-file span{font-size:12px;text-align:center;line-height:1.25;max-height:30px;overflow:hidden;word-break:break-word;}
-.os-file .repo{font-size:9px;color:#0a84d8;}
-
 .os-textarea{flex:1;border:0;outline:0;resize:none;padding:10px 14px;font-family:Consolas,monospace;font-size:14px;line-height:1.55;background:#fff;color:#1b1b1b;}
 .os-status{height:24px;border-top:1px solid #d8d8d8;display:flex;align-items:center;justify-content:flex-end;gap:18px;padding:0 14px;font-size:11.5px;color:#6b6b6b;}
-
 .os-calc{flex:1;display:flex;flex-direction:column;padding:10px 12px 14px;}
 .os-calc .disp{text-align:right;font-size:40px;font-weight:300;padding:2px 4px 12px;min-height:64px;overflow:hidden;white-space:nowrap;}
 .os-calc .grid{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;}
 .os-calc .grid button{border:1px solid #d8d8d8;background:#f0f0f0;color:#1b1b1b;font-size:16px;cursor:pointer;font-family:inherit;}
 .os-calc .grid button.op{background:#e6e6e6;}
 .os-calc .grid button.eq{background:#0a84d8;color:#fff;border-color:#0a84d8;}
-
 .os-term{flex:1;display:flex;flex-direction:column;background:#0c0c0c;color:#cfcfcf;font-family:Consolas,monospace;font-size:13.5px;padding:8px 10px;}
 .os-term-out{flex:1;overflow-y:auto;white-space:pre-wrap;word-break:break-word;}
 .os-term-line{display:flex;gap:6px;padding-top:4px;}
 .os-term-ps{white-space:pre;}
 .os-term-in{flex:1;background:none;border:0;outline:0;color:#cfcfcf;font:inherit;}
-
 .os-paint-wrap{flex:1;overflow:auto;background:#3d434c;display:grid;place-items:center;padding:14px;}
 .os-paint-wrap canvas{background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.4);cursor:crosshair;}
-
 .os-page{width:794px;min-height:1000px;background:#fff;color:#111;padding:70px 76px;outline:0;font-size:15px;line-height:1.65;overflow-wrap:break-word;margin:20px auto;box-shadow:0 3px 16px rgba(0,0,0,.4);}
 .os-wp-canvas{flex:1;overflow-y:auto;background:#565d66;display:flex;justify-content:center;align-items:flex-start;}
 .os-wp-toolbar{display:flex;align-items:center;gap:3px;padding:6px 8px;background:#f0f0f0;border-bottom:1px solid #d8d8d8;flex-wrap:wrap;}
 .os-wp-btn{width:30px;height:28px;border:1px solid transparent;background:none;color:#1b1b1b;cursor:pointer;border-radius:2px;display:grid;place-items:center;font-size:13px;font-family:inherit;}
 .os-wp-btn:hover{background:rgba(0,0,0,.06);}
-
 .os-mines{padding:10px;display:flex;flex-direction:column;align-items:center;gap:10px;background:#c0c0c0;flex:1;}
 .os-mines-top{display:flex;gap:20px;align-items:center;font-family:monospace;font-size:20px;color:#c00;}
 .os-mines-grid{display:grid;grid-template-columns:repeat(9,30px);grid-auto-rows:30px;border:3px inset #9a9a9a;background:#bdbdbd;}
 .os-mines-cell{display:grid;place-items:center;font-weight:700;font-size:14px;background:#c0c0c0;border:2px outset #e2e2e2;cursor:pointer;color:#111;}
 .os-mines-cell.open{border:1px solid #a9a9a9;background:#d9d9d9;cursor:default;}
 .os-mines-cell.mine{background:#e81123;color:#fff;}
-
 .os-weather{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:14px;}
 .os-weather-search{display:flex;gap:8px;}
 .os-weather-search input{flex:1;padding:8px 10px;border:1px solid #d8d8d8;background:#fff;color:#1b1b1b;outline:0;border-radius:4px;}
 .os-weather-search button{padding:8px 16px;border:1px solid #d8d8d8;background:#f0f0f0;cursor:pointer;border-radius:4px;}
-
-body.os-on #app{
-  position:fixed!important;
-  right:16px!important;bottom:56px!important;left:auto!important;top:auto!important;
-  width:min(380px, calc(100vw - 32px))!important;
-  height:min(560px, calc(100vh - 120px))!important;
-  max-width:none!important;margin:0!important;
-  background:var(--bg2,#071009)!important;
-  border:1px solid var(--line2,rgba(45,224,138,.45))!important;
-  border-radius:14px!important;z-index:9999!important;
-  box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 40px rgba(45,224,138,.18)!important;
-  overflow:hidden!important;padding:0!important;
-  display:flex!important;flex-direction:column!important;
-}
+body.os-on #app{position:fixed!important;right:16px!important;bottom:56px!important;left:auto!important;top:auto!important;width:min(380px, calc(100vw - 32px))!important;height:min(560px, calc(100vh - 120px))!important;max-width:none!important;margin:0!important;background:var(--bg2,#071009)!important;border:1px solid var(--line2,rgba(45,224,138,.45))!important;border-radius:14px!important;z-index:9999!important;box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 40px rgba(45,224,138,.18)!important;overflow:hidden!important;padding:0!important;display:flex!important;flex-direction:column!important;}
 body.os-on #app header{padding:8px 10px!important;border-bottom:1px solid var(--line,rgba(45,224,138,.2))!important;flex-wrap:nowrap!important;gap:6px!important;}
 body.os-on #app header .pill{display:none!important;}
 body.os-on #app header #logoTAG{display:none!important;}
@@ -256,15 +206,9 @@ body.os-on #app #chips{display:none!important;}
 body.os-on #app #chat{flex:1!important;padding:8px!important;}
 body.os-on #app #inputBar{padding:6px 8px 8px!important;}
 body.os-on #app .line{font-size:13px!important;}
-
-#osToggleBtn{
-  display:none;background:transparent;border:1px solid var(--line,rgba(45,224,138,.2));
-  border-radius:6px;color:var(--acc2,#39ff9b);font-family:var(--mono,monospace);
-  font-size:10px;letter-spacing:.15em;padding:5px 10px;cursor:pointer;margin-left:6px;
-}
+#osToggleBtn{display:none;background:transparent;border:1px solid var(--line,rgba(45,224,138,.2));border-radius:6px;color:var(--acc2,#39ff9b);font-family:var(--mono,monospace);font-size:10px;letter-spacing:.15em;padding:5px 10px;cursor:pointer;margin-left:6px;}
 body.app-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
 body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
-
 @media(max-width:520px){
   #osIcons{gap:2px;}
   .os-icon{width:74px;padding:6px 2px;}
@@ -274,7 +218,9 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
 }
 </style>
 
-<!-- JS propio -->
+<!-- ═══════════════════════════════════════════════════════════
+     JS propio de ANIA · todos en ./js/ y ./modulos/
+═══════════════════════════════════════════════════════════════ -->
 <script defer src="./js/00-core.js"></script>
 <script defer src="./js/01-lingua.js"></script>
 <script defer src="./js/02-ui.js"></script>
@@ -702,15 +648,10 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
 <input type="file" id="ggufFile" accept=".gguf" style="display:none">
 <input type="file" id="engineFiles" accept=".mjs,.js,.wasm" multiple style="display:none">
 
-<!-- ═══════════════════════════════════════════════════════ -->
-<!-- MINI-OS · Script                                         -->
-<!-- ═══════════════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════
+     MINI-OS · expone API global para el módulo remoto
+═══════════════════════════════════════════════════════════════ -->
 <script>
-/* ============================================================
-   MINI-OS ANIA · integración con ANIA (v10)
-   FIX: expone createOSWindow, closeOSWin, focusOSWin, renderOSStartMenu, renderOSDesktop
-        y OSRemoteWait (para que el módulo remoto espere correctamente).
-   ============================================================ */
 (function(){
 'use strict';
 
@@ -718,7 +659,7 @@ function waitFor(fn, cb, timeout){
   var start = Date.now();
   var iv = setInterval(function(){
     if(fn()){ clearInterval(iv); cb(); }
-    else if(Date.now() - start > (timeout||8000)){ clearInterval(iv); console.warn('[OS] timeout esperando ANIA'); }
+    else if(Date.now() - start > (timeout||10000)){ clearInterval(iv); console.warn('[OS] timeout'); }
   }, 120);
 }
 
@@ -748,8 +689,8 @@ var OS = {
     if(saved && typeof saved === 'object'){ this.FS = saved; return; }
     this.FS = {
       'Documentos':{ type:'folder', children:{
-        'Bienvenida.txt':{ type:'file', kind:'text', name:'Bienvenida.txt', size:420,
-          text:'Bienvenido a ANIA-OS.\n\nComandos:\n  · abre word\n  · abre música\n  · abre documentos\n  · abre el navegador\n  · entrena con documentos\n  · busca archivo bienvenida\n  · cambia el fondo a aurora\n  · info sistema' }
+        'Bienvenida.txt':{ type:'file', kind:'text', name:'Bienvenida.txt', size:500,
+          text:'Bienvenido a ANIA-OS.\n\nComandos disponibles (por chat o voz):\n  · abre word\n  · abre música\n  · abre documentos\n  · abre el navegador\n  · abre fondos\n  · entrena con documentos\n  · busca archivo bienvenida\n  · cambia el fondo a aurora\n  · info sistema\n  · apaga / bloquea' }
       }},
       'Imágenes':{ type:'folder', children:{} },
       'Música':{ type:'folder', children:{} },
@@ -838,7 +779,8 @@ function createOSWindow(opts){
     '</div>' +
     '<div class="os-body"></div>' +
     '<div class="os-rz"></div>';
-  $('#osWinLayer').appendChild(win);
+  var layer = $('#osWinLayer'); if(!layer){ console.warn('[OS] sin #osWinLayer'); return null; }
+  layer.appendChild(win);
 
   var rec = { el: win, body: win.querySelector('.os-body'), title: opts.title };
   OS.wins.set(id, rec);
@@ -849,7 +791,7 @@ function createOSWindow(opts){
     if(OS.activeWin === id && !win.classList.contains('minimized')) minimizeOSWin(id);
     else { win.classList.remove('minimized'); focusOSWin(id); }
   };
-  $('#osTasks').appendChild(tb);
+  var tasks = $('#osTasks'); if(tasks) tasks.appendChild(tb);
 
   win.querySelector('.bmin').onclick = function(e){ e.stopPropagation(); minimizeOSWin(id); };
   win.querySelector('.bmax').onclick = function(e){ e.stopPropagation(); toggleOSMax(id); };
@@ -944,6 +886,7 @@ function fileIconOS(node){
 
 function appOSExplorer(startPath){
   var ctx = createOSWindow({ title:'Explorador', icon:IC.folder, w:880, h:560 });
+  if(!ctx) return;
   var cur = (startPath || ['Documentos']).slice();
   ctx.body.innerHTML =
     '<div class="os-explorer-toolbar">' +
@@ -1000,6 +943,7 @@ function appOSExplorer(startPath){
 
 function appOSNotepad(node){
   var ctx = createOSWindow({ title:(node && node.name || 'Sin título') + ' · Notas', icon:IC.txt, w:640, h:480 });
+  if(!ctx) return;
   ctx.body.innerHTML = '<textarea class="os-textarea" spellcheck="false">' + esc(node && node.text || '') + '</textarea>' +
     '<div class="os-status"><span class="np-n"></span><span>Guardado local</span></div>';
   var ta = ctx.body.querySelector('.os-textarea');
@@ -1014,9 +958,7 @@ function appOSNotepad(node){
         OS.addFile(['Documentos'], { type:'file', kind:'text', name:name, text:ta.value, size:ta.value.length });
         ctx.setTitle(name + ' · Notas');
       } else {
-        node.text = ta.value;
-        node.size = ta.value.length;
-        OS.saveFS();
+        node.text = ta.value; node.size = ta.value.length; OS.saveFS();
       }
     }
   });
@@ -1025,6 +967,7 @@ function appOSNotepad(node){
 
 function appOSWord(node){
   var ctx = createOSWindow({ title:(node && node.name || 'Documento') + ' · Word', icon:IC.doc, w:900, h:660 });
+  if(!ctx) return;
   ctx.body.innerHTML =
     '<div class="os-wp-toolbar">' +
       '<button class="os-wp-btn" data-cmd="bold"><b>B</b></button>' +
@@ -1046,16 +989,13 @@ function appOSWord(node){
       if(!name) return;
       OS.addFile(['Documentos'], { type:'file', kind:'doc', name:name, html:page.innerHTML, size:page.innerHTML.length });
       ctx.setTitle(name + ' · Word');
-    } else {
-      node.html = page.innerHTML;
-      node.size = page.innerHTML.length;
-      OS.saveFS();
-    }
+    } else { node.html = page.innerHTML; node.size = page.innerHTML.length; OS.saveFS(); }
   };
 }
 
 function appOSCalc(){
   var ctx = createOSWindow({ title:'Calculadora', icon:IC.calc, w:340, h:470 });
+  if(!ctx) return;
   ctx.body.innerHTML = '<div class="os-calc"><div class="disp">0</div><div class="grid"></div></div>';
   var disp = ctx.body.querySelector('.disp');
   var acc = null, op = null, cur = '0', fresh = true;
@@ -1087,6 +1027,7 @@ function appOSCalc(){
 
 function appOSTerminal(){
   var ctx = createOSWindow({ title:'Terminal', icon:IC.term, w:720, h:440 });
+  if(!ctx) return;
   ctx.body.innerHTML = '<div class="os-term"><div class="os-term-out"></div><div class="os-term-line"><span class="os-term-ps">ANIA-OS:\\&gt;</span><input class="os-term-in"></div></div>';
   var out = ctx.body.querySelector('.os-term-out');
   var inp = ctx.body.querySelector('.os-term-in');
@@ -1112,6 +1053,7 @@ function appOSTerminal(){
 
 function appOSPaint(){
   var ctx = createOSWindow({ title:'Paint', icon:IC.paint, w:820, h:600 });
+  if(!ctx) return;
   ctx.body.innerHTML =
     '<div class="os-wp-toolbar">' +
       '<input type="color" value="#1b6fb8" id="os-pt-color" style="width:34px;height:26px;border:1px solid #d8d8d8;padding:0">' +
@@ -1143,6 +1085,7 @@ function appOSPaint(){
 
 function appOSMines(){
   var ctx = createOSWindow({ title:'Buscaminas', icon:IC.mines, w:360, h:470 });
+  if(!ctx) return;
   var R = 9, C = 9, M = 10;
   var mines, open, flag, dead, won, started, timer;
   ctx.body.innerHTML =
@@ -1221,6 +1164,7 @@ function appOSMines(){
 
 function appOSWeather(){
   var ctx = createOSWindow({ title:'Clima', icon:IC.weather, w:560, h:480 });
+  if(!ctx) return;
   ctx.body.innerHTML = '<div class="os-weather"><div class="os-weather-search"><input placeholder="Ciudad… ej: Madrid"><button>Buscar</button></div><div class="os-wx-out"></div></div>';
   var inp = ctx.body.querySelector('input');
   var out = ctx.body.querySelector('.os-wx-out');
@@ -1266,6 +1210,7 @@ function abrirFotos(){
   var imgs = Object.keys(carpeta && carpeta.children || {}).map(function(k){ return carpeta.children[k]; }).filter(function(n){ return n.kind === 'image' && n.url; });
   if(!imgs.length){ toastOS('No hay imágenes aún. Dibuja algo en Paint.'); return; }
   var ctx = createOSWindow({ title:'Fotos', icon:IC.photos, w:700, h:560 });
+  if(!ctx) return;
   ctx.body.innerHTML = '<div style="flex:1;display:grid;place-items:center;background:#14161a"><img style="max-width:92%;max-height:92%"></div>';
   var img = ctx.body.querySelector('img'); var i = 0;
   img.src = imgs[i].url;
@@ -1283,7 +1228,6 @@ function openOSNode(node){
   }
 }
 
-/* Desktop y start menu */
 function renderOSDesktop(){
   var box = $('#osIcons'); if(!box) return; box.innerHTML = '';
   var items = [
@@ -1291,11 +1235,10 @@ function renderOSDesktop(){
     ['Documentos',  IC.folder, function(){ appOSExplorer(['Documentos']); }],
     ['Papelera',    IC.folder, function(){ appOSExplorer(['Papelera']); }]
   ];
-  // Añadir apps remotas si el módulo remoto ya cargó
   if(window.OSRemote){
-    items.push(['🎵 Música',   '<span style="font-size:36px">🎵</span>', function(){ window.OSRemote.appOSMusic(); }]);
+    items.push(['🎵 Música',     '<span style="font-size:36px">🎵</span>', function(){ window.OSRemote.appOSMusic(); }]);
     items.push(['📄 Documentos', '<span style="font-size:36px">📄</span>', function(){ window.OSRemote.appOSDocViewer(); }]);
-    items.push(['🌐 Navegador', '<span style="font-size:36px">🌐</span>', function(){ window.OSRemote.appOSBrowser(); }]);
+    items.push(['🌐 Navegador',  '<span style="font-size:36px">🌐</span>', function(){ window.OSRemote.appOSBrowser(); }]);
     if(window.OSRemote.appOSWallpaper){
       items.push(['🎨 Fondos', '<span style="font-size:36px">🎨</span>', function(){ window.OSRemote.appOSWallpaper(); }]);
     }
@@ -1322,11 +1265,7 @@ function renderOSStartMenu(){
   });
 }
 
-function toggleOSStart(){
-  var sm = $('#osStartMenu');
-  if(!sm) return;
-  sm.classList.toggle('on');
-}
+function toggleOSStart(){ var sm = $('#osStartMenu'); if(sm) sm.classList.toggle('on'); }
 function closeOSStart(){ var sm = $('#osStartMenu'); if(sm) sm.classList.remove('on'); }
 
 function tickOSClock(){
@@ -1337,7 +1276,6 @@ function tickOSClock(){
   if($('#osClockD')) $('#osClockD').textContent = f;
 }
 
-/* OSBridge */
 var OSBridge = {
   listarApps: function(){ return Object.keys(APPS).map(function(k){ return { id:k, nombre:APPS[k].name }; }); },
   abrirApp: function(id){
@@ -1407,8 +1345,8 @@ var OSBridge = {
     ];
     var k = Number(id) || 0;
     if(k < 0 || k >= walls.length) k = 0;
-    $('#osWallpaper').style.background = walls[k];
-    try{ localStorage.setItem('aniaos_wall', String(k)); }catch(e){}
+    var wp = $('#osWallpaper'); if(wp) wp.style.background = walls[k];
+    try{ localStorage.setItem('aniaos_wall', String(k)); localStorage.removeItem('aniaos_wall_url'); }catch(e){}
     return { ok:true, fondo:k };
   },
   infoSistema: function(){
@@ -1500,10 +1438,8 @@ function inferirKind(nombre){
   return 'generic';
 }
 
-/* Hook send() */
 function hookSend(){
-  if(!window.send) return false;
-  if(window.__osSendHooked) return true;
+  if(!window.send || window.__osSendHooked) return;
   window.__osSendHooked = true;
   var origSend = window.send;
   window.send = async function(text){
@@ -1529,10 +1465,8 @@ function hookSend(){
     return origSend.call(this, text);
   };
   console.log('[OS] send() hooked');
-  return true;
 }
 
-/* Enter/exit OS */
 function enterOS(){
   document.body.classList.add('os-on');
   document.body.classList.remove('app-on');
@@ -1540,22 +1474,18 @@ function enterOS(){
   tickOSClock();
   renderOSDesktop();
   renderOSStartMenu();
+  var wallUrl = localStorage.getItem('aniaos_wall_url');
+  var wp = $('#osWallpaper');
+  if(wallUrl && wp){ wp.style.background = 'url("' + wallUrl + '") center/cover no-repeat fixed'; return; }
   var wall = localStorage.getItem('aniaos_wall');
-  if(wall != null){
+  if(wall != null && wp){
     var walls = [
       'linear-gradient(135deg,#04070d 0%,#0a2038 50%,#0d2b4a 100%)',
       'linear-gradient(135deg,#1c4a77 0%,#0d2440 60%,#04070d 100%)',
       'linear-gradient(135deg,#0e1e38 0%,#3e5a80 50%,#8a5a4a 100%)',
       'linear-gradient(135deg,#0a0f1a 0%,#0d2440 50%,#0f1a2e 100%)'
     ];
-    var wp = $('#osWallpaper');
-    if(wp) wp.style.background = walls[Number(wall)] || walls[0];
-  }
-  // Re-aplicar fondo remoto si existe
-  var wallUrl = localStorage.getItem('aniaos_wall_url');
-  if(wallUrl){
-    var wp2 = $('#osWallpaper');
-    if(wp2) wp2.style.background = 'url("' + wallUrl + '") center/cover no-repeat fixed';
+    wp.style.background = walls[Number(wall)] || walls[0];
   }
 }
 function exitOS(){
@@ -1564,14 +1494,11 @@ function exitOS(){
   var t = $('#osToggleTxt'); if(t) t.textContent = 'OS';
   closeOSStart();
 }
-
 function osLock(){
   exitOS();
   var lock = document.getElementById('lock');
-  if(lock){ lock.classList.add('on'); }
-  else { osShutdown(); }
+  if(lock){ lock.classList.add('on'); } else { osShutdown(); }
 }
-
 function osShutdown(){
   document.body.classList.remove('os-on');
   document.body.classList.remove('app-on');
@@ -1632,7 +1559,6 @@ function wireButtons(){
 function initOS(){
   OS.loadFS();
   wireButtons();
-
   var bs = document.getElementById('bootStart');
   if(bs){
     bs.addEventListener('click', function(){
@@ -1642,7 +1568,6 @@ function initOS(){
       }, 600);
     });
   }
-
   setTimeout(function(){
     var boot = document.getElementById('boot');
     if(boot && (boot.style.display === 'none' || boot.classList.contains('hide'))){
@@ -1650,7 +1575,6 @@ function initOS(){
       enterOS();
     }
   }, 2500);
-
   console.log('[OS] Mini-OS listo ·', Object.keys(APPS).length, 'apps ·', Object.keys(OS.FS).length, 'carpetas');
 }
 
@@ -1661,14 +1585,10 @@ waitFor(function(){
   initOS();
 }, 10000);
 
-window.addEventListener('load', function(){
-  setTimeout(function(){ hookSend(); }, 1200);
-});
+window.addEventListener('load', function(){ setTimeout(function(){ hookSend(); }, 1200); });
 
 /* ═══════════════════════════════════════════════════════════
-   FIX CRÍTICO · EXPONER API GLOBAL
-   (Sin esto, window.OS_createWindow no existe y el módulo
-   remoto falla con «OS_createWindow is not a function»).
+   ⭐ API GLOBAL EXPUESTA — sin esto el módulo remoto falla
 ═══════════════════════════════════════════════════════════ */
 window.OS = OS;
 window.OS_APPS = APPS;
@@ -1682,11 +1602,15 @@ window.OS_renderStartMenu = renderOSStartMenu;
 window.OS_renderDesktop = renderOSDesktop;
 window.OS_enter = enterOS;
 window.OS_exit = exitOS;
+
+console.log('[OS] API global expuesta: OS_createWindow, OS_renderStartMenu, OS_renderDesktop');
 })();
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════
-     ANIA-OS · MÓDULO DE ARCHIVOS REMOTOS (GitHub)
+     MÓDULO DE ARCHIVOS REMOTOS (GitHub)
+     Música · Documentos (DOCX/PDF/TXT/MD) · Navegador HTML · Fondos
+     + Entrenamiento de Ania con documentos
 ═══════════════════════════════════════════════════════════════ -->
 <script>
 (function(){
@@ -1794,16 +1718,8 @@ const GH = {
     }
     return out;
   },
-  async fetchText(url){
-    const r = await fetch(url);
-    if(!r.ok) throw new Error('HTTP ' + r.status);
-    return r.text();
-  },
-  async fetchBuffer(url){
-    const r = await fetch(url);
-    if(!r.ok) throw new Error('HTTP ' + r.status);
-    return r.arrayBuffer();
-  }
+  async fetchText(url){ const r = await fetch(url); if(!r.ok) throw new Error('HTTP ' + r.status); return r.text(); },
+  async fetchBuffer(url){ const r = await fetch(url); if(!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); }
 };
 
 const RemoteCache = {
@@ -1829,11 +1745,8 @@ const RemoteCache = {
   }
 };
 
-/* ══════ REPRODUCTOR DE MÚSICA ══════ */
-let _audioEl = null;
-let _playlist = [];
-let _playIdx = -1;
-
+/* ══════ MÚSICA ══════ */
+let _audioEl = null, _playlist = [], _playIdx = -1;
 function ensureAudioEl(){
   if(_audioEl) return _audioEl;
   _audioEl = new Audio();
@@ -1855,17 +1768,18 @@ function playNext(){ if(_playIdx < _playlist.length - 1) playTrack(_playIdx + 1)
 function playPrev(){ if(_playIdx > 0) playTrack(_playIdx - 1); }
 
 async function appOSMusic(){
+  if(!window.OS_createWindow){ toastR('OS no disponible', 'warn'); return; }
   await RemoteCache.refreshAll(false).catch(()=>{});
   _playlist = RemoteCache.music.slice();
-  if(!window.OS_createWindow){ toastR('OS no disponible', 'warn'); return; }
   const ctx = window.OS_createWindow({
     title:'🎵 Música del repositorio',
     icon: '<svg width="36" height="36" viewBox="0 0 48 48"><rect x="4" y="4" width="40" height="40" rx="6" fill="#C30052"/><circle cx="19" cy="32" r="4.6" fill="#fff"/><rect x="22" y="12" width="3.4" height="20" fill="#fff"/></svg>',
     w:720, h:520
   });
+  if(!ctx) return;
   function render(){
     if(!_playlist.length){
-      ctx.body.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#888;font-size:14px">No hay pistas en <b>' + CFG.PATHS.music + '/</b> del repo.<br><br>Sube archivos <b>.mp3</b> (o .wav, .m4a, .ogg) a esa carpeta en GitHub y pulsa «Actualizar».</div>';
+      ctx.body.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#888;font-size:14px">No hay pistas en <b>' + CFG.PATHS.music + '/</b> del repo.<br><br>Sube archivos <b>.mp3</b> a esa carpeta en GitHub y pulsa «Actualizar».</div>';
       return;
     }
     const cur = _playIdx >= 0 ? _playlist[_playIdx] : null;
@@ -1873,7 +1787,7 @@ async function appOSMusic(){
       '<div style="display:flex;flex-direction:column;height:100%;background:#14161a;color:#eee">' +
         '<div style="padding:12px 16px;border-bottom:1px solid #23262e;display:flex;gap:8px;align-items:center">' +
           '<b style="flex:1;font-size:13px;letter-spacing:.1em">🎵 ' + _playlist.length + ' pistas</b>' +
-          '<button class="r-btn" data-act="refresh" style="padding:6px 12px;border:1px solid #333;background:#222;color:#eee;cursor:pointer;border-radius:6px;font-size:11px">⟳ Actualizar</button>' +
+          '<button data-act="refresh" style="padding:6px 12px;border:1px solid #333;background:#222;color:#eee;cursor:pointer;border-radius:6px;font-size:11px">⟳ Actualizar</button>' +
         '</div>' +
         '<div style="flex:1;display:flex;min-height:0">' +
           '<div style="width:230px;border-right:1px solid #23262e;overflow-y:auto">' +
@@ -1891,9 +1805,9 @@ async function appOSMusic(){
               '<div style="font-size:11px;color:#8b93a3;margin-top:4px">' + (cur ? esc(cur.path) : 'Elige una pista') + '</div>' +
             '</div>' +
             '<div style="display:flex;gap:16px;align-items:center">' +
-              '<button class="r-btn" data-act="prev" style="width:44px;height:44px;border-radius:50%;border:0;background:#222;color:#eee;cursor:pointer;font-size:16px">⏮</button>' +
-              '<button class="r-btn" data-act="play" style="width:56px;height:56px;border-radius:50%;border:0;background:#0a84d8;color:#fff;cursor:pointer;font-size:20px">' + (ensureAudioEl().paused ? '▶' : '⏸') + '</button>' +
-              '<button class="r-btn" data-act="next" style="width:44px;height:44px;border-radius:50%;border:0;background:#222;color:#eee;cursor:pointer;font-size:16px">⏭</button>' +
+              '<button data-act="prev" style="width:44px;height:44px;border-radius:50%;border:0;background:#222;color:#eee;cursor:pointer;font-size:16px">⏮</button>' +
+              '<button data-act="play" style="width:56px;height:56px;border-radius:50%;border:0;background:#0a84d8;color:#fff;cursor:pointer;font-size:20px">' + (ensureAudioEl().paused ? '▶' : '⏸') + '</button>' +
+              '<button data-act="next" style="width:44px;height:44px;border-radius:50%;border:0;background:#222;color:#eee;cursor:pointer;font-size:16px">⏭</button>' +
             '</div>' +
             '<div style="width:100%;max-width:360px;display:flex;gap:8px;align-items:center">' +
               '<span class="r-t0" style="font-size:11px;color:#8b93a3;min-width:36px">0:00</span>' +
@@ -1908,11 +1822,7 @@ async function appOSMusic(){
       b.onclick = () => {
         const a = b.dataset.act;
         if(a === 'refresh'){ RemoteCache.refreshAll(true).then(() => { _playlist = RemoteCache.music.slice(); render(); }); }
-        else if(a === 'play'){
-          const el = ensureAudioEl();
-          if(el.paused) el.play(); else el.pause();
-          setTimeout(render, 50);
-        }
+        else if(a === 'play'){ const el2 = ensureAudioEl(); if(el2.paused) el2.play(); else el2.pause(); setTimeout(render, 50); }
         else if(a === 'next') playNext();
         else if(a === 'prev') playPrev();
       };
@@ -1934,12 +1844,12 @@ async function appOSMusic(){
     upd();
   }
   render();
-  const onChange = () => render();
-  document.addEventListener('remote-music-change', onChange);
+  document.addEventListener('remote-music-change', () => render());
 }
 
-/* ══════ VISOR DOCX/PDF/TXT/MD ══════ */
+/* ══════ VISOR DOCS ══════ */
 async function appOSDocViewer(file){
+  if(!window.OS_createWindow){ toastR('OS no disponible', 'warn'); return; }
   await RemoteCache.refreshAll(false).catch(()=>{});
   if(!file){
     const ctx = window.OS_createWindow({
@@ -1947,6 +1857,7 @@ async function appOSDocViewer(file){
       icon: '<svg width="36" height="36" viewBox="0 0 48 48"><path d="M11 4h20l6 6v34H11z" fill="#fff" stroke="#9aa5b1" stroke-width="1.4"/><rect x="6" y="17" width="24" height="24" rx="2" fill="#2B579A"/><text x="18" y="35" font-family="Segoe UI" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">W</text></svg>',
       w:760, h:560
     });
+    if(!ctx) return;
     function renderList(){
       if(!RemoteCache.docs.length){
         ctx.body.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#888">No hay documentos en <b>' + CFG.PATHS.docs + '/</b>.<br><br>Sube .docx, .pdf, .txt o .md al repo.</div>';
@@ -1967,8 +1878,8 @@ async function appOSDocViewer(file){
             '</div>'
           ).join('') +
         '</div>';
-      ctx.body.querySelectorAll('.r-doc').forEach(el => {
-        el.onclick = () => { ctx.close(); appOSDocViewer(RemoteCache.docs[+el.dataset.i]); };
+      ctx.body.querySelectorAll('.r-doc').forEach(el2 => {
+        el2.onclick = () => { ctx.close(); appOSDocViewer(RemoteCache.docs[+el2.dataset.i]); };
       });
       ctx.body.querySelector('.r-refresh').onclick = () => { RemoteCache.refreshAll(true).then(renderList); };
       ctx.body.querySelector('.r-train').onclick = () => { entrenarConDocumentos(); };
@@ -1978,6 +1889,7 @@ async function appOSDocViewer(file){
   }
   const ext = file.ext;
   const ctx = window.OS_createWindow({ title: file.name, icon: ext === 'pdf' ? '📕' : '📄', w: 900, h: 700 });
+  if(!ctx) return;
   ctx.body.innerHTML = '<div style="padding:30px;text-align:center;color:#888">Cargando ' + esc(file.name) + '…</div>';
   try{
     if(ext === 'docx')      await renderDocx(ctx, file);
@@ -2053,12 +1965,14 @@ async function renderText(ctx, file){
 
 /* ══════ NAVEGADOR INTERNO ══════ */
 async function appOSBrowser(initialFile){
+  if(!window.OS_createWindow){ toastR('OS no disponible', 'warn'); return; }
   await RemoteCache.refreshAll(false).catch(()=>{});
   const ctx = window.OS_createWindow({
     title:'🌐 Navegador interno',
     icon: '<svg width="36" height="36" viewBox="0 0 48 48"><rect x="4" y="6" width="40" height="36" rx="4" fill="#1954A0"/><path d="M12 20h24M12 26h24M12 32h14" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
     w:980, h:680
   });
+  if(!ctx) return;
   ctx.body.innerHTML =
     '<div style="display:flex;gap:6px;padding:8px;background:#f0f0f0;border-bottom:1px solid #d8d8d8;align-items:center">' +
       '<select class="r-url" style="flex:1;padding:6px 10px;border:1px solid #d8d8d8;background:#fff;border-radius:4px;font-size:12px;min-width:0">' +
@@ -2103,18 +2017,20 @@ async function appOSBrowser(initialFile){
   }
 }
 
-/* ══════ SELECTOR DE FONDOS ══════ */
+/* ══════ FONDOS ══════ */
 async function appOSWallpaper(){
+  if(!window.OS_createWindow){ toastR('OS no disponible', 'warn'); return; }
   await RemoteCache.refreshAll(false).catch(()=>{});
   const ctx = window.OS_createWindow({
     title:'🎨 Fondos del repositorio',
     icon: '<svg width="36" height="36" viewBox="0 0 48 48"><rect x="4" y="6" width="40" height="36" rx="4" fill="#5a3a8a"/><circle cx="14" cy="16" r="3" fill="#ffb900"/><path d="M4 34l12-14 8 10 6-6 14 16z" fill="#2f9e63"/></svg>',
     w:820, h:600
   });
+  if(!ctx) return;
   function render(){
     const walls = RemoteCache.wallpapers;
     if(!walls.length){
-      ctx.body.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#888;font-size:14px">No hay fondos en <b>' + CFG.PATHS.fondos + '/</b> del repo.<br><br>Sube imágenes (.jpg, .png, .webp) a esa carpeta y pulsa «Actualizar».</div>';
+      ctx.body.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#888;font-size:14px">No hay fondos en <b>' + CFG.PATHS.fondos + '/</b>.<br><br>Sube imágenes (.jpg, .png, .webp) y pulsa «Actualizar».</div>';
       return;
     }
     const currentUrl = localStorage.getItem('aniaos_wall_url') || '';
@@ -2129,7 +2045,7 @@ async function appOSWallpaper(){
           walls.map((w, i) => {
             const isActive = w.url === currentUrl;
             return '<div class="r-wall" data-i="' + i + '" style="cursor:pointer;border:2px solid ' + (isActive ? '#0a84d8' : 'transparent') + ';border-radius:8px;overflow:hidden;background:#000;aspect-ratio:16/9;position:relative">' +
-              '<img src="' + w.url + '" style="width:100%;height:100%;object-fit:cover;display:block" loading="lazy">' +
+              '<img src="' + w.url + '" style="width:100%;height:100%;object-fit:cover;display:block" loading="lazy" onerror="this.style.opacity=\'.3\'">' +
               '<div style="position:absolute;left:0;right:0;bottom:0;padding:6px 8px;background:linear-gradient(transparent,rgba(0,0,0,.85));font-size:10px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
                 (isActive ? '✓ ' : '') + esc(w.name) +
               '</div>' +
@@ -2137,8 +2053,8 @@ async function appOSWallpaper(){
           }).join('') +
         '</div>' +
       '</div>';
-    ctx.body.querySelectorAll('.r-wall').forEach(el => {
-      el.onclick = () => { aplicarFondoRemoto(walls[+el.dataset.i].url, walls[+el.dataset.i].name); render(); };
+    ctx.body.querySelectorAll('.r-wall').forEach(el2 => {
+      el2.onclick = () => { aplicarFondoRemoto(walls[+el2.dataset.i].url, walls[+el2.dataset.i].name); render(); };
     });
     ctx.body.querySelector('.r-btn-refresh').onclick = () => { RemoteCache.refreshAll(true).then(render); };
     ctx.body.querySelector('.r-btn-clear').onclick = () => { aplicarFondoRemoto(null, null); render(); };
@@ -2223,8 +2139,7 @@ async function entrenarConDocumentos(){
         const buf = await GH.fetchBuffer(d.url);
         const r = await window.mammoth.extractRawText({ arrayBuffer: buf });
         texto = r.value || '';
-      }
-      else if(d.ext === 'pdf'){
+      } else if(d.ext === 'pdf'){
         const pdfjsLib = await Libs.loadPdfJs();
         const buf = await GH.fetchBuffer(d.url);
         const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
@@ -2236,8 +2151,7 @@ async function entrenarConDocumentos(){
           partes.push(tc.items.map(it => it.str).join(' '));
         }
         texto = partes.join('\n\n');
-      }
-      else if(d.ext === 'txt' || d.ext === 'md'){
+      } else if(d.ext === 'txt' || d.ext === 'md'){
         texto = await GH.fetchText(d.url);
       }
       if(texto){ total += entrenarConTexto(d.name, texto); ok++; } else fail++;
@@ -2266,7 +2180,7 @@ function buscarEnEntrenados(query){
 }
 window.buscarEnEntrenados = buscarEnEntrenados;
 
-/* ══════ HOOK OSBridge (comandos extendidos) ══════ */
+/* ══════ HOOK OSBridge · comandos remotos ══════ */
 function hookOSBridge(){
   if(!window.OSBridge || window.OSBridge.__remoteHooked) return;
   window.OSBridge.__remoteHooked = true;
@@ -2282,8 +2196,9 @@ function hookOSBridge(){
     if(/^(?:abre|cambia|pon|muestra|elige)\s+(?:los?\s+|el\s+|un\s+)?(?:fondo|fondos|wallpaper)/.test(c)){
       appOSWallpaper(); return { ok:true, app:'fondos' };
     }
-    if(/^pon(?:me)?\s+(?:el\s+)?fondo\s+(?:de\s+|llamado\s+|que\s+se\s+llame\s+)?(.+)$/.test(c)){
-      const q = c.match(/^pon(?:me)?\s+(?:el\s+)?fondo\s+(?:de\s+|llamado\s+|que\s+se\s+llame\s+)?(.+)$/)[1].trim();
+    m = c.match(/^pon(?:me)?\s+(?:el\s+)?fondo\s+(?:de\s+|llamado\s+|que\s+se\s+llame\s+)?(.+)$/);
+    if(m){
+      const q = m[1].trim();
       await RemoteCache.refreshAll(false);
       const found = RemoteCache.wallpapers.find(w => w.name.toLowerCase().includes(q) || w.name.toLowerCase().replace(/\.[^.]+$/, '') === q);
       if(found){ aplicarFondoRemoto(found.url, found.name); return { ok:true, fondo:found.name }; }
@@ -2363,13 +2278,12 @@ function hookRespond(){
   console.log('[Remote] send() extendido ✓');
 }
 
-/* FIX: re-render del start menu + desktop después de registrar apps */
 function registrarEnOS(){
   if(!window.OS_APPS){ console.warn('[Remote] OS_APPS no disponible'); return; }
-  window.OS_APPS.music     = { name:'🎵 Música',   icon:'🎵', launch: () => appOSMusic() };
+  window.OS_APPS.music     = { name:'🎵 Música',     icon:'🎵', launch: () => appOSMusic() };
   window.OS_APPS.docs      = { name:'📄 Documentos', icon:'📄', launch: () => appOSDocViewer() };
-  window.OS_APPS.browser   = { name:'🌐 Navegador', icon:'🌐', launch: () => appOSBrowser() };
-  window.OS_APPS.wallpaper = { name:'🎨 Fondos',   icon:'🎨', launch: () => appOSWallpaper() };
+  window.OS_APPS.browser   = { name:'🌐 Navegador',  icon:'🌐', launch: () => appOSBrowser() };
+  window.OS_APPS.wallpaper = { name:'🎨 Fondos',     icon:'🎨', launch: () => appOSWallpaper() };
   if(typeof window.OS_renderStartMenu === 'function'){
     try{ window.OS_renderStartMenu(); console.log('[Remote] Start menu re-renderizado ✓'); }catch(e){ console.warn(e); }
   }
@@ -2382,7 +2296,7 @@ function waitFor(fn, cb, timeout){
   const start = Date.now();
   const iv = setInterval(() => {
     if(fn()){ clearInterval(iv); cb(); }
-    else if(Date.now() - start > (timeout || 12000)){ clearInterval(iv); console.warn('[Remote] timeout'); }
+    else if(Date.now() - start > (timeout || 15000)){ clearInterval(iv); console.warn('[Remote] timeout esperando OS'); }
   }, 150);
 }
 
@@ -2395,14 +2309,9 @@ waitFor(() => window.OSBridge && window.send && typeof window.OS_createWindow ==
 });
 
 window.OSRemote = {
-  appOSMusic,
-  appOSDocViewer,
-  appOSBrowser,
-  appOSWallpaper,
+  appOSMusic, appOSDocViewer, appOSBrowser, appOSWallpaper,
   aplicarFondoRemoto,
-  entrenarConDocumentos,
-  entrenarConTexto,
-  buscarEnEntrenados,
+  entrenarConDocumentos, entrenarConTexto, buscarEnEntrenados,
   refresh: () => RemoteCache.refreshAll(true),
   config: CFG,
   cache: RemoteCache
