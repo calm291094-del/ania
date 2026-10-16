@@ -11,49 +11,99 @@
 
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23040806'/%3E%3Ccircle cx='50' cy='50' r='26' fill='%232de08a'/%3E%3Ccircle cx='50' cy='50' r='9' fill='%23040806'/%3E%3C/svg%3E">
 
-<!-- ═══════════════════════════════════════════════════════════
-     FIX #1 · Anti-FOUC · CSS crítico inline ANTES de las hojas
-     Elimina el warning "El diseño se forzó antes de que la página
-     se cargara completamente".
-═══════════════════════════════════════════════════════════════ -->
+<!-- ═══ FIX #1 · CSS crítico anti-FOUC ═══ -->
 <style>
-  html,body{
-    background:#040806;color:#cfeede;margin:0;
-    font-family:'Share Tech Mono','Courier New',ui-monospace,monospace;
-    height:100%;overflow:hidden;
-  }
-  body::before{
-    content:'';position:fixed;inset:0;z-index:-1;
-    background:radial-gradient(circle at 50% 40%,#071009 0%,#040806 70%);
-  }
+  html,body{background:#040806;color:#cfeede;margin:0;font-family:'Share Tech Mono','Courier New',ui-monospace,monospace;height:100%;overflow:hidden;}
+  body::before{content:'';position:fixed;inset:0;z-index:-1;background:radial-gradient(circle at 50% 40%,#071009 0%,#040806 70%);}
   #boot{background:#040806;}
   #bootTitle{letter-spacing:.55em;color:#39ff9b;text-align:center;}
   #bootLog{color:#79a88f;font-size:13px;}
 </style>
 
-<!-- ═══════════════════════════════════════════════════════════
-     FIX #2 · WebSocket patch · silencia reintentos al agente local
-     (ws://127.0.0.1:8765) cuando no hay agente corriendo.
-     Evita el spam en consola en Firefox/Chrome.
+<!-- ═══════════════════════════════════════════════════════════════
+     FIX #2 · Interceptor de red · SHORT-CIRCUIT (no hace la request)
+     Silencia 404s de: cerebro.h5, cerebro.zip, cerebro.partN,
+     modelo.json, vosk.min.js, y WS al agente local.
+═══════════════════════════════════════════════════════════════ -->
+<script>
+(function(){
+  'use strict';
+  var SILENCIADOS = [
+    /\/models\/cerebro(\.h5|\.zip)(\.part\d+)?(\?|$)/,
+    /\/models\/cerebro\.part\d+(\?|$)/,
+    /\/modelos\/modelo\.json(\?|$)/,
+    /\/vendor\/vosk\.min\.js(\?|$)/
+  ];
+  function debeSilenciar(url){
+    var u = String(url || '');
+    for (var i = 0; i < SILENCIADOS.length; i++) if (SILENCIADOS[i].test(u)) return true;
+    return false;
+  }
+  // ⭐ Short-circuit: NO hace la request, devuelve 404 vacío sin tocar la red
+  if (typeof window.fetch === 'function'){
+    var OrigFetch = window.fetch.bind(window);
+    window.fetch = function(input, init){
+      var url = typeof input === 'string' ? input : (input && input.url) || '';
+      if (debeSilenciar(url)){
+        return Promise.resolve(new Response('', { status:404, statusText:'Not Found (silenciado)', headers:{ 'Content-Type':'application/json' } }));
+      }
+      return OrigFetch(input, init);
+    };
+  }
+  // Interceptor XHR que también short-circuitea
+  if (typeof XMLHttpRequest !== 'undefined'){
+    var OrigOpen = XMLHttpRequest.prototype.open;
+    var OrigSend = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.open = function(method, url){
+      this.__silencio = debeSilenciar(url);
+      return OrigOpen.apply(this, arguments);
+    };
+    XMLHttpRequest.prototype.send = function(body){
+      if (this.__silencio){
+        var self = this;
+        setTimeout(function(){
+          try {
+            Object.defineProperty(self, 'status', { value:404, configurable:true });
+            Object.defineProperty(self, 'responseText', { value:'', configurable:true });
+            Object.defineProperty(self, 'readyState', { value:4, configurable:true });
+            if (typeof self.onreadystatechange === 'function') self.onreadystatechange();
+            if (typeof self.onload === 'function') self.onload();
+          } catch(e){}
+        }, 0);
+        return;
+      }
+      return OrigSend.apply(this, arguments);
+    };
+  }
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     FIX #3 · WebSocket al agente local · SOLO 1 intento
+     A partir del 2º, fake silencioso (sin error en consola)
 ═══════════════════════════════════════════════════════════════ -->
 <script>
 (function(){
   if (typeof WebSocket === 'undefined') return;
-  const OrigWS = window.WebSocket;
-  let intentosLocal = 0;
+  var OrigWS = window.WebSocket;
+  var intentos = 0;
   function fakeWS(){
     return {
       readyState:3, CONNECTING:0, OPEN:1, CLOSING:2, CLOSED:3,
       addEventListener:function(){}, removeEventListener:function(){},
       dispatchEvent:function(){ return false; }, send:function(){}, close:function(){},
-      onopen:null, onclose:null, onerror:null, onmessage:null
+      onopen:null, onclose:null, onerror:null, onmessage:null,
+      binaryType:'blob', bufferedAmount:0, extensions:'', protocol:'', url:''
     };
   }
   function PatchedWS(url, protocols){
     try{
       if (typeof url === 'string' && /^wss?:\/\/(127\.0\.0\.1|localhost):8765\b/.test(url)){
-        intentosLocal++;
-        if (intentosLocal > 2){ console.info('[WS] agente local no disponible, silenciando'); return fakeWS(); }
+        intentos++;
+        if (intentos >= 2){
+          // Solo 1 intento real. Los siguientes son silencio total.
+          return fakeWS();
+        }
       }
     }catch(e){}
     return protocols ? new OrigWS(url, protocols) : new OrigWS(url);
@@ -64,15 +114,13 @@
 })();
 </script>
 
-<!-- ═══════════════════════════════════════════════════════════
-     FIX #3 · Vosk opcional · si no existe no genera error 404
-═══════════════════════════════════════════════════════════════ -->
+<!-- ═══ Vosk opcional (sin error si falta) ═══ -->
 <script>
 (function(){
   var s = document.createElement('script');
   s.src = './vendor/vosk.min.js';
   s.async = true;
-  s.onerror = function(){ console.info('[Vosk] no disponible — voz offline WASM deshabilitada'); };
+  s.onerror = function(){ /* silencio */ };
   document.head.appendChild(s);
 })();
 </script>
@@ -82,27 +130,15 @@
 <script src="./vendor/notifyx.min.js"></script>
 <script src="./vendor/h5wasm/h5wasm.js"></script>
 
-<!-- ═══════════════════════════════════════════════════════════
-     FIX #4 · CSS con preload + fallback noscript (evita FOUC)
-═══════════════════════════════════════════════════════════════ -->
-<link rel="preload" as="style" href="./css/base.css" onload="this.rel='stylesheet'">
-<link rel="preload" as="style" href="./css/logo.css" onload="this.rel='stylesheet'">
-<link rel="preload" as="style" href="./css/chat.css" onload="this.rel='stylesheet'">
-<link rel="preload" as="style" href="./css/overlays.css" onload="this.rel='stylesheet'">
-<link rel="preload" as="style" href="./css/dock.css" onload="this.rel='stylesheet'">
-<link rel="preload" as="style" href="./css/autonomo.css" onload="this.rel='stylesheet'">
-<noscript>
-  <link rel="stylesheet" href="./css/base.css">
-  <link rel="stylesheet" href="./css/logo.css">
-  <link rel="stylesheet" href="./css/chat.css">
-  <link rel="stylesheet" href="./css/overlays.css">
-  <link rel="stylesheet" href="./css/dock.css">
-  <link rel="stylesheet" href="./css/autonomo.css">
-</noscript>
+<!-- ═══ FIX #4 · CSS sin preload (stylesheet normal) ═══ -->
+<link rel="stylesheet" href="./css/base.css">
+<link rel="stylesheet" href="./css/logo.css">
+<link rel="stylesheet" href="./css/chat.css">
+<link rel="stylesheet" href="./css/overlays.css">
+<link rel="stylesheet" href="./css/dock.css">
+<link rel="stylesheet" href="./css/autonomo.css">
 
-<!-- ═══════════════════════════════════════════════════════════
-     CSS DEL MINI-OS (namespace #osDesktop, no interfiere con ANIA)
-═══════════════════════════════════════════════════════════════ -->
+<!-- ═══ CSS del Mini-OS ═══ -->
 <style id="os-css">
 #osDesktop{position:fixed;inset:0;z-index:800;display:none;font-family:"Segoe UI","Open Sans",Arial,sans-serif;color:#1b1b1b;background:#000;overflow:hidden;}
 #osDesktop.on{display:block;}
@@ -218,9 +254,7 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
 }
 </style>
 
-<!-- ═══════════════════════════════════════════════════════════
-     JS propio de ANIA · todos en ./js/ y ./modulos/
-═══════════════════════════════════════════════════════════════ -->
+<!-- ═══ JS propios de ANIA ═══ -->
 <script defer src="./js/00-core.js"></script>
 <script defer src="./js/01-lingua.js"></script>
 <script defer src="./js/02-ui.js"></script>
@@ -648,13 +682,12 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
 <input type="file" id="ggufFile" accept=".gguf" style="display:none">
 <input type="file" id="engineFiles" accept=".mjs,.js,.wasm" multiple style="display:none">
 
-<!-- ═══════════════════════════════════════════════════════════
-     MINI-OS · expone API global para el módulo remoto
+<!-- ═══════════════════════════════════════════════════════════════
+     MINI-OS · Script
 ═══════════════════════════════════════════════════════════════ -->
 <script>
 (function(){
 'use strict';
-
 function waitFor(fn, cb, timeout){
   var start = Date.now();
   var iv = setInterval(function(){
@@ -662,7 +695,6 @@ function waitFor(fn, cb, timeout){
     else if(Date.now() - start > (timeout||10000)){ clearInterval(iv); console.warn('[OS] timeout'); }
   }, 120);
 }
-
 var IC = {
   folder: '<svg width="42" height="42" viewBox="0 0 48 48"><path d="M4 10h13l4 5h20v6H4z" fill="#e8a200"/><path d="M4 16h37v22a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" fill="#ffc933"/></svg>',
   txt:    '<svg width="42" height="42" viewBox="0 0 48 48"><path d="M11 4h20l6 6v34H11z" fill="#fff" stroke="#9aa5b1" stroke-width="1.4"/><path d="M31 4l6 6h-6z" fill="#dfe5ec" stroke="#9aa5b1" stroke-width="1.2"/><path d="M16 17h16M16 22h16M16 27h16M16 32h10" stroke="#5a9bd8" stroke-width="2"/></svg>',
@@ -678,7 +710,6 @@ var IC = {
   weather:'<svg width="42" height="42" viewBox="0 0 48 48"><circle cx="18" cy="20" r="8" fill="#ffb900"/><path d="M12 32c-4 0-8-3-8-8s4-8 8-8c1 0 2 0 3 1 2-5 7-8 12-8 6 0 11 4 12 10 4 1 7 4 7 9 0 5-4 9-9 9H14c-1 0-2-1-2-2s1-3 0-3z" fill="#9ad0ff"/></svg>',
   photos: '<svg width="42" height="42" viewBox="0 0 48 48"><rect x="5" y="9" width="38" height="30" rx="2.5" fill="#fff" stroke="#8f9aa6" stroke-width="1.4"/><path d="M8 34l10-12 7 8 5-5 10 9z" fill="#2f9e63"/><circle cx="33" cy="17" r="3.6" fill="#ffb900"/></svg>'
 };
-
 var OS = {
   zTop: 100, winSeq: 0, activeWin: null,
   wins: new Map(),
@@ -750,13 +781,11 @@ var OS = {
     this.saveFS();
   }
 };
-
 var $ = function(s){ return document.querySelector(s); };
 var $$ = function(s){ return document.querySelectorAll(s); };
 var el = function(t, c, h){ var e = document.createElement(t); if(c) e.className = c; if(h != null) e.innerHTML = h; return e; };
 var esc = function(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
 function toastOS(txt){ if(typeof toast === 'function'){ try{ toast(txt); return; }catch(e){} } console.log('[OS]', txt); }
-
 function createOSWindow(opts){
   var id = 'osw' + (++OS.winSeq);
   var w = Math.min(opts.w || 760, innerWidth - 30);
@@ -764,7 +793,6 @@ function createOSWindow(opts){
   var cnt = OS.wins.size;
   var x = Math.max(8, (innerWidth - w) / 2 + ((cnt % 7) - 3) * 30);
   var y = Math.max(4, (innerHeight - 44 - h) / 2 + ((cnt % 7) - 3) * 22);
-
   var win = el('div', 'os-window active');
   win.style.cssText = 'width:' + w + 'px;height:' + h + 'px;left:' + x + 'px;top:' + y + 'px;z-index:' + (++OS.zTop);
   win.innerHTML =
@@ -779,12 +807,10 @@ function createOSWindow(opts){
     '</div>' +
     '<div class="os-body"></div>' +
     '<div class="os-rz"></div>';
-  var layer = $('#osWinLayer'); if(!layer){ console.warn('[OS] sin #osWinLayer'); return null; }
+  var layer = $('#osWinLayer'); if(!layer) return null;
   layer.appendChild(win);
-
   var rec = { el: win, body: win.querySelector('.os-body'), title: opts.title };
   OS.wins.set(id, rec);
-
   var tb = el('button', 'os-task active', (opts.icon || '') + esc(opts.title || ''));
   tb.dataset.win = id; tb.title = opts.title;
   tb.onclick = function(){
@@ -792,12 +818,10 @@ function createOSWindow(opts){
     else { win.classList.remove('minimized'); focusOSWin(id); }
   };
   var tasks = $('#osTasks'); if(tasks) tasks.appendChild(tb);
-
   win.querySelector('.bmin').onclick = function(e){ e.stopPropagation(); minimizeOSWin(id); };
   win.querySelector('.bmax').onclick = function(e){ e.stopPropagation(); toggleOSMax(id); };
   win.querySelector('.close').onclick = function(e){ e.stopPropagation(); closeOSWin(id); };
   win.addEventListener('pointerdown', function(){ focusOSWin(id); });
-
   var tbar = win.querySelector('.os-titlebar');
   tbar.addEventListener('dblclick', function(e){ if(!e.target.closest('.os-tb-btn')) toggleOSMax(id); });
   tbar.addEventListener('pointerdown', function(e){
@@ -822,7 +846,6 @@ function createOSWindow(opts){
     document.addEventListener('pointermove', mm);
     document.addEventListener('pointerup', mu, { once:true });
   });
-
   var rz = win.querySelector('.os-rz');
   rz.addEventListener('pointerdown', function(e){
     e.stopPropagation();
@@ -835,7 +858,6 @@ function createOSWindow(opts){
     document.addEventListener('pointermove', mm);
     document.addEventListener('pointerup', function(){ document.removeEventListener('pointermove', mm); }, { once:true });
   });
-
   focusOSWin(id);
   return {
     win: win, body: rec.body, id: id,
@@ -857,10 +879,7 @@ function minimizeOSWin(id){
   if(tb) tb.classList.remove('active');
   if(OS.activeWin === id) OS.activeWin = null;
 }
-function toggleOSMax(id){
-  var w = OS.wins.get(id); if(!w) return;
-  w.el.classList.toggle('maximized');
-}
+function toggleOSMax(id){ var w = OS.wins.get(id); if(w) w.el.classList.toggle('maximized'); }
 function closeOSWin(id){
   var w = OS.wins.get(id); if(!w) return;
   w.el.classList.add('closing');
@@ -870,31 +889,20 @@ function closeOSWin(id){
   if(tb) tb.parentNode.removeChild(tb);
   if(OS.activeWin === id) OS.activeWin = null;
 }
-
 function fileIconOS(node){
   if(!node) return '';
   if(node.type !== 'file') return IC.folder;
   switch(node.kind){
-    case 'doc': return IC.doc;
-    case 'sheet': return IC.xls;
-    case 'text': return IC.txt;
-    case 'image': return IC.img;
-    case 'audio': return IC.audio;
-    default: return IC.app;
+    case 'doc': return IC.doc; case 'sheet': return IC.xls; case 'text': return IC.txt;
+    case 'image': return IC.img; case 'audio': return IC.audio; default: return IC.app;
   }
 }
-
 function appOSExplorer(startPath){
   var ctx = createOSWindow({ title:'Explorador', icon:IC.folder, w:880, h:560 });
   if(!ctx) return;
   var cur = (startPath || ['Documentos']).slice();
   ctx.body.innerHTML =
-    '<div class="os-explorer-toolbar">' +
-      '<button class="os-explorer-nav nback">◀</button>' +
-      '<button class="os-explorer-nav nup">▲</button>' +
-      '<div class="os-explorer-crumb"></div>' +
-      '<button class="os-explorer-nav breload">⟳</button>' +
-    '</div>' +
+    '<div class="os-explorer-toolbar"><button class="os-explorer-nav nback">◀</button><button class="os-explorer-nav nup">▲</button><div class="os-explorer-crumb"></div><button class="os-explorer-nav breload">⟳</button></div>' +
     '<div class="os-explorer-grid"></div>' +
     '<div class="os-status"><span class="s1"></span><span class="s2"></span></div>';
   var grid = ctx.body.querySelector('.os-explorer-grid');
@@ -920,11 +928,7 @@ function appOSExplorer(startPath){
     });
     entries.forEach(function(n){
       var it = el('div', 'os-file', '<div class="ic">' + fileIconOS(n) + '</div><span>' + esc(n.name) + '</span>');
-      it.onclick = function(e){
-        e.stopPropagation();
-        grid.querySelectorAll('.os-file').forEach(function(x){ x.classList.remove('sel'); });
-        it.classList.add('sel');
-      };
+      it.onclick = function(e){ e.stopPropagation(); grid.querySelectorAll('.os-file').forEach(function(x){ x.classList.remove('sel'); }); it.classList.add('sel'); };
       it.ondblclick = function(){
         if(n.type === 'folder'){ cur = cur.concat([n.name]); render(); }
         else openOSNode(n);
@@ -940,7 +944,6 @@ function appOSExplorer(startPath){
   ctx.body.querySelector('.breload').onclick = render;
   render();
 }
-
 function appOSNotepad(node){
   var ctx = createOSWindow({ title:(node && node.name || 'Sin título') + ' · Notas', icon:IC.txt, w:640, h:480 });
   if(!ctx) return;
@@ -957,14 +960,11 @@ function appOSNotepad(node){
         if(!name) return;
         OS.addFile(['Documentos'], { type:'file', kind:'text', name:name, text:ta.value, size:ta.value.length });
         ctx.setTitle(name + ' · Notas');
-      } else {
-        node.text = ta.value; node.size = ta.value.length; OS.saveFS();
-      }
+      } else { node.text = ta.value; node.size = ta.value.length; OS.saveFS(); }
     }
   });
   upd();
 }
-
 function appOSWord(node){
   var ctx = createOSWindow({ title:(node && node.name || 'Documento') + ' · Word', icon:IC.doc, w:900, h:660 });
   if(!ctx) return;
@@ -992,7 +992,6 @@ function appOSWord(node){
     } else { node.html = page.innerHTML; node.size = page.innerHTML.length; OS.saveFS(); }
   };
 }
-
 function appOSCalc(){
   var ctx = createOSWindow({ title:'Calculadora', icon:IC.calc, w:340, h:470 });
   if(!ctx) return;
@@ -1024,7 +1023,6 @@ function appOSCalc(){
     disp.textContent = cur;
   };
 }
-
 function appOSTerminal(){
   var ctx = createOSWindow({ title:'Terminal', icon:IC.term, w:720, h:440 });
   if(!ctx) return;
@@ -1050,17 +1048,11 @@ function appOSTerminal(){
   });
   setTimeout(function(){ inp.focus(); }, 100);
 }
-
 function appOSPaint(){
   var ctx = createOSWindow({ title:'Paint', icon:IC.paint, w:820, h:600 });
   if(!ctx) return;
   ctx.body.innerHTML =
-    '<div class="os-wp-toolbar">' +
-      '<input type="color" value="#1b6fb8" id="os-pt-color" style="width:34px;height:26px;border:1px solid #d8d8d8;padding:0">' +
-      '<label style="font-size:12px;display:flex;gap:6px;align-items:center">Grosor <input type="range" id="os-pt-size" min="1" max="30" value="4" style="width:90px"></label>' +
-      '<button class="os-wp-btn" id="os-pt-clear" style="width:auto;padding:0 12px;">Limpiar</button>' +
-      '<button class="os-wp-btn" id="os-pt-save" style="width:auto;padding:0 12px;">Guardar</button>' +
-    '</div>' +
+    '<div class="os-wp-toolbar"><input type="color" value="#1b6fb8" id="os-pt-color" style="width:34px;height:26px;border:1px solid #d8d8d8;padding:0"><label style="font-size:12px;display:flex;gap:6px;align-items:center">Grosor <input type="range" id="os-pt-size" min="1" max="30" value="4" style="width:90px"></label><button class="os-wp-btn" id="os-pt-clear" style="width:auto;padding:0 12px;">Limpiar</button><button class="os-wp-btn" id="os-pt-save" style="width:auto;padding:0 12px;">Guardar</button></div>' +
     '<div class="os-paint-wrap"><canvas width="1000" height="560" style="background:#fff"></canvas></div>';
   var cv = ctx.body.querySelector('canvas');
   var x = cv.getContext('2d');
@@ -1082,17 +1074,12 @@ function appOSPaint(){
     OS.addFile(['Imágenes'], { type:'file', kind:'image', name:'dibujo-' + Date.now() + '.png', url:u, size:Math.round(u.length * 0.75) });
   };
 }
-
 function appOSMines(){
   var ctx = createOSWindow({ title:'Buscaminas', icon:IC.mines, w:360, h:470 });
   if(!ctx) return;
   var R = 9, C = 9, M = 10;
   var mines, open, flag, dead, won, started, timer;
-  ctx.body.innerHTML =
-    '<div class="os-mines">' +
-      '<div class="os-mines-top"><span id="os-m-mines">010</span><button id="os-m-reset" style="border:0;background:#e6e6e6;font-size:18px;cursor:pointer;padding:0 8px;">🙂</button><span id="os-m-time">000</span></div>' +
-      '<div class="os-mines-grid"></div>' +
-    '</div>';
+  ctx.body.innerHTML = '<div class="os-mines"><div class="os-mines-top"><span id="os-m-mines">010</span><button id="os-m-reset" style="border:0;background:#e6e6e6;font-size:18px;cursor:pointer;padding:0 8px;">🙂</button><span id="os-m-time">000</span></div><div class="os-mines-grid"></div></div>';
   var grid = ctx.body.querySelector('.os-mines-grid');
   function reset(){
     mines = {}; open = {}; flag = {}; dead = false; won = false; started = false;
@@ -1161,7 +1148,6 @@ function appOSMines(){
   ctx.body.querySelector('#os-m-reset').onclick = reset;
   reset();
 }
-
 function appOSWeather(){
   var ctx = createOSWindow({ title:'Clima', icon:IC.weather, w:560, h:480 });
   if(!ctx) return;
@@ -1179,12 +1165,7 @@ function appOSWeather(){
           .then(function(r){ return r.json(); })
           .then(function(w){
             var c = w.current;
-            out.innerHTML =
-              '<div style="background:linear-gradient(135deg,#2f7fbf,#5aa7e0);color:#fff;padding:20px;border-radius:8px;margin-top:10px">' +
-                '<div style="font-size:48px;font-weight:300;line-height:1">' + Math.round(c.temperature_2m) + '°C</div>' +
-                '<div style="font-size:18px;margin-top:6px">' + esc(p.name) + '</div>' +
-                '<div style="opacity:.9;font-size:13px;margin-top:8px">Sensación ' + Math.round(c.apparent_temperature) + '° · Humedad ' + c.relative_humidity_2m + '% · Viento ' + Math.round(c.wind_speed_10m) + ' km/h</div>' +
-              '</div>';
+            out.innerHTML = '<div style="background:linear-gradient(135deg,#2f7fbf,#5aa7e0);color:#fff;padding:20px;border-radius:8px;margin-top:10px"><div style="font-size:48px;font-weight:300;line-height:1">' + Math.round(c.temperature_2m) + '°C</div><div style="font-size:18px;margin-top:6px">' + esc(p.name) + '</div><div style="opacity:.9;font-size:13px;margin-top:8px">Sensación ' + Math.round(c.apparent_temperature) + '° · Humedad ' + c.relative_humidity_2m + '% · Viento ' + Math.round(c.wind_speed_10m) + ' km/h</div></div>';
           });
       })
       .catch(function(e){ out.innerHTML = '<div style="color:#d05050">Error: ' + esc(e.message) + '</div>'; });
@@ -1192,7 +1173,6 @@ function appOSWeather(){
   ctx.body.querySelector('button').onclick = function(){ inp.value.trim() && buscar(inp.value.trim()); };
   inp.addEventListener('keydown', function(e){ if(e.key === 'Enter' && inp.value.trim()) buscar(inp.value.trim()); });
 }
-
 var APPS = {
   explorer:  { name:'Explorador',   icon:IC.folder,  launch:function(a){ appOSExplorer(a && a.path); } },
   notepad:   { name:'Bloc de notas',icon:IC.txt,     launch:function(a){ appOSNotepad(a && a.node); } },
@@ -1204,7 +1184,6 @@ var APPS = {
   weather:   { name:'Clima',        icon:IC.weather, launch:function(){ appOSWeather(); } },
   photos:    { name:'Fotos',        icon:IC.photos,  launch:function(){ abrirFotos(); } }
 };
-
 function abrirFotos(){
   var carpeta = OS.getNode(['Imágenes']);
   var imgs = Object.keys(carpeta && carpeta.children || {}).map(function(k){ return carpeta.children[k]; }).filter(function(n){ return n.kind === 'image' && n.url; });
@@ -1216,7 +1195,6 @@ function abrirFotos(){
   img.src = imgs[i].url;
   setInterval(function(){ i = (i + 1) % imgs.length; img.src = imgs[i].url; }, 4000);
 }
-
 function openOSNode(node){
   if(!node) return;
   if(node.type !== 'file'){ appOSExplorer(); return; }
@@ -1227,7 +1205,6 @@ function openOSNode(node){
     default:      toastOS('No sé abrir: ' + node.name);
   }
 }
-
 function renderOSDesktop(){
   var box = $('#osIcons'); if(!box) return; box.innerHTML = '';
   var items = [
@@ -1245,16 +1222,11 @@ function renderOSDesktop(){
   }
   items.forEach(function(it){
     var d = el('div', 'os-icon', '<div class="ic">' + it[1] + '</div><span>' + it[0] + '</span>');
-    d.onclick = function(e){
-      e.stopPropagation();
-      $$('.os-icon').forEach(function(x){ x.classList.remove('sel'); });
-      d.classList.add('sel');
-    };
+    d.onclick = function(e){ e.stopPropagation(); $$('.os-icon').forEach(function(x){ x.classList.remove('sel'); }); d.classList.add('sel'); };
     d.ondblclick = it[2];
     box.appendChild(d);
   });
 }
-
 function renderOSStartMenu(){
   var sm = $('#osSmApps'); if(!sm) return; sm.innerHTML = '';
   Object.keys(APPS).forEach(function(k){
@@ -1264,10 +1236,8 @@ function renderOSStartMenu(){
     sm.appendChild(b);
   });
 }
-
 function toggleOSStart(){ var sm = $('#osStartMenu'); if(sm) sm.classList.toggle('on'); }
 function closeOSStart(){ var sm = $('#osStartMenu'); if(sm) sm.classList.remove('on'); }
-
 function tickOSClock(){
   var d = new Date();
   var t = d.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
@@ -1275,7 +1245,6 @@ function tickOSClock(){
   if($('#osClockT')) $('#osClockT').textContent = t;
   if($('#osClockD')) $('#osClockD').textContent = f;
 }
-
 var OSBridge = {
   listarApps: function(){ return Object.keys(APPS).map(function(k){ return { id:k, nombre:APPS[k].name }; }); },
   abrirApp: function(id){
@@ -1287,22 +1256,16 @@ var OSBridge = {
   cerrarApp: function(id, titulo){
     var n = 0;
     OS.wins.forEach(function(w, wid){
-      var match = titulo ? (w.title && w.title.toLowerCase().indexOf(String(titulo).toLowerCase()) >= 0) :
-        (!id || w.title.toLowerCase().indexOf((APPS[id] && APPS[id].name || id).toLowerCase()) >= 0);
+      var match = titulo ? (w.title && w.title.toLowerCase().indexOf(String(titulo).toLowerCase()) >= 0) : (!id || w.title.toLowerCase().indexOf((APPS[id] && APPS[id].name || id).toLowerCase()) >= 0);
       if(match){ closeOSWin(wid); n++; }
     });
     return { ok:true, cerrados:n };
   },
-  ventanasAbiertas: function(){
-    var out = []; OS.wins.forEach(function(w){ out.push({ titulo:w.title }); }); return out;
-  },
+  ventanasAbiertas: function(){ var out = []; OS.wins.forEach(function(w){ out.push({ titulo:w.title }); }); return out; },
   listarArchivos: function(carpeta){
     var node = OS.getNode(carpeta ? [carpeta] : []);
     if(!node) return { ok:false, error:'no existe' };
-    return {
-      ok:true, carpeta:carpeta || '(raíz)',
-      items: Object.keys(node.children || {}).map(function(k){ var c = node.children[k]; return { nombre:c.name, tipo:c.type, kind:c.kind || null, tamaño:c.size || 0 }; })
-    };
+    return { ok:true, carpeta:carpeta || '(raíz)', items: Object.keys(node.children || {}).map(function(k){ var c = node.children[k]; return { nombre:c.name, tipo:c.type, kind:c.kind || null, tamaño:c.size || 0 }; }) };
   },
   crearArchivo: function(carpeta, nombre, contenido){
     var path = [carpeta || 'Documentos'];
@@ -1356,12 +1319,9 @@ var OSBridge = {
       for(var k in node.children){ n++; if(node.children[k].type !== 'file') walk(node.children[k]); }
     })(OS.FS);
     var hm = performance.memory;
-    return {
-      ok:true, ventanas:OS.wins.size, apps:Object.keys(APPS).length, archivos:n,
+    return { ok:true, ventanas:OS.wins.size, apps:Object.keys(APPS).length, archivos:n,
       memoriaJS: hm ? Math.round(hm.usedJSHeapSize / 1048576) + ' MB' : '—',
-      nucleos: navigator.hardwareConcurrency || '—',
-      online: navigator.onLine
-    };
+      nucleos: navigator.hardwareConcurrency || '—', online: navigator.onLine };
   },
   apagar: function(){ osShutdown(); return { ok:true }; },
   bloquear: function(){ osLock(); return { ok:true }; },
@@ -1369,7 +1329,6 @@ var OSBridge = {
     var c = String(cmd || '').toLowerCase().trim();
     if(!c) return Promise.resolve({ ok:false, error:'comando vacío' });
     var m;
-
     m = c.match(/^(?:abre|abrir|lanza|inicia|ejecuta|arranca)\s+(?:la\s+|el\s+|los\s+|las\s+)?(.+?)$/);
     if(m){
       var q = m[1].trim();
@@ -1385,49 +1344,32 @@ var OSBridge = {
         'fotos':'photos','imagenes':'photos','galeria':'photos'
       };
       var found = aliases[q];
-      if(!found){
-        for(var k in APPS){ if(k === q || APPS[k].name.toLowerCase().indexOf(q) >= 0){ found = k; break; } }
-      }
+      if(!found){ for(var k in APPS){ if(k === q || APPS[k].name.toLowerCase().indexOf(q) >= 0){ found = k; break; } } }
       if(found) return Promise.resolve(OSBridge.abrirApp(found));
       return Promise.resolve({ ok:false, error:'app no reconocida: ' + q });
     }
-
     m = c.match(/^cierra\s+(?:la\s+|el\s+|las\s+|los\s+)?(?:ventana\s+de\s+|app\s+)?(.+)$/);
-    if(m){
-      var q2 = m[1].trim();
-      if(/todas|ventanas/.test(q2)) return Promise.resolve(OSBridge.cerrarApp());
-      return Promise.resolve(OSBridge.cerrarApp(null, q2));
-    }
-
+    if(m){ var q2 = m[1].trim(); if(/todas|ventanas/.test(q2)) return Promise.resolve(OSBridge.cerrarApp()); return Promise.resolve(OSBridge.cerrarApp(null, q2)); }
     m = c.match(/^(?:crea|crear|nuevo|guarda|escribe)\s+(?:un\s+|el\s+|la\s+)?(?:archivo|documento|nota|doc)\s+(?:llamado\s+|con\s+nombre\s+|de\s+nombre\s+)?["']?([^"']+?)["']?(?:\s+con\s+(?:contenido|texto)\s+["']?(.+?)["']?)?$/);
     if(m) return Promise.resolve(OSBridge.crearArchivo('Documentos', m[1].trim(), (m[2] || '').trim()));
-
     m = c.match(/^(?:busca|b[uú]scame|encuentra)\s+(?:el\s+archivo\s+|el\s+documento\s+|archivo\s+)?(.+)$/);
-    if(m){
-      var q3 = m[1].trim();
-      if(/en\s+internet|en\s+la\s+web|en\s+wikipedia/.test(q3)) return Promise.resolve({ ok:false, error:'buscar web → usa chat' });
-      return Promise.resolve(OSBridge.buscarArchivos(q3));
-    }
-
+    if(m){ var q3 = m[1].trim(); if(/en\s+internet|en\s+la\s+web|en\s+wikipedia/.test(q3)) return Promise.resolve({ ok:false, error:'buscar web → usa chat' }); return Promise.resolve(OSBridge.buscarArchivos(q3)); }
     m = c.match(/^(?:cambia|cambiar|pon)\s+(?:el\s+)?fondo\s+(?:a\s+|por\s+|al?\s+)?(.+)$/);
     if(m){
       var map = { 'aurora':0,'0':0,'ventana':1,'1':1,'montaña':2,'montanas':2,'2':2,'lineas':3,'líneas':3,'3':3 };
       var kk = map[m[1].trim()];
       if(kk != null) return Promise.resolve(OSBridge.cambiarFondo(kk));
     }
-
     if(/^(?:apaga|apagar|shutdown)\s*(?:el\s+)?(?:pc|sistema|equipo|os)?$/.test(c)) return Promise.resolve(OSBridge.apagar());
     if(/^(?:bloquea|bloquear|lock)\s*(?:la\s+)?(?:pantalla|sesi[oó]n|pc)?$/.test(c)) return Promise.resolve(OSBridge.bloquear());
     if(/^(?:info|estado|status)\s*(?:del\s+)?(?:sistema|os)?$/.test(c)) return Promise.resolve(OSBridge.infoSistema());
     if(/ventanas?\s+abiertas?/.test(c)) return Promise.resolve({ ok:true, ventanas:OSBridge.ventanasAbiertas() });
     m = c.match(/^(?:lista|listar|muestra|qu[eé]\s+hay\s+en)\s+(?:los\s+|las\s+)?(?:archivos\s+de\s+|carpeta\s+)?(.+)$/);
     if(m) return Promise.resolve(OSBridge.listarArchivos(m[1].trim()));
-
     return Promise.resolve({ ok:false, error:'comando no reconocido' });
   }
 };
 window.OSBridge = OSBridge;
-
 function inferirKind(nombre){
   var e = String(nombre).split('.').pop().toLowerCase();
   if(['txt','md','log','csv'].indexOf(e) >= 0) return 'text';
@@ -1437,7 +1379,6 @@ function inferirKind(nombre){
   if(['mp3','wav','ogg','m4a','flac'].indexOf(e) >= 0) return 'audio';
   return 'generic';
 }
-
 function hookSend(){
   if(!window.send || window.__osSendHooked) return;
   window.__osSendHooked = true;
@@ -1466,7 +1407,6 @@ function hookSend(){
   };
   console.log('[OS] send() hooked');
 }
-
 function enterOS(){
   document.body.classList.add('os-on');
   document.body.classList.remove('app-on');
@@ -1525,7 +1465,6 @@ function osShutdown(){
 }
 window.OSShutdown = osShutdown;
 window.OSLock = osLock;
-
 function wireButtons(){
   var sb = $('#osStartBtn'); if(sb) sb.onclick = function(e){ e.stopPropagation(); toggleOSStart(); };
   document.addEventListener('pointerdown', function(e){
@@ -1542,12 +1481,7 @@ function wireButtons(){
   });
   var ex = $('#osExit'); if(ex) ex.onclick = function(){ osShutdown(); };
   var tb = document.getElementById('osToggleBtn');
-  if(tb){
-    tb.onclick = function(){
-      if(document.body.classList.contains('os-on')) exitOS();
-      else enterOS();
-    };
-  }
+  if(tb){ tb.onclick = function(){ if(document.body.classList.contains('os-on')) exitOS(); else enterOS(); }; }
   var desk = $('#osDesktop');
   if(desk) desk.addEventListener('click', function(e){
     if(e.target.id === 'osWallpaper' || e.target.id === 'osIcons' || e.target.id === 'osDesktop'){
@@ -1555,17 +1489,13 @@ function wireButtons(){
     }
   });
 }
-
 function initOS(){
   OS.loadFS();
   wireButtons();
   var bs = document.getElementById('bootStart');
   if(bs){
     bs.addEventListener('click', function(){
-      setTimeout(function(){
-        document.body.classList.add('app-on');
-        enterOS();
-      }, 600);
+      setTimeout(function(){ document.body.classList.add('app-on'); enterOS(); }, 600);
     });
   }
   setTimeout(function(){
@@ -1577,19 +1507,10 @@ function initOS(){
   }, 2500);
   console.log('[OS] Mini-OS listo ·', Object.keys(APPS).length, 'apps ·', Object.keys(OS.FS).length, 'carpetas');
 }
-
 waitFor(function(){
   return typeof window.send === 'function' && typeof window.reply === 'function' && document.getElementById('osDesktop');
-}, function(){
-  hookSend();
-  initOS();
-}, 10000);
-
+}, function(){ hookSend(); initOS(); }, 10000);
 window.addEventListener('load', function(){ setTimeout(function(){ hookSend(); }, 1200); });
-
-/* ═══════════════════════════════════════════════════════════
-   ⭐ API GLOBAL EXPUESTA — sin esto el módulo remoto falla
-═══════════════════════════════════════════════════════════ */
 window.OS = OS;
 window.OS_APPS = APPS;
 window.IC = IC;
@@ -1602,50 +1523,36 @@ window.OS_renderStartMenu = renderOSStartMenu;
 window.OS_renderDesktop = renderOSDesktop;
 window.OS_enter = enterOS;
 window.OS_exit = exitOS;
-
 console.log('[OS] API global expuesta: OS_createWindow, OS_renderStartMenu, OS_renderDesktop');
 })();
 </script>
 
-<!-- ═══════════════════════════════════════════════════════════
+<!-- ═══════════════════════════════════════════════════════════════
      MÓDULO DE ARCHIVOS REMOTOS (GitHub)
-     Música · Documentos (DOCX/PDF/TXT/MD) · Navegador HTML · Fondos
-     + Entrenamiento de Ania con documentos
+     · Música MP3 · Docs (DOCX/PDF/TXT/MD) · HTMLs · Fondos
+     · FIX: usa raw.githubusercontent.com (evita 403 de jsDelivr)
+     · FIX: navegador carga HTML con blob URL (renderiza, no muestra código)
 ═══════════════════════════════════════════════════════════════ -->
 <script>
 (function(){
 'use strict';
 
 const CFG = {
-  USER:   'calm291094-del',
-  REPO:   'ania',
+  USER: 'calm291094-del',
+  REPO: 'ania',
   BRANCH: 'main',
-  PATHS: {
-    docs:   'documentos',
-    music:  'musica',
-    htmls:  'htmls',
-    fondos: 'fondos'
-  },
-  CDN: (p) => 'https://cdn.jsdelivr.net/gh/' + CFG.USER + '/' + CFG.REPO + '@' + CFG.BRANCH + '/' + p.split('/').map(encodeURIComponent).join('/'),
+  PATHS: { docs:'documentos', music:'musica', htmls:'htmls', fondos:'fondos' },
+  // ⭐ FIX: raw.githubusercontent.com (más fiable que jsDelivr para MP3 grandes)
+  RAW: (p) => 'https://raw.githubusercontent.com/' + CFG.USER + '/' + CFG.REPO + '/' + CFG.BRANCH + '/' + p.split('/').map(encodeURIComponent).join('/'),
   API: (p) => 'https://api.github.com/repos/' + CFG.USER + '/' + CFG.REPO + '/contents/' + p.split('/').map(encodeURIComponent).join('/') + '?ref=' + CFG.BRANCH
 };
 
 const $  = s => document.querySelector(s);
 const el = (t, c, h) => { const e = document.createElement(t); if(c) e.className = c; if(h != null) e.innerHTML = h; return e; };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function toastR(txt, tipo){
-  if(typeof toast === 'function'){ try{ return toast(txt, tipo); }catch(e){} }
-  console.log('[Remote]', txt);
-}
-function chatR(txt){
-  if(typeof reply === 'function'){ try{ return reply(txt); }catch(e){} }
-  if(typeof personaReply === 'function'){ try{ return personaReply(txt); }catch(e){} }
-  console.log('[Remote→chat]', txt);
-}
-function getExt(name){
-  const m = String(name).match(/\.([a-z0-9]+)$/i);
-  return m ? m[1].toLowerCase() : '';
-}
+function toastR(txt, tipo){ if(typeof toast === 'function'){ try{ return toast(txt, tipo); }catch(e){} } console.log('[Remote]', txt); }
+function chatR(txt){ if(typeof reply === 'function'){ try{ return reply(txt); }catch(e){} } if(typeof personaReply === 'function'){ try{ return personaReply(txt); }catch(e){} } console.log('[Remote→chat]', txt); }
+function getExt(name){ const m = String(name).match(/\.([a-z0-9]+)$/i); return m ? m[1].toLowerCase() : ''; }
 
 const Libs = {
   _loaded: {},
@@ -1682,10 +1589,7 @@ const GH = {
   async list(folder, force){
     const key = this.cacheKey(folder);
     if(!force){
-      try{
-        const cached = JSON.parse(localStorage.getItem(key) || 'null');
-        if(cached && cached.t && Date.now() - cached.t < 600000){ return cached.items; }
-      }catch(e){}
+      try{ const cached = JSON.parse(localStorage.getItem(key) || 'null'); if(cached && cached.t && Date.now() - cached.t < 600000){ return cached.items; } }catch(e){}
     }
     try{
       const r = await fetch(CFG.API(folder));
@@ -1693,17 +1597,10 @@ const GH = {
       if(!r.ok) throw new Error('HTTP ' + r.status);
       const j = await r.json();
       if(!Array.isArray(j)) return [];
-      const items = j.map(it => ({
-        name: it.name, path: it.path, type: it.type,
-        size: it.size || 0, ext: getExt(it.name),
-        url: it.type === 'file' ? CFG.CDN(it.path) : null
-      }));
+      const items = j.map(it => ({ name: it.name, path: it.path, type: it.type, size: it.size || 0, ext: getExt(it.name), url: it.type === 'file' ? CFG.RAW(it.path) : null }));
       try{ localStorage.setItem(key, JSON.stringify({ t:Date.now(), items })); }catch(e){}
       return items;
-    }catch(e){
-      try{ const cached = JSON.parse(localStorage.getItem(key) || 'null'); if(cached) return cached.items; }catch(_){}
-      return [];
-    }
+    }catch(e){ try{ const cached = JSON.parse(localStorage.getItem(key) || 'null'); if(cached) return cached.items; }catch(_){} return []; }
   },
   async listRecursive(folder, depth){
     depth = depth == null ? 3 : depth;
@@ -1711,10 +1608,7 @@ const GH = {
     const items = await this.list(folder);
     for(const it of items){
       if(it.type === 'file') out.push(it);
-      else if(it.type === 'dir' && depth > 0){
-        const sub = await this.listRecursive(it.path, depth - 1);
-        sub.forEach(x => out.push(x));
-      }
+      else if(it.type === 'dir' && depth > 0){ const sub = await this.listRecursive(it.path, depth - 1); sub.forEach(x => out.push(x)); }
     }
     return out;
   },
@@ -1745,7 +1639,7 @@ const RemoteCache = {
   }
 };
 
-/* ══════ MÚSICA ══════ */
+/* ══════ MÚSICA (con fallback de URL) ══════ */
 let _audioEl = null, _playlist = [], _playIdx = -1;
 function ensureAudioEl(){
   if(_audioEl) return _audioEl;
@@ -1753,6 +1647,17 @@ function ensureAudioEl(){
   _audioEl.crossOrigin = 'anonymous';
   _audioEl.volume = 1;
   _audioEl.addEventListener('ended', () => playNext());
+  _audioEl.addEventListener('error', function(){
+    // ⭐ FIX: si falla la URL RAW, intenta una vez por jsDelivr como fallback
+    var t = _playlist[_playIdx];
+    if(!t) return;
+    var alt = 'https://cdn.jsdelivr.net/gh/' + CFG.USER + '/' + CFG.REPO + '@' + CFG.BRANCH + '/' + t.path.split('/').map(encodeURIComponent).join('/');
+    if(_audioEl.src !== alt){
+      console.info('[Música] fallback jsDelivr para', t.name);
+      _audioEl.src = alt;
+      _audioEl.play().catch(function(){});
+    }
+  });
   return _audioEl;
 }
 function playTrack(idx){
@@ -1779,7 +1684,7 @@ async function appOSMusic(){
   if(!ctx) return;
   function render(){
     if(!_playlist.length){
-      ctx.body.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#888;font-size:14px">No hay pistas en <b>' + CFG.PATHS.music + '/</b> del repo.<br><br>Sube archivos <b>.mp3</b> a esa carpeta en GitHub y pulsa «Actualizar».</div>';
+      ctx.body.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#888;font-size:14px">No hay pistas en <b>' + CFG.PATHS.music + '/</b> del repo.<br><br>Sube archivos <b>.mp3</b> a esa carpeta y pulsa «Actualizar».</div>';
       return;
     }
     const cur = _playIdx >= 0 ? _playlist[_playIdx] : null;
@@ -1847,7 +1752,7 @@ async function appOSMusic(){
   document.addEventListener('remote-music-change', () => render());
 }
 
-/* ══════ VISOR DOCS ══════ */
+/* ══════ DOCS ══════ */
 async function appOSDocViewer(file){
   if(!window.OS_createWindow){ toastR('OS no disponible', 'warn'); return; }
   await RemoteCache.refreshAll(false).catch(()=>{});
@@ -1900,35 +1805,22 @@ async function appOSDocViewer(file){
     ctx.body.innerHTML = '<div style="padding:30px;color:#d05050;font-size:14px">Error: ' + esc(e.message) + '</div>';
   }
 }
-
 async function renderDocx(ctx, file){
   toastR('Convirtiendo ' + file.name + '…');
   await Libs.loadMammoth();
   const buf = await GH.fetchBuffer(file.url);
   const result = await window.mammoth.convertToHtml({ arrayBuffer: buf });
   ctx.body.innerHTML =
-    '<div class="os-wp-toolbar">' +
-      '<button class="os-wp-btn" data-save="1" style="width:auto;padding:0 12px;">🧠 Entrenar IA con este</button>' +
-      '<span style="flex:1"></span>' +
-      '<span style="font-size:11px;color:#666">' + esc(file.path) + '</span>' +
-    '</div>' +
+    '<div class="os-wp-toolbar"><button class="os-wp-btn" data-save="1" style="width:auto;padding:0 12px;">🧠 Entrenar IA con este</button><span style="flex:1"></span><span style="font-size:11px;color:#666">' + esc(file.path) + '</span></div>' +
     '<div class="os-wp-canvas"><div class="os-page" style="font-family:Georgia,serif">' + (result.value || '<p>Documento vacío</p>') + '</div></div>';
-  ctx.body.querySelector('[data-save]').onclick = () => {
-    const txt = ctx.body.querySelector('.os-page').innerText;
-    entrenarConTexto(file.name, txt);
-  };
+  ctx.body.querySelector('[data-save]').onclick = () => { const txt = ctx.body.querySelector('.os-page').innerText; entrenarConTexto(file.name, txt); };
 }
-
 async function renderPdf(ctx, file){
   const pdfjsLib = await Libs.loadPdfJs();
   const buf = await GH.fetchBuffer(file.url);
   const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
   ctx.body.innerHTML =
-    '<div class="os-wp-toolbar">' +
-      '<button class="os-wp-btn" data-save="1" style="width:auto;padding:0 12px;">🧠 Entrenar IA con este</button>' +
-      '<span style="flex:1"></span>' +
-      '<span style="font-size:11px;color:#666">' + esc(file.path) + ' · ' + pdf.numPages + ' páginas</span>' +
-    '</div>' +
+    '<div class="os-wp-toolbar"><button class="os-wp-btn" data-save="1" style="width:auto;padding:0 12px;">🧠 Entrenar IA con este</button><span style="flex:1"></span><span style="font-size:11px;color:#666">' + esc(file.path) + ' · ' + pdf.numPages + ' páginas</span></div>' +
     '<div class="os-wp-canvas" id="pdf-viewer" style="flex-direction:column;background:#3d434c;padding:20px;gap:14px"></div>';
   const viewer = ctx.body.querySelector('#pdf-viewer');
   const allText = [];
@@ -1942,28 +1834,23 @@ async function renderPdf(ctx, file){
     viewer.appendChild(canvas);
     const c = canvas.getContext('2d');
     await page.render({ canvasContext:c, viewport }).promise;
-    try{
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items.map(it => it.str).join(' ');
-      if(pageText.trim()) allText.push(pageText);
-    }catch(e){}
+    try{ const tc = await page.getTextContent(); const t = tc.items.map(it => it.str).join(' '); if(t.trim()) allText.push(t); }catch(e){}
   }
   ctx.body.querySelector('[data-save]').onclick = () => entrenarConTexto(file.name, allText.join('\n\n'));
 }
-
 async function renderText(ctx, file){
   const text = await GH.fetchText(file.url);
   ctx.body.innerHTML =
-    '<div class="os-wp-toolbar">' +
-      '<button class="os-wp-btn" data-save="1" style="width:auto;padding:0 12px;">🧠 Entrenar IA con este</button>' +
-      '<span style="flex:1"></span>' +
-      '<span style="font-size:11px;color:#666">' + esc(file.path) + '</span>' +
-    '</div>' +
+    '<div class="os-wp-toolbar"><button class="os-wp-btn" data-save="1" style="width:auto;padding:0 12px;">🧠 Entrenar IA con este</button><span style="flex:1"></span><span style="font-size:11px;color:#666">' + esc(file.path) + '</span></div>' +
     '<div class="os-wp-canvas"><div class="os-page" style="font-family:Consolas,monospace;font-size:13px;white-space:pre-wrap">' + esc(text) + '</div></div>';
   ctx.body.querySelector('[data-save]').onclick = () => entrenarConTexto(file.name, text);
 }
 
-/* ══════ NAVEGADOR INTERNO ══════ */
+/* ═══════════════════════════════════════════════════════════════
+   FIX #5 · NAVEGADOR INTERNO · carga HTML como BLOB URL
+   Así el navegador lo renderiza como HTML y no muestra el código.
+   También reescribe rutas relativas (src/href) a absolutas.
+═══════════════════════════════════════════════════════════════ */
 async function appOSBrowser(initialFile){
   if(!window.OS_createWindow){ toastR('OS no disponible', 'warn'); return; }
   await RemoteCache.refreshAll(false).catch(()=>{});
@@ -1992,29 +1879,77 @@ async function appOSBrowser(initialFile){
   const sel = ctx.body.querySelector('.r-url');
   const frame = ctx.body.querySelector('.r-frame');
   const status = ctx.body.querySelector('.r-status');
-  let currentUrl = '';
-  function navigate(url, name){
-    currentUrl = url;
-    frame.src = url;
-    status.textContent = 'Cargando: ' + (name || url);
-    setTimeout(() => { status.textContent = '✓ ' + (name || url); }, 800);
+  let currentFile = null;
+  const blobUrls = [];
+
+  async function navigate(file){
+    currentFile = file;
+    status.textContent = 'Cargando: ' + file.path;
+    try{
+      // 1) Descargar el HTML como texto
+      const r = await fetch(file.url);
+      if(!r.ok) throw new Error('HTTP ' + r.status);
+      let html = await r.text();
+
+      // 2) Base absoluta del archivo (mismo directorio)
+      const slash = file.path.lastIndexOf('/');
+      const dir = slash >= 0 ? file.path.slice(0, slash + 1) : '';
+      const baseRaw = 'https://raw.githubusercontent.com/' + CFG.USER + '/' + CFG.REPO + '/' + CFG.BRANCH + '/' + dir;
+
+      // 3) Reescribir rutas relativas → absolutas (src, href, action)
+      html = html.replace(
+        /(\s(?:src|href|action)\s*=\s*)(["'])(?!https?:|\/\/|data:|blob:|mailto:|tel:|#|javascript:)([^"']+)(\2)/gi,
+        function(m, pre, q, path){ return pre + q + baseRaw + path + q; }
+      );
+
+      // 4) Inyectar <base> por si el HTML usa enlaces dinámicos
+      if(!/<base\s/i.test(html)){
+        if(/<head[^>]*>/i.test(html)){
+          html = html.replace(/<head([^>]*)>/i, '<head$1><base href="' + baseRaw + '">');
+        } else {
+          html = '<head><base href="' + baseRaw + '"></head>' + html;
+        }
+      }
+
+      // 5) Convertir a blob con MIME text/html → fuerza render
+      const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
+      const blobUrl = URL.createObjectURL(blob);
+      blobUrls.push(blobUrl);
+
+      // Limpiar blobs viejos (> 5)
+      while(blobUrls.length > 5){ try{ URL.revokeObjectURL(blobUrls.shift()); }catch(e){} }
+
+      frame.removeAttribute('srcdoc');
+      frame.src = blobUrl;
+      status.textContent = '✓ ' + file.path;
+      console.info('[Navegador] Render HTML:', file.path, 'via blob URL');
+    }catch(e){
+      status.textContent = '✗ Error: ' + e.message;
+      frame.srcdoc = '<div style="font-family:sans-serif;padding:40px;text-align:center;color:#d05050"><h2>Error al cargar</h2><p>' + esc(e.message) + '</p><p style="color:#666">' + esc(file.path) + '</p></div>';
+    }
   }
+
   ctx.body.querySelector('.r-go').onclick = () => {
     const i = sel.value;
     if(i === '') return;
-    const h = RemoteCache.htmls[+i];
-    navigate(h.url, h.path);
+    navigate(RemoteCache.htmls[+i]);
   };
-  ctx.body.querySelector('.r-reload').onclick = () => { if(currentUrl) frame.src = currentUrl; };
-  ctx.body.querySelector('.r-external').onclick = () => { if(currentUrl) window.open(currentUrl, '_blank', 'noopener'); };
+  ctx.body.querySelector('.r-reload').onclick = () => { if(currentFile) navigate(currentFile); };
+  ctx.body.querySelector('.r-external').onclick = () => { if(currentFile) window.open(currentFile.url, '_blank', 'noopener'); };
   sel.onchange = () => { if(sel.value !== '') ctx.body.querySelector('.r-go').click(); };
+
   if(initialFile){
     const idx = RemoteCache.htmls.findIndex(h => h.name === initialFile.name || h.path === initialFile.path);
-    if(idx >= 0){ sel.value = String(idx); navigate(RemoteCache.htmls[idx].url, RemoteCache.htmls[idx].path); }
+    if(idx >= 0){ sel.value = String(idx); navigate(RemoteCache.htmls[idx]); }
   } else if(RemoteCache.htmls.length){
     sel.value = '0';
-    navigate(RemoteCache.htmls[0].url, RemoteCache.htmls[0].path);
+    navigate(RemoteCache.htmls[0]);
   }
+
+  // Limpieza al cerrar ventana
+  ctx.win.addEventListener('remove', function(){
+    blobUrls.forEach(u => { try{ URL.revokeObjectURL(u); }catch(e){} });
+  });
 }
 
 /* ══════ FONDOS ══════ */
@@ -2030,7 +1965,7 @@ async function appOSWallpaper(){
   function render(){
     const walls = RemoteCache.wallpapers;
     if(!walls.length){
-      ctx.body.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#888;font-size:14px">No hay fondos en <b>' + CFG.PATHS.fondos + '/</b>.<br><br>Sube imágenes (.jpg, .png, .webp) y pulsa «Actualizar».</div>';
+      ctx.body.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#888;font-size:14px">No hay fondos en <b>' + CFG.PATHS.fondos + '/</b>.<br><br>Sube imágenes y pulsa «Actualizar».</div>';
       return;
     }
     const currentUrl = localStorage.getItem('aniaos_wall_url') || '';
@@ -2061,7 +1996,6 @@ async function appOSWallpaper(){
   }
   render();
 }
-
 function aplicarFondoRemoto(url, nombre){
   const wp = document.getElementById('osWallpaper');
   if(!wp) return;
@@ -2091,14 +2025,12 @@ const Trained = {
   save(){ try{ localStorage.setItem(this.KEY, JSON.stringify(this.data)); }catch(e){} },
   count(){ this.load(); return Object.keys(this.data).length; }
 };
-
 function entrenarConTexto(nombre, texto){
   const txt = String(texto || '').trim();
   if(txt.length < 40){ toastR('Texto muy corto para entrenar', 'warn'); return 0; }
   let chunks = 0;
   if(typeof DocBrain !== 'undefined' && typeof DocBrain.addChunks === 'function'){
-    try{ chunks = DocBrain.addChunks('repo:' + nombre, txt); if(typeof DocBrain.save === 'function') DocBrain.save(); }
-    catch(e){}
+    try{ chunks = DocBrain.addChunks('repo:' + nombre, txt); if(typeof DocBrain.save === 'function') DocBrain.save(); }catch(e){}
   }
   Trained.load();
   const trozos = [];
@@ -2122,7 +2054,6 @@ function entrenarConTexto(nombre, texto){
   toastR('🧠 Entrenado: ' + nombre + ' (' + chunks + ' fragmentos)');
   return chunks;
 }
-
 async function entrenarConDocumentos(){
   toastR('🧠 Entrenando IA con documentos…');
   await RemoteCache.refreshAll(true);
@@ -2161,7 +2092,6 @@ async function entrenarConDocumentos(){
   chatR('✅ Entrenamiento completo: ' + ok + ' documentos (' + total + ' fragmentos).');
   toastR('✓ Entrenados ' + ok + '/' + docs.length + ' · ' + total + ' fragmentos');
 }
-
 function buscarEnEntrenados(query){
   Trained.load();
   const q = String(query || '').toLowerCase();
@@ -2180,22 +2110,16 @@ function buscarEnEntrenados(query){
 }
 window.buscarEnEntrenados = buscarEnEntrenados;
 
-/* ══════ HOOK OSBridge · comandos remotos ══════ */
+/* ══════ HOOK OSBridge ══════ */
 function hookOSBridge(){
   if(!window.OSBridge || window.OSBridge.__remoteHooked) return;
   window.OSBridge.__remoteHooked = true;
   const origExec = window.OSBridge.ejecutar.bind(window.OSBridge);
-
   window.OSBridge.ejecutar = async function(cmd){
     const c = String(cmd || '').toLowerCase().trim();
     let m;
-
-    if(/^(?:abre|pon|reproduce)\s+(?:la\s+)?m[uú]sica(?:\s+(?:del?\s+repo(?:sitorio)?|de\s+github))?$/.test(c)){
-      appOSMusic(); return { ok:true, app:'musica' };
-    }
-    if(/^(?:abre|cambia|pon|muestra|elige)\s+(?:los?\s+|el\s+|un\s+)?(?:fondo|fondos|wallpaper)/.test(c)){
-      appOSWallpaper(); return { ok:true, app:'fondos' };
-    }
+    if(/^(?:abre|pon|reproduce)\s+(?:la\s+)?m[uú]sica(?:\s+(?:del?\s+repo(?:sitorio)?|de\s+github))?$/.test(c)){ appOSMusic(); return { ok:true, app:'musica' }; }
+    if(/^(?:abre|cambia|pon|muestra|elige)\s+(?:los?\s+|el\s+|un\s+)?(?:fondo|fondos|wallpaper)/.test(c)){ appOSWallpaper(); return { ok:true, app:'fondos' }; }
     m = c.match(/^pon(?:me)?\s+(?:el\s+)?fondo\s+(?:de\s+|llamado\s+|que\s+se\s+llame\s+)?(.+)$/);
     if(m){
       const q = m[1].trim();
@@ -2204,27 +2128,13 @@ function hookOSBridge(){
       if(found){ aplicarFondoRemoto(found.url, found.name); return { ok:true, fondo:found.name }; }
       return { ok:false, error:'fondo no encontrado: ' + q };
     }
-    if(/^lista\s+(?:los\s+)?fondos/.test(c)){
-      await RemoteCache.refreshAll(false);
-      return { ok:true, resultados: RemoteCache.wallpapers.map(w => ({ ruta:w.path })), total:RemoteCache.wallpapers.length };
-    }
+    if(/^lista\s+(?:los\s+)?fondos/.test(c)){ await RemoteCache.refreshAll(false); return { ok:true, resultados: RemoteCache.wallpapers.map(w => ({ ruta:w.path })), total:RemoteCache.wallpapers.length }; }
     if(/^(?:pausa|para)\s+(?:la\s+)?m[uú]sica$/.test(c)){ if(_audioEl) _audioEl.pause(); return { ok:true, accion:'pausa' }; }
     if(/^(?:siguiente|next)\s+(?:pista|canci[oó]n)?$/.test(c)){ playNext(); return { ok:true }; }
     if(/^(?:anterior|prev)\s+(?:pista|canci[oó]n)?$/.test(c)){ playPrev(); return { ok:true }; }
-
-    if(/^lista\s+(?:los\s+)?(?:m[uú]sica|canciones|pistas)/.test(c)){
-      await RemoteCache.refreshAll(false);
-      return { ok:true, resultados: RemoteCache.music.slice(0,30).map(x => ({ ruta:x.path })), total:RemoteCache.music.length };
-    }
-    if(/^lista\s+(?:los\s+)?(?:documentos|docs|documentaciones)/.test(c)){
-      await RemoteCache.refreshAll(false);
-      return { ok:true, resultados: RemoteCache.docs.slice(0,30).map(x => ({ ruta:x.path })), total:RemoteCache.docs.length };
-    }
-    if(/^lista\s+(?:los\s+)?htmls?/.test(c)){
-      await RemoteCache.refreshAll(false);
-      return { ok:true, resultados: RemoteCache.htmls.slice(0,30).map(x => ({ ruta:x.path })), total:RemoteCache.htmls.length };
-    }
-
+    if(/^lista\s+(?:los\s+)?(?:m[uú]sica|canciones|pistas)/.test(c)){ await RemoteCache.refreshAll(false); return { ok:true, resultados: RemoteCache.music.slice(0,30).map(x => ({ ruta:x.path })), total:RemoteCache.music.length }; }
+    if(/^lista\s+(?:los\s+)?(?:documentos|docs)/.test(c)){ await RemoteCache.refreshAll(false); return { ok:true, resultados: RemoteCache.docs.slice(0,30).map(x => ({ ruta:x.path })), total:RemoteCache.docs.length }; }
+    if(/^lista\s+(?:los\s+)?htmls?/.test(c)){ await RemoteCache.refreshAll(false); return { ok:true, resultados: RemoteCache.htmls.slice(0,30).map(x => ({ ruta:x.path })), total:RemoteCache.htmls.length }; }
     m = c.match(/^(?:abre|muestra|lee)\s+(?:el\s+)?(?:documento|doc|archivo|pdf)\s+(.+)$/);
     if(m){
       const q = m[1].trim();
@@ -2233,7 +2143,6 @@ function hookOSBridge(){
       if(found){ appOSDocViewer(found); return { ok:true, archivo:found.path }; }
       return { ok:false, error:'documento no encontrado: ' + q };
     }
-
     m = c.match(/^(?:navega|abre\s+el\s+navegador|abre\s+html)\s*(?:a\s+|hacia\s+|el?\s+html\s+)?(.+)?$/);
     if(m){
       const q = (m[1] || '').trim();
@@ -2243,22 +2152,14 @@ function hookOSBridge(){
         if(found){ appOSBrowser(found); return { ok:true, archivo:found.path }; }
         return { ok:false, error:'html no encontrado: ' + q };
       }
-      appOSBrowser();
-      return { ok:true, app:'navegador' };
+      appOSBrowser(); return { ok:true, app:'navegador' };
     }
-
-    if(/^(?:entrena|entrenar|aprende)\s*(?:te\s+)?(?:con\s+)?(?:los\s+)?(?:documentos|docs)/.test(c)){
-      entrenarConDocumentos(); return { ok:true, accion:'entrenando' };
-    }
-    if(/^cu[aá]ntos?\s+(?:documentos|docs)\s+(?:tienes|hay)\s+(?:entrenados?|aprendidos?)/.test(c)){
-      return { ok:true, total:Trained.count(), mensaje:Trained.count() + ' documentos entrenados' };
-    }
-
+    if(/^(?:entrena|entrenar|aprende)\s*(?:te\s+)?(?:con\s+)?(?:los\s+)?(?:documentos|docs)/.test(c)){ entrenarConDocumentos(); return { ok:true, accion:'entrenando' }; }
+    if(/^cu[aá]ntos?\s+(?:documentos|docs)\s+(?:tienes|hay)\s+(?:entrenados?|aprendidos?)/.test(c)){ return { ok:true, total:Trained.count(), mensaje:Trained.count() + ' documentos entrenados' }; }
     return origExec(cmd);
   };
   console.log('[Remote] OSBridge extendido ✓');
 }
-
 function hookRespond(){
   if(!window.send || window.send.__remoteHooked) return;
   window.send.__remoteHooked = true;
@@ -2277,21 +2178,16 @@ function hookRespond(){
   };
   console.log('[Remote] send() extendido ✓');
 }
-
 function registrarEnOS(){
   if(!window.OS_APPS){ console.warn('[Remote] OS_APPS no disponible'); return; }
   window.OS_APPS.music     = { name:'🎵 Música',     icon:'🎵', launch: () => appOSMusic() };
   window.OS_APPS.docs      = { name:'📄 Documentos', icon:'📄', launch: () => appOSDocViewer() };
   window.OS_APPS.browser   = { name:'🌐 Navegador',  icon:'🌐', launch: () => appOSBrowser() };
   window.OS_APPS.wallpaper = { name:'🎨 Fondos',     icon:'🎨', launch: () => appOSWallpaper() };
-  if(typeof window.OS_renderStartMenu === 'function'){
-    try{ window.OS_renderStartMenu(); console.log('[Remote] Start menu re-renderizado ✓'); }catch(e){ console.warn(e); }
-  }
-  if(typeof window.OS_renderDesktop === 'function'){
-    try{ window.OS_renderDesktop(); console.log('[Remote] Desktop re-renderizado ✓'); }catch(e){ console.warn(e); }
-  }
+  if(typeof window.OS_renderStartMenu === 'function'){ try{ window.OS_renderStartMenu(); }catch(e){} }
+  if(typeof window.OS_renderDesktop === 'function'){ try{ window.OS_renderDesktop(); }catch(e){} }
+  console.log('[Remote] Apps registradas y menús re-renderizados ✓');
 }
-
 function waitFor(fn, cb, timeout){
   const start = Date.now();
   const iv = setInterval(() => {
@@ -2299,7 +2195,6 @@ function waitFor(fn, cb, timeout){
     else if(Date.now() - start > (timeout || 15000)){ clearInterval(iv); console.warn('[Remote] timeout esperando OS'); }
   }, 150);
 }
-
 waitFor(() => window.OSBridge && window.send && typeof window.OS_createWindow === 'function', () => {
   hookOSBridge();
   hookRespond();
@@ -2307,16 +2202,12 @@ waitFor(() => window.OSBridge && window.send && typeof window.OS_createWindow ==
   setTimeout(() => { RemoteCache.refreshAll(false).catch(()=>{}); }, 2500);
   console.log('[Remote] Módulo cargado · música, docs, pdf, htmls, fondos, entrenamiento ✓');
 });
-
 window.OSRemote = {
   appOSMusic, appOSDocViewer, appOSBrowser, appOSWallpaper,
-  aplicarFondoRemoto,
-  entrenarConDocumentos, entrenarConTexto, buscarEnEntrenados,
+  aplicarFondoRemoto, entrenarConDocumentos, entrenarConTexto, buscarEnEntrenados,
   refresh: () => RemoteCache.refreshAll(true),
-  config: CFG,
-  cache: RemoteCache
+  config: CFG, cache: RemoteCache
 };
-
 })();
 </script>
 
