@@ -403,65 +403,139 @@
   }
 
   /* ═══════════════════════════════════════════════════════════
-     NAVEGADOR INTERNO HTML
-  ═══════════════════════════════════════════════════════════ */
-  async function appOSBrowser(initialFile) {
-    if (!window.OS_createWindow) { toastR('Mini-OS no disponible', 'warn'); return; }
-    await RemoteCache.refreshAll(false).catch(() => {});
-    const ctx = window.OS_createWindow({
-      title: '🌐 Navegador interno',
-      icon: '<svg width="36" height="36" viewBox="0 0 48 48"><rect x="4" y="6" width="40" height="36" rx="4" fill="#1954A0"/><path d="M12 20h24M12 26h24M12 32h14" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
-      w: 980, h: 680
-    });
-    if (!ctx) return;
+   NAVEGADOR INTERNO HTML
+   FIX · Carga el HTML como Blob (text/html) para que el
+   navegador lo RENDERICE en vez de mostrar el código.
+   · Inyecta <base> para que las rutas relativas funcionen
+   · Revoca blob URLs antiguas para no dejar memoria colgada
+═══════════════════════════════════════════════════════════ */
+async function appOSBrowser(initialFile) {
+  if (!window.OS_createWindow) { toastR('Mini-OS no disponible', 'warn'); return; }
+  await RemoteCache.refreshAll(false).catch(() => {});
+  const ctx = window.OS_createWindow({
+    title: '🌐 Navegador interno',
+    icon: '<svg width="36" height="36" viewBox="0 0 48 48"><rect x="4" y="6" width="40" height="36" rx="4" fill="#1954A0"/><path d="M12 20h24M12 26h24M12 32h14" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
+    w: 980, h: 680
+  });
+  if (!ctx) return;
 
-    ctx.body.innerHTML =
-      '<div style="display:flex;gap:6px;padding:8px;background:#f0f0f0;border-bottom:1px solid #d8d8d8;align-items:center">' +
-        '<select class="r-url" style="flex:1;padding:6px 10px;border:1px solid #d8d8d8;background:#fff;border-radius:4px;font-size:12px;min-width:0">' +
-          '<option value="">— Elige un HTML del repo —</option>' +
-          RemoteCache.htmls.map((h, i) => '<option value="' + i + '">' + esc(h.path) + '</option>').join('') +
-        '</select>' +
-        '<button class="r-go" style="padding:6px 14px;border:1px solid #d8d8d8;background:#f0f0f0;border-radius:4px;cursor:pointer;font-size:12px">Ir</button>' +
-        '<button class="r-reload" style="padding:6px 12px;border:1px solid #d8d8d8;background:#f0f0f0;border-radius:4px;cursor:pointer;font-size:12px">⟳</button>' +
-        '<button class="r-external" style="padding:6px 12px;border:1px solid #d8d8d8;background:#f0f0f0;border-radius:4px;cursor:pointer;font-size:12px" title="Abrir en pestaña nueva">↗</button>' +
-      '</div>' +
-      '<div style="flex:1;position:relative;background:#fff">' +
-        '<iframe class="r-frame" style="width:100%;height:100%;border:0" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"></iframe>' +
-      '</div>' +
-      '<div style="height:24px;display:flex;align-items:center;padding:0 12px;font-size:11px;color:#666;background:#f0f0f0;border-top:1px solid #d8d8d8">' +
-        '<span class="r-status">Listo. ' + RemoteCache.htmls.length + ' HTMLs disponibles.</span>' +
-      '</div>';
+  ctx.body.innerHTML =
+    '<div style="display:flex;gap:6px;padding:8px;background:#f0f0f0;border-bottom:1px solid #d8d8d8;align-items:center">' +
+      '<select class="r-url" style="flex:1;padding:6px 10px;border:1px solid #d8d8d8;background:#fff;border-radius:4px;font-size:12px;min-width:0">' +
+        '<option value="">— Elige un HTML del repo —</option>' +
+        RemoteCache.htmls.map((h, i) => '<option value="' + i + '">' + esc(h.path) + '</option>').join('') +
+      '</select>' +
+      '<button class="r-go" style="padding:6px 14px;border:1px solid #d8d8d8;background:#f0f0f0;border-radius:4px;cursor:pointer;font-size:12px">Ir</button>' +
+      '<button class="r-reload" style="padding:6px 12px;border:1px solid #d8d8d8;background:#f0f0f0;border-radius:4px;cursor:pointer;font-size:12px">⟳</button>' +
+      '<button class="r-external" style="padding:6px 12px;border:1px solid #d8d8d8;background:#f0f0f0;border-radius:4px;cursor:pointer;font-size:12px" title="Abrir en pestaña nueva">↗</button>' +
+    '</div>' +
+    '<div style="flex:1;position:relative;background:#fff">' +
+      '<iframe class="r-frame" style="width:100%;height:100%;border:0" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"></iframe>' +
+    '</div>' +
+    '<div style="height:24px;display:flex;align-items:center;padding:0 12px;font-size:11px;color:#666;background:#f0f0f0;border-top:1px solid #d8d8d8">' +
+      '<span class="r-status">Listo. ' + RemoteCache.htmls.length + ' HTMLs disponibles.</span>' +
+    '</div>';
 
-    const sel = ctx.body.querySelector('.r-url');
-    const frame = ctx.body.querySelector('.r-frame');
-    const status = ctx.body.querySelector('.r-status');
-    let currentUrl = '';
+  const sel = ctx.body.querySelector('.r-url');
+  const frame = ctx.body.querySelector('.r-frame');
+  const status = ctx.body.querySelector('.r-status');
+  let currentFile = null;
+  let currentBlobUrl = '';
 
-    function navigate(url, name) {
-      currentUrl = url;
-      frame.src = url;
-      status.textContent = 'Cargando: ' + (name || url);
-      setTimeout(() => { status.textContent = '✓ ' + (name || url); }, 800);
-    }
+  /**
+   * Carga un archivo HTML del repo y lo renderiza en el iframe.
+   * 1) Descarga el HTML como texto
+   * 2) Inyecta <base href> para rutas relativas
+   * 3) Envuelve en Blob (text/html) → fuerza renderizado
+   * 4) Revoca el blob anterior
+   */
+  async function navigate(file) {
+    currentFile = file;
+    status.textContent = 'Cargando: ' + file.path;
 
-    ctx.body.querySelector('.r-go').onclick = () => {
-      const i = sel.value;
-      if (i === '') return;
-      const h = RemoteCache.htmls[+i];
-      navigate(h.url, h.path);
-    };
-    ctx.body.querySelector('.r-reload').onclick = () => { if (currentUrl) frame.src = currentUrl; };
-    ctx.body.querySelector('.r-external').onclick = () => { if (currentUrl) window.open(currentUrl, '_blank', 'noopener'); };
-    sel.onchange = () => { if (sel.value !== '') ctx.body.querySelector('.r-go').click(); };
+    try {
+      // 1) Descargar el HTML como TEXTO (no como binario)
+      const r = await fetch(file.url);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      let html = await r.text();
 
-    if (initialFile) {
-      const idx = RemoteCache.htmls.findIndex(h => h.name === initialFile.name || h.path === initialFile.path);
-      if (idx >= 0) { sel.value = String(idx); navigate(RemoteCache.htmls[idx].url, RemoteCache.htmls[idx].path); }
-    } else if (RemoteCache.htmls.length) {
-      sel.value = '0';
-      navigate(RemoteCache.htmls[0].url, RemoteCache.htmls[0].path);
+      // 2) Calcular base absoluta (mismo directorio del HTML)
+      const slash = file.path.lastIndexOf('/');
+      const dir = slash >= 0 ? file.path.slice(0, slash + 1) : '';
+      const baseRaw = 'https://raw.githubusercontent.com/' + CFG.USER + '/' + CFG.REPO + '/' + CFG.BRANCH + '/' +
+        dir.split('/').map(encodeURIComponent).join('/');
+
+      // 3) Reescribir rutas relativas a absolutas en el HTML
+      //    (por si algún HTML las usa sin <base>, ej. src="styles.css")
+      html = html.replace(
+        /(\s(?:src|href|action|poster)\s*=\s*)(["'])(?!https?:|\/\/|data:|blob:|mailto:|tel:|#|javascript:)([^"']+)(\2)/gi,
+        function (m, pre, q, path) {
+          return pre + q + baseRaw + path + q;
+        }
+      );
+
+      // 4) Inyectar <base> en <head> por si acaso (cinturón y tirantes)
+      if (!/<base\s/i.test(html)) {
+        if (/<head[^>]*>/i.test(html)) {
+          html = html.replace(/<head([^>]*)>/i, '<head$1><base href="' + baseRaw + '">');
+        } else if (/<html[^>]*>/i.test(html)) {
+          html = html.replace(/<html([^>]*)>/i, '<html$1><head><base href="' + baseRaw + '"></head>');
+        } else {
+          html = '<head><base href="' + baseRaw + '"></head>' + html;
+        }
+      }
+
+      // 5) Blob con MIME text/html → el navegador RENDERIZA
+      const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
+      const blobUrl = URL.createObjectURL(blob);
+
+      // 6) Revocar blob anterior para no acumular memoria
+      if (currentBlobUrl && currentBlobUrl !== blobUrl) {
+        try { URL.revokeObjectURL(currentBlobUrl); } catch (e) {}
+      }
+      currentBlobUrl = blobUrl;
+
+      // 7) Asignar al iframe
+      frame.removeAttribute('srcdoc');
+      frame.src = blobUrl;
+      status.textContent = '✓ ' + file.path;
+    } catch (e) {
+      status.textContent = '✗ ' + e.message;
+      frame.removeAttribute('src');
+      frame.srcdoc = '<div style="font-family:sans-serif;padding:40px;text-align:center;color:#d05050">' +
+        '<h2 style="color:#c00">Error al cargar</h2>' +
+        '<p>' + esc(e.message) + '</p>' +
+        '<p style="color:#666;font-size:12px">' + esc(file.path) + '</p>' +
+        '</div>';
     }
   }
+
+  ctx.body.querySelector('.r-go').onclick = () => {
+    const i = sel.value;
+    if (i === '') return;
+    const h = RemoteCache.htmls[+i];
+    navigate(h);
+  };
+  ctx.body.querySelector('.r-reload').onclick = () => { if (currentFile) navigate(currentFile); };
+  ctx.body.querySelector('.r-external').onclick = () => { if (currentFile) window.open(currentFile.url, '_blank', 'noopener'); };
+  sel.onchange = () => { if (sel.value !== '') ctx.body.querySelector('.r-go').click(); };
+
+  // Autoseleccionar el primer HTML o el pasado como argumento
+  if (initialFile) {
+    const idx = RemoteCache.htmls.findIndex(h => h.name === initialFile.name || h.path === initialFile.path);
+    if (idx >= 0) { sel.value = String(idx); navigate(RemoteCache.htmls[idx]); }
+  } else if (RemoteCache.htmls.length) {
+    sel.value = '0';
+    navigate(RemoteCache.htmls[0]);
+  }
+
+  // Limpiar blob al cerrar la ventana
+  ctx.win.addEventListener('remove', () => {
+    if (currentBlobUrl) {
+      try { URL.revokeObjectURL(currentBlobUrl); } catch (e) {}
+    }
+  });
+}
 
   /* ═══════════════════════════════════════════════════════════
      FONDOS REMOTOS
