@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalm AI</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg-deep: #0a0514;
+  --bg-panel: rgba(20, 10, 40, 0.95);
+  --bg-card: rgba(30, 15, 60, 0.85);
+  --bg-input: rgba(40, 20, 80, 0.6);
+  --accent: #6a0dad;
+  --accent-light: #9b59b6;
+  --text: #d8bfd8;
+  --text-dim: #9370db;
+  --text-bright: #f0e6ff;
+  --user-bubble: #6a0dad;
+  --ai-bubble: rgba(30, 15, 60, 0.9);
+  --border: rgba(106, 13, 173, 0.4);
+  --danger: #ff4444;
+}
+html, body {
+  height: 100%; width: 100%; overflow: hidden;
+  background: var(--bg-deep); color: var(--text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 14px; line-height: 1.5;
+}
+.kalm-ai-container {
+  display: flex; flex-direction: column; height: 100%; width: 100%;
+  background: linear-gradient(180deg, #0a0514 0%, #140a28 50%, #0a0514 100%);
+}
+.kalm-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; background: var(--bg-panel);
+  border-bottom: 1px solid var(--border); flex-shrink: 0; gap: 12px; flex-wrap: wrap;
+}
+.kalm-logo { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 700; color: var(--accent-light); }
+.kalm-logo span { font-size: 22px; }
+.kalm-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.kalm-select {
+  background: var(--bg-input); color: var(--text); border: 1px solid var(--border);
+  padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; outline: none;
+}
+.kalm-btn {
+  background: var(--bg-input); color: var(--text); border: 1px solid var(--border);
+  padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; transition: all 0.2s;
+}
+.kalm-btn:hover { background: var(--accent); color: #fff; }
+.kalm-btn.danger:hover { background: var(--danger); border-color: var(--danger); }
+.kalm-mode-bar {
+  display: flex; padding: 0 16px; background: rgba(15, 8, 30, 0.8);
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.kalm-mode-tab {
+  padding: 8px 20px; font-size: 13px; cursor: pointer; color: var(--text-dim);
+  border-bottom: 2px solid transparent; transition: all 0.2s;
+}
+.kalm-mode-tab.active { color: var(--accent-light); border-bottom-color: var(--accent-light); }
+.kalm-gen-panel {
+  display: none; padding: 16px; background: var(--bg-panel);
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.kalm-gen-panel.visible { display: block; }
+.kalm-gen-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+.kalm-gen-row label { min-width: 60px; font-size: 12px; color: var(--text-dim); }
+.kalm-gen-input, .kalm-gen-textarea {
+  flex: 1; background: var(--bg-input); color: var(--text);
+  border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px;
+  font-size: 13px; outline: none; font-family: inherit;
+}
+.kalm-gen-textarea { width: 100%; min-height: 60px; resize: vertical; }
+.kalm-chat {
+  flex: 1; overflow-y: auto; padding: 16px; display: flex;
+  flex-direction: column; gap: 12px;
+}
+.kalm-chat::-webkit-scrollbar { width: 6px; }
+.kalm-chat::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+.kalm-welcome {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  flex: 1; text-align: center; padding: 40px 20px;
+}
+.kalm-welcome-icon { font-size: 64px; margin-bottom: 16px; }
+.kalm-welcome h2 { color: var(--accent-light); font-size: 24px; margin-bottom: 8px; }
+.kalm-welcome p { color: var(--text-dim); font-size: 14px; max-width: 400px; }
+.kalm-welcome-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; justify-content: center; }
+.kalm-suggestion {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 8px 14px; border-radius: 8px; font-size: 12px; color: var(--text-dim);
+  cursor: pointer; transition: all 0.2s; max-width: 250px; text-align: left;
+}
+.kalm-suggestion:hover { background: var(--accent); color: #fff; }
+.kalm-msg { display: flex; gap: 10px; max-width: 85%; animation: msgIn 0.3s ease; }
+.kalm-msg.user { align-self: flex-end; flex-direction: row-reverse; }
+.kalm-msg.ai { align-self: flex-start; }
+@keyframes msgIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.kalm-msg-avatar {
+  width: 32px; height: 32px; border-radius: 50%; display: flex;
+  align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; margin-top: 2px;
+}
+.kalm-msg.user .kalm-msg-avatar { background: var(--user-bubble); }
+.kalm-msg.ai .kalm-msg-avatar { background: var(--ai-bubble); border: 1px solid var(--border); }
+.kalm-msg-bubble { padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.6; word-wrap: break-word; }
+.kalm-msg.user .kalm-msg-bubble { background: var(--user-bubble); color: #fff; border-bottom-right-radius: 4px; }
+.kalm-msg.ai .kalm-msg-bubble { background: var(--ai-bubble); color: var(--text); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+.kalm-msg-time { font-size: 10px; color: var(--text-dim); margin-top: 4px; opacity: 0.7; }
+.kalm-msg.user .kalm-msg-time { text-align: right; }
+.kalm-msg-bubble h1, .kalm-msg-bubble h2, .kalm-msg-bubble h3 { color: var(--accent-light); margin: 12px 0 6px 0; }
+.kalm-msg-bubble h1 { font-size: 18px; } .kalm-msg-bubble h2 { font-size: 16px; } .kalm-msg-bubble h3 { font-size: 15px; }
+.kalm-msg-bubble p { margin: 6px 0; }
+.kalm-msg-bubble ul, .kalm-msg-bubble ol { margin: 6px 0; padding-left: 20px; }
+.kalm-msg-bubble li { margin: 3px 0; }
+.kalm-msg-bubble code { background: rgba(0,0,0,0.3); padding: 1px 5px; border-radius: 3px; font-family: Consolas, Monaco, monospace; font-size: 12px; color: #da70d6; }
+.kalm-msg-bubble pre { background: rgba(0,0,0,0.4); padding: 10px; border-radius: 6px; margin: 8px 0; overflow-x: auto; border: 1px solid var(--border); }
+.kalm-msg-bubble pre code { background: none; padding: 0; color: var(--text); }
+.kalm-msg-bubble strong { color: var(--accent-light); }
+.kalm-msg-bubble em { color: var(--text-dim); }
+.kalm-msg-bubble blockquote { border-left: 3px solid var(--accent); padding-left: 12px; margin: 8px 0; color: var(--text-dim); }
+.kalm-typing { display: flex; gap: 4px; padding: 4px 0; }
+.kalm-typing-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-light); animation: typingBounce 1.4s infinite; }
+.kalm-typing-dot:nth-child(2) { animation-delay: 0.2s; } .kalm-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-8px); opacity: 1; } }
+.kalm-loading-bar { height: 2px; background: var(--bg-deep); flex-shrink: 0; overflow: hidden; display: none; }
+.kalm-loading-bar.active { display: block; }
+.kalm-loading-bar-inner { height: 100%; width: 30%; background: linear-gradient(90deg, transparent, var(--accent-light), transparent); animation: loadSlide 1.5s infinite; }
+@keyframes loadSlide { 0% { transform: translateX(-100%); } 100% { transform: translateX(400%); } }
+.kalm-error-banner { display: none; padding: 8px 16px; background: rgba(255,68,68,0.15); border-bottom: 1px solid rgba(255,68,68,0.3); color: var(--danger); font-size: 12px; flex-shrink: 0; align-items: center; gap: 8px; }
+.kalm-error-banner.visible { display: flex; }
+.kalm-error-banner .close-btn { margin-left: auto; cursor: pointer; opacity: 0.7; font-size: 16px; }
+.kalm-input-area { padding: 12px 16px; background: var(--bg-panel); border-top: 1px solid var(--border); flex-shrink: 0; }
+.kalm-input-row { display: flex; gap: 8px; align-items: flex-end; }
+.kalm-input {
+  flex: 1; background: var(--bg-input); color: var(--text); border: 1px solid var(--border);
+  padding: 10px 14px; border-radius: 10px; font-size: 14px; outline: none;
+  resize: none; max-height: 120px; min-height: 42px; font-family: inherit; line-height: 1.5;
+}
+.kalm-input:focus { border-color: var(--accent-light); }
+.kalm-send-btn {
+  width: 42px; height: 42px; border-radius: 10px; background: var(--accent); color: #fff;
+  border: none; cursor: pointer; font-size: 18px; display: flex; align-items: center;
+  justify-content: center; transition: all 0.2s; flex-shrink: 0;
+}
+.kalm-send-btn:hover { background: var(--accent-light); transform: scale(1.05); }
+.kalm-send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.kalm-input-hint { font-size: 10px; color: var(--text-dim); opacity: 0.5; margin-top: 4px; text-align: right; }
+@media (max-width: 600px) { .kalm-msg { max-width: 95%; } .kalm-chat { padding: 10px; } }
+</style>
+</head>
+<body>
+
+<div class="kalm-ai-container">
+  <div class="kalm-header">
+    <div class="kalm-logo"><span>🧠</span> Kalm AI</div>
+    <div class="kalm-controls">
+      <select class="kalm-select" id="kalmModel">
+        <option value="openai">OpenAI</option>
+        <option value="mistral">Mistral</option>
+        <option value="llama">Llama 3.1</option>
+        <option value="deepseek">DeepSeek</option>
+        <option value="qwen-coder">Qwen Coder</option>
+      </select>
+      <button class="kalm-btn" id="btnStop" style="display:none;" onclick="stopGeneration()">⏹ Detener</button>
+      <button class="kalm-btn danger" onclick="clearChat()">🗑 Limpiar</button>
+    </div>
+  </div>
+
+  <div class="kalm-mode-bar">
+    <div class="kalm-mode-tab active" data-mode="chat" onclick="switchMode('chat')">💬 Chat</div>
+    <div class="kalm-mode-tab" data-mode="generar" onclick="switchMode('generar')">📄 Generar Documento</div>
+  </div>
+
+  <div class="kalm-gen-panel" id="genPanel">
+    <div class="kalm-gen-row">
+      <label>Tipo:</label>
+      <select class="kalm-select" id="genTipo" style="flex:1;">
+        <option value="academico">Trabajo Académico</option>
+        <option value="ejecutivo">Informe Ejecutivo</option>
+        <option value="resumen">Resumen</option>
+        <option value="codigo">Código</option>
+      </select>
+    </div>
+    <div class="kalm-gen-row">
+      <label>Tema:</label>
+      <input type="text" class="kalm-gen-input" id="genTema" placeholder="Escribe el tema del documento...">
+    </div>
+    <div class="kalm-gen-row">
+      <label>Notas:</label>
+      <textarea class="kalm-gen-textarea" id="genNotas" placeholder="Instrucciones adicionales (opcional)..."></textarea>
+    </div>
+    <div style="text-align:right;">
+      <button class="kalm-btn" onclick="generarDocumento()" style="background:var(--accent);color:#fff;">🚀 Generar</button>
+    </div>
+  </div>
+
+  <div class="kalm-error-banner" id="errorBanner">
+    <span>⚠️</span>
+    <span id="errorText">Error</span>
+    <span class="close-btn" onclick="hideError()">✕</span>
+  </div>
+
+  <div class="kalm-loading-bar" id="loadingBar"><div class="kalm-loading-bar-inner"></div></div>
+
+  <div class="kalm-chat" id="chatArea">
+    <div class="kalm-welcome" id="welcomeScreen">
+      <div class="kalm-welcome-icon">🧠</div>
+      <h2>Kalm AI</h2>
+      <p>Tu asistente de IA · funciona sin backend, directo desde tu navegador.</p>
+      <div class="kalm-welcome-suggestions">
+        <div class="kalm-suggestion" onclick="useSuggestion(this)">Explícame qué es la computación cuántica</div>
+        <div class="kalm-suggestion" onclick="useSuggestion(this)">Escribe un poema sobre la tecnología</div>
+        <div class="kalm-suggestion" onclick="useSuggestion(this)">¿Cuáles son los lenguajes de programación más usados en 2025?</div>
+        <div class="kalm-suggestion" onclick="useSuggestion(this)">Dame 5 ideas para un proyecto de software</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kalm-input-area">
+    <div class="kalm-input-row">
+      <textarea class="kalm-input" id="chatInput" placeholder="Escribe tu mensaje..." rows="1"
+        onkeydown="handleInputKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="kalm-send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+    </div>
+    <div class="kalm-input-hint">Enter para enviar · Shift+Enter para nueva línea</div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   KALM AI · Cliente puro (sin backend)
+   Usa Pollinations.ai — gratis, sin API key, CORS habilitado.
+   Si algún día tienes backend propio, cambia API_BASE.
+═══════════════════════════════════════════════════════════ */
+'use strict';
+
+const API_BASE = 'https://text.pollinations.ai/openai';
+const SYSTEM_PROMPT = 'Eres Kalm AI: asistente experto, claro, útil. Respondes en español. Usa markdown cuando ayude. Sé conciso pero completo.';
+
+let chatHistory = [];
+let isGenerating = false;
+let abortController = null;
+let currentMode = 'chat';
+let currentAiMsgEl = null;
+let currentAiText = '';
+
+/* ─── UTILIDADES ─── */
+function getTime(){ return new Date().toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' }); }
+function escapeHtml(text){ const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
+
+function formatMarkdown(text){
+  let html = escapeHtml(text);
+  html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (m, lang, code) => '<pre><code>' + code.trim() + '</code></pre>');
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+  html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+  html = html.replace(/^[\-\*] (.+)$/gm, '<li>$1</li>');
+  html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
+  html = html.replace(/\n\n/g, '</p><p>');
+  html = html.replace(/\n/g, '<br>');
+  html = '<p>' + html + '</p>';
+  html = html.replace(/<p>\s*<\/p>/g, '');
+  html = html.replace(/<p>\s*(<h[1-3]>)/g, '$1').replace(/(<\/h[1-3]>)\s*<\/p>/g, '$1');
+  html = html.replace(/<p>\s*(<pre>)/g, '$1').replace(/(<\/pre>)\s*<\/p>/g, '$1');
+  html = html.replace(/<p>\s*(<ul>)/g, '$1').replace(/(<\/ul>)\s*<\/p>/g, '$1');
+  html = html.replace(/<p>\s*(<blockquote>)/g, '$1').replace(/(<\/blockquote>)\s*<\/p>/g, '$1');
+  return html;
+}
+
+function scrollToBottom(){
+  const chat = document.getElementById('chatArea');
+  requestAnimationFrame(() => { chat.scrollTop = chat.scrollHeight; });
+}
+function autoResize(el){
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+function hideWelcome(){ const w = document.getElementById('welcomeScreen'); if(w) w.style.display = 'none'; }
+function showError(msg){ document.getElementById('errorText').textContent = msg; document.getElementById('errorBanner').classList.add('visible'); }
+function hideError(){ document.getElementById('errorBanner').classList.remove('visible'); }
+function setLoading(on){
+  document.getElementById('loadingBar').classList.toggle('active', on);
+  document.getElementById('sendBtn').disabled = on;
+  document.getElementById('btnStop').style.display = on ? 'inline-flex' : 'none';
+  isGenerating = on;
+}
+
+function addUserMessage(text){
+  hideWelcome();
+  const chat = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'kalm-msg user';
+  div.innerHTML = '<div class="kalm-msg-avatar">👤</div><div><div class="kalm-msg-bubble">' + escapeHtml(text) + '</div><div class="kalm-msg-time">' + getTime() + '</div></div>';
+  chat.appendChild(div);
+  scrollToBottom();
+  chatHistory.push({ role:'user', content:text });
+}
+
+function createAiMessage(){
+  hideWelcome();
+  const chat = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'kalm-msg ai';
+  div.innerHTML =
+    '<div class="kalm-msg-avatar">🧠</div>' +
+    '<div style="flex:1;min-width:0;">' +
+      '<div class="kalm-msg-bubble">' +
+        '<div class="kalm-typing" id="typingIndicator">' +
+          '<div class="kalm-typing-dot"></div><div class="kalm-typing-dot"></div><div class="kalm-typing-dot"></div>' +
+        '</div>' +
+        '<div class="kalm-ai-content" style="display:none;"></div>' +
+      '</div>' +
+      '<div class="kalm-msg-time">' + getTime() + '</div>' +
+    '</div>';
+  chat.appendChild(div);
+  scrollToBottom();
+  return div.querySelector('.kalm-ai-content');
+}
+
+function updateAiMessage(el, text){
+  const typing = el.parentElement.querySelector('#typingIndicator');
+  if(typing) typing.style.display = 'none';
+  el.style.display = 'block';
+  el.innerHTML = formatMarkdown(text);
+  scrollToBottom();
+}
+function finalizeAiMessage(text){ chatHistory.push({ role:'assistant', content:text }); }
+
+function switchMode(mode){
+  currentMode = mode;
+  document.querySelectorAll('.kalm-mode-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+  document.getElementById('genPanel').classList.toggle('visible', mode === 'generar');
+  document.getElementById('chatInput').placeholder = mode === 'chat' ? 'Escribe tu mensaje...' : 'Pregúntame sobre el documento...';
+}
+function useSuggestion(el){ document.getElementById('chatInput').value = el.textContent; sendMessage(); }
+function handleInputKey(e){ if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); } }
+function stopGeneration(){
+  if(abortController){ abortController.abort(); abortController = null; }
+  setLoading(false);
+  if(currentAiMsgEl && currentAiText){
+    updateAiMessage(currentAiMsgEl, currentAiText + '\n\n*[Generación detenida]*');
+    finalizeAiMessage(currentAiText);
+  }
+}
+function clearChat(){
+  if(isGenerating) stopGeneration();
+  chatHistory = [];
+  const chat = document.getElementById('chatArea');
+  chat.innerHTML =
+    '<div class="kalm-welcome" id="welcomeScreen">' +
+      '<div class="kalm-welcome-icon">🧠</div>' +
+      '<h2>Kalm AI</h2>' +
+      '<p>Tu asistente de IA · funciona sin backend, directo desde tu navegador.</p>' +
+      '<div class="kalm-welcome-suggestions">' +
+        '<div class="kalm-suggestion" onclick="useSuggestion(this)">Explícame qué es la computación cuántica</div>' +
+        '<div class="kalm-suggestion" onclick="useSuggestion(this)">Escribe un poema sobre la tecnología</div>' +
+        '<div class="kalm-suggestion" onclick="useSuggestion(this)">¿Cuáles son los lenguajes de programación más usados en 2025?</div>' +
+        '<div class="kalm-suggestion" onclick="useSuggestion(this)">Dame 5 ideas para un proyecto de software</div>' +
+      '</div>' +
+    '</div>';
+  hideError();
+}
+
+/* ─── LLAMADA A POLLINATIONS (cliente puro, sin backend) ─── */
+async function callAI(messages, signal){
+  const r = await fetch(API_BASE, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    signal,
+    body: JSON.stringify({
+      model: document.getElementById('kalmModel').value || 'openai',
+      messages: messages,
+      temperature: 0.7,
+      stream: false
+    })
+  });
+  if(!r.ok) throw new Error('HTTP ' + r.status);
+  const j = await r.json();
+  return j.choices?.[0]?.message?.content || j.error || '(sin respuesta)';
+}
+
+/* ─── ENVIAR MENSAJE ─── */
+async function sendMessage(){
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if(!text || isGenerating) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  hideError();
+  addUserMessage(text);
+
+  const aiContentEl = createAiMessage();
+  currentAiMsgEl = aiContentEl;
+  currentAiText = '';
+  setLoading(true);
+
+  abortController = new AbortController();
+
+  try{
+    const messages = [
+      { role:'system', content: SYSTEM_PROMPT },
+      ...chatHistory.slice(-10),
+      { role:'user', content: text }
+    ];
+    // Nota: chatHistory ya incluye el texto del usuario, así que pasamos solo los últimos
+    const response = await callAI([
+      { role:'system', content: SYSTEM_PROMPT },
+      ...chatHistory.slice(-10)
+    ], abortController.signal);
+
+    currentAiText = response || '';
+    await typeText(aiContentEl, currentAiText, 6);
+    finalizeAiMessage(currentAiText);
+  }catch(e){
+    if(e.name !== 'AbortError'){
+      showError('Error: ' + e.message);
+      updateAiMessage(aiContentEl, '⚠ No pude obtener respuesta. Verifica tu conexión a internet.\n\nDetalle: `' + e.message + '`');
+    }
+  }
+
+  setLoading(false);
+  currentAiMsgEl = null;
+  abortController = null;
+}
+
+/* ─── TYPE ANIMATION ─── */
+function typeText(el, text, delay){
+  return new Promise(resolve => {
+    if(!text){ resolve(); return; }
+    let i = 0;
+    const step = Math.max(1, Math.floor(text.length / 120));
+    const interval = setInterval(() => {
+      if(i >= text.length || (abortController && abortController.signal.aborted)){
+        clearInterval(interval);
+        updateAiMessage(el, text);
+        resolve();
+        return;
+      }
+      i += step;
+      updateAiMessage(el, text.substring(0, i));
+    }, delay);
+  });
+}
+
+/* ─── GENERAR DOCUMENTO ─── */
+async function generarDocumento(){
+  const tema = document.getElementById('genTema').value.trim();
+  const tipo = document.getElementById('genTipo').value;
+  const notas = document.getElementById('genNotas').value.trim();
+
+  if(!tema){ showError('Escribe un tema para generar el documento'); return; }
+  if(isGenerating) return;
+
+  hideError();
+  const prompt = 'Genera un documento tipo "' + tipo + '" sobre: ' + tema +
+    (notas ? '\n\nNotas adicionales: ' + notas : '') +
+    '\n\nUsa títulos, subtítulos y listas. En español.';
+
+  addUserMessage('📄 Generar: ' + tema + ' (' + tipo + ')');
+
+  const aiContentEl = createAiMessage();
+  currentAiMsgEl = aiContentEl;
+  currentAiText = '';
+  setLoading(true);
+
+  abortController = new AbortController();
+
+  try{
+    const response = await callAI([
+      { role:'system', content:'Eres redactor profesional. Generas documentos claros y bien estructurados en español.' },
+      { role:'user', content: prompt }
+    ], abortController.signal);
+
+    currentAiText = response || '';
+    await typeText(aiContentEl, currentAiText, 4);
+    finalizeAiMessage(currentAiText);
+  }catch(e){
+    if(e.name !== 'AbortError'){
+      showError('Error: ' + e.message);
+      updateAiMessage(aiContentEl, '⚠ No pude generar el documento.');
+    }
+  }
+
+  setLoading(false);
+  currentAiMsgEl = null;
+  abortController = null;
+}
+
+/* ─── INIT ─── */
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('chatInput');
+  input.focus();
+});
+
+document.addEventListener('keydown', e => {
+  if(e.ctrlKey && e.key === 'l'){ e.preventDefault(); clearChat(); }
+});
+</script>
+
+</body>
+</html>
