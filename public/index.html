@@ -11,142 +11,11 @@
 
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23040806'/%3E%3Ccircle cx='50' cy='50' r='26' fill='%232de08a'/%3E%3Ccircle cx='50' cy='50' r='9' fill='%23040806'/%3E%3C/svg%3E">
 
-<!-- ═══════════════════════════════════════════════════════════
-     FIX · CSS crítico anti-FOUC · ahora con más cobertura
-     (fija colores y layout del boot + app + OS antes de que
-     lleguen las hojas externas → Firefox no forzará layout)
-═══════════════════════════════════════════════════════════════ -->
-<style>
-  html,body{
-    background:#040806;color:#cfeede;margin:0;
-    font-family:'Share Tech Mono','Courier New',ui-monospace,monospace;
-    height:100%;overflow:hidden;
-  }
-  body::before{
-    content:'';position:fixed;inset:0;z-index:-1;
-    background:radial-gradient(circle at 50% 40%,#071009 0%,#040806 70%);
-  }
-  #boot{position:fixed;inset:0;background:#040806;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-  #bootTitle{letter-spacing:.55em;color:#39ff9b;text-align:center;}
-  #bootLog{color:#79a88f;font-size:13px;}
-  #osDesktop{position:fixed;inset:0;background:#000;display:none;overflow:hidden;}
-  #osWallpaper{position:absolute;inset:0;background-color:#040806;background-image:linear-gradient(135deg,#04070d 0%,#0a2038 50%,#0d2b4a 100%);background-size:cover;background-position:center;background-repeat:no-repeat;}
-  #app{display:flex;flex-direction:column;height:100dvh;max-width:760px;margin:0 auto;}
-</style>
-
-<!-- ═══════════════════════════════════════════════════════════
-     FIX · Interceptor de red · short-circuit sin tocar la red
-═══════════════════════════════════════════════════════════════ -->
-<script>
-(function(){
-  'use strict';
-  var SILENCIADOS = [
-    /\/models\/cerebro(\.h5|\.zip)(\.part\d+)?(\?|$)/,
-    /\/models\/cerebro\.part\d+(\?|$)/,
-    /\/modelos\/modelo\.json(\?|$)/,
-    /\/vendor\/vosk\.min\.js(\?|$)/
-  ];
-  function debeSilenciar(url){
-    var u = String(url || '');
-    for (var i = 0; i < SILENCIADOS.length; i++) if (SILENCIADOS[i].test(u)) return true;
-    return false;
-  }
-  if (typeof window.fetch === 'function'){
-    var OrigFetch = window.fetch.bind(window);
-    window.fetch = function(input, init){
-      var url = typeof input === 'string' ? input : (input && input.url) || '';
-      if (debeSilenciar(url)){
-        return Promise.resolve(new Response('', { status:404, statusText:'Not Found (silenciado)', headers:{ 'Content-Type':'application/json' } }));
-      }
-      return OrigFetch(input, init);
-    };
-  }
-  if (typeof XMLHttpRequest !== 'undefined'){
-    var OrigOpen = XMLHttpRequest.prototype.open;
-    var OrigSend = XMLHttpRequest.prototype.send;
-    XMLHttpRequest.prototype.open = function(method, url){
-      this.__silencio = debeSilenciar(url);
-      return OrigOpen.apply(this, arguments);
-    };
-    XMLHttpRequest.prototype.send = function(body){
-      if (this.__silencio){
-        var self = this;
-        setTimeout(function(){
-          try {
-            Object.defineProperty(self, 'status', { value:404, configurable:true });
-            Object.defineProperty(self, 'responseText', { value:'', configurable:true });
-            Object.defineProperty(self, 'readyState', { value:4, configurable:true });
-            if (typeof self.onreadystatechange === 'function') self.onreadystatechange();
-            if (typeof self.onload === 'function') self.onload();
-          } catch(e){}
-        }, 0);
-        return;
-      }
-      return OrigSend.apply(this, arguments);
-    };
-  }
-})();
-</script>
-
-<!-- ═══════════════════════════════════════════════════════════
-     FIX · WebSocket patch · SOLO intenta si el hostname es local
-     (si estás en onrender.com, nunca intenta conectar al agente
-      local → cero errores en consola)
-═══════════════════════════════════════════════════════════════ -->
-<script>
-(function(){
-  if (typeof WebSocket === 'undefined') return;
-  var OrigWS = window.WebSocket;
-  var esLocal = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
-  function fakeWS(){
-    return {
-      readyState:3, CONNECTING:0, OPEN:1, CLOSING:2, CLOSED:3,
-      addEventListener:function(){}, removeEventListener:function(){},
-      dispatchEvent:function(){ return false; }, send:function(){}, close:function(){},
-      onopen:null, onclose:null, onerror:null, onmessage:null,
-      binaryType:'blob', bufferedAmount:0, extensions:'', protocol:'', url:''
-    };
-  }
-  function PatchedWS(url, protocols){
-    try{
-      if (typeof url === 'string' && /^wss?:\/\/(127\.0\.0\.1|localhost):8765\b/.test(url)){
-        if (!esLocal){
-          // En producción (Render, GitHub Pages, etc.) nunca intentes
-          return fakeWS();
-        }
-      }
-    }catch(e){}
-    return protocols ? new OrigWS(url, protocols) : new OrigWS(url);
-  }
-  PatchedWS.prototype = OrigWS.prototype;
-  PatchedWS.CONNECTING = 0; PatchedWS.OPEN = 1; PatchedWS.CLOSING = 2; PatchedWS.CLOSED = 3;
-  try{ window.WebSocket = PatchedWS; }catch(e){}
-})();
-</script>
-
-<!-- ═══════════════════════════════════════════════════════════
-     FIX · Vosk opcional (sin error si falta)
-═══════════════════════════════════════════════════════════════ -->
-<script>
-(function(){
-  var s = document.createElement('script');
-  s.src = './vendor/vosk.min.js';
-  s.async = true;
-  s.onerror = function(){ /* silencio */ };
-  document.head.appendChild(s);
-})();
-</script>
-
-<!-- Vendor · TODOS con defer/async para no bloquear el primer paint -->
 <link rel="stylesheet" href="./vendor/notifyx.min.css">
-<script defer src="./vendor/notifyx.min.js"></script>
-<script defer src="./vendor/h5wasm/h5wasm.js"></script>
+<script src="./vendor/notifyx.min.js"></script>
+<script src="./vendor/h5wasm/h5wasm.js"></script>
+<script src="./vendor/vosk.min.js"></script>
 
-<!-- ═══════════════════════════════════════════════════════════
-     FIX · hojas de estilo como <link rel="stylesheet"> normal
-     (sin preload, sin onload). El navegador las bloquea al parsear
-     y por eso NO hay FOUC; ya no aparece el warning de preload
-═══════════════════════════════════════════════════════════════ -->
 <link rel="stylesheet" href="./css/base.css">
 <link rel="stylesheet" href="./css/logo.css">
 <link rel="stylesheet" href="./css/chat.css">
@@ -154,123 +23,6 @@
 <link rel="stylesheet" href="./css/dock.css">
 <link rel="stylesheet" href="./css/autonomo.css">
 
-<!-- ═══ CSS del Mini-OS ═══ -->
-<style id="os-css">
-#osDesktop{position:fixed;inset:0;z-index:800;display:none;font-family:"Segoe UI","Open Sans",Arial,sans-serif;color:#1b1b1b;background:#000;overflow:hidden;}
-#osDesktop.on{display:block;}
-body.os-on #osDesktop{display:block;}
-body.os-on #app{display:none;}
-#osWallpaper{position:absolute;inset:0;background-color:#040806;background-image:linear-gradient(135deg,#04070d 0%,#0a2038 50%,#0d2b4a 100%);background-size:cover;background-position:center;background-repeat:no-repeat;}
-#osWinLayer{position:absolute;inset:0 0 44px 0;}
-#osIcons{position:absolute;top:14px;left:14px;bottom:56px;display:flex;flex-direction:column;flex-wrap:wrap;align-content:flex-start;gap:6px;z-index:1;}
-.os-icon{width:90px;padding:8px 4px;border:1px solid transparent;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:default;border-radius:3px;user-select:none;}
-.os-icon:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.18);}
-.os-icon.sel{background:rgba(10,132,216,.35);border-color:rgba(140,200,255,.6);}
-.os-icon .ic{height:44px;display:grid;place-items:center;}
-.os-icon span{color:#fff;font-size:12px;text-align:center;text-shadow:0 1px 3px rgba(0,0,0,.9);line-height:1.25;max-height:32px;overflow:hidden;word-break:break-word;}
-#osTaskbar{position:absolute;left:0;right:0;bottom:0;height:44px;background:rgba(12,16,22,.94);display:flex;align-items:stretch;z-index:450;color:#fff;border-top:1px solid rgba(255,255,255,.08);}
-#osStartBtn{width:56px;border:0;cursor:pointer;background:radial-gradient(circle at 50% 30%,#3d9ae8,#0a4d8c 78%);border-right:1px solid rgba(255,255,255,.12);display:grid;place-items:center;}
-#osStartBtn:hover{filter:brightness(1.18);}
-#osStartBtn .orb{width:27px;height:27px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:15px;color:#fff;background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.9),rgba(255,255,255,0) 55%);}
-#osTasks{flex:1;display:flex;align-items:stretch;overflow:hidden;padding-left:6px;}
-.os-task{min-width:46px;padding:0 12px;border:0;background:none;color:#fff;position:relative;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;}
-.os-task:hover{background:rgba(255,255,255,.12);}
-.os-task.active{background:rgba(255,255,255,.18);}
-.os-task::after{content:'';position:absolute;bottom:0;left:8px;right:8px;height:2px;background:rgba(255,255,255,.45);}
-.os-task.active::after{height:3px;left:4px;right:4px;background:#0a84d8;}
-#osClock{display:flex;flex-direction:column;justify-content:center;align-items:flex-end;padding:0 14px;font-size:12px;line-height:1.3;cursor:default;}
-#osClock:hover{background:rgba(255,255,255,.1);}
-#osExit{width:44px;border:0;background:none;color:#fff;cursor:pointer;font-size:16px;}
-#osExit:hover{background:#e81123;}
-#osStartMenu{position:absolute;left:0;bottom:44px;width:600px;max-width:96vw;background:rgba(18,22,28,.98);color:#fff;z-index:480;display:none;flex-direction:column;box-shadow:0 -4px 30px rgba(0,0,0,.5);}
-#osStartMenu.on{display:flex;animation:osSmIn .18s ease-out;}
-@keyframes osSmIn{from{transform:translateY(8px);opacity:0;}}
-.os-sm-row{display:flex;min-height:400px;max-height:min(520px,72vh);}
-.os-sm-rail{width:50px;display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:4px;border-right:1px solid rgba(255,255,255,.08);}
-.os-sm-rail button{width:40px;height:40px;border:0;background:none;color:#e8e8e8;font-size:16px;border-radius:3px;cursor:pointer;display:grid;place-items:center;}
-.os-sm-rail button:hover{background:rgba(255,255,255,.12);}
-.os-sm-user{width:40px;height:40px;border-radius:50%;background:#274b70;display:grid;place-items:center;font-size:16px;margin:6px 0;}
-.os-sm-apps{flex:1;overflow-y:auto;padding:12px;}
-.os-sm-apps button{display:flex;align-items:center;gap:12px;width:100%;padding:9px 12px;background:none;border:0;color:#eee;font-size:13px;cursor:pointer;border-radius:3px;text-align:left;}
-.os-sm-apps button:hover{background:rgba(255,255,255,.12);}
-.os-window{position:absolute;display:flex;flex-direction:column;background:#fff;color:#1b1b1b;box-shadow:0 12px 38px rgba(0,0,0,.45),0 0 0 1px rgba(0,0,0,.2);animation:osWinIn .16s ease-out;}
-@keyframes osWinIn{from{transform:scale(.95);opacity:0;}}
-.os-window.closing{transform:scale(.95);opacity:0;transition:.14s;}
-.os-window.maximized{left:0!important;top:0!important;width:100vw!important;height:calc(100vh - 44px)!important;}
-.os-window.minimized{transform:scale(.86) translateY(50px);opacity:0;visibility:hidden;pointer-events:none;}
-.os-titlebar{height:34px;flex:0 0 auto;display:flex;align-items:center;background:#f0f0f0;border-bottom:1px solid #d8d8d8;}
-.os-window:not(.active) .os-titlebar{opacity:.7;}
-.os-tb-ico{width:34px;display:grid;place-items:center;flex:0 0 auto;}
-.os-tb-title{flex:1;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px;}
-.os-tb-btns{display:flex;height:100%;}
-.os-tb-btn{width:46px;border:0;background:none;color:#1b1b1b;display:grid;place-items:center;cursor:pointer;font-size:14px;}
-.os-tb-btn:hover{background:rgba(0,0,0,.06);}
-.os-tb-btn.close:hover{background:#e81123;color:#fff;}
-.os-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;position:relative;}
-.os-rz{position:absolute;right:0;bottom:0;width:17px;height:17px;cursor:nwse-resize;z-index:5;}
-.os-explorer-toolbar{display:flex;align-items:center;gap:4px;padding:6px 8px;background:#f0f0f0;border-bottom:1px solid #d8d8d8;}
-.os-explorer-nav{width:32px;height:30px;border:0;background:none;color:#1b1b1b;cursor:pointer;border-radius:2px;}
-.os-explorer-nav:hover{background:rgba(0,0,0,.06);}
-.os-explorer-crumb{flex:1;background:#fff;border:1px solid #d8d8d8;height:30px;padding:0 10px;font-size:12.5px;display:flex;align-items:center;gap:2px;overflow:hidden;white-space:nowrap;}
-.os-explorer-grid{flex:1;overflow-y:auto;padding:12px;display:flex;flex-wrap:wrap;align-content:flex-start;gap:4px;}
-.os-file{width:104px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:7px;border:1px solid transparent;cursor:default;border-radius:2px;}
-.os-file:hover{background:rgba(0,0,0,.06);}
-.os-file.sel{background:rgba(10,132,216,.15);border-color:rgba(10,132,216,.4);}
-.os-file .ic{height:46px;display:grid;place-items:center;}
-.os-file span{font-size:12px;text-align:center;line-height:1.25;max-height:30px;overflow:hidden;word-break:break-word;}
-.os-textarea{flex:1;border:0;outline:0;resize:none;padding:10px 14px;font-family:Consolas,monospace;font-size:14px;line-height:1.55;background:#fff;color:#1b1b1b;}
-.os-status{height:24px;border-top:1px solid #d8d8d8;display:flex;align-items:center;justify-content:flex-end;gap:18px;padding:0 14px;font-size:11.5px;color:#6b6b6b;}
-.os-calc{flex:1;display:flex;flex-direction:column;padding:10px 12px 14px;}
-.os-calc .disp{text-align:right;font-size:40px;font-weight:300;padding:2px 4px 12px;min-height:64px;overflow:hidden;white-space:nowrap;}
-.os-calc .grid{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;}
-.os-calc .grid button{border:1px solid #d8d8d8;background:#f0f0f0;color:#1b1b1b;font-size:16px;cursor:pointer;font-family:inherit;}
-.os-calc .grid button.op{background:#e6e6e6;}
-.os-calc .grid button.eq{background:#0a84d8;color:#fff;border-color:#0a84d8;}
-.os-term{flex:1;display:flex;flex-direction:column;background:#0c0c0c;color:#cfcfcf;font-family:Consolas,monospace;font-size:13.5px;padding:8px 10px;}
-.os-term-out{flex:1;overflow-y:auto;white-space:pre-wrap;word-break:break-word;}
-.os-term-line{display:flex;gap:6px;padding-top:4px;}
-.os-term-ps{white-space:pre;}
-.os-term-in{flex:1;background:none;border:0;outline:0;color:#cfcfcf;font:inherit;}
-.os-paint-wrap{flex:1;overflow:auto;background:#3d434c;display:grid;place-items:center;padding:14px;}
-.os-paint-wrap canvas{background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.4);cursor:crosshair;}
-.os-page{width:794px;min-height:1000px;background:#fff;color:#111;padding:70px 76px;outline:0;font-size:15px;line-height:1.65;overflow-wrap:break-word;margin:20px auto;box-shadow:0 3px 16px rgba(0,0,0,.4);}
-.os-wp-canvas{flex:1;overflow-y:auto;background:#565d66;display:flex;justify-content:center;align-items:flex-start;}
-.os-wp-toolbar{display:flex;align-items:center;gap:3px;padding:6px 8px;background:#f0f0f0;border-bottom:1px solid #d8d8d8;flex-wrap:wrap;}
-.os-wp-btn{width:30px;height:28px;border:1px solid transparent;background:none;color:#1b1b1b;cursor:pointer;border-radius:2px;display:grid;place-items:center;font-size:13px;font-family:inherit;}
-.os-wp-btn:hover{background:rgba(0,0,0,.06);}
-.os-mines{padding:10px;display:flex;flex-direction:column;align-items:center;gap:10px;background:#c0c0c0;flex:1;}
-.os-mines-top{display:flex;gap:20px;align-items:center;font-family:monospace;font-size:20px;color:#c00;}
-.os-mines-grid{display:grid;grid-template-columns:repeat(9,30px);grid-auto-rows:30px;border:3px inset #9a9a9a;background:#bdbdbd;}
-.os-mines-cell{display:grid;place-items:center;font-weight:700;font-size:14px;background:#c0c0c0;border:2px outset #e2e2e2;cursor:pointer;color:#111;}
-.os-mines-cell.open{border:1px solid #a9a9a9;background:#d9d9d9;cursor:default;}
-.os-mines-cell.mine{background:#e81123;color:#fff;}
-.os-weather{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:14px;}
-.os-weather-search{display:flex;gap:8px;}
-.os-weather-search input{flex:1;padding:8px 10px;border:1px solid #d8d8d8;background:#fff;color:#1b1b1b;outline:0;border-radius:4px;}
-.os-weather-search button{padding:8px 16px;border:1px solid #d8d8d8;background:#f0f0f0;cursor:pointer;border-radius:4px;}
-body.os-on #app{position:fixed!important;right:16px!important;bottom:56px!important;left:auto!important;top:auto!important;width:min(380px, calc(100vw - 32px))!important;height:min(560px, calc(100vh - 120px))!important;max-width:none!important;margin:0!important;background:var(--bg2,#071009)!important;border:1px solid var(--line2,rgba(45,224,138,.45))!important;border-radius:14px!important;z-index:9999!important;box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 40px rgba(45,224,138,.18)!important;overflow:hidden!important;padding:0!important;display:flex!important;flex-direction:column!important;}
-body.os-on #app header{padding:8px 10px!important;border-bottom:1px solid var(--line,rgba(45,224,138,.2))!important;flex-wrap:nowrap!important;gap:6px!important;}
-body.os-on #app header .pill{display:none!important;}
-body.os-on #app header #logoTAG{display:none!important;}
-body.os-on #app header #headRight{margin-left:auto!important;}
-body.os-on #app #coreZone{display:none!important;}
-body.os-on #app #chips{display:none!important;}
-body.os-on #app #chat{flex:1!important;padding:8px!important;}
-body.os-on #app #inputBar{padding:6px 8px 8px!important;}
-body.os-on #app .line{font-size:13px!important;}
-#osToggleBtn{display:none;background:transparent;border:1px solid var(--line,rgba(45,224,138,.2));border-radius:6px;color:var(--acc2,#39ff9b);font-family:var(--mono,monospace);font-size:10px;letter-spacing:.15em;padding:5px 10px;cursor:pointer;margin-left:6px;}
-body.app-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
-body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
-@media(max-width:520px){
-  #osIcons{gap:2px;}
-  .os-icon{width:74px;padding:6px 2px;}
-  .os-icon span{font-size:10.5px;}
-  body.os-on #app{right:8px!important;bottom:52px!important;width:calc(100vw - 16px)!important;height:calc(100vh - 110px)!important;}
-  #osStartMenu{width:96vw;}
-}
-</style>
-
-<!-- ═══ JS propios de ANIA ═══ -->
 <script defer src="./js/00-core.js"></script>
 <script defer src="./js/01-lingua.js"></script>
 <script defer src="./js/02-ui.js"></script>
@@ -286,18 +38,20 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
 <script defer src="./js/11-chat.js"></script>
 <script defer src="./js/12-respond.js"></script>
 <script defer src="./js/13-admin.js"></script>
+
 <script defer src="./modulos/finanzas.js"></script>
 <script defer src="./modulos/inventario.js"></script>
 <script defer src="./modulos/compras.js"></script>
 <script defer src="./modulos/dashboard.js"></script>
 <script defer src="./modulos/jarvis-ui.js"></script>
+
 <script defer src="./js/15-dock.js"></script>
 <script defer src="./js/16-autonomo.js"></script>
 <script defer src="./js/17-sync-github.js"></script>
 <script defer src="./js/14-boot.js"></script>
+
 </head>
 <body>
-
 <canvas id="bgfx"></canvas>
 
 <div id="hudPanel">
@@ -335,7 +89,7 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
       <button type="button" class="lbtn dim" id="backToLoginBtn">← VOLVER</button>
     </form>
 
-    <button id="bootStart" style="display:none;">DESPERTAR A ANIA</button>
+    <button id="bootStart">DESPERTAR A ANIA</button>
   </div>
 </div>
 
@@ -361,11 +115,6 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
     <span class="pill" id="relayPill"><span class="dot"></span><span>SESIÓN</span></span>
     <span id="operator"></span>
 
-    <button id="osToggleBtn" title="Cambiar entre ANIA y el escritorio OS">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-      <span id="osToggleTxt">OS</span>
-    </button>
-
     <span id="headRight">
       <button id="weatherChip" title="Ver clima"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.2 11.2A3.9 3.9 0 0 0 6.5 19z"/></svg><span id="wTxt">--°</span></button>
       <span id="batt"></span>
@@ -388,32 +137,6 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
   </form>
 </div>
 
-<div id="osDesktop">
-  <div id="osWallpaper"></div>
-  <div id="osWinLayer"></div>
-  <div id="osIcons"></div>
-
-  <div id="osTaskbar">
-    <button id="osStartBtn" title="Inicio"><span class="orb">A</span></button>
-    <div id="osTasks"></div>
-    <div id="osClock"><span id="osClockT">--:--</span><span id="osClockD"></span></div>
-    <button id="osExit" title="Salir del OS">⏻</button>
-  </div>
-
-  <div id="osStartMenu">
-    <div class="os-sm-row">
-      <div class="os-sm-rail">
-        <div class="os-sm-user" id="osSmUser">A</div>
-        <span style="flex:1"></span>
-        <button data-os="toggleAnia" title="Volver a ANIA">↩</button>
-        <button data-os="lock" title="Bloquear">🔒</button>
-        <button data-os="shutdown" title="Apagar">⏻</button>
-      </div>
-      <div class="os-sm-apps" id="osSmApps"></div>
-    </div>
-  </div>
-</div>
-
 <button id="dockFab" title="Abrir menú" aria-label="Abrir menú de ANIA">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
     <path d="M12 2v6M12 16v6M2 12h6M16 12h6"/>
@@ -434,53 +157,19 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
   <div id="dockBody">
     <div class="dock-grid">
       <div class="dock-section"><span>◆</span>DATOS<span>◆</span></div>
-      <button class="dock-item" id="btnTasks" title="Agenda">
-        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg></span>
-        <span class="dock-label">Agenda</span>
-        <span class="badge" id="taskBadge"></span>
-      </button>
-      <button class="dock-item" id="btnMem" title="Memoria">
-        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a4 4 0 0 1 4 4c2.5.5 4 2.4 4 4.8 0 2-1.2 3.7-3 4.4L16 21H8l-1-4.8c-1.8-.7-3-2.4-3-4.4 0-2.4 1.5-4.3 4-4.8A4 4 0 0 1 12 3z"/></svg></span>
-        <span class="dock-label">Memoria</span>
-      </button>
-      <button class="dock-item" id="btnDiary" title="Diario">
-        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3z"/><path d="M8 8h8M8 12h8M8 16h4"/></svg></span>
-        <span class="dock-label">Diario</span>
-      </button>
-      <button class="dock-item" id="btnLib" title="Biblioteca">
-        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h7M8 11h7"/></svg></span>
-        <span class="dock-label">Biblioteca</span>
-      </button>
+      <button class="dock-item" id="btnTasks" title="Agenda"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg></span><span class="dock-label">Agenda</span><span class="badge" id="taskBadge"></span></button>
+      <button class="dock-item" id="btnMem" title="Memoria"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3a4 4 0 0 1 4 4c2.5.5 4 2.4 4 4.8 0 2-1.2 3.7-3 4.4L16 21H8l-1-4.8c-1.8-.7-3-2.4-3-4.4 0-2.4 1.5-4.3 4-4.8A4 4 0 0 1 12 3z"/></svg></span><span class="dock-label">Memoria</span></button>
+      <button class="dock-item" id="btnDiary" title="Diario"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h13a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3z"/></svg></span><span class="dock-label">Diario</span></button>
+      <button class="dock-item" id="btnLib" title="Biblioteca"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/></svg></span><span class="dock-label">Biblioteca</span></button>
       <div class="dock-section"><span>◆</span>NÚCLEO<span>◆</span></div>
-      <button class="dock-item" id="btnDashboard" title="Panel principal">
-        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
-        <span class="dock-label">Panel</span>
-      </button>
-      <button class="dock-item" id="btnJarvis" title="Módulos Jarvis">
-        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/></svg></span>
-        <span class="dock-label">Jarvis</span>
-      </button>
-      <button class="dock-item" id="btnJarvisMode2" title="Modo Jarvis estético">
-        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span>
-        <span class="dock-label">HUD</span>
-      </button>
-      <button class="dock-item" id="btnSettings" title="Ajustes">
-        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/></svg></span>
-        <span class="dock-label">Ajustes</span>
-      </button>
+      <button class="dock-item" id="btnDashboard" title="Panel principal"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span class="dock-label">Panel</span></button>
+      <button class="dock-item" id="btnJarvis" title="Módulos Jarvis"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/></svg></span><span class="dock-label">Jarvis</span></button>
+      <button class="dock-item" id="btnJarvisMode2" title="Modo Jarvis estético"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/></svg></span><span class="dock-label">HUD</span></button>
+      <button class="dock-item" id="btnSettings" title="Ajustes"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/></svg></span><span class="dock-label">Ajustes</span></button>
       <div class="dock-section"><span>◆</span>OPERADOR<span>◆</span></div>
-      <button class="dock-item" id="btnInstall" title="Instalar app">
-        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 7v7"/><path d="M9.5 11.5 12 14l2.5-2.5"/></svg></span>
-        <span class="dock-label">Instalar</span>
-      </button>
-      <button class="dock-item" id="btnPerfil" style="display:none;" title="Mi perfil">
-        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2"/></svg></span>
-        <span class="dock-label">Perfil</span>
-      </button>
-      <button class="dock-item" id="btnAdmin" style="display:none;" title="Administración">
-        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
-        <span class="dock-label">Admin</span>
-      </button>
+      <button class="dock-item" id="btnInstall" title="Instalar app"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 7v7"/><path d="M9.5 11.5 12 14l2.5-2.5"/></svg></span><span class="dock-label">Instalar</span></button>
+      <button class="dock-item" id="btnPerfil" style="display:none;" title="Mi perfil"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2"/></svg></span><span class="dock-label">Perfil</span></button>
+      <button class="dock-item" id="btnAdmin" style="display:none;" title="Administración"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span><span class="dock-label">Admin</span></button>
     </div>
   </div>
   <div id="dockFoot">
@@ -490,57 +179,43 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
 </div>
 
 <div id="moodBubble" title="Estado emocional de Ania" style="position:fixed;bottom:calc(120px + env(safe-area-inset-bottom));right:16px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg, rgba(8,21,15,.9), rgba(4,8,6,.95));border:2px solid var(--line2);display:none;place-items:center;font-size:24px;z-index:450;box-shadow:0 4px 16px rgba(45,224,138,.35);cursor:pointer;transition:transform .3s, border-color .3s;">😊</div>
-<button id="ambBtn" title="Detener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.2 11.2A3.9 3.9 0 0 0 6.5 19z"/></svg></button>
+<button id="ambBtn" title="Detener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.2 11.2A3.9 3.9 0 0 0 6.5 19z"/></svg></button>
 
 <div id="backdrop"></div>
 
 <div id="sheet">
   <div class="grab"></div>
-  <div class="sheetHead"><h2>AGENDA</h2><span class="pill" id="taskCount">0 PENDIENTES</span><button class="xbtn" id="closeSheet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="sheetHead"><h2>AGENDA</h2><span class="pill" id="taskCount">0 PENDIENTES</span><button class="xbtn" id="closeSheet">✕</button></div>
   <div id="taskList"></div>
   <div id="taskForm"><input id="taskInput" placeholder="Nueva tarea..."><input id="taskWhen" type="datetime-local"><button id="addTaskBtn">AÑADIR</button></div>
 </div>
 
 <div id="sheetMem">
   <div class="grab"></div>
-  <div class="sheetHead"><h2>LO QUE ANIA RECUERDA</h2><span class="pill" id="memStats">0 RECUERDOS</span><button class="xbtn" id="closeMem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="sheetHead"><h2>LO QUE ANIA RECUERDA</h2><span class="pill" id="memStats">0 RECUERDOS</span><button class="xbtn" id="closeMem">✕</button></div>
   <div id="memList"></div>
   <div class="sheetFoot"><button class="bigbtn" id="wipeMem">OLVIDARLO TODO</button></div>
 </div>
 
 <div id="sheetDiary">
   <div class="grab"></div>
-  <div class="sheetHead"><h2>DIARIO DE ANIA</h2><span class="pill" id="diaryCount">0 ENTRADAS</span><button class="xbtn" id="closeDiary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="sheetHead"><h2>DIARIO DE ANIA</h2><span class="pill" id="diaryCount">0 ENTRADAS</span><button class="xbtn" id="closeDiary">✕</button></div>
   <div id="diaryList"></div>
   <div class="sheetFoot"><button class="bigbtn" id="clearDiary">BORRAR DIARIO</button></div>
 </div>
 
 <div id="sheetLib">
   <div class="grab"></div>
-  <div class="sheetHead"><h2>BIBLIOTECA OFFLINE</h2><span class="pill" id="libCount">0 ARTÍCULOS</span><button class="xbtn" id="closeLib"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="sheetHead"><h2>BIBLIOTECA OFFLINE</h2><span class="pill" id="libCount">0 ARTÍCULOS</span><button class="xbtn" id="closeLib">✕</button></div>
   <div id="libList"></div>
   <div class="sheetFoot"><button class="bigbtn" id="clearLib">VACIAR BIBLIOTECA</button></div>
 </div>
 
-<div class="overlay" id="installModal">
-  <div class="modal">
-    <h2>INSTALAR ANIA<button class="xbtn" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
-    <p class="dim">Ania puede vivir en tu pantalla de inicio como una app.</p>
-    <button class="bigbtn" id="installNow" style="display:none">INSTALAR AHORA</button>
-    <div class="step"><b>01</b><p><span class="dim">Android (Chrome):</span> menú <span class="dim">(⋮)</span> → <b>«Instalar aplicación»</b>.</p></div>
-    <div class="step"><b>02</b><p><span class="dim">iPhone (Safari):</span> Compartir → <b>«Añadir a pantalla de inicio»</b>.</p></div>
-    <hr>
-    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">CEREBRO LOCAL (GGUF)</h2>
-    <p class="dim">1) Tu modelo <b>.gguf</b> en <b>modelos/</b> + <b>modelo.json</b>.<br>2) Runtime wllama en <b>engine/</b>.<br>3) <b>node servidor.js</b> → <b>http://localhost:8080</b>.<br>Sin servidor: «carga el cerebro» y elige el archivo.</p>
-    <button class="bigbtn" id="exportKit">DESCARGAR COPIA (.HTML)</button>
-    <hr>
-    <button class="bigbtn" id="saveOffline">GUARDAR COPIA OFFLINE (.HTML)</button>
-  </div>
-</div>
+<div class="overlay" id="installModal"><div class="modal"><h2>INSTALAR ANIA<button class="xbtn" data-close>✕</button></h2><p class="dim">Ania puede vivir en tu pantalla de inicio como una app.</p><button class="bigbtn" id="installNow" style="display:none">INSTALAR AHORA</button><div class="step"><b>01</b><p><span class="dim">Android (Chrome):</span> menú <span class="dim">(⋮)</span> → <b>«Instalar aplicación»</b>.</p></div><div class="step"><b>02</b><p><span class="dim">iPhone (Safari):</span> Compartir → <b>«Añadir a pantalla de inicio»</b>.</p></div><hr><h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">CEREBRO LOCAL (GGUF)</h2><p class="dim">1) Tu modelo <b>.gguf</b> en <b>models/</b>.<br>2) Runtime wllama en <b>engine/</b>.<br>3) <b>node servidor.js</b>.</p><button class="bigbtn" id="exportKit">DESCARGAR COPIA (.HTML)</button><hr><button class="bigbtn" id="saveOffline">GUARDAR COPIA OFFLINE (.HTML)</button></div></div>
 
 <div class="overlay" id="settingsModal">
   <div class="modal">
-    <h2>AJUSTES<button class="xbtn" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
+    <h2>AJUSTES<button class="xbtn" data-close>✕</button></h2>
     <div class="frow"><label>VOZ</label><select id="voiceSelect"></select></div>
     <div class="frow"><label>VELOCIDAD</label><input type="range" id="rateRange" min="0.7" max="1.4" step="0.05"><output id="rateOut">1.05</output></div>
     <div class="frow"><label>TONO</label><input type="range" id="pitchRange" min="0.7" max="1.5" step="0.05"><output id="pitchOut">1.10</output></div>
@@ -554,17 +229,15 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
     <button class="bigbtn" id="btnTestBrain">PROBAR CEREBRO</button>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">OÍDO LOCAL · WHISPER</h2>
-    <p class="dim" id="earsInfo">Primera vez ~80 MB, luego offline total.</p>
+    <p class="dim" id="earsInfo">Modelos en ./models/</p>
     <button class="bigbtn" id="btnEars">ACTIVAR OÍDO LOCAL</button>
     <button class="bigbtn" id="btnVosk">OÍDO OFFLINE (VOSK)</button>
-    <button class="bigbtn" id="btnEarsModel">CAMBIAR MODELO (tiny/base)</button>
+    <button class="bigbtn" id="btnEarsModel">CAMBIAR MODELO</button>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">HUD · VISIÓN Y GESTOS</h2>
-    <p class="dim" id="hudInfo">Puño=pausa · palma=silencio · victoria=siguiente.</p>
     <button class="bigbtn" id="btnHud">ABRIR HUD</button>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">SESIÓN MULTIDISPOSITIVO</h2>
-    <p class="dim" id="relayInfo">relay.js en tu PC o Render.</p>
     <button class="bigbtn" id="btnRelay">CONECTAR SESIÓN</button>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">AGENTE DEL PC</h2>
@@ -595,13 +268,8 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
     <button class="bigbtn" id="runDiag">ESCANEAR</button>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">MODO JARVIS</h2>
-    <p class="dim" id="jarvisInfo">HUD, sonidos, paleta cian y reactor denso. Atajos: H=HUD · J=Panel · F=Finanzas · I=Inventario · C=Compras.</p>
     <button class="bigbtn" id="btnJarvisMode">ACTIVAR MODO JARVIS</button>
-    <div class="frow" style="margin-top:10px;">
-      <label>DENSIDAD</label>
-      <input type="range" id="densidadRange" min="1" max="3" step="1" value="1">
-      <output id="densidadOut">1</output>
-    </div>
+    <div class="frow" style="margin-top:10px;"><label>DENSIDAD</label><input type="range" id="densidadRange" min="1" max="3" step="1" value="1"><output id="densidadOut">1</output></div>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">TEMA VISUAL</h2>
     <div style="display:flex;gap:8px;margin:10px 0;flex-wrap:wrap;">
@@ -612,11 +280,9 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
     </div>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">🌙 NÚCLEO AUTÓNOMO</h2>
-    <p class="dim" style="font-size:11px;margin-bottom:12px;">Ania trabaja sola en segundo plano. Estas son sus reglas y últimas acciones.</p>
     <div id="panelAutonomo"><div class="empty">Cargando...</div></div>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">☁️ SYNC GITHUB</h2>
-    <p class="dim" style="font-size:11px;margin-bottom:8px;">Sincroniza tus reglas entre dispositivos a través de tu repositorio GitHub.</p>
     <div class="frow"><label>TOKEN</label><input type="password" id="ghTokenInput" placeholder="ghp_..." style="flex:1;"></div>
     <button class="bigbtn" id="btnGuardarGhToken">GUARDAR TOKEN</button>
     <p class="dim" id="ghTokenStatus" style="font-size:10px;margin-top:6px;"></p>
@@ -624,72 +290,15 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
   </div>
 </div>
 
-<div class="overlay" id="passModal">
-  <div class="modal">
-    <h2>CAMBIAR CONTRASEÑA<button class="xbtn" data-close style="margin-left:auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
-    <input id="passActual" type="password" placeholder="Contraseña actual" style="width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:15px;padding:11px 13px;margin-bottom:8px;">
-    <input id="passNueva" type="password" placeholder="Nueva contraseña (mín 6)" style="width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:15px;padding:11px 13px;margin-bottom:8px;">
-    <input id="passNueva2" type="password" placeholder="Repite la nueva" style="width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:15px;padding:11px 13px;margin-bottom:8px;">
-    <div id="passMsg" style="font-size:11px; color:var(--dim); min-height:16px; margin-bottom:8px;"></div>
-    <button class="bigbtn" id="savePassBtn">GUARDAR CAMBIO</button>
-  </div>
-</div>
+<div class="overlay" id="passModal"><div class="modal"><h2>CAMBIAR CONTRASEÑA<button class="xbtn" data-close style="margin-left:auto;">✕</button></h2><input id="passActual" type="password" placeholder="Contraseña actual" style="width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:15px;padding:11px 13px;margin-bottom:8px;"><input id="passNueva" type="password" placeholder="Nueva contraseña (mín 6)" style="width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:15px;padding:11px 13px;margin-bottom:8px;"><input id="passNueva2" type="password" placeholder="Repite la nueva" style="width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:15px;padding:11px 13px;margin-bottom:8px;"><div id="passMsg" style="font-size:11px; color:var(--dim); min-height:16px; margin-bottom:8px;"></div><button class="bigbtn" id="savePassBtn">GUARDAR CAMBIO</button></div></div>
 
-<div class="overlay" id="adminModal">
-  <div class="modal" style="width:min(1000px,100%);max-width:1000px;">
-    <h2>PANEL DE ADMINISTRACIÓN<button class="xbtn" data-close style="margin-left:auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
-    <p class="dim" id="adminStats" style="font-size:11px;margin-bottom:14px;">Cargando...</p>
-    <div class="bento-grid">
-      <div class="bento-tile tile-stat"><div class="stat-num" id="bentoTotalUsuarios">—</div><div class="stat-lbl">Usuarios</div></div>
-      <div class="bento-tile tile-stat"><div class="stat-num" id="bentoActivos">—</div><div class="stat-lbl">Activos 7d</div></div>
-      <div class="bento-tile tile-stat tile-amber"><div class="stat-num" id="bentoBloqueados">—</div><div class="stat-lbl">Bloqueados</div></div>
-      <div class="bento-tile tile-stat"><div class="stat-num" id="bentoConocimiento">—</div><div class="stat-lbl">Conocimiento</div></div>
-      <div class="bento-tile tile-full"><div class="tile-head"><span class="tile-title">Usuarios registrados</span><span class="tile-badge" id="bentoUserCount">0</span></div><div class="tile-body" id="adminUsersList"><div class="empty">Cargando...</div></div></div>
-      <div class="bento-tile tile-wide"><div class="tile-head"><span class="tile-title">Sugerencias del agente</span></div><div class="tile-body" id="adminSugerencias"><div class="empty">Cargando...</div></div></div>
-      <div class="bento-tile tile-wide"><div class="tile-head"><span class="tile-title">Reporte de seguridad</span></div><div class="tile-body" id="adminSecurityReport"><div class="empty">Cargando...</div></div></div>
-      <div class="bento-tile tile-wide"><div class="tile-head"><span class="tile-title">Conocimiento compartido</span></div><div class="tile-body" id="adminKBList"><div class="empty">Cargando...</div></div></div>
-      <div class="bento-tile tile-wide"><div class="tile-head"><span class="tile-title">Log admin</span></div><div class="tile-body" id="adminLogList"><div class="empty">Cargando...</div></div></div>
-    </div>
-  </div>
-</div>
+<div class="overlay" id="adminModal"><div class="modal" style="width:min(1000px,100%);max-width:1000px;"><h2>PANEL DE ADMINISTRACIÓN<button class="xbtn" data-close style="margin-left:auto;">✕</button></h2><p class="dim" id="adminStats" style="font-size:11px;margin-bottom:14px;">Cargando...</p><div class="bento-grid"><div class="bento-tile tile-stat"><div class="stat-num" id="bentoTotalUsuarios">—</div><div class="stat-lbl">Usuarios</div></div><div class="bento-tile tile-stat"><div class="stat-num" id="bentoActivos">—</div><div class="stat-lbl">Activos 7d</div></div><div class="bento-tile tile-stat tile-amber"><div class="stat-num" id="bentoBloqueados">—</div><div class="stat-lbl">Bloqueados</div></div><div class="bento-tile tile-stat"><div class="stat-num" id="bentoConocimiento">—</div><div class="stat-lbl">Conocimiento</div></div><div class="bento-tile tile-full"><div class="tile-head"><span class="tile-title">Usuarios registrados</span><span class="tile-badge" id="bentoUserCount">0</span></div><div class="tile-body" id="adminUsersList"><div class="empty">Cargando...</div></div></div><div class="bento-tile tile-wide"><div class="tile-head"><span class="tile-title">Sugerencias del agente</span></div><div class="tile-body" id="adminSugerencias"><div class="empty">Cargando...</div></div></div><div class="bento-tile tile-wide"><div class="tile-head"><span class="tile-title">Reporte de seguridad</span></div><div class="tile-body" id="adminSecurityReport"><div class="empty">Cargando...</div></div></div><div class="bento-tile tile-wide"><div class="tile-head"><span class="tile-title">Conocimiento compartido</span></div><div class="tile-body" id="adminKBList"><div class="empty">Cargando...</div></div></div><div class="bento-tile tile-wide"><div class="tile-head"><span class="tile-title">Log admin</span></div><div class="tile-body" id="adminLogList"><div class="empty">Cargando...</div></div></div></div></div></div>
 
-<div class="overlay" id="perfilModal">
-  <div class="modal" style="width:min(720px,100%);max-width:720px;">
-    <h2>MI PERFIL<button class="xbtn" data-close style="margin-left:auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
-    <p class="dim" id="perfilSubtitulo" style="font-size:11px;margin-bottom:14px;">Cargando tu perfil...</p>
-    <div class="bento-grid">
-      <div class="bento-tile tile-stat"><div class="stat-num" id="perfilInteracciones">—</div><div class="stat-lbl">Interacciones</div></div>
-      <div class="bento-tile tile-stat"><div class="stat-num" id="perfilHechos">—</div><div class="stat-lbl">Hechos</div></div>
-      <div class="bento-tile tile-stat"><div class="stat-num" id="perfilGustos">—</div><div class="stat-lbl">Gustos</div></div>
-      <div class="bento-tile tile-stat"><div class="stat-num" id="perfilLongitud">—</div><div class="stat-lbl">Long. media</div></div>
-      <div class="bento-tile tile-wide"><div class="tile-head"><span class="tile-title">Tus temas favoritos</span></div><div class="tile-body" id="perfilTemas"><div class="empty">Cargando...</div></div></div>
-      <div class="bento-tile tile-wide"><div class="tile-head"><span class="tile-title">Tu estilo</span></div><div class="tile-body" id="perfilEstilo"><div class="empty">Cargando...</div></div></div>
-    </div>
-  </div>
-</div>
+<div class="overlay" id="perfilModal"><div class="modal" style="width:min(720px,100%);max-width:720px;"><h2>MI PERFIL<button class="xbtn" data-close style="margin-left:auto;">✕</button></h2><p class="dim" id="perfilSubtitulo" style="font-size:11px;margin-bottom:14px;">Cargando tu perfil...</p><div class="bento-grid"><div class="bento-tile tile-stat"><div class="stat-num" id="perfilInteracciones">—</div><div class="stat-lbl">Interacciones</div></div><div class="bento-tile tile-stat"><div class="stat-num" id="perfilHechos">—</div><div class="stat-lbl">Hechos</div></div><div class="bento-tile tile-stat"><div class="stat-num" id="perfilGustos">—</div><div class="stat-lbl">Gustos</div></div><div class="bento-tile tile-stat"><div class="stat-num" id="perfilLongitud">—</div><div class="stat-lbl">Long. media</div></div><div class="bento-tile tile-wide"><div class="tile-head"><span class="tile-title">Tus temas favoritos</span></div><div class="tile-body" id="perfilTemas"><div class="empty">Cargando...</div></div></div><div class="bento-tile tile-wide"><div class="tile-head"><span class="tile-title">Tu estilo</span></div><div class="tile-body" id="perfilEstilo"><div class="empty">Cargando...</div></div></div></div><p class="dim" id="perfilPie" style="font-size:10px;margin-top:14px;text-align:center;">Este perfil se actualiza automáticamente cada día con tu actividad. Solo tú puedes verlo.</p></div></div>
 
-<div class="overlay" id="dashboardModal">
-  <div class="modal" style="width:min(1100px,100%);max-width:1100px;padding:16px 18px;">
-    <h2 style="margin-bottom:14px;">PANEL PRINCIPAL<button class="xbtn" data-close style="margin-left:auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
-    <div id="panelDashboard"></div>
-  </div>
-</div>
+<div class="overlay" id="dashboardModal"><div class="modal" style="width:min(1100px,100%);max-width:1100px;padding:16px 18px;"><h2 style="margin-bottom:14px;">PANEL PRINCIPAL<button class="xbtn" data-close style="margin-left:auto;">✕</button></h2><div id="panelDashboard"></div></div></div>
 
-<div class="overlay" id="jarvisModal">
-  <div class="modal" style="width:min(1100px,100%);max-width:1100px;">
-    <h2>PANEL JARVIS<button class="xbtn" data-close style="margin-left:auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
-    <div id="jarvisTabs" style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
-      <button class="chip jarvisTab" data-tab="finanzas" style="border-color:var(--line2);color:var(--acc2);">💰 FINANZAS</button>
-      <button class="chip jarvisTab" data-tab="inventario">📦 INVENTARIO</button>
-      <button class="chip jarvisTab" data-tab="compras">🛒 COMPRAS</button>
-    </div>
-    <div id="jarvisContenido">
-      <div id="panelFinanzas"></div>
-      <div id="panelInventario" style="display:none;"></div>
-      <div id="panelCompras" style="display:none;"></div>
-    </div>
-  </div>
-</div>
+<div class="overlay" id="jarvisModal"><div class="modal" style="width:min(1100px,100%);max-width:1100px;"><h2>PANEL JARVIS<button class="xbtn" data-close style="margin-left:auto;">✕</button></h2><div id="jarvisTabs" style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;"><button class="chip jarvisTab" data-tab="finanzas">💰 FINANZAS</button><button class="chip jarvisTab" data-tab="inventario">📦 INVENTARIO</button><button class="chip jarvisTab" data-tab="compras">🛒 COMPRAS</button></div><div id="jarvisContenido"><div id="panelFinanzas"></div><div id="panelInventario" style="display:none;"></div><div id="panelCompras" style="display:none;"></div></div></div></div>
 
 <div id="toasts"></div>
 <input type="file" id="docDir" webkitdirectory multiple style="display:none">
@@ -699,1548 +308,677 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
 <input type="file" id="engineFiles" accept=".mjs,.js,.wasm" multiple style="display:none">
 
 <!-- ═══════════════════════════════════════════════════════════════
-     MINI-OS · Script
+     ⭐ ANIA-OS · BOTÓN + ESCRITORIO (añadido, no rompe nada)
 ═══════════════════════════════════════════════════════════════ -->
+
+<!-- Botón flotante para abrir/cerrar el OS -->
+<button id="osFab" title="Abrir escritorio ANIA-OS" aria-label="Abrir escritorio">
+  <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+    <path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>
+  </svg>
+</button>
+
+<!-- Escritorio del mini-OS -->
+<div id="osDesktop" aria-hidden="true">
+  <div id="osWallpaper"></div>
+  <div id="osIcons"></div>
+  <div id="osWinLayer"></div>
+
+  <div id="osTaskbar">
+    <button id="osStartBtn" title="Menú"><span class="os-orb">A</span></button>
+    <div id="osTasks"></div>
+    <div id="osClock"><span id="osClockT">--:--</span><span id="osClockD"></span></div>
+    <button id="osExitBtn" title="Volver a ANIA">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+    </button>
+  </div>
+
+  <div id="osStartMenu">
+    <div class="os-sm-head"><span class="os-sm-user" id="osSmUser">A</span>ANIA-OS</div>
+    <div class="os-sm-apps" id="osSmApps"></div>
+    <div class="os-sm-foot">
+      <button data-os="exit">↩ Volver a ANIA</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ CSS del mini-OS ════════════ -->
+<style id="os-css">
+/* ═══ FAB flotante ═══ */
+#osFab{
+  position:fixed;
+  right:16px;
+  bottom:calc(80px + env(safe-area-inset-bottom));
+  z-index:9997;
+  width:52px;height:52px;border-radius:50%;
+  background:radial-gradient(circle at 30% 30%,#3d9ae8,#0a4d8c 70%,#042247 100%);
+  border:2px solid rgba(140,200,255,.65);
+  color:#fff;
+  cursor:pointer;
+  display:none;place-items:center;
+  box-shadow:0 6px 20px rgba(10,77,140,.55),0 0 24px rgba(61,154,232,.5);
+  transition:transform .25s cubic-bezier(.2,.9,.3,1), box-shadow .25s;
+  user-select:none;-webkit-tap-highlight-color:transparent;
+}
+#osFab:hover{ transform:scale(1.08); }
+#osFab:active{ transform:scale(.94); }
+body.app-on #osFab{ display:grid; }
+body.os-on  #osFab{ display:none; }
+
+/* ═══ Escritorio (oculto por defecto) ═══ */
+#osDesktop{
+  position:fixed;inset:0;z-index:9990;
+  display:none;font-family:"Segoe UI",Arial,sans-serif;
+  color:#1b1b1b;overflow:hidden;background:#000;
+}
+body.os-on #osDesktop{ display:block; }
+body.os-on #app{ display:none; }
+body.os-on #dockFab{ display:none; }
+body.os-on #moodBubble{ display:none !important; }
+body.os-on #dockBackdrop{ display:none !important; }
+body.os-on #backdrop{ display:none !important; }
+
+#osWallpaper{
+  position:absolute;inset:0;
+  background-color:#040806;
+  background-image:linear-gradient(135deg,#04070d 0%,#0a2038 50%,#0d2b4a 100%);
+  background-size:cover;background-position:center;background-repeat:no-repeat;
+  overflow:hidden;
+}
+#osWallpaper img.wall-img{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  object-fit:cover;object-position:center;display:block;pointer-events:none;
+}
+#osWinLayer{ position:absolute;inset:0 0 44px 0; }
+#osIcons{
+  position:absolute;top:14px;left:14px;bottom:56px;
+  display:flex;flex-direction:column;flex-wrap:wrap;align-content:flex-start;
+  gap:6px;z-index:1;
+}
+.os-icon{
+  width:88px;padding:8px 4px;border:1px solid transparent;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  cursor:default;border-radius:4px;user-select:none;
+  transition:background .15s,border-color .15s;
+}
+.os-icon:hover{ background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.18); }
+.os-icon.sel{ background:rgba(10,132,216,.35);border-color:rgba(140,200,255,.6); }
+.os-icon .ic{ height:44px;display:grid;place-items:center;font-size:34px;line-height:1; }
+.os-icon span{
+  color:#fff;font-size:11.5px;text-align:center;
+  text-shadow:0 1px 3px rgba(0,0,0,.9);line-height:1.25;
+  max-height:30px;overflow:hidden;word-break:break-word;
+}
+
+#osTaskbar{
+  position:absolute;left:0;right:0;bottom:0;height:44px;
+  background:rgba(12,16,22,.94);
+  display:flex;align-items:stretch;
+  z-index:10;color:#fff;
+  border-top:1px solid rgba(255,255,255,.08);
+}
+#osStartBtn{
+  width:56px;border:0;cursor:pointer;
+  background:radial-gradient(circle at 50% 30%,#3d9ae8,#0a4d8c 78%);
+  border-right:1px solid rgba(255,255,255,.12);
+  display:grid;place-items:center;
+}
+#osStartBtn:hover{ filter:brightness(1.18); }
+#osStartBtn .os-orb{
+  width:26px;height:26px;border-radius:50%;display:grid;place-items:center;
+  font-weight:700;font-size:14px;color:#fff;
+  background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.9),rgba(255,255,255,0) 55%);
+}
+#osTasks{ flex:1;display:flex;align-items:stretch;overflow:hidden;padding-left:6px; }
+.os-task{
+  min-width:46px;padding:0 12px;border:0;background:none;color:#fff;
+  position:relative;display:flex;align-items:center;gap:6px;cursor:pointer;
+  font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;
+}
+.os-task:hover{ background:rgba(255,255,255,.12); }
+.os-task.active{ background:rgba(255,255,255,.18); }
+#osClock{
+  display:flex;flex-direction:column;justify-content:center;align-items:flex-end;
+  padding:0 12px;font-size:11.5px;line-height:1.3;cursor:default;
+}
+#osExitBtn{
+  width:46px;border:0;background:rgba(10,132,216,.15);color:#8cc8ff;
+  cursor:pointer;display:grid;place-items:center;
+  border-left:1px solid rgba(255,255,255,.1);
+  transition:background .2s,color .2s;
+}
+#osExitBtn:hover{ background:#0a84d8;color:#fff; }
+
+#osStartMenu{
+  position:absolute;left:0;bottom:44px;width:min(400px,90vw);
+  background:rgba(18,22,28,.98);color:#fff;
+  z-index:20;display:none;flex-direction:column;
+  box-shadow:0 -4px 30px rgba(0,0,0,.6);border-radius:0 8px 0 0;
+  max-height:70vh;overflow:hidden;
+}
+#osStartMenu.on{ display:flex;animation:osSmIn .18s ease-out; }
+@keyframes osSmIn{ from{transform:translateY(8px);opacity:0;} }
+.os-sm-head{
+  padding:14px 16px;font-size:13px;letter-spacing:.15em;
+  color:#8cc8ff;border-bottom:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;gap:10px;
+}
+.os-sm-user{
+  width:32px;height:32px;border-radius:50%;background:#274b70;
+  display:grid;place-items:center;font-size:14px;color:#fff;
+}
+.os-sm-apps{ flex:1;overflow-y:auto;padding:8px; }
+.os-sm-apps button{
+  display:flex;align-items:center;gap:12px;width:100%;
+  padding:10px 12px;background:none;border:0;color:#eee;
+  font-size:13px;cursor:pointer;border-radius:6px;text-align:left;
+  transition:background .15s;
+}
+.os-sm-apps button:hover{ background:rgba(255,255,255,.12); }
+.os-sm-apps button .sm-ic{
+  width:24px;height:24px;display:grid;place-items:center;
+  font-size:18px;line-height:1;
+}
+.os-sm-foot{
+  padding:10px 14px;border-top:1px solid rgba(255,255,255,.08);
+  display:flex;justify-content:flex-end;
+}
+.os-sm-foot button{
+  padding:8px 14px;border:1px solid rgba(140,200,255,.4);
+  background:transparent;color:#8cc8ff;border-radius:6px;
+  font-size:11px;letter-spacing:.1em;cursor:pointer;
+  font-family:inherit;
+}
+.os-sm-foot button:hover{ background:rgba(140,200,255,.15); }
+
+/* ═══ Ventanas del OS ═══ */
+.os-window{
+  position:absolute;display:flex;flex-direction:column;
+  background:#fff;color:#1b1b1b;
+  box-shadow:0 12px 38px rgba(0,0,0,.5);
+  border-radius:8px;overflow:hidden;
+  animation:osWinIn .18s ease-out;
+}
+@keyframes osWinIn{ from{transform:scale(.95);opacity:0;} }
+.os-window.closing{ transform:scale(.95);opacity:0;transition:.14s; }
+.os-window.maximized{ left:0!important;top:0!important;width:100vw!important;height:calc(100vh - 44px)!important;border-radius:0; }
+.os-titlebar{
+  height:34px;flex:0 0 auto;display:flex;align-items:center;
+  background:linear-gradient(180deg,#f5f5f5,#e8e8e8);
+  border-bottom:1px solid #d0d0d0;
+}
+.os-tb-ico{ width:34px;display:grid;place-items:center;font-size:16px; }
+.os-tb-title{ flex:1;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px; }
+.os-tb-btns{ display:flex;height:100%; }
+.os-tb-btn{
+  width:46px;border:0;background:none;color:#1b1b1b;
+  display:grid;place-items:center;cursor:pointer;font-size:14px;
+}
+.os-tb-btn:hover{ background:rgba(0,0,0,.06); }
+.os-tb-btn.close:hover{ background:#e81123;color:#fff; }
+.os-body{ flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;position:relative;background:#fafafa; }
+
+/* ═══ Responsive ═══ */
+@media(max-width:520px){
+  #osFab{ right:12px;bottom:calc(70px + env(safe-area-inset-bottom));width:46px;height:46px; }
+  #osFab svg{ width:20px;height:20px; }
+  #osIcons{ gap:2px;top:10px;left:10px;bottom:52px; }
+  .os-icon{ width:72px;padding:6px 2px; }
+  .os-icon span{ font-size:10.5px; }
+  .os-icon .ic{ height:38px;font-size:28px; }
+  #osStartMenu{ width:100%;border-radius:0;max-height:80vh; }
+  #osTaskbar{ height:40px; }
+  .os-task{ padding:0 8px;font-size:11px; }
+  #osClock{ padding:0 8px;font-size:10.5px; }
+  #osExitBtn{ width:42px; }
+}
+</style>
+
+<!-- ════════════ JS del mini-OS ════════════ -->
 <script>
 (function(){
 'use strict';
-function waitFor(fn, cb, timeout){
-  var start = Date.now();
-  var iv = setInterval(function(){
-    if(fn()){ clearInterval(iv); cb(); }
-    else if(Date.now() - start > (timeout||10000)){ clearInterval(iv); console.warn('[OS] timeout'); }
-  }, 120);
-}
-var IC = {
-  folder: '<svg width="42" height="42" viewBox="0 0 48 48"><path d="M4 10h13l4 5h20v6H4z" fill="#e8a200"/><path d="M4 16h37v22a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" fill="#ffc933"/></svg>',
-  txt:    '<svg width="42" height="42" viewBox="0 0 48 48"><path d="M11 4h20l6 6v34H11z" fill="#fff" stroke="#9aa5b1" stroke-width="1.4"/><path d="M31 4l6 6h-6z" fill="#dfe5ec" stroke="#9aa5b1" stroke-width="1.2"/><path d="M16 17h16M16 22h16M16 27h16M16 32h10" stroke="#5a9bd8" stroke-width="2"/></svg>',
-  doc:    '<svg width="42" height="42" viewBox="0 0 48 48"><path d="M11 4h20l6 6v34H11z" fill="#fff" stroke="#9aa5b1" stroke-width="1.4"/><rect x="6" y="17" width="24" height="24" rx="2" fill="#2B579A"/><text x="18" y="35" font-family="Segoe UI" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">W</text></svg>',
-  xls:    '<svg width="42" height="42" viewBox="0 0 48 48"><path d="M11 4h20l6 6v34H11z" fill="#fff" stroke="#9aa5b1" stroke-width="1.4"/><rect x="6" y="17" width="24" height="24" rx="2" fill="#217346"/><text x="18" y="35" font-family="Segoe UI" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">X</text></svg>',
-  img:    '<svg width="42" height="42" viewBox="0 0 48 48"><rect x="5" y="9" width="38" height="30" rx="2.5" fill="#fff" stroke="#8f9aa6" stroke-width="1.4"/><path d="M8 34l10-12 7 8 5-5 10 9z" fill="#2f9e63"/><circle cx="33" cy="17" r="3.6" fill="#ffb900"/></svg>',
-  audio:  '<svg width="42" height="42" viewBox="0 0 48 48"><rect x="4" y="4" width="40" height="40" rx="4" fill="#C30052"/><circle cx="19" cy="32" r="4.6" fill="#fff"/><rect x="22" y="12" width="3.4" height="20" fill="#fff"/></svg>',
-  app:    '<svg width="42" height="42" viewBox="0 0 48 48"><rect x="6" y="6" width="36" height="36" rx="6" fill="#4a4f57"/></svg>',
-  calc:   '<svg width="42" height="42" viewBox="0 0 48 48"><rect x="8" y="4" width="32" height="40" rx="3" fill="#4a4f57"/><rect x="12" y="8" width="24" height="9" rx="1" fill="#c9e6f5"/><rect x="12" y="21" width="6" height="5" rx="1" fill="#8d949e"/><rect x="21" y="21" width="6" height="5" rx="1" fill="#8d949e"/><rect x="30" y="21" width="6" height="5" rx="1" fill="#8d949e"/><rect x="12" y="29" width="6" height="5" rx="1" fill="#8d949e"/><rect x="21" y="29" width="6" height="5" rx="1" fill="#8d949e"/><rect x="30" y="29" width="6" height="12" rx="1" fill="#0a84d8"/><rect x="12" y="37" width="15" height="4" rx="1" fill="#8d949e"/></svg>',
-  term:   '<svg width="42" height="42" viewBox="0 0 48 48"><rect x="4" y="6" width="40" height="36" rx="4" fill="#22282f"/><text x="12" y="30" font-family="Consolas,monospace" font-size="14" fill="#2de08a">&gt;_</text></svg>',
-  paint:  '<svg width="42" height="42" viewBox="0 0 48 48"><path d="M24 5C13 5 5 13 5 23.5 5 34 13 42 23.5 42c2.8 0 4.4-1.8 4.4-3.8 0-1.9-1.4-2.7-1.4-4.4 0-1.9 1.6-3.3 3.7-3.3h4.2C39.5 30.5 43 26.6 43 21.4 43 11.8 34.6 5 24 5z" fill="#f2f5f8" stroke="#8f9aa6" stroke-width="1.5"/><circle cx="14.5" cy="18" r="3" fill="#e81123"/><circle cx="22.5" cy="13" r="3" fill="#ff8c00"/><circle cx="31.5" cy="15.5" r="3" fill="#107c10"/><circle cx="13.5" cy="27" r="3" fill="#0078d7"/></svg>',
-  mines:  '<svg width="42" height="42" viewBox="0 0 48 48"><circle cx="24" cy="26" r="14" fill="#333"/><path d="M24 6v6M24 40v6M4 26h6M38 26h6M8 10l4 4M36 10l-4 4M8 42l4-4M36 42l-4-4" stroke="#333" stroke-width="2"/></svg>',
-  weather:'<svg width="42" height="42" viewBox="0 0 48 48"><circle cx="18" cy="20" r="8" fill="#ffb900"/><path d="M12 32c-4 0-8-3-8-8s4-8 8-8c1 0 2 0 3 1 2-5 7-8 12-8 6 0 11 4 12 10 4 1 7 4 7 9 0 5-4 9-9 9H14c-1 0-2-1-2-2s1-3 0-3z" fill="#9ad0ff"/></svg>',
-  photos: '<svg width="42" height="42" viewBox="0 0 48 48"><rect x="5" y="9" width="38" height="30" rx="2.5" fill="#fff" stroke="#8f9aa6" stroke-width="1.4"/><path d="M8 34l10-12 7 8 5-5 10 9z" fill="#2f9e63"/><circle cx="33" cy="17" r="3.6" fill="#ffb900"/></svg>'
-};
-var OS = {
-  zTop: 100, winSeq: 0, activeWin: null,
-  wins: new Map(),
-  FS: null,
-  loadFS: function(){
-    var saved = null;
-    try{ saved = JSON.parse(localStorage.getItem('aniaos_fs')||'null'); }catch(e){}
-    if(saved && typeof saved === 'object'){ this.FS = saved; return; }
-    this.FS = {
+
+// Espera a que TODO esté cargado (defer scripts incluidos)
+window.addEventListener('load', function(){
+  // Pequeño delay para que 14-boot.js termine
+  setTimeout(init, 300);
+});
+
+var _iniciado = false;
+function init(){
+  if(_iniciado) return;
+  _iniciado = true;
+
+  var $  = function(s){ return document.querySelector(s); };
+  var $$ = function(s){ return document.querySelectorAll(s); };
+  var el = function(t,c,h){ var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e; };
+  var esc = function(s){ return String(s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+
+  // ─── Estado del OS ───
+  var OS = {
+    zTop:100, winSeq:0, activeWin:null,
+    wins: new Map(),
+    FS: {
       'Documentos':{ type:'folder', children:{
-        'Bienvenida.txt':{ type:'file', kind:'text', name:'Bienvenida.txt', size:500,
-          text:'Bienvenido a ANIA-OS.\n\nComandos disponibles (por chat o voz):\n  · abre word\n  · abre música\n  · abre documentos\n  · abre el navegador\n  · abre fondos\n  · entrena con documentos\n  · busca archivo bienvenida\n  · cambia el fondo a aurora\n  · info sistema\n  · apaga / bloquea' }
+        'Bienvenida.txt':{ type:'file', kind:'text', name:'Bienvenida.txt',
+          text:'Bienvenido a ANIA-OS.\n\nEscribe a Ania para controlar el OS:\n  · abre música\n  · abre documentos\n  · abre el navegador\n  · abre fondos\n  · abre word\n  · info sistema' }
       }},
       'Imágenes':{ type:'folder', children:{} },
       'Música':{ type:'folder', children:{} },
-      'Apps':{ type:'folder', children:{} },
-      'Descargas':{ type:'folder', children:{} },
+      'Programas':{ type:'folder', children:{} },
       'Papelera':{ type:'folder', isTrash:true, children:{} }
-    };
-    this.saveFS();
-  },
-  saveFS: function(){ try{ localStorage.setItem('aniaos_fs', JSON.stringify(this.FS)); }catch(e){} },
-  getNode: function(path){
-    var n = { children: this.FS };
-    for(var i = 0; i < path.length; i++){
-      if(!n.children || !n.children[path[i]]) return null;
-      n = n.children[path[i]];
     }
-    return n;
-  },
-  ensureFolder: function(path){
-    var cur = { children: this.FS };
-    for(var i = 0; i < path.length; i++){
-      var p = path[i];
-      if(!cur.children) cur.children = {};
-      if(!cur.children[p]) cur.children[p] = { type:'folder', children:{} };
-      cur = cur.children[p];
-      if(cur.type === 'file') return null;
-    }
-    if(!cur.children) cur.children = {};
-    return cur;
-  },
-  addFile: function(folderPath, node){
-    var f = this.ensureFolder(folderPath);
-    if(!f) return null;
-    var nm = String(node.name || 'archivo');
-    var dot = nm.lastIndexOf('.');
-    var base = dot > 0 ? nm.slice(0, dot) : nm;
-    var ext = dot > 0 ? nm.slice(dot) : '';
-    var name = nm, i = 2;
-    while(f.children[name]){ name = base + ' (' + i + ')' + ext; i++; }
-    node.name = name;
-    f.children[name] = node;
-    this.saveFS();
-    return name;
-  },
-  deleteNode: function(path){
-    var parent = this.getNode(path.slice(0, -1));
-    var name = path[path.length - 1];
-    if(!parent || !parent.children || !parent.children[name]) return;
-    var node = parent.children[name];
-    if(parent.isTrash){ delete parent.children[name]; this.saveFS(); return; }
-    var trash = this.ensureFolder(['Papelera']);
-    var tn = node.name, i = 2;
-    while(trash.children[tn]){ tn = node.name + ' (' + i + ')'; i++; }
-    node.name = tn;
-    trash.children[tn] = node;
-    delete parent.children[name];
-    this.saveFS();
-  }
-};
-var $ = function(s){ return document.querySelector(s); };
-var $$ = function(s){ return document.querySelectorAll(s); };
-var el = function(t, c, h){ var e = document.createElement(t); if(c) e.className = c; if(h != null) e.innerHTML = h; return e; };
-var esc = function(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
-function toastOS(txt){ if(typeof toast === 'function'){ try{ toast(txt); return; }catch(e){} } console.log('[OS]', txt); }
-function createOSWindow(opts){
-  var id = 'osw' + (++OS.winSeq);
-  var w = Math.min(opts.w || 760, innerWidth - 30);
-  var h = Math.min(opts.h || 500, innerHeight - 70);
-  var cnt = OS.wins.size;
-  var x = Math.max(8, (innerWidth - w) / 2 + ((cnt % 7) - 3) * 30);
-  var y = Math.max(4, (innerHeight - 44 - h) / 2 + ((cnt % 7) - 3) * 22);
-  var win = el('div', 'os-window active');
-  win.style.cssText = 'width:' + w + 'px;height:' + h + 'px;left:' + x + 'px;top:' + y + 'px;z-index:' + (++OS.zTop);
-  win.innerHTML =
-    '<div class="os-titlebar">' +
-      '<div class="os-tb-ico">' + (opts.icon || '') + '</div>' +
-      '<div class="os-tb-title">' + esc(opts.title || 'Ventana') + '</div>' +
-      '<div class="os-tb-btns">' +
-        '<button class="os-tb-btn bmin" title="Minimizar">─</button>' +
-        '<button class="os-tb-btn bmax" title="Maximizar">▢</button>' +
-        '<button class="os-tb-btn close" title="Cerrar">✕</button>' +
-      '</div>' +
-    '</div>' +
-    '<div class="os-body"></div>' +
-    '<div class="os-rz"></div>';
-  var layer = $('#osWinLayer'); if(!layer) return null;
-  layer.appendChild(win);
-  var rec = { el: win, body: win.querySelector('.os-body'), title: opts.title };
-  OS.wins.set(id, rec);
-  var tb = el('button', 'os-task active', (opts.icon || '') + esc(opts.title || ''));
-  tb.dataset.win = id; tb.title = opts.title;
-  tb.onclick = function(){
-    if(OS.activeWin === id && !win.classList.contains('minimized')) minimizeOSWin(id);
-    else { win.classList.remove('minimized'); focusOSWin(id); }
   };
-  var tasks = $('#osTasks'); if(tasks) tasks.appendChild(tb);
-  win.querySelector('.bmin').onclick = function(e){ e.stopPropagation(); minimizeOSWin(id); };
-  win.querySelector('.bmax').onclick = function(e){ e.stopPropagation(); toggleOSMax(id); };
-  win.querySelector('.close').onclick = function(e){ e.stopPropagation(); closeOSWin(id); };
-  win.addEventListener('pointerdown', function(){ focusOSWin(id); });
-  var tbar = win.querySelector('.os-titlebar');
-  tbar.addEventListener('dblclick', function(e){ if(!e.target.closest('.os-tb-btn')) toggleOSMax(id); });
-  tbar.addEventListener('pointerdown', function(e){
-    if(e.button !== 0 || e.target.closest('.os-tb-btn')) return;
-    var sx = e.clientX, sy = e.clientY, moved = false, ox = 0, oy = 0;
-    function mm(ev){
-      if(!moved){
-        if(Math.hypot(ev.clientX - sx, ev.clientY - sy) < 4) return;
-        moved = true;
-        if(win.classList.contains('maximized')){
-          win.classList.remove('maximized');
-          win.style.width = w + 'px'; win.style.height = h + 'px';
-          win.style.left = Math.max(0, ev.clientX - w / 2) + 'px';
-          win.style.top = Math.max(0, ev.clientY - 16) + 'px';
+
+  // ─── Iconos SVG ───
+  var IC = {
+    folder:'<svg width="38" height="38" viewBox="0 0 48 48"><path d="M4 10h13l4 5h20v6H4z" fill="#e8a200"/><path d="M4 16h37v22a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" fill="#ffc933"/></svg>',
+    txt:'<svg width="38" height="38" viewBox="0 0 48 48"><path d="M11 4h20l6 6v34H11z" fill="#fff" stroke="#9aa5b1" stroke-width="1.4"/><path d="M31 4l6 6h-6z" fill="#dfe5ec" stroke="#9aa5b1" stroke-width="1.2"/><path d="M16 17h16M16 22h16M16 27h16M16 32h10" stroke="#5a9bd8" stroke-width="2"/></svg>',
+    doc:'<svg width="38" height="38" viewBox="0 0 48 48"><path d="M11 4h20l6 6v34H11z" fill="#fff" stroke="#9aa5b1" stroke-width="1.4"/><rect x="6" y="17" width="24" height="24" rx="2" fill="#2B579A"/><text x="18" y="35" font-family="Segoe UI" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">W</text></svg>',
+    calc:'<svg width="38" height="38" viewBox="0 0 48 48"><rect x="8" y="4" width="32" height="40" rx="3" fill="#4a4f57"/><rect x="12" y="8" width="24" height="9" rx="1" fill="#c9e6f5"/><rect x="12" y="21" width="6" height="5" rx="1" fill="#8d949e"/><rect x="21" y="21" width="6" height="5" rx="1" fill="#8d949e"/><rect x="30" y="21" width="6" height="5" rx="1" fill="#8d949e"/><rect x="12" y="29" width="6" height="5" rx="1" fill="#8d949e"/><rect x="21" y="29" width="6" height="5" rx="1" fill="#8d949e"/><rect x="30" y="29" width="6" height="12" rx="1" fill="#0a84d8"/><rect x="12" y="37" width="15" height="4" rx="1" fill="#8d949e"/></svg>',
+    term:'<svg width="38" height="38" viewBox="0 0 48 48"><rect x="4" y="6" width="40" height="36" rx="4" fill="#22282f"/><text x="12" y="30" font-family="Consolas,monospace" font-size="14" fill="#2de08a">&gt;_</text></svg>',
+    app:'<svg width="38" height="38" viewBox="0 0 48 48"><rect x="6" y="6" width="36" height="36" rx="6" fill="#4a4f57"/></svg>'
+  };
+
+  // ─── Crear ventana ───
+  function crearVentana(opts){
+    var id = 'osw' + (++OS.winSeq);
+    var w = Math.min(opts.w || 760, innerWidth - 20);
+    var h = Math.min(opts.h || 500, innerHeight - 64);
+    var x = Math.max(6, (innerWidth - w) / 2);
+    var y = Math.max(4, (innerHeight - 44 - h) / 2);
+
+    var win = el('div','os-window active');
+    win.style.cssText = 'width:'+w+'px;height:'+h+'px;left:'+x+'px;top:'+y+'px;z-index:'+(++OS.zTop);
+    win.innerHTML =
+      '<div class="os-titlebar">'+
+        '<div class="os-tb-ico">'+(opts.icon||'')+'</div>'+
+        '<div class="os-tb-title">'+esc(opts.title||'Ventana')+'</div>'+
+        '<div class="os-tb-btns">'+
+          '<button class="os-tb-btn bmax" title="Maximizar">▢</button>'+
+          '<button class="os-tb-btn close" title="Cerrar">✕</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="os-body"></div>';
+
+    var layer = $('#osWinLayer'); if(!layer) return null;
+    layer.appendChild(win);
+
+    var rec = { el:win, body:win.querySelector('.os-body'), title:opts.title };
+    OS.wins.set(id, rec);
+
+    var tb = el('button','os-task active', esc(opts.title||''));
+    tb.dataset.win = id;
+    tb.onclick = function(){ focusWin(id); };
+    var tasks = $('#osTasks'); if(tasks) tasks.appendChild(tb);
+
+    win.querySelector('.bmax').onclick = function(e){ e.stopPropagation(); win.classList.toggle('maximized'); };
+    win.querySelector('.close').onclick = function(e){ e.stopPropagation(); cerrarWin(id); };
+    win.addEventListener('pointerdown', function(){ focusWin(id); });
+
+    var tbar = win.querySelector('.os-titlebar');
+    tbar.addEventListener('dblclick', function(e){ if(!e.target.closest('.os-tb-btn')) win.classList.toggle('maximized'); });
+    tbar.addEventListener('pointerdown', function(e){
+      if(e.button!==0 || e.target.closest('.os-tb-btn')) return;
+      var sx=e.clientX, sy=e.clientY, ox=win.offsetLeft, oy=win.offsetTop, moved=false;
+      function mm(ev){
+        if(!moved){
+          if(Math.hypot(ev.clientX-sx, ev.clientY-sy)<4) return;
+          moved=true;
+          if(win.classList.contains('maximized')) win.classList.remove('maximized');
+          ox=win.offsetLeft; oy=win.offsetTop;
         }
-        ox = win.offsetLeft; oy = win.offsetTop;
+        win.style.left=(ox+ev.clientX-sx)+'px';
+        win.style.top=Math.max(0,oy+ev.clientY-sy)+'px';
       }
-      win.style.left = (ox + ev.clientX - sx) + 'px';
-      win.style.top = Math.max(0, oy + ev.clientY - sy) + 'px';
-    }
-    function mu(){ document.removeEventListener('pointermove', mm); }
-    document.addEventListener('pointermove', mm);
-    document.addEventListener('pointerup', mu, { once:true });
-  });
-  var rz = win.querySelector('.os-rz');
-  rz.addEventListener('pointerdown', function(e){
-    e.stopPropagation();
-    var sx = e.clientX, sy = e.clientY;
-    var ow = win.offsetWidth, oh = win.offsetHeight;
-    function mm(ev){
-      win.style.width = Math.max(320, ow + ev.clientX - sx) + 'px';
-      win.style.height = Math.max(220, oh + ev.clientY - sy) + 'px';
-    }
-    document.addEventListener('pointermove', mm);
-    document.addEventListener('pointerup', function(){ document.removeEventListener('pointermove', mm); }, { once:true });
-  });
-  focusOSWin(id);
-  return {
-    win: win, body: rec.body, id: id,
-    setTitle: function(t){ rec.title = t; win.querySelector('.os-tb-title').textContent = t; tb.title = t; tb.textContent = t; },
-    close: function(){ closeOSWin(id); }
-  };
-}
-function focusOSWin(id){
-  var w = OS.wins.get(id); if(!w) return;
-  w.el.style.zIndex = ++OS.zTop;
-  OS.wins.forEach(function(o){ o.el.classList.toggle('active', o === w); });
-  $$('#osTasks .os-task').forEach(function(b){ b.classList.toggle('active', b.dataset.win === id); });
-  OS.activeWin = id;
-}
-function minimizeOSWin(id){
-  var w = OS.wins.get(id); if(!w) return;
-  w.el.classList.add('minimized'); w.el.classList.remove('active');
-  var tb = document.querySelector('#osTasks .os-task[data-win="' + id + '"]');
-  if(tb) tb.classList.remove('active');
-  if(OS.activeWin === id) OS.activeWin = null;
-}
-function toggleOSMax(id){ var w = OS.wins.get(id); if(w) w.el.classList.toggle('maximized'); }
-function closeOSWin(id){
-  var w = OS.wins.get(id); if(!w) return;
-  w.el.classList.add('closing');
-  setTimeout(function(){ if(w.el.parentNode) w.el.parentNode.removeChild(w.el); }, 160);
-  OS.wins.delete(id);
-  var tb = document.querySelector('#osTasks .os-task[data-win="' + id + '"]');
-  if(tb) tb.parentNode.removeChild(tb);
-  if(OS.activeWin === id) OS.activeWin = null;
-}
-function fileIconOS(node){
-  if(!node) return '';
-  if(node.type !== 'file') return IC.folder;
-  switch(node.kind){
-    case 'doc': return IC.doc; case 'sheet': return IC.xls; case 'text': return IC.txt;
-    case 'image': return IC.img; case 'audio': return IC.audio; default: return IC.app;
-  }
-}
-function appOSExplorer(startPath){
-  var ctx = createOSWindow({ title:'Explorador', icon:IC.folder, w:880, h:560 });
-  if(!ctx) return;
-  var cur = (startPath || ['Documentos']).slice();
-  ctx.body.innerHTML =
-    '<div class="os-explorer-toolbar"><button class="os-explorer-nav nback">◀</button><button class="os-explorer-nav nup">▲</button><div class="os-explorer-crumb"></div><button class="os-explorer-nav breload">⟳</button></div>' +
-    '<div class="os-explorer-grid"></div>' +
-    '<div class="os-status"><span class="s1"></span><span class="s2"></span></div>';
-  var grid = ctx.body.querySelector('.os-explorer-grid');
-  var crumb = ctx.body.querySelector('.os-explorer-crumb');
-  function render(){
-    var node = OS.getNode(cur);
-    if(!node){ cur = ['Documentos']; return render(); }
-    crumb.innerHTML = '';
-    var root = el('b', '', 'ANIA-OS'); root.style.cursor = 'pointer';
-    root.onclick = function(){ cur = []; render(); };
-    crumb.appendChild(root);
-    cur.forEach(function(p, i){
-      crumb.appendChild(el('span', '', ' › '));
-      var b = el('b', '', esc(p)); b.style.cursor = 'pointer';
-      b.onclick = function(){ cur = cur.slice(0, i+1); render(); };
-      crumb.appendChild(b);
+      function mu(){ document.removeEventListener('pointermove',mm); }
+      document.addEventListener('pointermove',mm);
+      document.addEventListener('pointerup',mu,{once:true});
     });
-    grid.innerHTML = '';
-    var entries = Object.keys(node.children || {}).map(function(k){ return node.children[k]; });
-    entries.sort(function(a, b){
-      if(a.type !== b.type) return a.type === 'folder' ? -1 : 1;
-      return a.name.localeCompare(b.name, 'es');
-    });
-    entries.forEach(function(n){
-      var it = el('div', 'os-file', '<div class="ic">' + fileIconOS(n) + '</div><span>' + esc(n.name) + '</span>');
-      it.onclick = function(e){ e.stopPropagation(); grid.querySelectorAll('.os-file').forEach(function(x){ x.classList.remove('sel'); }); it.classList.add('sel'); };
-      it.ondblclick = function(){
-        if(n.type === 'folder'){ cur = cur.concat([n.name]); render(); }
-        else openOSNode(n);
-      };
-      grid.appendChild(it);
-    });
-    ctx.body.querySelector('.s1').textContent = entries.length + ' elemento(s)';
-    ctx.body.querySelector('.s2').textContent = cur.join(' \\ ');
-    ctx.setTitle((cur[cur.length-1] || 'ANIA-OS') + ' · Explorador');
-  }
-  ctx.body.querySelector('.nback').onclick = function(){ if(cur.length){ cur = cur.slice(0,-1); render(); } };
-  ctx.body.querySelector('.nup').onclick = function(){ cur = []; render(); };
-  ctx.body.querySelector('.breload').onclick = render;
-  render();
-}
-function appOSNotepad(node){
-  var ctx = createOSWindow({ title:(node && node.name || 'Sin título') + ' · Notas', icon:IC.txt, w:640, h:480 });
-  if(!ctx) return;
-  ctx.body.innerHTML = '<textarea class="os-textarea" spellcheck="false">' + esc(node && node.text || '') + '</textarea>' +
-    '<div class="os-status"><span class="np-n"></span><span>Guardado local</span></div>';
-  var ta = ctx.body.querySelector('.os-textarea');
-  function upd(){ ctx.body.querySelector('.np-n').textContent = ta.value.length + ' caracteres'; }
-  ta.addEventListener('input', upd);
-  ta.addEventListener('keydown', function(e){
-    if(e.ctrlKey && e.key === 's'){
-      e.preventDefault();
-      if(!node){
-        var name = prompt('Guardar como:', 'nota-' + Date.now() + '.txt');
-        if(!name) return;
-        OS.addFile(['Documentos'], { type:'file', kind:'text', name:name, text:ta.value, size:ta.value.length });
-        ctx.setTitle(name + ' · Notas');
-      } else { node.text = ta.value; node.size = ta.value.length; OS.saveFS(); }
-    }
-  });
-  upd();
-}
-function appOSWord(node){
-  var ctx = createOSWindow({ title:(node && node.name || 'Documento') + ' · Word', icon:IC.doc, w:900, h:660 });
-  if(!ctx) return;
-  ctx.body.innerHTML =
-    '<div class="os-wp-toolbar">' +
-      '<button class="os-wp-btn" data-cmd="bold"><b>B</b></button>' +
-      '<button class="os-wp-btn" data-cmd="italic"><i>I</i></button>' +
-      '<button class="os-wp-btn" data-cmd="underline"><u>U</u></button>' +
-      '<button class="os-wp-btn" data-cmd="insertUnorderedList">•</button>' +
-      '<span style="flex:1"></span>' +
-      '<button class="os-wp-btn" data-save="1" style="width:auto;padding:0 12px;">Guardar</button>' +
-    '</div>' +
-    '<div class="os-wp-canvas"><div class="os-page" contenteditable="true">' + (node && node.html || '<p>Empieza a escribir…</p>') + '</div></div>';
-  var page = ctx.body.querySelector('.os-page');
-  ctx.body.querySelectorAll('[data-cmd]').forEach(function(b){
-    b.onmousedown = function(e){ e.preventDefault(); };
-    b.onclick = function(){ page.focus(); document.execCommand(b.dataset.cmd); };
-  });
-  ctx.body.querySelector('[data-save]').onclick = function(){
-    if(!node){
-      var name = prompt('Guardar como:', 'documento-' + Date.now() + '.html');
-      if(!name) return;
-      OS.addFile(['Documentos'], { type:'file', kind:'doc', name:name, html:page.innerHTML, size:page.innerHTML.length });
-      ctx.setTitle(name + ' · Word');
-    } else { node.html = page.innerHTML; node.size = page.innerHTML.length; OS.saveFS(); }
-  };
-}
-function appOSCalc(){
-  var ctx = createOSWindow({ title:'Calculadora', icon:IC.calc, w:340, h:470 });
-  if(!ctx) return;
-  ctx.body.innerHTML = '<div class="os-calc"><div class="disp">0</div><div class="grid"></div></div>';
-  var disp = ctx.body.querySelector('.disp');
-  var acc = null, op = null, cur = '0', fresh = true;
-  var keys = ['C','⌫','%','÷','7','8','9','×','4','5','6','−','1','2','3','+','±','0',',','='];
-  var grid = ctx.body.querySelector('.grid');
-  keys.forEach(function(k){
-    var cls = ['+','−','×','÷'].indexOf(k) >= 0 ? 'op' : (k === '=' ? 'eq' : '');
-    var b = el('button', cls, k); b.dataset.k = k; grid.appendChild(b);
-  });
-  grid.onclick = function(e){
-    var k = e.target.dataset.k;
-    if(!k) return;
-    if(/[0-9]/.test(k)){ cur = fresh ? k : (cur === '0' ? k : cur + k); fresh = false; }
-    else if(k === ','){ if(cur.indexOf(',') < 0){ cur += ','; fresh = false; } }
-    else if(k === 'C'){ acc = null; op = null; cur = '0'; fresh = true; }
-    else if(k === '⌫'){ cur = cur.length > 1 ? cur.slice(0,-1) : '0'; }
-    else if(k === '±'){ cur = cur.charAt(0) === '-' ? cur.slice(1) : '-' + cur; }
-    else if(k === '%'){ cur = String(parseFloat(cur.replace(',','.')) / 100).replace('.',','); }
-    else if(['+','−','×','÷'].indexOf(k) >= 0){ acc = parseFloat(cur.replace(',','.')); op = k; fresh = true; }
-    else if(k === '=' && op !== null){
-      var b = parseFloat(cur.replace(',','.'));
-      var r = op === '+' ? acc + b : op === '−' ? acc - b : op === '×' ? acc * b : (b === 0 ? NaN : acc / b);
-      cur = isFinite(r) ? String(+r.toFixed(10)).replace('.',',') : 'Error';
-      acc = null; op = null; fresh = true;
-    }
-    disp.textContent = cur;
-  };
-}
-function appOSTerminal(){
-  var ctx = createOSWindow({ title:'Terminal', icon:IC.term, w:720, h:440 });
-  if(!ctx) return;
-  ctx.body.innerHTML = '<div class="os-term"><div class="os-term-out"></div><div class="os-term-line"><span class="os-term-ps">ANIA-OS:\\&gt;</span><input class="os-term-in"></div></div>';
-  var out = ctx.body.querySelector('.os-term-out');
-  var inp = ctx.body.querySelector('.os-term-in');
-  function print(t){ out.textContent += t + '\n'; out.scrollTop = out.scrollHeight; }
-  print('ANIA-OS Shell · escribe "help"');
-  inp.addEventListener('keydown', function(e){
-    if(e.key !== 'Enter') return;
-    var line = inp.value; inp.value = '';
-    print('> ' + line);
-    var cmd = line.trim().toLowerCase();
-    if(cmd === 'help') print('Comandos: help, ver, date, whoami, clear, apps, files, os <cmd>');
-    else if(cmd === 'ver') print('ANIA-OS v1.0');
-    else if(cmd === 'date') print(new Date().toString());
-    else if(cmd === 'whoami') print('operador');
-    else if(cmd === 'clear') out.textContent = '';
-    else if(cmd === 'apps') print(Object.keys(APPS).join(', '));
-    else if(cmd === 'files'){ var f = OS.getNode(['Documentos']); print(Object.keys(f.children || {}).join('\n') || '(vacío)'); }
-    else if(cmd.indexOf('os ') === 0) window.OSBridge.ejecutar(line.slice(3)).then(function(r){ print(JSON.stringify(r, null, 2)); });
-    else if(cmd) print('No reconocido: ' + cmd);
-  });
-  setTimeout(function(){ inp.focus(); }, 100);
-}
-function appOSPaint(){
-  var ctx = createOSWindow({ title:'Paint', icon:IC.paint, w:820, h:600 });
-  if(!ctx) return;
-  ctx.body.innerHTML =
-    '<div class="os-wp-toolbar"><input type="color" value="#1b6fb8" id="os-pt-color" style="width:34px;height:26px;border:1px solid #d8d8d8;padding:0"><label style="font-size:12px;display:flex;gap:6px;align-items:center">Grosor <input type="range" id="os-pt-size" min="1" max="30" value="4" style="width:90px"></label><button class="os-wp-btn" id="os-pt-clear" style="width:auto;padding:0 12px;">Limpiar</button><button class="os-wp-btn" id="os-pt-save" style="width:auto;padding:0 12px;">Guardar</button></div>' +
-    '<div class="os-paint-wrap"><canvas width="1000" height="560" style="background:#fff"></canvas></div>';
-  var cv = ctx.body.querySelector('canvas');
-  var x = cv.getContext('2d');
-  x.fillStyle = '#fff'; x.fillRect(0, 0, cv.width, cv.height);
-  x.lineCap = x.lineJoin = 'round';
-  var draw = false;
-  function pos(e){ var r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; }
-  cv.addEventListener('pointerdown', function(e){ draw = true; try{ cv.setPointerCapture(e.pointerId); }catch(_){}; var p = pos(e); x.beginPath(); x.moveTo(p[0], p[1]); });
-  cv.addEventListener('pointermove', function(e){
-    if(!draw) return;
-    x.strokeStyle = ctx.body.querySelector('#os-pt-color').value;
-    x.lineWidth = +ctx.body.querySelector('#os-pt-size').value;
-    var p = pos(e); x.lineTo(p[0], p[1]); x.stroke();
-  });
-  cv.addEventListener('pointerup', function(){ draw = false; });
-  ctx.body.querySelector('#os-pt-clear').onclick = function(){ x.fillStyle = '#fff'; x.fillRect(0, 0, cv.width, cv.height); };
-  ctx.body.querySelector('#os-pt-save').onclick = function(){
-    var u = cv.toDataURL('image/png');
-    OS.addFile(['Imágenes'], { type:'file', kind:'image', name:'dibujo-' + Date.now() + '.png', url:u, size:Math.round(u.length * 0.75) });
-  };
-}
-function appOSMines(){
-  var ctx = createOSWindow({ title:'Buscaminas', icon:IC.mines, w:360, h:470 });
-  if(!ctx) return;
-  var R = 9, C = 9, M = 10;
-  var mines, open, flag, dead, won, started, timer;
-  ctx.body.innerHTML = '<div class="os-mines"><div class="os-mines-top"><span id="os-m-mines">010</span><button id="os-m-reset" style="border:0;background:#e6e6e6;font-size:18px;cursor:pointer;padding:0 8px;">🙂</button><span id="os-m-time">000</span></div><div class="os-mines-grid"></div></div>';
-  var grid = ctx.body.querySelector('.os-mines-grid');
-  function reset(){
-    mines = {}; open = {}; flag = {}; dead = false; won = false; started = false;
-    if(timer){ clearInterval(timer); timer = null; }
-    ctx.body.querySelector('#os-m-mines').textContent = '010';
-    ctx.body.querySelector('#os-m-time').textContent = '000';
-    render();
-  }
-  function neighbors(i){
-    var r = Math.floor(i / C), c = i % C, out = [];
-    for(var dr = -1; dr <= 1; dr++) for(var dc = -1; dc <= 1; dc++){
-      if(!dr && !dc) continue;
-      var nr = r + dr, nc = c + dc;
-      if(nr >= 0 && nr < R && nc >= 0 && nc < C) out.push(nr * C + nc);
-    }
-    return out;
-  }
-  function countAdj(i){ return neighbors(i).filter(function(n){ return mines[n]; }).length; }
-  function place(safe){
-    var forb = {}; forb[safe] = 1; neighbors(safe).forEach(function(n){ forb[n] = 1; });
-    var count = 0;
-    while(count < M){
-      var i = Math.floor(Math.random() * R * C);
-      if(!forb[i] && !mines[i]){ mines[i] = 1; count++; }
-    }
-  }
-  function reveal(i){
-    if(open[i] || flag[i]) return;
-    open[i] = 1;
-    if(mines[i]){ dead = true; if(timer) clearInterval(timer); render(); return; }
-    if(countAdj(i) === 0) neighbors(i).forEach(reveal);
-    var opened = 0; for(var k in open) opened++;
-    if(opened === R * C - M){ won = true; if(timer) clearInterval(timer); }
-    render();
-  }
-  function render(){
-    grid.innerHTML = '';
-    for(var i = 0; i < R * C; i++){
-      (function(i){
-        var d = document.createElement('div');
-        d.className = 'os-mines-cell';
-        if(open[i]){
-          d.classList.add('open');
-          if(mines[i]){ d.classList.add('mine'); d.textContent = '💣'; }
-          else { var n = countAdj(i); if(n) d.textContent = n; }
-        } else if(flag[i]) d.textContent = '🚩';
-        d.onclick = function(){
-          if(dead || won || flag[i]) return;
-          if(!started){
-            started = true; place(i);
-            var t = 0;
-            timer = setInterval(function(){ t++; ctx.body.querySelector('#os-m-time').textContent = String(Math.min(999, t)).padStart(3, '0'); }, 1000);
-          }
-          reveal(i);
-        };
-        d.oncontextmenu = function(e){
-          e.preventDefault();
-          if(dead || won || open[i]) return;
-          flag[i] ? delete flag[i] : (flag[i] = 1);
-          render();
-        };
-        grid.appendChild(d);
-      })(i);
-    }
-  }
-  ctx.body.querySelector('#os-m-reset').onclick = reset;
-  reset();
-}
-function appOSWeather(){
-  var ctx = createOSWindow({ title:'Clima', icon:IC.weather, w:560, h:480 });
-  if(!ctx) return;
-  ctx.body.innerHTML = '<div class="os-weather"><div class="os-weather-search"><input placeholder="Ciudad… ej: Madrid"><button>Buscar</button></div><div class="os-wx-out"></div></div>';
-  var inp = ctx.body.querySelector('input');
-  var out = ctx.body.querySelector('.os-wx-out');
-  function buscar(q){
-    out.innerHTML = '<div style="color:#6b6b6b">Buscando…</div>';
-    fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(q) + '&count=1&language=es&format=json')
-      .then(function(r){ return r.json(); })
-      .then(function(g){
-        if(!g.results || !g.results.length){ out.innerHTML = '<div style="color:#d05050">No encontrada</div>'; return; }
-        var p = g.results[0];
-        return fetch('https://api.open-meteo.com/v1/forecast?latitude=' + p.latitude + '&longitude=' + p.longitude + '&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto')
-          .then(function(r){ return r.json(); })
-          .then(function(w){
-            var c = w.current;
-            out.innerHTML = '<div style="background:linear-gradient(135deg,#2f7fbf,#5aa7e0);color:#fff;padding:20px;border-radius:8px;margin-top:10px"><div style="font-size:48px;font-weight:300;line-height:1">' + Math.round(c.temperature_2m) + '°C</div><div style="font-size:18px;margin-top:6px">' + esc(p.name) + '</div><div style="opacity:.9;font-size:13px;margin-top:8px">Sensación ' + Math.round(c.apparent_temperature) + '° · Humedad ' + c.relative_humidity_2m + '% · Viento ' + Math.round(c.wind_speed_10m) + ' km/h</div></div>';
-          });
-      })
-      .catch(function(e){ out.innerHTML = '<div style="color:#d05050">Error: ' + esc(e.message) + '</div>'; });
-  }
-  ctx.body.querySelector('button').onclick = function(){ inp.value.trim() && buscar(inp.value.trim()); };
-  inp.addEventListener('keydown', function(e){ if(e.key === 'Enter' && inp.value.trim()) buscar(inp.value.trim()); });
-}
-var APPS = {
-  explorer:  { name:'Explorador',   icon:IC.folder,  launch:function(a){ appOSExplorer(a && a.path); } },
-  notepad:   { name:'Bloc de notas',icon:IC.txt,     launch:function(a){ appOSNotepad(a && a.node); } },
-  word:      { name:'Word',         icon:IC.doc,     launch:function(a){ appOSWord(a && a.node); } },
-  calc:      { name:'Calculadora',  icon:IC.calc,    launch:function(){ appOSCalc(); } },
-  terminal:  { name:'Terminal',     icon:IC.term,    launch:function(){ appOSTerminal(); } },
-  paint:     { name:'Paint',        icon:IC.paint,   launch:function(){ appOSPaint(); } },
-  mines:     { name:'Buscaminas',   icon:IC.mines,   launch:function(){ appOSMines(); } },
-  weather:   { name:'Clima',        icon:IC.weather, launch:function(){ appOSWeather(); } },
-  photos:    { name:'Fotos',        icon:IC.photos,  launch:function(){ abrirFotos(); } }
-};
-function abrirFotos(){
-  var carpeta = OS.getNode(['Imágenes']);
-  var imgs = Object.keys(carpeta && carpeta.children || {}).map(function(k){ return carpeta.children[k]; }).filter(function(n){ return n.kind === 'image' && n.url; });
-  if(!imgs.length){ toastOS('No hay imágenes aún. Dibuja algo en Paint.'); return; }
-  var ctx = createOSWindow({ title:'Fotos', icon:IC.photos, w:700, h:560 });
-  if(!ctx) return;
-  ctx.body.innerHTML = '<div style="flex:1;display:grid;place-items:center;background:#14161a"><img style="max-width:92%;max-height:92%"></div>';
-  var img = ctx.body.querySelector('img'); var i = 0;
-  img.src = imgs[i].url;
-  setInterval(function(){ i = (i + 1) % imgs.length; img.src = imgs[i].url; }, 4000);
-}
-function openOSNode(node){
-  if(!node) return;
-  if(node.type !== 'file'){ appOSExplorer(); return; }
-  switch(node.kind){
-    case 'doc':   appOSWord(node); break;
-    case 'text':  appOSNotepad(node); break;
-    case 'image': abrirFotos(); break;
-    default:      toastOS('No sé abrir: ' + node.name);
-  }
-}
-function renderOSDesktop(){
-  var box = $('#osIcons'); if(!box) return; box.innerHTML = '';
-  var items = [
-    ['Este equipo', IC.folder, function(){ appOSExplorer([]); }],
-    ['Documentos',  IC.folder, function(){ appOSExplorer(['Documentos']); }],
-    ['Papelera',    IC.folder, function(){ appOSExplorer(['Papelera']); }]
-  ];
-  if(window.OSRemote){
-    items.push(['🎵 Música',     '<span style="font-size:36px">🎵</span>', function(){ window.OSRemote.appOSMusic(); }]);
-    items.push(['📄 Documentos', '<span style="font-size:36px">📄</span>', function(){ window.OSRemote.appOSDocViewer(); }]);
-    items.push(['🌐 Navegador',  '<span style="font-size:36px">🌐</span>', function(){ window.OSRemote.appOSBrowser(); }]);
-    if(window.OSRemote.appOSWallpaper){
-      items.push(['🎨 Fondos', '<span style="font-size:36px">🎨</span>', function(){ window.OSRemote.appOSWallpaper(); }]);
-    }
-  }
-  items.forEach(function(it){
-    var d = el('div', 'os-icon', '<div class="ic">' + it[1] + '</div><span>' + it[0] + '</span>');
-    d.onclick = function(e){ e.stopPropagation(); $$('.os-icon').forEach(function(x){ x.classList.remove('sel'); }); d.classList.add('sel'); };
-    d.ondblclick = it[2];
-    box.appendChild(d);
-  });
-}
-function renderOSStartMenu(){
-  var sm = $('#osSmApps'); if(!sm) return; sm.innerHTML = '';
-  Object.keys(APPS).forEach(function(k){
-    var a = APPS[k];
-    var b = el('button', '', '<span style="width:26px;display:inline-grid;place-items:center">' + a.icon + '</span>' + esc(a.name));
-    b.onclick = function(){ closeOSStart(); a.launch(); };
-    sm.appendChild(b);
-  });
-}
-function toggleOSStart(){ var sm = $('#osStartMenu'); if(sm) sm.classList.toggle('on'); }
-function closeOSStart(){ var sm = $('#osStartMenu'); if(sm) sm.classList.remove('on'); }
-function tickOSClock(){
-  var d = new Date();
-  var t = d.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
-  var f = d.toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric' });
-  if($('#osClockT')) $('#osClockT').textContent = t;
-  if($('#osClockD')) $('#osClockD').textContent = f;
-}
-var OSBridge = {
-  listarApps: function(){ return Object.keys(APPS).map(function(k){ return { id:k, nombre:APPS[k].name }; }); },
-  abrirApp: function(id){
-    var a = APPS[id];
-    if(!a) return { ok:false, error:'app desconocida: ' + id };
-    try{ a.launch(); return { ok:true, app:id }; }
-    catch(e){ return { ok:false, error:e.message }; }
-  },
-  cerrarApp: function(id, titulo){
-    var n = 0;
-    OS.wins.forEach(function(w, wid){
-      var match = titulo ? (w.title && w.title.toLowerCase().indexOf(String(titulo).toLowerCase()) >= 0) : (!id || w.title.toLowerCase().indexOf((APPS[id] && APPS[id].name || id).toLowerCase()) >= 0);
-      if(match){ closeOSWin(wid); n++; }
-    });
-    return { ok:true, cerrados:n };
-  },
-  ventanasAbiertas: function(){ var out = []; OS.wins.forEach(function(w){ out.push({ titulo:w.title }); }); return out; },
-  listarArchivos: function(carpeta){
-    var node = OS.getNode(carpeta ? [carpeta] : []);
-    if(!node) return { ok:false, error:'no existe' };
-    return { ok:true, carpeta:carpeta || '(raíz)', items: Object.keys(node.children || {}).map(function(k){ var c = node.children[k]; return { nombre:c.name, tipo:c.type, kind:c.kind || null, tamaño:c.size || 0 }; }) };
-  },
-  crearArchivo: function(carpeta, nombre, contenido){
-    var path = [carpeta || 'Documentos'];
-    if(!OS.getNode(path)) return { ok:false, error:'carpeta no existe' };
-    var kind = inferirKind(nombre);
-    var real = OS.addFile(path, { type:'file', kind:kind, name:nombre, text:contenido || '', size:(contenido || '').length });
-    return { ok:true, archivo:real, carpeta:path[0], kind:kind };
-  },
-  leerArchivo: function(carpeta, nombre){
-    var node = OS.getNode([carpeta || 'Documentos', nombre]);
-    if(!node) return { ok:false, error:'no existe' };
-    return { ok:true, contenido: node.text || node.html || '(binario)', tamaño: node.size || 0 };
-  },
-  borrarArchivo: function(carpeta, nombre){
-    if(!OS.getNode([carpeta || 'Documentos', nombre])) return { ok:false, error:'no existe' };
-    OS.deleteNode([carpeta || 'Documentos', nombre]);
-    return { ok:true };
-  },
-  buscarArchivos: function(q){
-    var ql = String(q || '').toLowerCase().trim();
-    if(!ql) return { ok:false, error:'falta término' };
-    var hits = [];
-    (function walk(node, path){
-      if(!node || !node.children) return;
-      for(var k in node.children){
-        var c = node.children[k];
-        var np = path.concat([c.name]);
-        if(c.type === 'file' && c.name.toLowerCase().indexOf(ql) >= 0) hits.push({ ruta:np.join('/'), tamaño:c.size || 0 });
-        if(c.type !== 'file') walk(c, np);
-      }
-    })(OS.getNode([]), []);
-    return { ok:true, resultados: hits.slice(0, 30) };
-  },
-  cambiarFondo: function(id){
-    var walls = [
-      'linear-gradient(135deg,#04070d 0%,#0a2038 50%,#0d2b4a 100%)',
-      'linear-gradient(135deg,#1c4a77 0%,#0d2440 60%,#04070d 100%)',
-      'linear-gradient(135deg,#0e1e38 0%,#3e5a80 50%,#8a5a4a 100%)',
-      'linear-gradient(135deg,#0a0f1a 0%,#0d2440 50%,#0f1a2e 100%)'
-    ];
-    var k = Number(id) || 0;
-    if(k < 0 || k >= walls.length) k = 0;
-    var wp = $('#osWallpaper');
-    if(wp){
-      wp.style.backgroundImage = walls[k];
-      wp.style.backgroundSize = 'cover';
-      wp.style.backgroundPosition = 'center';
-      wp.style.backgroundRepeat = 'no-repeat';
-      wp.style.backgroundAttachment = 'scroll';
-      wp.style.backgroundColor = '#040806';
-      wp.innerHTML = ''; // limpia cualquier <img> previo
-    }
-    try{ localStorage.setItem('aniaos_wall', String(k)); localStorage.removeItem('aniaos_wall_url'); }catch(e){}
-    return { ok:true, fondo:k };
-  },
-  infoSistema: function(){
-    var n = 0;
-    (function walk(node){
-      if(!node || !node.children) return;
-      for(var k in node.children){ n++; if(node.children[k].type !== 'file') walk(node.children[k]); }
-    })(OS.FS);
-    var hm = performance.memory;
-    return { ok:true, ventanas:OS.wins.size, apps:Object.keys(APPS).length, archivos:n,
-      memoriaJS: hm ? Math.round(hm.usedJSHeapSize / 1048576) + ' MB' : '—',
-      nucleos: navigator.hardwareConcurrency || '—', online: navigator.onLine };
-  },
-  apagar: function(){ osShutdown(); return { ok:true }; },
-  bloquear: function(){ osLock(); return { ok:true }; },
-  ejecutar: function(cmd){
-    var c = String(cmd || '').toLowerCase().trim();
-    if(!c) return Promise.resolve({ ok:false, error:'comando vacío' });
-    var m;
-    m = c.match(/^(?:abre|abrir|lanza|inicia|ejecuta|arranca)\s+(?:la\s+|el\s+|los\s+|las\s+)?(.+?)$/);
-    if(m){
-      var q = m[1].trim();
-      var aliases = {
-        'explorador':'explorer','archivos':'explorer','documentos':'explorer','papelera':'explorer',
-        'word':'word','documento':'word',
-        'texto':'notepad','bloc':'notepad','notas':'notepad','notepad':'notepad','bloc de notas':'notepad',
-        'calc':'calc','calculadora':'calc','cuenta':'calc',
-        'terminal':'terminal','consola':'terminal','cmd':'terminal',
-        'paint':'paint','dibujo':'paint','dibujar':'paint',
-        'buscaminas':'mines','minas':'mines',
-        'clima':'weather','tiempo':'weather',
-        'fotos':'photos','imagenes':'photos','galeria':'photos'
-      };
-      var found = aliases[q];
-      if(!found){ for(var k in APPS){ if(k === q || APPS[k].name.toLowerCase().indexOf(q) >= 0){ found = k; break; } } }
-      if(found) return Promise.resolve(OSBridge.abrirApp(found));
-      return Promise.resolve({ ok:false, error:'app no reconocida: ' + q });
-    }
-    m = c.match(/^cierra\s+(?:la\s+|el\s+|las\s+|los\s+)?(?:ventana\s+de\s+|app\s+)?(.+)$/);
-    if(m){ var q2 = m[1].trim(); if(/todas|ventanas/.test(q2)) return Promise.resolve(OSBridge.cerrarApp()); return Promise.resolve(OSBridge.cerrarApp(null, q2)); }
-    m = c.match(/^(?:crea|crear|nuevo|guarda|escribe)\s+(?:un\s+|el\s+|la\s+)?(?:archivo|documento|nota|doc)\s+(?:llamado\s+|con\s+nombre\s+|de\s+nombre\s+)?["']?([^"']+?)["']?(?:\s+con\s+(?:contenido|texto)\s+["']?(.+?)["']?)?$/);
-    if(m) return Promise.resolve(OSBridge.crearArchivo('Documentos', m[1].trim(), (m[2] || '').trim()));
-    m = c.match(/^(?:busca|b[uú]scame|encuentra)\s+(?:el\s+archivo\s+|el\s+documento\s+|archivo\s+)?(.+)$/);
-    if(m){ var q3 = m[1].trim(); if(/en\s+internet|en\s+la\s+web|en\s+wikipedia/.test(q3)) return Promise.resolve({ ok:false, error:'buscar web → usa chat' }); return Promise.resolve(OSBridge.buscarArchivos(q3)); }
-    m = c.match(/^(?:cambia|cambiar|pon)\s+(?:el\s+)?fondo\s+(?:a\s+|por\s+|al?\s+)?(.+)$/);
-    if(m){
-      var map = { 'aurora':0,'0':0,'ventana':1,'1':1,'montaña':2,'montanas':2,'2':2,'lineas':3,'líneas':3,'3':3 };
-      var kk = map[m[1].trim()];
-      if(kk != null) return Promise.resolve(OSBridge.cambiarFondo(kk));
-    }
-    if(/^(?:apaga|apagar|shutdown)\s*(?:el\s+)?(?:pc|sistema|equipo|os)?$/.test(c)) return Promise.resolve(OSBridge.apagar());
-    if(/^(?:bloquea|bloquear|lock)\s*(?:la\s+)?(?:pantalla|sesi[oó]n|pc)?$/.test(c)) return Promise.resolve(OSBridge.bloquear());
-    if(/^(?:info|estado|status)\s*(?:del\s+)?(?:sistema|os)?$/.test(c)) return Promise.resolve(OSBridge.infoSistema());
-    if(/ventanas?\s+abiertas?/.test(c)) return Promise.resolve({ ok:true, ventanas:OSBridge.ventanasAbiertas() });
-    m = c.match(/^(?:lista|listar|muestra|qu[eé]\s+hay\s+en)\s+(?:los\s+|las\s+)?(?:archivos\s+de\s+|carpeta\s+)?(.+)$/);
-    if(m) return Promise.resolve(OSBridge.listarArchivos(m[1].trim()));
-    return Promise.resolve({ ok:false, error:'comando no reconocido' });
-  }
-};
-window.OSBridge = OSBridge;
-function inferirKind(nombre){
-  var e = String(nombre).split('.').pop().toLowerCase();
-  if(['txt','md','log','csv'].indexOf(e) >= 0) return 'text';
-  if(['doc','docx'].indexOf(e) >= 0) return 'doc';
-  if(['xls','xlsx'].indexOf(e) >= 0) return 'sheet';
-  if(['png','jpg','jpeg','gif','webp','svg'].indexOf(e) >= 0) return 'image';
-  if(['mp3','wav','ogg','m4a','flac'].indexOf(e) >= 0) return 'audio';
-  return 'generic';
-}
-function hookSend(){
-  if(!window.send || window.__osSendHooked) return;
-  window.__osSendHooked = true;
-  var origSend = window.send;
-  window.send = async function(text){
-    try{
-      var r = await OSBridge.ejecutar(text);
-      if(r && r.ok){
-        var msg = '✓ ';
-        if(r.app) msg += 'App «' + r.app + '» abierta.';
-        else if(r.archivo) msg += 'Archivo «' + r.archivo + '» creado en ' + r.carpeta + '.';
-        else if(r.cerrados != null) msg += r.cerrados + ' ventana(s) cerrada(s).';
-        else if(r.items) msg += r.carpeta + ': ' + (r.items.slice(0,8).map(function(i){ return i.nombre; }).join(', ') || '(vacía)');
-        else if(r.resultados) msg += r.resultados.length ? r.resultados.length + ' encontrado(s):\n' + r.resultados.map(function(x){ return '· ' + x.ruta; }).join('\n') : 'Sin resultados.';
-        else if(r.ventanas) msg += r.ventanas.length + ' ventana(s): ' + (r.ventanas.map(function(v){ return v.titulo; }).join(', ') || 'ninguna');
-        else if(r.fondo != null) msg += 'Fondo cambiado a ' + r.fondo + '.';
-        else if(r.memoriaJS) msg += 'Ventanas: ' + r.ventanas + ' · Apps: ' + r.apps + ' · Archivos: ' + r.archivos + ' · Memoria: ' + r.memoriaJS;
-        else msg += 'Hecho.';
-        try{ if(typeof addChat === 'function') addChat('you', text); }catch(e){}
-        try{ if(typeof reply === 'function'){ reply(msg); return; } }catch(e){}
-        try{ if(typeof personaReply === 'function'){ personaReply(msg); return; } }catch(e){}
-        return;
-      }
-    }catch(e){}
-    return origSend.call(this, text);
-  };
-  console.log('[OS] send() hooked');
-}
-function enterOS(){
-  document.body.classList.add('os-on');
-  document.body.classList.remove('app-on');
-  var t = $('#osToggleTxt'); if(t) t.textContent = 'ANIA';
-  tickOSClock();
-  renderOSDesktop();
-  renderOSStartMenu();
-  // ⭐ FIX: Restaurar fondo respetando PNG (con fallback si falla)
-  var wallUrl = localStorage.getItem('aniaos_wall_url');
-  var wp = $('#osWallpaper');
-  if(wallUrl && wp){
-    aplicarFondoSeguro(wp, wallUrl, null);
-    return;
-  }
-  var wall = localStorage.getItem('aniaos_wall');
-  if(wall != null && wp){
-    var walls = [
-      'linear-gradient(135deg,#04070d 0%,#0a2038 50%,#0d2b4a 100%)',
-      'linear-gradient(135deg,#1c4a77 0%,#0d2440 60%,#04070d 100%)',
-      'linear-gradient(135deg,#0e1e38 0%,#3e5a80 50%,#8a5a4a 100%)',
-      'linear-gradient(135deg,#0a0f1a 0%,#0d2440 50%,#0f1a2e 100%)'
-    ];
-    wp.style.backgroundImage = walls[Number(wall)] || walls[0];
-    wp.style.backgroundSize = 'cover';
-    wp.style.backgroundPosition = 'center';
-    wp.style.backgroundRepeat = 'no-repeat';
-    wp.style.backgroundColor = '#040806';
-    wp.innerHTML = '';
-  }
-}
 
-/* ⭐ FIX · Aplica fondo remoto con un <img> real (nunca sale blanco) */
-function aplicarFondoSeguro(wp, url, nombre){
-  if(!wp) return;
-  wp.style.backgroundImage = 'none';
-  wp.style.backgroundColor = '#040806';
-  wp.innerHTML = '';
-  var img = document.createElement('img');
-  img.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;display:block;pointer-events:none;user-select:none;';
-  img.alt = '';
-  img.src = url;
-  img.onload = function(){
-    console.log('[Fondo] Cargado OK:', url, img.naturalWidth + 'x' + img.naturalHeight);
-    if(nombre) toastR('🎨 Fondo aplicado: ' + nombre);
-  };
-  img.onerror = function(){
-    console.warn('[Fondo] Error cargando:', url);
-    img.remove();
-    wp.style.backgroundImage = 'linear-gradient(135deg,#04070d 0%,#0a2038 50%,#0d2b4a 100%)';
-    wp.style.backgroundSize = 'cover';
-    wp.style.backgroundPosition = 'center';
-    wp.style.backgroundRepeat = 'no-repeat';
-    wp.style.backgroundColor = '#040806';
-    try{ localStorage.removeItem('aniaos_wall_url'); }catch(e){}
-    toastR('No pude cargar el fondo — usando gradiente', 'warn');
-  };
-  wp.appendChild(img);
-  try{ localStorage.setItem('aniaos_wall_url', url); }catch(e){}
-}
-window.__aplicarFondoSeguro = aplicarFondoSeguro;
-
-function exitOS(){
-  document.body.classList.remove('os-on');
-  document.body.classList.add('app-on');
-  var t = $('#osToggleTxt'); if(t) t.textContent = 'OS';
-  closeOSStart();
-}
-function osLock(){
-  exitOS();
-  var lock = document.getElementById('lock');
-  if(lock){ lock.classList.add('on'); } else { osShutdown(); }
-}
-function osShutdown(){
-  document.body.classList.remove('os-on');
-  document.body.classList.remove('app-on');
-  var app = document.getElementById('app');
-  if(app) app.style.display = 'none';
-  var lock = document.getElementById('lock');
-  if(lock) lock.classList.remove('on');
-  var boot = document.getElementById('boot');
-  if(boot){ boot.style.display = 'flex'; boot.classList.remove('hide'); }
-  var lb = document.getElementById('loginBox');
-  var rb = document.getElementById('registerBox');
-  var bs = document.getElementById('bootStart');
-  if(lb) lb.style.display = 'flex';
-  if(rb) rb.style.display = 'none';
-  if(bs) bs.style.display = 'none';
-  var ids = [];
-  OS.wins.forEach(function(w, id){ ids.push(id); });
-  ids.forEach(function(id){ closeOSWin(id); });
-  var log = document.getElementById('bootLog');
-  if(log) log.innerHTML = '';
-  document.querySelectorAll('.overlay.on').forEach(function(o){ o.classList.remove('on'); });
-  if(app) app.style.display = '';
-  console.log('[OS] Shutdown → login');
-}
-window.OSShutdown = osShutdown;
-window.OSLock = osLock;
-function wireButtons(){
-  var sb = $('#osStartBtn'); if(sb) sb.onclick = function(e){ e.stopPropagation(); toggleOSStart(); };
-  document.addEventListener('pointerdown', function(e){
-    if(!e.target.closest('#osTaskbar') && !e.target.closest('#osStartMenu')) closeOSStart();
-  });
-  $$('#osStartMenu [data-os]').forEach(function(b){
-    b.onclick = function(){
-      var a = b.dataset.os;
-      closeOSStart();
-      if(a === 'toggleAnia') exitOS();
-      else if(a === 'lock') osLock();
-      else if(a === 'shutdown') osShutdown();
+    focusWin(id);
+    return {
+      win:win, body:rec.body, id:id,
+      setTitle:function(t){ rec.title=t; win.querySelector('.os-tb-title').textContent=t; tb.textContent=t; },
+      close:function(){ cerrarWin(id); }
     };
-  });
-  var ex = $('#osExit'); if(ex) ex.onclick = function(){ osShutdown(); };
-  var tb = document.getElementById('osToggleBtn');
-  if(tb){ tb.onclick = function(){ if(document.body.classList.contains('os-on')) exitOS(); else enterOS(); }; }
-  var desk = $('#osDesktop');
-  if(desk) desk.addEventListener('click', function(e){
-    if(e.target.id === 'osWallpaper' || e.target.id === 'osIcons' || e.target.id === 'osDesktop'){
-      $$('.os-icon').forEach(function(x){ x.classList.remove('sel'); });
+  }
+  function focusWin(id){
+    var w = OS.wins.get(id); if(!w) return;
+    w.el.style.zIndex = ++OS.zTop;
+    OS.wins.forEach(function(o){ o.el.classList.toggle('active', o===w); });
+    $$('#osTasks .os-task').forEach(function(b){ b.classList.toggle('active', b.dataset.win===id); });
+    OS.activeWin = id;
+  }
+  function cerrarWin(id){
+    var w = OS.wins.get(id); if(!w) return;
+    w.el.classList.add('closing');
+    setTimeout(function(){ if(w.el.parentNode) w.el.parentNode.removeChild(w.el); }, 160);
+    OS.wins.delete(id);
+    var tb = document.querySelector('#osTasks .os-task[data-win="'+id+'"]');
+    if(tb) tb.parentNode.removeChild(tb);
+    if(OS.activeWin===id) OS.activeWin = null;
+  }
+
+  // ─── Aplicaciones ───
+  function appExplorador(ruta){
+    var ctx = crearVentana({ title:'Explorador', icon:IC.folder, w:820, h:520 });
+    if(!ctx) return;
+    var cur = (ruta||['Documentos']).slice();
+    ctx.body.innerHTML =
+      '<div style="display:flex;align-items:center;gap:4px;padding:6px 8px;background:#f0f0f0;border-bottom:1px solid #d8d8d8">'+
+        '<button class="ex-nav" data-nav="up" style="width:32px;height:30px;border:0;background:none;cursor:pointer;font-size:14px">▲</button>'+
+        '<div class="ex-crumb" style="flex:1;background:#fff;border:1px solid #d8d8d8;height:30px;padding:0 10px;font-size:12.5px;display:flex;align-items:center;border-radius:4px"></div>'+
+      '</div>'+
+      '<div class="ex-grid" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-wrap:wrap;align-content:flex-start;gap:4px;background:#fff"></div>';
+    var grid = ctx.body.querySelector('.ex-grid');
+    var crumb = ctx.body.querySelector('.ex-crumb');
+    function nodo(p){
+      var n = { children: OS.FS };
+      for(var i=0;i<p.length;i++){ if(!n.children || !n.children[p[i]]) return null; n = n.children[p[i]]; }
+      return n;
     }
-  });
-}
-function initOS(){
-  OS.loadFS();
-  wireButtons();
+    function render(){
+      var node = nodo(cur);
+      if(!node){ cur = ['Documentos']; return render(); }
+      crumb.innerHTML = '';
+      var r = el('b','', 'ANIA-OS'); r.style.cursor='pointer';
+      r.onclick = function(){ cur=[]; render(); };
+      crumb.appendChild(r);
+      cur.forEach(function(p,i){
+        crumb.appendChild(el('span','',' › '));
+        var b = el('b','',esc(p)); b.style.cursor='pointer';
+        b.onclick = function(){ cur = cur.slice(0,i+1); render(); };
+        crumb.appendChild(b);
+      });
+      grid.innerHTML = '';
+      var keys = Object.keys(node.children||{});
+      keys.sort(function(a,b){
+        var A = node.children[a], B = node.children[b];
+        if(A.type!==B.type) return A.type==='folder'?-1:1;
+        return a.localeCompare(b,'es');
+      });
+      keys.forEach(function(k){
+        var n = node.children[k];
+        var ico = n.type==='folder' ? IC.folder : (n.kind==='text'?IC.txt:IC.app);
+        var it = el('div','',
+          '<div style="height:46px;display:grid;place-items:center">'+ico+'</div>'+
+          '<span style="font-size:12px;text-align:center;line-height:1.25;max-height:30px;overflow:hidden;word-break:break-word;color:#1b1b1b">'+esc(n.name)+'</span>');
+        it.style.cssText = 'width:104px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:7px;border:1px solid transparent;cursor:default;border-radius:4px;';
+        it.onmouseenter = function(){ it.style.background='#eaf3fb'; };
+        it.onmouseleave = function(){ it.style.background=''; };
+        it.ondblclick = function(){
+          if(n.type==='folder'){ cur = cur.concat([n.name]); render(); }
+        };
+        grid.appendChild(it);
+      });
+    }
+    ctx.body.querySelector('[data-nav="up"]').onclick = function(){
+      if(cur.length){ cur = cur.slice(0,-1); render(); }
+    };
+    render();
+  }
+
+  function appCalculadora(){
+    var ctx = crearVentana({ title:'Calculadora', icon:IC.calc, w:320, h:440 });
+    if(!ctx) return;
+    ctx.body.innerHTML = '<div style="flex:1;display:flex;flex-direction:column;padding:10px 12px 14px;background:#fff">'+
+      '<div class="cdisp" style="text-align:right;font-size:38px;font-weight:300;padding:2px 4px 12px;min-height:60px;overflow:hidden;white-space:nowrap">0</div>'+
+      '<div class="cgrid" style="flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:4px"></div></div>';
+    var disp = ctx.body.querySelector('.cdisp');
+    var grid = ctx.body.querySelector('.cgrid');
+    var keys = ['C','⌫','%','÷','7','8','9','×','4','5','6','−','1','2','3','+','±','0',',','='];
+    var acc=null, op=null, cur='0', fresh=true;
+    keys.forEach(function(k){
+      var cls = ['+','−','×','÷'].indexOf(k)>=0 ? 'background:#e6e6e6;' : (k==='='?'background:#0a84d8;color:#fff;':'');
+      var b = el('button','',k);
+      b.style.cssText = 'border:1px solid #d8d8d8;background:#f0f0f0;color:#1b1b1b;font-size:16px;cursor:pointer;border-radius:4px;'+cls;
+      b.dataset.k = k;
+      grid.appendChild(b);
+    });
+    grid.onclick = function(e){
+      var k = e.target.dataset.k; if(!k) return;
+      if(/[0-9]/.test(k)){ cur = fresh ? k : (cur==='0'?k:cur+k); fresh=false; }
+      else if(k===','){ if(cur.indexOf(',')<0){ cur+=','; fresh=false; } }
+      else if(k==='C'){ acc=null; op=null; cur='0'; fresh=true; }
+      else if(k==='⌫'){ cur = cur.length>1 ? cur.slice(0,-1) : '0'; }
+      else if(k==='±'){ cur = cur.charAt(0)==='-' ? cur.slice(1) : '-'+cur; }
+      else if(k==='%'){ cur = String(parseFloat(cur.replace(',','.'))/100).replace('.',','); }
+      else if(['+','−','×','÷'].indexOf(k)>=0){ acc=parseFloat(cur.replace(',','.')); op=k; fresh=true; }
+      else if(k==='=' && op!==null){
+        var b = parseFloat(cur.replace(',','.'));
+        var r = op==='+'?acc+b:op==='−'?acc-b:op==='×'?acc*b:(b===0?NaN:acc/b);
+        cur = isFinite(r) ? String(+r.toFixed(10)).replace('.',',') : 'Error';
+        acc=null; op=null; fresh=true;
+      }
+      disp.textContent = cur;
+    };
+  }
+
+  function appTerminal(){
+    var ctx = crearVentana({ title:'Terminal', icon:IC.term, w:680, h:420 });
+    if(!ctx) return;
+    ctx.body.innerHTML = '<div style="flex:1;display:flex;flex-direction:column;background:#0c0c0c;color:#cfcfcf;font-family:Consolas,monospace;font-size:13px;padding:8px 10px">'+
+      '<div class="t-out" style="flex:1;overflow-y:auto;white-space:pre-wrap;word-break:break-word"></div>'+
+      '<div style="display:flex;gap:6px;padding-top:4px"><span>ANIA-OS:\\&gt;</span>'+
+      '<input class="t-in" style="flex:1;background:none;border:0;outline:0;color:#cfcfcf;font:inherit"></div></div>';
+    var out = ctx.body.querySelector('.t-out'), inp = ctx.body.querySelector('.t-in');
+    function print(t){ out.textContent += t+'\n'; out.scrollTop = out.scrollHeight; }
+    print('ANIA-OS Shell · escribe "help"');
+    inp.addEventListener('keydown', function(e){
+      if(e.key!=='Enter') return;
+      var line = inp.value; inp.value='';
+      print('> '+line);
+      var cmd = line.trim().toLowerCase();
+      if(cmd==='help') print('Comandos: help, ver, date, clear, apps, files');
+      else if(cmd==='ver') print('ANIA-OS v10.0');
+      else if(cmd==='date') print(new Date().toString());
+      else if(cmd==='clear') out.textContent='';
+      else if(cmd==='files') print(Object.keys(OS.FS).join('\n'));
+      else if(cmd) print('No reconocido: '+cmd);
+    });
+    setTimeout(function(){ inp.focus(); }, 100);
+  }
+
+  function appNotas(){
+    var ctx = crearVentana({ title:'Notas', icon:IC.txt, w:560, h:420 });
+    if(!ctx) return;
+    ctx.body.innerHTML = '<textarea class="nota" style="flex:1;border:0;outline:0;resize:none;padding:12px;font-family:Consolas,monospace;font-size:14px;line-height:1.55;background:#fff;color:#1b1b1b" spellcheck="false" placeholder="Escribe algo..."></textarea>';
+    var ta = ctx.body.querySelector('.nota');
+    ta.value = localStorage.getItem('ania_os_nota') || '';
+    ta.addEventListener('input', function(){ localStorage.setItem('ania_os_nota', ta.value); });
+  }
+
+  // ─── Apps registradas ───
+  var APPS = {
+    explorer:{ name:'Explorador', icon:IC.folder, launch:function(){ appExplorador(); } },
+    calc:{ name:'Calculadora', icon:IC.calc, launch:function(){ appCalculadora(); } },
+    term:{ name:'Terminal', icon:IC.term, launch:function(){ appTerminal(); } },
+    notas:{ name:'Notas', icon:IC.txt, launch:function(){ appNotas(); } }
+  };
+
+  // ─── Desktop icons ───
+  function renderDesktop(){
+    var box = $('#osIcons'); if(!box) return; box.innerHTML='';
+    var items = [
+      ['Este equipo', IC.folder, function(){ appExplorador([]); }],
+      ['Documentos', IC.folder, function(){ appExplorador(['Documentos']); }],
+      ['Papelera', IC.folder, function(){ appExplorador(['Papelera']); }]
+    ];
+    // Apps remotas si está disponible el módulo
+    if(window.OSRemote){
+      items.push(['🎵 Música', '<span style="font-size:34px">🎵</span>', function(){ window.OSRemote.appOSMusic(); }]);
+      items.push(['📄 Documentos', '<span style="font-size:34px">📄</span>', function(){ window.OSRemote.appOSDocViewer(); }]);
+      items.push(['🌐 Navegador', '<span style="font-size:34px">🌐</span>', function(){ window.OSRemote.appOSBrowser(); }]);
+      items.push(['🎨 Fondos', '<span style="font-size:34px">🎨</span>', function(){ window.OSRemote.appOSWallpaper(); }]);
+    }
+    items.forEach(function(it){
+      var d = el('div','os-icon','<div class="ic">'+it[1]+'</div><span>'+esc(it[0])+'</span>');
+      d.onclick = function(e){ e.stopPropagation(); $$('.os-icon').forEach(function(x){ x.classList.remove('sel'); }); d.classList.add('sel'); };
+      d.ondblclick = it[2];
+      box.appendChild(d);
+    });
+  }
+
+  // ─── Start menu ───
+  function renderStartMenu(){
+    var sm = $('#osSmApps'); if(!sm) return; sm.innerHTML='';
+    Object.keys(APPS).forEach(function(k){
+      var a = APPS[k];
+      var b = el('button','','<span class="sm-ic">'+a.icon+'</span>'+esc(a.name));
+      b.onclick = function(){ closeStart(); a.launch(); };
+      sm.appendChild(b);
+    });
+  }
+  function openStart(){ var m = $('#osStartMenu'); if(m) m.classList.add('on'); }
+  function closeStart(){ var m = $('#osStartMenu'); if(m) m.classList.remove('on'); }
+  function toggleStart(){ var m = $('#osStartMenu'); if(m) m.classList.toggle('on'); }
+
+  // ─── Reloj ───
+  function tickClock(){
+    var d = new Date();
+    var t = d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    var f = d.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'});
+    if($('#osClockT')) $('#osClockT').textContent = t;
+    if($('#osClockD')) $('#osClockD').textContent = f;
+  }
+  setInterval(function(){ if(document.body.classList.contains('os-on')) tickClock(); }, 30000);
+
+  // ─── Abrir / cerrar OS ───
+  function enterOS(){
+    document.body.classList.add('os-on');
+    document.body.classList.remove('app-on');
+    tickClock();
+    renderDesktop();
+    renderStartMenu();
+    // Fondo guardado
+    var wp = $('#osWallpaper');
+    var wallUrl = localStorage.getItem('aniaos_wall_url');
+    if(wallUrl && wp){
+      wp.innerHTML = '';
+      var img = document.createElement('img');
+      img.className = 'wall-img'; img.src = wallUrl; img.alt = '';
+      img.onerror = function(){ img.remove(); };
+      wp.appendChild(img);
+    }
+  }
+  function exitOS(){
+    document.body.classList.remove('os-on');
+    document.body.classList.add('app-on');
+    closeStart();
+  }
+
+  // ─── Botón OS ───
+  var fab = $('#osFab');
+  if(fab){
+    fab.onclick = function(){
+      if(document.body.classList.contains('os-on')) exitOS();
+      else enterOS();
+    };
+  }
+
+  // ─── Mostrar botón tras login ───
+  // Detectar cuando #boot desaparece (login completado)
+  var boot = document.getElementById('boot');
+  if(boot){
+    var obs = new MutationObserver(function(){
+      var hidden = boot.style.display==='none' || boot.classList.contains('hide');
+      if(hidden && !document.body.classList.contains('app-on')){
+        document.body.classList.add('app-on');
+      }
+    });
+    obs.observe(boot, { attributes:true, attributeFilter:['style','class'] });
+    // Estado inicial
+    if(boot.style.display==='none' || boot.classList.contains('hide')){
+      document.body.classList.add('app-on');
+    }
+  }
+  // Fallback: si bootStart es clickeado
   var bs = document.getElementById('bootStart');
   if(bs){
     bs.addEventListener('click', function(){
-      setTimeout(function(){ document.body.classList.add('app-on'); enterOS(); }, 600);
+      setTimeout(function(){ document.body.classList.add('app-on'); }, 800);
     });
   }
-  setTimeout(function(){
-    var boot = document.getElementById('boot');
-    if(boot && (boot.style.display === 'none' || boot.classList.contains('hide'))){
-      document.body.classList.add('app-on');
-      enterOS();
-    }
-  }, 2500);
-  console.log('[OS] Mini-OS listo ·', Object.keys(APPS).length, 'apps ·', Object.keys(OS.FS).length, 'carpetas');
-}
-waitFor(function(){
-  return typeof window.send === 'function' && typeof window.reply === 'function' && document.getElementById('osDesktop');
-}, function(){ hookSend(); initOS(); }, 10000);
-window.addEventListener('load', function(){ setTimeout(function(){ hookSend(); }, 1200); });
-window.OS = OS;
-window.OS_APPS = APPS;
-window.IC = IC;
-window.OS_createWindow = createOSWindow;
-window.OS_closeWindow = closeOSWin;
-window.OS_focusWindow = focusOSWin;
-window.OS_minimizeWindow = minimizeOSWin;
-window.OS_toggleMaxWindow = toggleOSMax;
-window.OS_renderStartMenu = renderOSStartMenu;
-window.OS_renderDesktop = renderOSDesktop;
-window.OS_enter = enterOS;
-window.OS_exit = exitOS;
-console.log('[OS] API global expuesta: OS_createWindow, OS_renderStartMenu, OS_renderDesktop');
-})();
-</script>
 
-<!-- ═══════════════════════════════════════════════════════════════
-     MÓDULO DE ARCHIVOS REMOTOS (GitHub)
-═══════════════════════════════════════════════════════════════ -->
-<script>
-(function(){
-'use strict';
-
-const CFG = {
-  USER: 'calm291094-del',
-  REPO: 'ania',
-  BRANCH: 'main',
-  PATHS: { docs:'documentos', music:'musica', htmls:'htmls', fondos:'fondos' },
-  RAW: (p) => 'https://raw.githubusercontent.com/' + CFG.USER + '/' + CFG.REPO + '/' + CFG.BRANCH + '/' + p.split('/').map(encodeURIComponent).join('/'),
-  API: (p) => 'https://api.github.com/repos/' + CFG.USER + '/' + CFG.REPO + '/contents/' + p.split('/').map(encodeURIComponent).join('/') + '?ref=' + CFG.BRANCH
-};
-
-const $  = s => document.querySelector(s);
-const el = (t, c, h) => { const e = document.createElement(t); if(c) e.className = c; if(h != null) e.innerHTML = h; return e; };
-const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function toastR(txt, tipo){ if(typeof toast === 'function'){ try{ return toast(txt, tipo); }catch(e){} } console.log('[Remote]', txt); }
-function chatR(txt){ if(typeof reply === 'function'){ try{ return reply(txt); }catch(e){} } if(typeof personaReply === 'function'){ try{ return personaReply(txt); }catch(e){} } console.log('[Remote→chat]', txt); }
-function getExt(name){ const m = String(name).match(/\.([a-z0-9]+)$/i); return m ? m[1].toLowerCase() : ''; }
-
-const Libs = {
-  _loaded: {},
-  loadMammoth(){
-    if(this._loaded.mammoth) return Promise.resolve();
-    return new Promise((res, rej) => {
-      const s = document.createElement('script');
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
-      s.onload = () => { this._loaded.mammoth = true; res(); };
-      s.onerror = () => rej(new Error('Mammoth no cargó'));
-      document.head.appendChild(s);
-    });
-  },
-  loadPdfJs(){
-    if(this._loaded.pdfjs) return Promise.resolve(window.pdfjsLib);
-    return new Promise((res, rej) => {
-      const s = document.createElement('script');
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-      s.onload = () => {
-        if(window.pdfjsLib){
-          window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-          this._loaded.pdfjs = true;
-          res(window.pdfjsLib);
-        } else rej(new Error('PDF.js no cargó'));
-      };
-      s.onerror = () => rej(new Error('PDF.js no cargó'));
-      document.head.appendChild(s);
-    });
-  }
-};
-
-const GH = {
-  cacheKey(p){ return 'aniaos_gh_' + p; },
-  async list(folder, force){
-    const key = this.cacheKey(folder);
-    if(!force){
-      try{ const cached = JSON.parse(localStorage.getItem(key) || 'null'); if(cached && cached.t && Date.now() - cached.t < 600000){ return cached.items; } }catch(e){}
-    }
-    try{
-      const r = await fetch(CFG.API(folder));
-      if(r.status === 404) return [];
-      if(!r.ok) throw new Error('HTTP ' + r.status);
-      const j = await r.json();
-      if(!Array.isArray(j)) return [];
-      const items = j.map(it => ({ name: it.name, path: it.path, type: it.type, size: it.size || 0, ext: getExt(it.name), url: it.type === 'file' ? CFG.RAW(it.path) : null }));
-      try{ localStorage.setItem(key, JSON.stringify({ t:Date.now(), items })); }catch(e){}
-      return items;
-    }catch(e){ try{ const cached = JSON.parse(localStorage.getItem(key) || 'null'); if(cached) return cached.items; }catch(_){} return []; }
-  },
-  async listRecursive(folder, depth){
-    depth = depth == null ? 3 : depth;
-    const out = [];
-    const items = await this.list(folder);
-    for(const it of items){
-      if(it.type === 'file') out.push(it);
-      else if(it.type === 'dir' && depth > 0){ const sub = await this.listRecursive(it.path, depth - 1); sub.forEach(x => out.push(x)); }
-    }
-    return out;
-  },
-  async fetchText(url){ const r = await fetch(url); if(!r.ok) throw new Error('HTTP ' + r.status); return r.text(); },
-  async fetchBuffer(url){ const r = await fetch(url); if(!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); }
-};
-
-const RemoteCache = {
-  docs: [], music: [], htmls: [], wallpapers: [],
-  listeners: new Set(),
-  emit(){ this.listeners.forEach(fn => { try{ fn(); }catch(e){} }); },
-  on(fn){ this.listeners.add(fn); },
-  async refreshAll(force){
-    chatR('Actualizando archivos del repositorio…');
-    const [docs, music, htmls, walls] = await Promise.all([
-      GH.listRecursive(CFG.PATHS.docs, 3),
-      GH.listRecursive(CFG.PATHS.music, 3),
-      GH.listRecursive(CFG.PATHS.htmls, 3),
-      GH.listRecursive(CFG.PATHS.fondos, 3)
-    ]);
-    this.docs  = docs.filter(f => ['docx','pdf','txt','md'].includes(f.ext));
-    this.music = music.filter(f => ['mp3','wav','m4a','ogg','flac','opus','aac'].includes(f.ext));
-    this.htmls = htmls.filter(f => ['html','htm'].includes(f.ext));
-    this.wallpapers = walls.filter(f => ['jpg','jpeg','png','webp','gif','svg'].includes(f.ext));
-    this.emit();
-    toastR('📁 Repo: ' + this.docs.length + ' docs · ' + this.music.length + ' pistas · ' + this.htmls.length + ' HTMLs · ' + this.wallpapers.length + ' fondos');
-    return { docs: this.docs.length, music: this.music.length, htmls: this.htmls.length, fondos: this.wallpapers.length };
-  }
-};
-
-/* ══════ MÚSICA ══════ */
-let _audioEl = null, _playlist = [], _playIdx = -1;
-function ensureAudioEl(){
-  if(_audioEl) return _audioEl;
-  _audioEl = new Audio();
-  _audioEl.crossOrigin = 'anonymous';
-  _audioEl.volume = 1;
-  _audioEl.addEventListener('ended', () => playNext());
-  _audioEl.addEventListener('error', function(){
-    var t = _playlist[_playIdx];
-    if(!t) return;
-    var alt = 'https://cdn.jsdelivr.net/gh/' + CFG.USER + '/' + CFG.REPO + '@' + CFG.BRANCH + '/' + t.path.split('/').map(encodeURIComponent).join('/');
-    if(_audioEl.src !== alt){
-      console.info('[Música] fallback jsDelivr para', t.name);
-      _audioEl.src = alt;
-      _audioEl.play().catch(function(){});
+  // ─── Eventos de botones del OS ───
+  var osStart = $('#osStartBtn'); if(osStart) osStart.onclick = function(e){ e.stopPropagation(); toggleStart(); };
+  var osExit = $('#osExitBtn'); if(osExit) osExit.onclick = function(){ exitOS(); };
+  document.addEventListener('pointerdown', function(e){
+    if(!e.target.closest('#osTaskbar') && !e.target.closest('#osStartMenu')) closeStart();
+  });
+  // Click en desktop limpia selección
+  var desk = $('#osDesktop');
+  if(desk) desk.addEventListener('click', function(e){
+    if(e.target.id==='osWallpaper' || e.target.id==='osIcons' || e.target.id==='osDesktop'){
+      $$('.os-icon').forEach(function(x){ x.classList.remove('sel'); });
     }
   });
-  return _audioEl;
-}
-function playTrack(idx){
-  if(idx < 0 || idx >= _playlist.length) return;
-  _playIdx = idx;
-  const t = _playlist[idx];
-  const a = ensureAudioEl();
-  a.src = t.url;
-  a.play().then(() => toastR('🎵 ' + t.name.replace(/\.[^.]+$/, ''))).catch(e => toastR('No pude reproducir: ' + e.message, 'warn'));
-  document.dispatchEvent(new CustomEvent('remote-music-change', { detail:{ idx, track:t } }));
-}
-function playNext(){ if(_playIdx < _playlist.length - 1) playTrack(_playIdx + 1); }
-function playPrev(){ if(_playIdx > 0) playTrack(_playIdx - 1); }
-
-async function appOSMusic(){
-  if(!window.OS_createWindow){ toastR('OS no disponible', 'warn'); return; }
-  await RemoteCache.refreshAll(false).catch(()=>{});
-  _playlist = RemoteCache.music.slice();
-  const ctx = window.OS_createWindow({
-    title:'🎵 Música del repositorio',
-    icon: '<svg width="36" height="36" viewBox="0 0 48 48"><rect x="4" y="4" width="40" height="40" rx="6" fill="#C30052"/><circle cx="19" cy="32" r="4.6" fill="#fff"/><rect x="22" y="12" width="3.4" height="20" fill="#fff"/></svg>',
-    w:720, h:520
+  // Botón salir del start menu
+  $$('#osStartMenu [data-os="exit"]').forEach(function(b){
+    b.onclick = function(){ closeStart(); exitOS(); };
   });
-  if(!ctx) return;
-  function render(){
-    if(!_playlist.length){
-      ctx.body.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#888;font-size:14px">No hay pistas en <b>' + CFG.PATHS.music + '/</b> del repo.<br><br>Sube archivos <b>.mp3</b> a esa carpeta y pulsa «Actualizar».</div>';
-      return;
-    }
-    const cur = _playIdx >= 0 ? _playlist[_playIdx] : null;
-    ctx.body.innerHTML =
-      '<div style="display:flex;flex-direction:column;height:100%;background:#14161a;color:#eee">' +
-        '<div style="padding:12px 16px;border-bottom:1px solid #23262e;display:flex;gap:8px;align-items:center">' +
-          '<b style="flex:1;font-size:13px;letter-spacing:.1em">🎵 ' + _playlist.length + ' pistas</b>' +
-          '<button data-act="refresh" style="padding:6px 12px;border:1px solid #333;background:#222;color:#eee;cursor:pointer;border-radius:6px;font-size:11px">⟳ Actualizar</button>' +
-        '</div>' +
-        '<div style="flex:1;display:flex;min-height:0">' +
-          '<div style="width:230px;border-right:1px solid #23262e;overflow-y:auto">' +
-            _playlist.map((t, i) =>
-              '<div class="r-track" data-i="' + i + '" style="padding:10px 14px;cursor:pointer;font-size:12.5px;' + (i === _playIdx ? 'background:rgba(10,132,216,.22);box-shadow:inset 3px 0 0 #0a84d8' : '') + '">' +
-                '🎵 ' + esc(t.name.replace(/\.[^.]+$/, '')) +
-                (t.path !== t.name ? '<div style="font-size:10px;color:#8b93a3;margin-top:2px">' + esc(t.path) + '</div>' : '') +
-              '</div>'
-            ).join('') +
-          '</div>' +
-          '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px">' +
-            '<div style="width:180px;height:180px;border-radius:8px;background:linear-gradient(135deg,#C30052,#5a0026);display:grid;place-items:center;font-size:60px">🎵</div>' +
-            '<div style="text-align:center;max-width:100%">' +
-              '<div style="font-size:15px;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:340px">' + (cur ? esc(cur.name.replace(/\.[^.]+$/, '')) : 'Sin reproducción') + '</div>' +
-              '<div style="font-size:11px;color:#8b93a3;margin-top:4px">' + (cur ? esc(cur.path) : 'Elige una pista') + '</div>' +
-            '</div>' +
-            '<div style="display:flex;gap:16px;align-items:center">' +
-              '<button data-act="prev" style="width:44px;height:44px;border-radius:50%;border:0;background:#222;color:#eee;cursor:pointer;font-size:16px">⏮</button>' +
-              '<button data-act="play" style="width:56px;height:56px;border-radius:50%;border:0;background:#0a84d8;color:#fff;cursor:pointer;font-size:20px">' + (ensureAudioEl().paused ? '▶' : '⏸') + '</button>' +
-              '<button data-act="next" style="width:44px;height:44px;border-radius:50%;border:0;background:#222;color:#eee;cursor:pointer;font-size:16px">⏭</button>' +
-            '</div>' +
-            '<div style="width:100%;max-width:360px;display:flex;gap:8px;align-items:center">' +
-              '<span class="r-t0" style="font-size:11px;color:#8b93a3;min-width:36px">0:00</span>' +
-              '<input type="range" class="r-prog" min="0" max="100" value="0" style="flex:1">' +
-              '<span class="r-t1" style="font-size:11px;color:#8b93a3;min-width:36px">0:00</span>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
-    ctx.body.querySelectorAll('.r-track').forEach(tr => { tr.onclick = () => playTrack(+tr.dataset.i); });
-    ctx.body.querySelectorAll('[data-act]').forEach(b => {
-      b.onclick = () => {
-        const a = b.dataset.act;
-        if(a === 'refresh'){ RemoteCache.refreshAll(true).then(() => { _playlist = RemoteCache.music.slice(); render(); }); }
-        else if(a === 'play'){ const el2 = ensureAudioEl(); if(el2.paused) el2.play(); else el2.pause(); setTimeout(render, 50); }
-        else if(a === 'next') playNext();
-        else if(a === 'prev') playPrev();
-      };
-    });
-    const a = ensureAudioEl();
-    const prog = ctx.body.querySelector('.r-prog');
-    const t0 = ctx.body.querySelector('.r-t0');
-    const t1 = ctx.body.querySelector('.r-t1');
-    function fmt(s){ if(!isFinite(s)) return '0:00'; s = Math.floor(s); return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); }
-    function upd(){
-      if(!ctx.body.isConnected) return;
-      if(document.activeElement !== prog) prog.value = a.currentTime || 0;
-      prog.max = a.duration || 100;
-      t0.textContent = fmt(a.currentTime);
-      t1.textContent = fmt(a.duration);
-      requestAnimationFrame(upd);
-    }
-    prog.oninput = () => { try{ a.currentTime = +prog.value; }catch(e){} };
-    upd();
-  }
-  render();
-  document.addEventListener('remote-music-change', () => render());
-}
 
-/* ══════ DOCS ══════ */
-async function appOSDocViewer(file){
-  if(!window.OS_createWindow){ toastR('OS no disponible', 'warn'); return; }
-  await RemoteCache.refreshAll(false).catch(()=>{});
-  if(!file){
-    const ctx = window.OS_createWindow({
-      title:'📄 Documentos del repositorio',
-      icon: '<svg width="36" height="36" viewBox="0 0 48 48"><path d="M11 4h20l6 6v34H11z" fill="#fff" stroke="#9aa5b1" stroke-width="1.4"/><rect x="6" y="17" width="24" height="24" rx="2" fill="#2B579A"/><text x="18" y="35" font-family="Segoe UI" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">W</text></svg>',
-      w:760, h:560
-    });
-    if(!ctx) return;
-    function renderList(){
-      if(!RemoteCache.docs.length){
-        ctx.body.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#888">No hay documentos en <b>' + CFG.PATHS.docs + '/</b>.<br><br>Sube .docx, .pdf, .txt o .md al repo.</div>';
+  // ─── OSBridge para Ania ───
+  window.OSBridge = {
+    abrirApp: function(id){
+      var a = APPS[id];
+      if(!a) return { ok:false, error:'app no reconocida: '+id };
+      try{ a.launch(); return { ok:true, app:id }; }
+      catch(e){ return { ok:false, error:e.message }; }
+    },
+    cerrarApp: function(){
+      var ids = []; OS.wins.forEach(function(w,id){ ids.push(id); });
+      ids.forEach(cerrarWin);
+      return { ok:true, cerrados:ids.length };
+    },
+    listarApps: function(){ return Object.keys(APPS).map(function(k){ return { id:k, nombre:APPS[k].name }; }); },
+    ventanasAbiertas: function(){ var out=[]; OS.wins.forEach(function(w){ out.push({ titulo:w.title }); }); return out; },
+    entrar: enterOS,
+    salir: exitOS,
+    abrirExplorador: function(){ appExplorador(); return { ok:true }; },
+    abrirCalculadora: function(){ appCalculadora(); return { ok:true }; },
+    abrirTerminal: function(){ appTerminal(); return { ok:true }; }
+  };
+
+  // ─── Hook a send() para que Ania controle el OS ───
+  if(typeof window.send === 'function' && !window.__osSendHooked){
+    window.__osSendHooked = true;
+    var orig = window.send;
+    window.send = async function(text){
+      var low = String(text||'').toLowerCase().trim();
+      // Abrir OS
+      if(/^(?:abre|muestra|abrir)\s+(?:el\s+)?(?:escritorio|os|minios|sistema)/.test(low)){
+        enterOS();
+        try{ if(typeof reply === 'function'){ reply('Escritorio abierto. Pulsa ↩ para volver.'); return; } }catch(e){}
         return;
       }
-      ctx.body.innerHTML =
-        '<div style="flex:1;overflow-y:auto;padding:12px">' +
-          '<div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">' +
-            '<b style="flex:1;font-size:13px">📄 ' + RemoteCache.docs.length + ' documentos</b>' +
-            '<button class="r-refresh" style="padding:6px 12px;border:1px solid #333;background:#222;color:#eee;cursor:pointer;border-radius:6px;font-size:11px">⟳ Actualizar</button>' +
-            '<button class="r-train" style="padding:6px 12px;border:1px solid #0a84d8;background:#0a84d8;color:#fff;cursor:pointer;border-radius:6px;font-size:11px">🧠 Entrenar IA con todos</button>' +
-          '</div>' +
-          RemoteCache.docs.map((d, i) =>
-            '<div class="r-doc" data-i="' + i + '" style="padding:11px 14px;border-bottom:1px solid #23262e;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:10px">' +
-              '<span style="font-size:22px">' + (d.ext === 'pdf' ? '📕' : d.ext === 'docx' ? '📘' : d.ext === 'md' ? '📝' : '📄') + '</span>' +
-              '<span style="flex:1">' + esc(d.name) + '<div style="font-size:10px;color:#8b93a3;margin-top:2px">' + esc(d.path) + '</div></span>' +
-              '<span style="font-size:10px;color:#666">' + Math.round(d.size/1024) + ' KB</span>' +
-            '</div>'
-          ).join('') +
-        '</div>';
-      ctx.body.querySelectorAll('.r-doc').forEach(el2 => {
-        el2.onclick = () => { ctx.close(); appOSDocViewer(RemoteCache.docs[+el2.dataset.i]); };
-      });
-      ctx.body.querySelector('.r-refresh').onclick = () => { RemoteCache.refreshAll(true).then(renderList); };
-      ctx.body.querySelector('.r-train').onclick = () => { entrenarConDocumentos(); };
-    }
-    renderList();
-    return;
-  }
-  const ext = file.ext;
-  const ctx = window.OS_createWindow({ title: file.name, icon: ext === 'pdf' ? '📕' : '📄', w: 900, h: 700 });
-  if(!ctx) return;
-  ctx.body.innerHTML = '<div style="padding:30px;text-align:center;color:#888">Cargando ' + esc(file.name) + '…</div>';
-  try{
-    if(ext === 'docx')      await renderDocx(ctx, file);
-    else if(ext === 'pdf')  await renderPdf(ctx, file);
-    else if(ext === 'txt' || ext === 'md') await renderText(ctx, file);
-    else throw new Error('Formato no soportado: ' + ext);
-  }catch(e){
-    ctx.body.innerHTML = '<div style="padding:30px;color:#d05050;font-size:14px">Error: ' + esc(e.message) + '</div>';
-  }
-}
-async function renderDocx(ctx, file){
-  toastR('Convirtiendo ' + file.name + '…');
-  await Libs.loadMammoth();
-  const buf = await GH.fetchBuffer(file.url);
-  const result = await window.mammoth.convertToHtml({ arrayBuffer: buf });
-  ctx.body.innerHTML =
-    '<div class="os-wp-toolbar"><button class="os-wp-btn" data-save="1" style="width:auto;padding:0 12px;">🧠 Entrenar IA con este</button><span style="flex:1"></span><span style="font-size:11px;color:#666">' + esc(file.path) + '</span></div>' +
-    '<div class="os-wp-canvas"><div class="os-page" style="font-family:Georgia,serif">' + (result.value || '<p>Documento vacío</p>') + '</div></div>';
-  ctx.body.querySelector('[data-save]').onclick = () => { const txt = ctx.body.querySelector('.os-page').innerText; entrenarConTexto(file.name, txt); };
-}
-async function renderPdf(ctx, file){
-  const pdfjsLib = await Libs.loadPdfJs();
-  const buf = await GH.fetchBuffer(file.url);
-  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-  ctx.body.innerHTML =
-    '<div class="os-wp-toolbar"><button class="os-wp-btn" data-save="1" style="width:auto;padding:0 12px;">🧠 Entrenar IA con este</button><span style="flex:1"></span><span style="font-size:11px;color:#666">' + esc(file.path) + ' · ' + pdf.numPages + ' páginas</span></div>' +
-    '<div class="os-wp-canvas" id="pdf-viewer" style="flex-direction:column;background:#3d434c;padding:20px;gap:14px"></div>';
-  const viewer = ctx.body.querySelector('#pdf-viewer');
-  const allText = [];
-  const maxPages = Math.min(pdf.numPages, 30);
-  for(let i = 1; i <= maxPages; i++){
-    const page = await pdf.getPage(i);
-    const viewport = page.getViewport({ scale: 1.4 });
-    const canvas = document.createElement('canvas');
-    canvas.width = viewport.width; canvas.height = viewport.height;
-    canvas.style.cssText = 'background:#fff;box-shadow:0 3px 16px rgba(0,0,0,.4);max-width:100%';
-    viewer.appendChild(canvas);
-    const c = canvas.getContext('2d');
-    await page.render({ canvasContext:c, viewport }).promise;
-    try{ const tc = await page.getTextContent(); const t = tc.items.map(it => it.str).join(' '); if(t.trim()) allText.push(t); }catch(e){}
-  }
-  ctx.body.querySelector('[data-save]').onclick = () => entrenarConTexto(file.name, allText.join('\n\n'));
-}
-async function renderText(ctx, file){
-  const text = await GH.fetchText(file.url);
-  ctx.body.innerHTML =
-    '<div class="os-wp-toolbar"><button class="os-wp-btn" data-save="1" style="width:auto;padding:0 12px;">🧠 Entrenar IA con este</button><span style="flex:1"></span><span style="font-size:11px;color:#666">' + esc(file.path) + '</span></div>' +
-    '<div class="os-wp-canvas"><div class="os-page" style="font-family:Consolas,monospace;font-size:13px;white-space:pre-wrap">' + esc(text) + '</div></div>';
-  ctx.body.querySelector('[data-save]').onclick = () => entrenarConTexto(file.name, text);
-}
-
-/* ══════ NAVEGADOR INTERNO ══════ */
-async function appOSBrowser(initialFile){
-  if(!window.OS_createWindow){ toastR('OS no disponible', 'warn'); return; }
-  await RemoteCache.refreshAll(false).catch(()=>{});
-  const ctx = window.OS_createWindow({
-    title:'🌐 Navegador interno',
-    icon: '<svg width="36" height="36" viewBox="0 0 48 48"><rect x="4" y="6" width="40" height="36" rx="4" fill="#1954A0"/><path d="M12 20h24M12 26h24M12 32h14" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
-    w:980, h:680
-  });
-  if(!ctx) return;
-  ctx.body.innerHTML =
-    '<div style="display:flex;gap:6px;padding:8px;background:#f0f0f0;border-bottom:1px solid #d8d8d8;align-items:center">' +
-      '<select class="r-url" style="flex:1;padding:6px 10px;border:1px solid #d8d8d8;background:#fff;border-radius:4px;font-size:12px;min-width:0">' +
-        '<option value="">— Elige un HTML del repo —</option>' +
-        RemoteCache.htmls.map((h, i) => '<option value="' + i + '">' + esc(h.path) + '</option>').join('') +
-      '</select>' +
-      '<button class="r-go" style="padding:6px 14px;border:1px solid #d8d8d8;background:#f0f0f0;border-radius:4px;cursor:pointer;font-size:12px">Ir</button>' +
-      '<button class="r-reload" style="padding:6px 12px;border:1px solid #d8d8d8;background:#f0f0f0;border-radius:4px;cursor:pointer;font-size:12px">⟳</button>' +
-      '<button class="r-external" style="padding:6px 12px;border:1px solid #d8d8d8;background:#f0f0f0;border-radius:4px;cursor:pointer;font-size:12px" title="Abrir en pestaña nueva">↗</button>' +
-    '</div>' +
-    '<div style="flex:1;position:relative;background:#fff">' +
-      // ⭐ FIX · Quitado sandbox (era el causante del warning de Firefox)
-      '<iframe class="r-frame" referrerpolicy="no-referrer" style="width:100%;height:100%;border:0"></iframe>' +
-    '</div>' +
-    '<div style="height:24px;display:flex;align-items:center;padding:0 12px;font-size:11px;color:#666;background:#f0f0f0;border-top:1px solid #d8d8d8">' +
-      '<span class="r-status">Listo. ' + RemoteCache.htmls.length + ' HTMLs disponibles.</span>' +
-    '</div>';
-  const sel = ctx.body.querySelector('.r-url');
-  const frame = ctx.body.querySelector('.r-frame');
-  const status = ctx.body.querySelector('.r-status');
-  let currentFile = null;
-  const blobUrls = [];
-
-  async function navigate(file){
-    currentFile = file;
-    status.textContent = 'Cargando: ' + file.path;
-    try{
-      const r = await fetch(file.url);
-      if(!r.ok) throw new Error('HTTP ' + r.status);
-      let html = await r.text();
-      const slash = file.path.lastIndexOf('/');
-      const dir = slash >= 0 ? file.path.slice(0, slash + 1) : '';
-      const baseRaw = 'https://raw.githubusercontent.com/' + CFG.USER + '/' + CFG.REPO + '/' + CFG.BRANCH + '/' + dir;
-      html = html.replace(
-        /(\s(?:src|href|action)\s*=\s*)(["'])(?!https?:|\/\/|data:|blob:|mailto:|tel:|#|javascript:)([^"']+)(\2)/gi,
-        function(m, pre, q, path){ return pre + q + baseRaw + path + q; }
-      );
-      if(!/<base\s/i.test(html)){
-        if(/<head[^>]*>/i.test(html)) html = html.replace(/<head([^>]*)>/i, '<head$1><base href="' + baseRaw + '">');
-        else html = '<head><base href="' + baseRaw + '"></head>' + html;
+      // Cerrar OS
+      if(/^(?:cierra|sal|volver|regresa)\s+(?:el\s+)?(?:escritorio|os|minios)/.test(low)){
+        exitOS();
+        try{ if(typeof reply === 'function'){ reply('De vuelta a ANIA.'); return; } }catch(e){}
+        return;
       }
-      const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
-      const blobUrl = URL.createObjectURL(blob);
-      blobUrls.push(blobUrl);
-      while(blobUrls.length > 5){ try{ URL.revokeObjectURL(blobUrls.shift()); }catch(e){} }
-      frame.removeAttribute('srcdoc');
-      frame.src = blobUrl;
-      status.textContent = '✓ ' + file.path;
-      console.info('[Navegador] Render HTML:', file.path, 'via blob URL');
-    }catch(e){
-      status.textContent = '✗ Error: ' + e.message;
-      frame.srcdoc = '<div style="font-family:sans-serif;padding:40px;text-align:center;color:#d05050"><h2>Error al cargar</h2><p>' + esc(e.message) + '</p><p style="color:#666">' + esc(file.path) + '</p></div>';
-    }
-  }
-
-  ctx.body.querySelector('.r-go').onclick = () => {
-    const i = sel.value;
-    if(i === '') return;
-    navigate(RemoteCache.htmls[+i]);
-  };
-  ctx.body.querySelector('.r-reload').onclick = () => { if(currentFile) navigate(currentFile); };
-  ctx.body.querySelector('.r-external').onclick = () => { if(currentFile) window.open(currentFile.url, '_blank', 'noopener'); };
-  sel.onchange = () => { if(sel.value !== '') ctx.body.querySelector('.r-go').click(); };
-  if(initialFile){
-    const idx = RemoteCache.htmls.findIndex(h => h.name === initialFile.name || h.path === initialFile.path);
-    if(idx >= 0){ sel.value = String(idx); navigate(RemoteCache.htmls[idx]); }
-  } else if(RemoteCache.htmls.length){
-    sel.value = '0';
-    navigate(RemoteCache.htmls[0]);
-  }
-  ctx.win.addEventListener('remove', function(){
-    blobUrls.forEach(u => { try{ URL.revokeObjectURL(u); }catch(e){} });
-  });
-}
-
-/* ══════ FONDOS ══════ */
-async function appOSWallpaper(){
-  if(!window.OS_createWindow){ toastR('OS no disponible', 'warn'); return; }
-  await RemoteCache.refreshAll(false).catch(()=>{});
-  const ctx = window.OS_createWindow({
-    title:'🎨 Fondos del repositorio',
-    icon: '<svg width="36" height="36" viewBox="0 0 48 48"><rect x="4" y="6" width="40" height="36" rx="4" fill="#5a3a8a"/><circle cx="14" cy="16" r="3" fill="#ffb900"/><path d="M4 34l12-14 8 10 6-6 14 16z" fill="#2f9e63"/></svg>',
-    w:820, h:600
-  });
-  if(!ctx) return;
-  function render(){
-    const walls = RemoteCache.wallpapers;
-    if(!walls.length){
-      ctx.body.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#888;font-size:14px">No hay fondos en <b>' + CFG.PATHS.fondos + '/</b>.<br><br>Sube imágenes y pulsa «Actualizar».</div>';
-      return;
-    }
-    const currentUrl = localStorage.getItem('aniaos_wall_url') || '';
-    ctx.body.innerHTML =
-      '<div style="display:flex;flex-direction:column;height:100%;background:#14161a;color:#eee">' +
-        '<div style="padding:12px 16px;border-bottom:1px solid #23262e;display:flex;gap:8px;align-items:center">' +
-          '<b style="flex:1;font-size:13px;letter-spacing:.1em">🎨 ' + walls.length + ' fondos</b>' +
-          '<button class="r-btn-refresh" style="padding:6px 12px;border:1px solid #333;background:#222;color:#eee;cursor:pointer;border-radius:6px;font-size:11px">⟳ Actualizar</button>' +
-          '<button class="r-btn-clear" style="padding:6px 12px;border:1px solid #333;background:#222;color:#eee;cursor:pointer;border-radius:6px;font-size:11px">✕ Por defecto</button>' +
-        '</div>' +
-        '<div style="flex:1;overflow-y:auto;padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">' +
-          walls.map((w, i) => {
-            const isActive = w.url === currentUrl;
-            return '<div class="r-wall" data-i="' + i + '" style="cursor:pointer;border:2px solid ' + (isActive ? '#0a84d8' : 'transparent') + ';border-radius:8px;overflow:hidden;background:#000;aspect-ratio:16/9;position:relative">' +
-              '<img src="' + w.url + '" style="width:100%;height:100%;object-fit:cover;display:block" loading="lazy" onerror="this.style.opacity=\'.3\'">' +
-              '<div style="position:absolute;left:0;right:0;bottom:0;padding:6px 8px;background:linear-gradient(transparent,rgba(0,0,0,.85));font-size:10px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
-                (isActive ? '✓ ' : '') + esc(w.name) +
-              '</div>' +
-            '</div>';
-          }).join('') +
-        '</div>' +
-      '</div>';
-    ctx.body.querySelectorAll('.r-wall').forEach(el2 => {
-      el2.onclick = () => {
-        const w = walls[+el2.dataset.i];
-        if(window.__aplicarFondoSeguro){
-          const wp = document.getElementById('osWallpaper');
-          window.__aplicarFondoSeguro(wp, w.url, w.name);
-        }
-        render();
-      };
-    });
-    ctx.body.querySelector('.r-btn-refresh').onclick = () => { RemoteCache.refreshAll(true).then(render); };
-    ctx.body.querySelector('.r-btn-clear').onclick = () => {
-      localStorage.removeItem('aniaos_wall_url');
-      if(window.OSBridge) window.OSBridge.cambiarFondo(0);
-      render();
+      // Apps directas
+      var m = low.match(/^(?:abre|lanza)\s+(?:la\s+|el\s+)?(explorador|calculadora|terminal|notas)\b/);
+      if(m){
+        enterOS();
+        var name = m[1];
+        var map = { explorador:'explorer', calculadora:'calc', terminal:'term', notas:'notas' };
+        setTimeout(function(){ APPS[map[name]].launch(); }, 200);
+        try{ if(typeof reply === 'function'){ reply('✓ '+name+' abierto en el OS.'); return; } }catch(e){}
+        return;
+      }
+      return orig.call(this, text);
     };
+    console.log('[OS] send() hooked ✓');
   }
-  render();
-}
 
-/* ══════ ENTRENAMIENTO ══════ */
-const Trained = {
-  KEY: 'aniaos_trained',
-  data: null,
-  load(){ try{ this.data = JSON.parse(localStorage.getItem(this.KEY) || 'null') || {}; } catch(e){ this.data = {}; } return this.data; },
-  save(){ try{ localStorage.setItem(this.KEY, JSON.stringify(this.data)); }catch(e){} },
-  count(){ this.load(); return Object.keys(this.data).length; }
-};
-function entrenarConTexto(nombre, texto){
-  const txt = String(texto || '').trim();
-  if(txt.length < 40){ toastR('Texto muy corto para entrenar', 'warn'); return 0; }
-  let chunks = 0;
-  if(typeof DocBrain !== 'undefined' && typeof DocBrain.addChunks === 'function'){
-    try{ chunks = DocBrain.addChunks('repo:' + nombre, txt); if(typeof DocBrain.save === 'function') DocBrain.save(); }catch(e){}
-  }
-  Trained.load();
-  const trozos = [];
-  const parrafos = txt.split(/\n{2,}/);
-  let cur = '';
-  for(const p of parrafos){
-    const clean = p.trim();
-    if(!clean) continue;
-    if((cur + '\n\n' + clean).length > 600){ if(cur) trozos.push(cur); cur = clean; }
-    else cur = cur ? cur + '\n\n' + clean : clean;
-  }
-  if(cur) trozos.push(cur);
-  Trained.data['repo:' + nombre] = { t:Date.now(), chunks: trozos, size: txt.length };
-  Trained.save();
-  chunks = Math.max(chunks, trozos.length);
-  if(typeof Mind !== 'undefined' && Mind.d){
-    Mind.d.hechos = Mind.d.hechos || [];
-    Mind.d.hechos.push({ clave:'documento', valor:'Repo: ' + nombre, t:Date.now() });
-    if(typeof Mind.save === 'function') Mind.save();
-  }
-  toastR('🧠 Entrenado: ' + nombre + ' (' + chunks + ' fragmentos)');
-  return chunks;
+  console.log('[OS] Mini-OS listo · '+Object.keys(APPS).length+' apps · Listo para móvil ✓');
 }
-async function entrenarConDocumentos(){
-  toastR('🧠 Entrenando IA con documentos…');
-  await RemoteCache.refreshAll(true);
-  const docs = RemoteCache.docs.slice();
-  if(!docs.length){ toastR('No hay documentos para entrenar', 'warn'); return; }
-  let total = 0, ok = 0, fail = 0;
-  for(let i = 0; i < docs.length; i++){
-    const d = docs[i];
-    toastR('[' + (i+1) + '/' + docs.length + '] ' + d.name);
-    try{
-      let texto = '';
-      if(d.ext === 'docx'){
-        await Libs.loadMammoth();
-        const buf = await GH.fetchBuffer(d.url);
-        const r = await window.mammoth.extractRawText({ arrayBuffer: buf });
-        texto = r.value || '';
-      } else if(d.ext === 'pdf'){
-        const pdfjsLib = await Libs.loadPdfJs();
-        const buf = await GH.fetchBuffer(d.url);
-        const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-        const partes = [];
-        const max = Math.min(pdf.numPages, 50);
-        for(let p = 1; p <= max; p++){
-          const page = await pdf.getPage(p);
-          const tc = await page.getTextContent();
-          partes.push(tc.items.map(it => it.str).join(' '));
-        }
-        texto = partes.join('\n\n');
-      } else if(d.ext === 'txt' || d.ext === 'md'){
-        texto = await GH.fetchText(d.url);
-      }
-      if(texto){ total += entrenarConTexto(d.name, texto); ok++; } else fail++;
-    }catch(e){ fail++; }
-    await new Promise(r => setTimeout(r, 250));
-  }
-  chatR('✅ Entrenamiento completo: ' + ok + ' documentos (' + total + ' fragmentos).');
-  toastR('✓ Entrenados ' + ok + '/' + docs.length + ' · ' + total + ' fragmentos');
-}
-function buscarEnEntrenados(query){
-  Trained.load();
-  const q = String(query || '').toLowerCase();
-  if(!q || q.length < 3) return null;
-  const palabras = q.split(/\s+/).filter(w => w.length > 3);
-  let best = null, bestScore = 0;
-  for(const [doc, info] of Object.entries(Trained.data)){
-    for(const chunk of info.chunks){
-      const low = chunk.toLowerCase();
-      let score = 0;
-      for(const w of palabras) if(low.includes(w)) score += 2;
-      if(score > bestScore){ bestScore = score; best = { doc, chunk }; }
-    }
-  }
-  return bestScore >= 2 ? best : null;
-}
-window.buscarEnEntrenados = buscarEnEntrenados;
-
-function hookOSBridge(){
-  if(!window.OSBridge || window.OSBridge.__remoteHooked) return;
-  window.OSBridge.__remoteHooked = true;
-  const origExec = window.OSBridge.ejecutar.bind(window.OSBridge);
-  window.OSBridge.ejecutar = async function(cmd){
-    const c = String(cmd || '').toLowerCase().trim();
-    let m;
-    if(/^(?:abre|pon|reproduce)\s+(?:la\s+)?m[uú]sica(?:\s+(?:del?\s+repo(?:sitorio)?|de\s+github))?$/.test(c)){ appOSMusic(); return { ok:true, app:'musica' }; }
-    if(/^(?:abre|cambia|pon|muestra|elige)\s+(?:los?\s+|el\s+|un\s+)?(?:fondo|fondos|wallpaper)/.test(c)){ appOSWallpaper(); return { ok:true, app:'fondos' }; }
-    m = c.match(/^pon(?:me)?\s+(?:el\s+)?fondo\s+(?:de\s+|llamado\s+|que\s+se\s+llame\s+)?(.+)$/);
-    if(m){
-      const q = m[1].trim();
-      await RemoteCache.refreshAll(false);
-      const found = RemoteCache.wallpapers.find(w => w.name.toLowerCase().includes(q) || w.name.toLowerCase().replace(/\.[^.]+$/, '') === q);
-      if(found){
-        const wp = document.getElementById('osWallpaper');
-        if(window.__aplicarFondoSeguro) window.__aplicarFondoSeguro(wp, found.url, found.name);
-        return { ok:true, fondo:found.name };
-      }
-      return { ok:false, error:'fondo no encontrado: ' + q };
-    }
-    if(/^lista\s+(?:los\s+)?fondos/.test(c)){ await RemoteCache.refreshAll(false); return { ok:true, resultados: RemoteCache.wallpapers.map(w => ({ ruta:w.path })), total:RemoteCache.wallpapers.length }; }
-    if(/^(?:pausa|para)\s+(?:la\s+)?m[uú]sica$/.test(c)){ if(_audioEl) _audioEl.pause(); return { ok:true, accion:'pausa' }; }
-    if(/^(?:siguiente|next)\s+(?:pista|canci[oó]n)?$/.test(c)){ playNext(); return { ok:true }; }
-    if(/^(?:anterior|prev)\s+(?:pista|canci[oó]n)?$/.test(c)){ playPrev(); return { ok:true }; }
-    if(/^lista\s+(?:los\s+)?(?:m[uú]sica|canciones|pistas)/.test(c)){ await RemoteCache.refreshAll(false); return { ok:true, resultados: RemoteCache.music.slice(0,30).map(x => ({ ruta:x.path })), total:RemoteCache.music.length }; }
-    if(/^lista\s+(?:los\s+)?(?:documentos|docs)/.test(c)){ await RemoteCache.refreshAll(false); return { ok:true, resultados: RemoteCache.docs.slice(0,30).map(x => ({ ruta:x.path })), total:RemoteCache.docs.length }; }
-    if(/^lista\s+(?:los\s+)?htmls?/.test(c)){ await RemoteCache.refreshAll(false); return { ok:true, resultados: RemoteCache.htmls.slice(0,30).map(x => ({ ruta:x.path })), total:RemoteCache.htmls.length }; }
-    m = c.match(/^(?:abre|muestra|lee)\s+(?:el\s+)?(?:documento|doc|archivo|pdf)\s+(.+)$/);
-    if(m){
-      const q = m[1].trim();
-      await RemoteCache.refreshAll(false);
-      const found = RemoteCache.docs.find(d => d.name.toLowerCase().includes(q) || d.path.toLowerCase().includes(q) || d.name.toLowerCase().replace(/\.[^.]+$/, '') === q);
-      if(found){ appOSDocViewer(found); return { ok:true, archivo:found.path }; }
-      return { ok:false, error:'documento no encontrado: ' + q };
-    }
-    m = c.match(/^(?:navega|abre\s+el\s+navegador|abre\s+html)\s*(?:a\s+|hacia\s+|el?\s+html\s+)?(.+)?$/);
-    if(m){
-      const q = (m[1] || '').trim();
-      await RemoteCache.refreshAll(false);
-      if(q){
-        const found = RemoteCache.htmls.find(h => h.name.toLowerCase().includes(q) || h.path.toLowerCase().includes(q) || h.name.toLowerCase().replace(/\.[^.]+$/, '') === q);
-        if(found){ appOSBrowser(found); return { ok:true, archivo:found.path }; }
-        return { ok:false, error:'html no encontrado: ' + q };
-      }
-      appOSBrowser(); return { ok:true, app:'navegador' };
-    }
-    if(/^(?:entrena|entrenar|aprende)\s*(?:te\s+)?(?:con\s+)?(?:los\s+)?(?:documentos|docs)/.test(c)){ entrenarConDocumentos(); return { ok:true, accion:'entrenando' }; }
-    if(/^cu[aá]ntos?\s+(?:documentos|docs)\s+(?:tienes|hay)\s+(?:entrenados?|aprendidos?)/.test(c)){ return { ok:true, total:Trained.count(), mensaje:Trained.count() + ' documentos entrenados' }; }
-    return origExec(cmd);
-  };
-  console.log('[Remote] OSBridge extendido ✓');
-}
-function hookRespond(){
-  if(!window.send || window.send.__remoteHooked) return;
-  window.send.__remoteHooked = true;
-  const orig = window.send;
-  window.send = async function(text){
-    const found = buscarEnEntrenados(text);
-    if(found && /qu[eé]\s+(?:dice|sabes|hay)|busca|seg[uú]n|en\s+(?:el\s+)?documento|informaci[oó]n\s+sobre/i.test(text)){
-      try{
-        if(typeof addChat === 'function') addChat('you', text);
-        const respuesta = '📄 Según «' + found.doc + '»:\n\n' + found.chunk.slice(0, 500) + (found.chunk.length > 500 ? '…' : '');
-        if(typeof reply === 'function'){ reply(respuesta); return; }
-        if(typeof personaReply === 'function'){ personaReply(respuesta); return; }
-      }catch(e){}
-    }
-    return orig.call(this, text);
-  };
-  console.log('[Remote] send() extendido ✓');
-}
-function registrarEnOS(){
-  if(!window.OS_APPS){ console.warn('[Remote] OS_APPS no disponible'); return; }
-  window.OS_APPS.music     = { name:'🎵 Música',     icon:'🎵', launch: () => appOSMusic() };
-  window.OS_APPS.docs      = { name:'📄 Documentos', icon:'📄', launch: () => appOSDocViewer() };
-  window.OS_APPS.browser   = { name:'🌐 Navegador',  icon:'🌐', launch: () => appOSBrowser() };
-  window.OS_APPS.wallpaper = { name:'🎨 Fondos',     icon:'🎨', launch: () => appOSWallpaper() };
-  if(typeof window.OS_renderStartMenu === 'function'){ try{ window.OS_renderStartMenu(); }catch(e){} }
-  if(typeof window.OS_renderDesktop === 'function'){ try{ window.OS_renderDesktop(); }catch(e){} }
-  console.log('[Remote] Apps registradas y menús re-renderizados ✓');
-}
-function waitFor(fn, cb, timeout){
-  const start = Date.now();
-  const iv = setInterval(() => {
-    if(fn()){ clearInterval(iv); cb(); }
-    else if(Date.now() - start > (timeout || 15000)){ clearInterval(iv); console.warn('[Remote] timeout'); }
-  }, 150);
-}
-waitFor(() => window.OSBridge && window.send && typeof window.OS_createWindow === 'function', () => {
-  hookOSBridge();
-  hookRespond();
-  registrarEnOS();
-  setTimeout(() => { RemoteCache.refreshAll(false).catch(()=>{}); }, 2500);
-  console.log('[Remote] Módulo cargado · música, docs, pdf, htmls, fondos, entrenamiento ✓');
-});
-window.OSRemote = {
-  appOSMusic, appOSDocViewer, appOSBrowser, appOSWallpaper,
-  entrenarConDocumentos, entrenarConTexto, buscarEnEntrenados,
-  refresh: () => RemoteCache.refreshAll(true),
-  config: CFG, cache: RemoteCache
-};
 })();
 </script>
 
