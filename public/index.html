@@ -11,18 +11,22 @@
 
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23040806'/%3E%3Ccircle cx='50' cy='50' r='26' fill='%232de08a'/%3E%3Ccircle cx='50' cy='50' r='9' fill='%23040806'/%3E%3C/svg%3E">
 
+<!-- Vendor -->
 <link rel="stylesheet" href="./vendor/notifyx.min.css">
 <script src="./vendor/notifyx.min.js"></script>
 <script src="./vendor/h5wasm/h5wasm.js"></script>
 <script src="./vendor/vosk.min.js"></script>
 
+<!-- CSS propio -->
 <link rel="stylesheet" href="./css/base.css">
 <link rel="stylesheet" href="./css/logo.css">
 <link rel="stylesheet" href="./css/chat.css">
 <link rel="stylesheet" href="./css/overlays.css">
 <link rel="stylesheet" href="./css/dock.css">
 <link rel="stylesheet" href="./css/autonomo.css">
+<link rel="stylesheet" href="./css/mini-os.css">
 
+<!-- JS propio -->
 <script defer src="./js/00-core.js"></script>
 <script defer src="./js/01-lingua.js"></script>
 <script defer src="./js/02-ui.js"></script>
@@ -39,17 +43,23 @@
 <script defer src="./js/12-respond.js"></script>
 <script defer src="./js/13-admin.js"></script>
 
+<!-- Módulos Jarvis -->
 <script defer src="./modulos/finanzas.js"></script>
 <script defer src="./modulos/inventario.js"></script>
 <script defer src="./modulos/compras.js"></script>
 <script defer src="./modulos/dashboard.js"></script>
 <script defer src="./modulos/jarvis-ui.js"></script>
 
+<!-- Dock control-center -->
 <script defer src="./js/15-dock.js"></script>
 <script defer src="./js/16-autonomo.js"></script>
 <script defer src="./js/17-sync-github.js"></script>
-<script defer src="./js/14-boot.js"></script>
 
+<!-- Mini-OS · se carga justo antes del boot para estar listo al login -->
+<script defer src="./js/18-mini-os.js"></script>
+
+<!-- Arranque -->
+<script defer src="./js/14-boot.js"></script>
 </head>
 <body>
 <canvas id="bgfx"></canvas>
@@ -137,6 +147,7 @@
   </form>
 </div>
 
+<!-- ============ DOCK · FAB + Drawer tipo control-center ============ -->
 <button id="dockFab" title="Abrir menú" aria-label="Abrir menú de ANIA">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
     <path d="M12 2v6M12 16v6M2 12h6M16 12h6"/>
@@ -149,73 +160,163 @@
 <div id="dockDrawer" role="dialog" aria-modal="true" aria-label="Menú de ANIA">
   <span class="dock-corner tl"></span>
   <span class="dock-corner tr"></span>
+
   <div id="dockGrab"></div>
+
   <div id="dockHead">
     <span id="dockTitle">NÚCLEO ANIA</span>
     <span id="dockSubtitle">v10 · JARVIS</span>
   </div>
+
   <div id="dockBody">
     <div class="dock-grid">
+
+      <!-- SECCIÓN: DATOS -->
       <div class="dock-section"><span>◆</span>DATOS<span>◆</span></div>
-      <button class="dock-item" id="btnTasks" title="Agenda"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg></span><span class="dock-label">Agenda</span><span class="badge" id="taskBadge"></span></button>
-      <button class="dock-item" id="btnMem" title="Memoria"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3a4 4 0 0 1 4 4c2.5.5 4 2.4 4 4.8 0 2-1.2 3.7-3 4.4L16 21H8l-1-4.8c-1.8-.7-3-2.4-3-4.4 0-2.4 1.5-4.3 4-4.8A4 4 0 0 1 12 3z"/></svg></span><span class="dock-label">Memoria</span></button>
-      <button class="dock-item" id="btnDiary" title="Diario"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h13a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3z"/></svg></span><span class="dock-label">Diario</span></button>
-      <button class="dock-item" id="btnLib" title="Biblioteca"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/></svg></span><span class="dock-label">Biblioteca</span></button>
+
+      <button class="dock-item" id="btnTasks" title="Agenda">
+        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg></span>
+        <span class="dock-label">Agenda</span>
+        <span class="badge" id="taskBadge"></span>
+      </button>
+
+      <button class="dock-item" id="btnMem" title="Memoria">
+        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a4 4 0 0 1 4 4c2.5.5 4 2.4 4 4.8 0 2-1.2 3.7-3 4.4L16 21H8l-1-4.8c-1.8-.7-3-2.4-3-4.4 0-2.4 1.5-4.3 4-4.8A4 4 0 0 1 12 3z"/><path d="M9 13h.01M15 13h.01M10 17h4"/></svg></span>
+        <span class="dock-label">Memoria</span>
+      </button>
+
+      <button class="dock-item" id="btnDiary" title="Diario">
+        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3z"/><path d="M8 8h8M8 12h8M8 16h4"/></svg></span>
+        <span class="dock-label">Diario</span>
+      </button>
+
+      <button class="dock-item" id="btnLib" title="Biblioteca">
+        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M8 7h7M8 11h7"/></svg></span>
+        <span class="dock-label">Biblioteca</span>
+      </button>
+
+      <!-- ⭐ NUEVO · Estado de ánimo (sincronizado con #moodBubble) -->
+      <button class="dock-item" id="btnMood" title="Estado de ánimo de Ania">
+        <span class="dock-icon" id="dockMoodIcon" style="font-size:22px;line-height:1;">😊</span>
+        <span class="dock-label">Ánimo</span>
+      </button>
+
+      <!-- SECCIÓN: NÚCLEO -->
       <div class="dock-section"><span>◆</span>NÚCLEO<span>◆</span></div>
-      <button class="dock-item" id="btnDashboard" title="Panel principal"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span class="dock-label">Panel</span></button>
-      <button class="dock-item" id="btnJarvis" title="Módulos Jarvis"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/></svg></span><span class="dock-label">Jarvis</span></button>
-      <button class="dock-item" id="btnJarvisMode2" title="Modo Jarvis estético"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/></svg></span><span class="dock-label">HUD</span></button>
-      <button class="dock-item" id="btnSettings" title="Ajustes"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/></svg></span><span class="dock-label">Ajustes</span></button>
+
+      <button class="dock-item" id="btnDashboard" title="Panel principal">
+        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
+        <span class="dock-label">Panel</span>
+      </button>
+
+      <button class="dock-item" id="btnJarvis" title="Módulos Jarvis">
+        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/></svg></span>
+        <span class="dock-label">Jarvis</span>
+      </button>
+
+      <button class="dock-item" id="btnJarvisMode2" title="Modo Jarvis estético">
+        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span>
+        <span class="dock-label">HUD</span>
+      </button>
+
+      <!-- ⭐ NUEVO · Acceso al Mini-OS -->
+      <button class="dock-item" id="btnMiniOS" title="Abrir escritorio Mini-OS">
+        <span class="dock-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="4" width="20" height="14" rx="2"/>
+            <path d="M8 22h8M12 18v4"/>
+          </svg>
+        </span>
+        <span class="dock-label">Mini-OS</span>
+      </button>
+
+      <button class="dock-item" id="btnSettings" title="Ajustes">
+        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/></svg></span>
+        <span class="dock-label">Ajustes</span>
+      </button>
+
+      <!-- SECCIÓN: OPERADOR -->
       <div class="dock-section"><span>◆</span>OPERADOR<span>◆</span></div>
-      <button class="dock-item" id="btnInstall" title="Instalar app"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 7v7"/><path d="M9.5 11.5 12 14l2.5-2.5"/></svg></span><span class="dock-label">Instalar</span></button>
-      <button class="dock-item" id="btnPerfil" style="display:none;" title="Mi perfil"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2"/></svg></span><span class="dock-label">Perfil</span></button>
-      <button class="dock-item" id="btnAdmin" style="display:none;" title="Administración"><span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span><span class="dock-label">Admin</span></button>
+
+      <button class="dock-item" id="btnInstall" title="Instalar app">
+        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 7v7"/><path d="M9.5 11.5 12 14l2.5-2.5"/></svg></span>
+        <span class="dock-label">Instalar</span>
+      </button>
+
+      <button class="dock-item" id="btnPerfil" style="display:none;" title="Mi perfil">
+        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2"/></svg></span>
+        <span class="dock-label">Perfil</span>
+      </button>
+
+      <button class="dock-item" id="btnAdmin" style="display:none;" title="Administración">
+        <span class="dock-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+        <span class="dock-label">Admin</span>
+      </button>
     </div>
   </div>
+
   <div id="dockFoot">
     <span>PAN · CAFÉ · ANIME</span>
     <button class="dock-close" id="dockClose">CERRAR</button>
   </div>
 </div>
 
-<div id="moodBubble" title="Estado emocional de Ania" style="position:fixed;bottom:calc(120px + env(safe-area-inset-bottom));right:16px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg, rgba(8,21,15,.9), rgba(4,8,6,.95));border:2px solid var(--line2);display:none;place-items:center;font-size:24px;z-index:450;box-shadow:0 4px 16px rgba(45,224,138,.35);cursor:pointer;transition:transform .3s, border-color .3s;">😊</div>
-<button id="ambBtn" title="Detener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.2 11.2A3.9 3.9 0 0 0 6.5 19z"/></svg></button>
+<!-- ⭐ moodBubble oculto · el emoji ahora vive en el dock (#btnMood) -->
+<div id="moodBubble" title="Estado emocional de Ania" style="display:none;">😊</div>
+
+<button id="ambBtn" title="Detener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.2 11.2A3.9 3.9 0 0 0 6.5 19z"/></svg></button>
 
 <div id="backdrop"></div>
 
 <div id="sheet">
   <div class="grab"></div>
-  <div class="sheetHead"><h2>AGENDA</h2><span class="pill" id="taskCount">0 PENDIENTES</span><button class="xbtn" id="closeSheet">✕</button></div>
+  <div class="sheetHead"><h2>AGENDA</h2><span class="pill" id="taskCount">0 PENDIENTES</span><button class="xbtn" id="closeSheet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div id="taskList"></div>
   <div id="taskForm"><input id="taskInput" placeholder="Nueva tarea..."><input id="taskWhen" type="datetime-local"><button id="addTaskBtn">AÑADIR</button></div>
 </div>
 
 <div id="sheetMem">
   <div class="grab"></div>
-  <div class="sheetHead"><h2>LO QUE ANIA RECUERDA</h2><span class="pill" id="memStats">0 RECUERDOS</span><button class="xbtn" id="closeMem">✕</button></div>
+  <div class="sheetHead"><h2>LO QUE ANIA RECUERDA</h2><span class="pill" id="memStats">0 RECUERDOS</span><button class="xbtn" id="closeMem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div id="memList"></div>
   <div class="sheetFoot"><button class="bigbtn" id="wipeMem">OLVIDARLO TODO</button></div>
 </div>
 
 <div id="sheetDiary">
   <div class="grab"></div>
-  <div class="sheetHead"><h2>DIARIO DE ANIA</h2><span class="pill" id="diaryCount">0 ENTRADAS</span><button class="xbtn" id="closeDiary">✕</button></div>
+  <div class="sheetHead"><h2>DIARIO DE ANIA</h2><span class="pill" id="diaryCount">0 ENTRADAS</span><button class="xbtn" id="closeDiary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div id="diaryList"></div>
   <div class="sheetFoot"><button class="bigbtn" id="clearDiary">BORRAR DIARIO</button></div>
 </div>
 
 <div id="sheetLib">
   <div class="grab"></div>
-  <div class="sheetHead"><h2>BIBLIOTECA OFFLINE</h2><span class="pill" id="libCount">0 ARTÍCULOS</span><button class="xbtn" id="closeLib">✕</button></div>
+  <div class="sheetHead"><h2>BIBLIOTECA OFFLINE</h2><span class="pill" id="libCount">0 ARTÍCULOS</span><button class="xbtn" id="closeLib"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div id="libList"></div>
   <div class="sheetFoot"><button class="bigbtn" id="clearLib">VACIAR BIBLIOTECA</button></div>
 </div>
 
-<div class="overlay" id="installModal"><div class="modal"><h2>INSTALAR ANIA<button class="xbtn" data-close>✕</button></h2><p class="dim">Ania puede vivir en tu pantalla de inicio como una app.</p><button class="bigbtn" id="installNow" style="display:none">INSTALAR AHORA</button><div class="step"><b>01</b><p><span class="dim">Android (Chrome):</span> menú <span class="dim">(⋮)</span> → <b>«Instalar aplicación»</b>.</p></div><div class="step"><b>02</b><p><span class="dim">iPhone (Safari):</span> Compartir → <b>«Añadir a pantalla de inicio»</b>.</p></div><hr><h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">CEREBRO LOCAL (GGUF)</h2><p class="dim">1) Tu modelo <b>.gguf</b> en <b>models/</b>.<br>2) Runtime wllama en <b>engine/</b>.<br>3) <b>node servidor.js</b>.</p><button class="bigbtn" id="exportKit">DESCARGAR COPIA (.HTML)</button><hr><button class="bigbtn" id="saveOffline">GUARDAR COPIA OFFLINE (.HTML)</button></div></div>
+<!-- ============ INSTALAR ============ -->
+<div class="overlay" id="installModal">
+  <div class="modal">
+    <h2>INSTALAR ANIA<button class="xbtn" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
+    <p class="dim">Ania puede vivir en tu pantalla de inicio como una app.</p>
+    <button class="bigbtn" id="installNow" style="display:none">INSTALAR AHORA</button>
+    <div class="step"><b>01</b><p><span class="dim">Android (Chrome):</span> menú <span class="dim">(⋮)</span> → <b>«Instalar aplicación»</b>.</p></div>
+    <div class="step"><b>02</b><p><span class="dim">iPhone (Safari):</span> Compartir → <b>«Añadir a pantalla de inicio»</b>.</p></div>
+    <hr>
+    <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">CEREBRO LOCAL (GGUF)</h2>
+    <p class="dim">1) Tu modelo <b>.gguf</b> en <b>modelos/</b> + <b>modelo.json</b>.<br>2) Runtime wllama en <b>engine/</b>.<br>3) <b>node servidor.js</b> → <b>http://localhost:8080</b>.<br>Sin servidor: «carga el cerebro» y elige el archivo.</p>
+    <button class="bigbtn" id="exportKit">DESCARGAR COPIA (.HTML)</button>
+    <hr>
+    <button class="bigbtn" id="saveOffline">GUARDAR COPIA OFFLINE (.HTML)</button>
+  </div>
+</div>
 
+<!-- ============ AJUSTES ============ -->
 <div class="overlay" id="settingsModal">
   <div class="modal">
-    <h2>AJUSTES<button class="xbtn" data-close>✕</button></h2>
+    <h2>AJUSTES<button class="xbtn" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
     <div class="frow"><label>VOZ</label><select id="voiceSelect"></select></div>
     <div class="frow"><label>VELOCIDAD</label><input type="range" id="rateRange" min="0.7" max="1.4" step="0.05"><output id="rateOut">1.05</output></div>
     <div class="frow"><label>TONO</label><input type="range" id="pitchRange" min="0.7" max="1.5" step="0.05"><output id="pitchOut">1.10</output></div>
@@ -229,15 +330,17 @@
     <button class="bigbtn" id="btnTestBrain">PROBAR CEREBRO</button>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">OÍDO LOCAL · WHISPER</h2>
-    <p class="dim" id="earsInfo">Modelos en ./models/</p>
+    <p class="dim" id="earsInfo">Primera vez ~80 MB, luego offline total.</p>
     <button class="bigbtn" id="btnEars">ACTIVAR OÍDO LOCAL</button>
     <button class="bigbtn" id="btnVosk">OÍDO OFFLINE (VOSK)</button>
-    <button class="bigbtn" id="btnEarsModel">CAMBIAR MODELO</button>
+    <button class="bigbtn" id="btnEarsModel">CAMBIAR MODELO (tiny/base)</button>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">HUD · VISIÓN Y GESTOS</h2>
+    <p class="dim" id="hudInfo">Puño=pausa · palma=silencio · victoria=siguiente.</p>
     <button class="bigbtn" id="btnHud">ABRIR HUD</button>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">SESIÓN MULTIDISPOSITIVO</h2>
+    <p class="dim" id="relayInfo">relay.js en tu PC o Render.</p>
     <button class="bigbtn" id="btnRelay">CONECTAR SESIÓN</button>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">AGENTE DEL PC</h2>
@@ -268,8 +371,13 @@
     <button class="bigbtn" id="runDiag">ESCANEAR</button>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">MODO JARVIS</h2>
+    <p class="dim" id="jarvisInfo">HUD, sonidos, paleta cian y reactor denso. Atajos: H=HUD · J=Panel · F=Finanzas · I=Inventario · C=Compras.</p>
     <button class="bigbtn" id="btnJarvisMode">ACTIVAR MODO JARVIS</button>
-    <div class="frow" style="margin-top:10px;"><label>DENSIDAD</label><input type="range" id="densidadRange" min="1" max="3" step="1" value="1"><output id="densidadOut">1</output></div>
+    <div class="frow" style="margin-top:10px;">
+      <label>DENSIDAD</label>
+      <input type="range" id="densidadRange" min="1" max="3" step="1" value="1">
+      <output id="densidadOut">1</output>
+    </div>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">TEMA VISUAL</h2>
     <div style="display:flex;gap:8px;margin:10px 0;flex-wrap:wrap;">
@@ -280,25 +388,161 @@
     </div>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">🌙 NÚCLEO AUTÓNOMO</h2>
-    <div id="panelAutonomo"><div class="empty">Cargando...</div></div>
+    <p class="dim" style="font-size:11px;margin-bottom:12px;">
+      Ania trabaja sola en segundo plano. Estas son sus reglas y últimas acciones.
+    </p>
+    <div id="panelAutonomo">
+      <div class="empty">Cargando...</div>
+    </div>
+
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">☁️ SYNC GITHUB</h2>
-    <div class="frow"><label>TOKEN</label><input type="password" id="ghTokenInput" placeholder="ghp_..." style="flex:1;"></div>
+    <p class="dim" style="font-size:11px;margin-bottom:8px;">Sincroniza tus reglas entre dispositivos a través de tu repositorio GitHub.</p>
+    <div class="frow">
+      <label>TOKEN</label>
+      <input type="password" id="ghTokenInput" placeholder="ghp_..." style="flex:1;">
+    </div>
     <button class="bigbtn" id="btnGuardarGhToken">GUARDAR TOKEN</button>
     <p class="dim" id="ghTokenStatus" style="font-size:10px;margin-top:6px;"></p>
+
     <button class="bigbtn" id="forgetGeo">OLVIDAR UBICACIÓN</button>
   </div>
 </div>
 
-<div class="overlay" id="passModal"><div class="modal"><h2>CAMBIAR CONTRASEÑA<button class="xbtn" data-close style="margin-left:auto;">✕</button></h2><input id="passActual" type="password" placeholder="Contraseña actual" style="width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:15px;padding:11px 13px;margin-bottom:8px;"><input id="passNueva" type="password" placeholder="Nueva contraseña (mín 6)" style="width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:15px;padding:11px 13px;margin-bottom:8px;"><input id="passNueva2" type="password" placeholder="Repite la nueva" style="width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:15px;padding:11px 13px;margin-bottom:8px;"><div id="passMsg" style="font-size:11px; color:var(--dim); min-height:16px; margin-bottom:8px;"></div><button class="bigbtn" id="savePassBtn">GUARDAR CAMBIO</button></div></div>
+<!-- ============ CAMBIO CONTRASEÑA ============ -->
+<div class="overlay" id="passModal">
+  <div class="modal">
+    <h2>CAMBIAR CONTRASEÑA
+      <button class="xbtn" data-close style="margin-left:auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </h2>
+    <input id="passActual" type="password" placeholder="Contraseña actual" style="width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:15px;padding:11px 13px;margin-bottom:8px;">
+    <input id="passNueva" type="password" placeholder="Nueva contraseña (mín 6)" style="width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:15px;padding:11px 13px;margin-bottom:8px;">
+    <input id="passNueva2" type="password" placeholder="Repite la nueva" style="width:100%;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:15px;padding:11px 13px;margin-bottom:8px;">
+    <div id="passMsg" style="font-size:11px; color:var(--dim); min-height:16px; margin-bottom:8px;"></div>
+    <button class="bigbtn" id="savePassBtn">GUARDAR CAMBIO</button>
+  </div>
+</div>
 
-<div class="overlay" id="adminModal"><div class="modal" style="width:min(1000px,100%);max-width:1000px;"><h2>PANEL DE ADMINISTRACIÓN<button class="xbtn" data-close style="margin-left:auto;">✕</button></h2><p class="dim" id="adminStats" style="font-size:11px;margin-bottom:14px;">Cargando...</p><div class="bento-grid"><div class="bento-tile tile-stat"><div class="stat-num" id="bentoTotalUsuarios">—</div><div class="stat-lbl">Usuarios</div></div><div class="bento-tile tile-stat"><div class="stat-num" id="bentoActivos">—</div><div class="stat-lbl">Activos 7d</div></div><div class="bento-tile tile-stat tile-amber"><div class="stat-num" id="bentoBloqueados">—</div><div class="stat-lbl">Bloqueados</div></div><div class="bento-tile tile-stat"><div class="stat-num" id="bentoConocimiento">—</div><div class="stat-lbl">Conocimiento</div></div><div class="bento-tile tile-full"><div class="tile-head"><span class="tile-title">Usuarios registrados</span><span class="tile-badge" id="bentoUserCount">0</span></div><div class="tile-body" id="adminUsersList"><div class="empty">Cargando...</div></div></div><div class="bento-tile tile-wide"><div class="tile-head"><span class="tile-title">Sugerencias del agente</span></div><div class="tile-body" id="adminSugerencias"><div class="empty">Cargando...</div></div></div><div class="bento-tile tile-wide"><div class="tile-head"><span class="tile-title">Reporte de seguridad</span></div><div class="tile-body" id="adminSecurityReport"><div class="empty">Cargando...</div></div></div><div class="bento-tile tile-wide"><div class="tile-head"><span class="tile-title">Conocimiento compartido</span></div><div class="tile-body" id="adminKBList"><div class="empty">Cargando...</div></div></div><div class="bento-tile tile-wide"><div class="tile-head"><span class="tile-title">Log admin</span></div><div class="tile-body" id="adminLogList"><div class="empty">Cargando...</div></div></div></div></div></div>
+<!-- ============ ADMIN ============ -->
+<div class="overlay" id="adminModal">
+  <div class="modal" style="width:min(1000px,100%);max-width:1000px;">
+    <h2>PANEL DE ADMINISTRACIÓN
+      <button class="xbtn" data-close style="margin-left:auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </h2>
+    <p class="dim" id="adminStats" style="font-size:11px;margin-bottom:14px;">Cargando...</p>
+    <div class="bento-grid">
+      <div class="bento-tile tile-stat"><div class="stat-num" id="bentoTotalUsuarios">—</div><div class="stat-lbl">Usuarios</div></div>
+      <div class="bento-tile tile-stat"><div class="stat-num" id="bentoActivos">—</div><div class="stat-lbl">Activos 7d</div></div>
+      <div class="bento-tile tile-stat tile-amber"><div class="stat-num" id="bentoBloqueados">—</div><div class="stat-lbl">Bloqueados</div></div>
+      <div class="bento-tile tile-stat"><div class="stat-num" id="bentoConocimiento">—</div><div class="stat-lbl">Conocimiento</div></div>
+      <div class="bento-tile tile-full">
+        <div class="tile-head"><span class="tile-title">Usuarios registrados</span><span class="tile-badge" id="bentoUserCount">0</span></div>
+        <div class="tile-body" id="adminUsersList"><div class="empty">Cargando...</div></div>
+      </div>
+      <div class="bento-tile tile-wide tile-sugerencias">
+        <div class="tile-head"><span class="tile-title">Sugerencias del agente</span><span class="tile-badge">auto</span></div>
+        <div class="tile-body" id="adminSugerencias"><div class="empty">Cargando...</div></div>
+      </div>
+      <div class="bento-tile tile-wide tile-seguridad">
+        <div class="tile-head"><span class="tile-title">Reporte de seguridad</span><span class="tile-badge">auto</span></div>
+        <div class="tile-body" id="adminSecurityReport"><div class="empty">Cargando...</div></div>
+      </div>
+      <div class="bento-tile tile-wide">
+        <div class="tile-head"><span class="tile-title">Conocimiento compartido</span><span class="tile-badge">top</span></div>
+        <div class="tile-body" id="adminKBList"><div class="empty">Cargando...</div></div>
+      </div>
+      <div class="bento-tile tile-wide tile-log">
+        <div class="tile-head"><span class="tile-title">Log admin</span><span class="tile-badge">últimas</span></div>
+        <div class="tile-body" id="adminLogList"><div class="empty">Cargando...</div></div>
+      </div>
+    </div>
+  </div>
+</div>
 
-<div class="overlay" id="perfilModal"><div class="modal" style="width:min(720px,100%);max-width:720px;"><h2>MI PERFIL<button class="xbtn" data-close style="margin-left:auto;">✕</button></h2><p class="dim" id="perfilSubtitulo" style="font-size:11px;margin-bottom:14px;">Cargando tu perfil...</p><div class="bento-grid"><div class="bento-tile tile-stat"><div class="stat-num" id="perfilInteracciones">—</div><div class="stat-lbl">Interacciones</div></div><div class="bento-tile tile-stat"><div class="stat-num" id="perfilHechos">—</div><div class="stat-lbl">Hechos</div></div><div class="bento-tile tile-stat"><div class="stat-num" id="perfilGustos">—</div><div class="stat-lbl">Gustos</div></div><div class="bento-tile tile-stat"><div class="stat-num" id="perfilLongitud">—</div><div class="stat-lbl">Long. media</div></div><div class="bento-tile tile-wide"><div class="tile-head"><span class="tile-title">Tus temas favoritos</span></div><div class="tile-body" id="perfilTemas"><div class="empty">Cargando...</div></div></div><div class="bento-tile tile-wide"><div class="tile-head"><span class="tile-title">Tu estilo</span></div><div class="tile-body" id="perfilEstilo"><div class="empty">Cargando...</div></div></div></div><p class="dim" id="perfilPie" style="font-size:10px;margin-top:14px;text-align:center;">Este perfil se actualiza automáticamente cada día con tu actividad. Solo tú puedes verlo.</p></div></div>
+<!-- ============ PERFIL ============ -->
+<div class="overlay" id="perfilModal">
+  <div class="modal" style="width:min(720px,100%);max-width:720px;">
+    <h2>MI PERFIL
+      <button class="xbtn" data-close style="margin-left:auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </h2>
+    <p class="dim" id="perfilSubtitulo" style="font-size:11px;margin-bottom:14px;">Cargando tu perfil...</p>
+    <div class="bento-grid">
+      <div class="bento-tile tile-stat"><div class="stat-num" id="perfilInteracciones">—</div><div class="stat-lbl">Interacciones</div></div>
+      <div class="bento-tile tile-stat"><div class="stat-num" id="perfilHechos">—</div><div class="stat-lbl">Hechos</div></div>
+      <div class="bento-tile tile-stat"><div class="stat-num" id="perfilGustos">—</div><div class="stat-lbl">Gustos</div></div>
+      <div class="bento-tile tile-stat"><div class="stat-num" id="perfilLongitud">—</div><div class="stat-lbl">Long. media</div></div>
+      <div class="bento-tile tile-wide">
+        <div class="tile-head"><span class="tile-title">Tus temas favoritos</span><span class="tile-badge">detectados</span></div>
+        <div class="tile-body" id="perfilTemas"><div class="empty">Cargando...</div></div>
+      </div>
+      <div class="bento-tile tile-wide">
+        <div class="tile-head"><span class="tile-title">Tu estilo</span><span class="tile-badge">tono</span></div>
+        <div class="tile-body" id="perfilEstilo"><div class="empty">Cargando...</div></div>
+      </div>
+    </div>
+    <p class="dim" id="perfilPie" style="font-size:10px;margin-top:14px;text-align:center;">Este perfil se actualiza automáticamente cada día con tu actividad. Solo tú puedes verlo.</p>
+  </div>
+</div>
 
-<div class="overlay" id="dashboardModal"><div class="modal" style="width:min(1100px,100%);max-width:1100px;padding:16px 18px;"><h2 style="margin-bottom:14px;">PANEL PRINCIPAL<button class="xbtn" data-close style="margin-left:auto;">✕</button></h2><div id="panelDashboard"></div></div></div>
+<!-- ============ DASHBOARD ============ -->
+<div class="overlay" id="dashboardModal">
+  <div class="modal" style="width:min(1100px,100%);max-width:1100px;padding:16px 18px;">
+    <h2 style="margin-bottom:14px;">PANEL PRINCIPAL
+      <button class="xbtn" data-close style="margin-left:auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </h2>
+    <div id="panelDashboard"></div>
+  </div>
+</div>
 
-<div class="overlay" id="jarvisModal"><div class="modal" style="width:min(1100px,100%);max-width:1100px;"><h2>PANEL JARVIS<button class="xbtn" data-close style="margin-left:auto;">✕</button></h2><div id="jarvisTabs" style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;"><button class="chip jarvisTab" data-tab="finanzas">💰 FINANZAS</button><button class="chip jarvisTab" data-tab="inventario">📦 INVENTARIO</button><button class="chip jarvisTab" data-tab="compras">🛒 COMPRAS</button></div><div id="jarvisContenido"><div id="panelFinanzas"></div><div id="panelInventario" style="display:none;"></div><div id="panelCompras" style="display:none;"></div></div></div></div>
+<!-- ============ JARVIS ============ -->
+<div class="overlay" id="jarvisModal">
+  <div class="modal" style="width:min(1100px,100%);max-width:1100px;">
+    <h2>PANEL JARVIS
+      <button class="xbtn" data-close style="margin-left:auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </h2>
+    <div id="jarvisTabs" style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
+      <button class="chip jarvisTab" data-tab="finanzas" style="border-color:var(--line2);color:var(--acc2);">💰 FINANZAS</button>
+      <button class="chip jarvisTab" data-tab="inventario">📦 INVENTARIO</button>
+      <button class="chip jarvisTab" data-tab="compras">🛒 COMPRAS</button>
+    </div>
+    <div id="jarvisContenido">
+      <div id="panelFinanzas"></div>
+      <div id="panelInventario" style="display:none;"></div>
+      <div id="panelCompras" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MINI-OS · marcado del escritorio ============ -->
+<div id="osDesktop">
+  <div id="osWallpaper"></div>
+  <div id="osWinLayer"></div>
+  <div id="osIcons"></div>
+
+  <div id="osTaskbar">
+    <button id="osStartBtn" title="Inicio"><span class="orb">A</span></button>
+    <div id="osTasks"></div>
+    <div id="osClock"><span id="osClockT">--:--</span><span id="osClockD"></span></div>
+    <button id="osExit" title="Salir del OS">⏻</button>
+  </div>
+
+  <div id="osStartMenu">
+    <div class="os-sm-row">
+      <div class="os-sm-rail">
+        <div class="os-sm-user" id="osSmUser">A</div>
+        <span style="flex:1"></span>
+        <button data-os="toggleAnia" title="Volver a ANIA">↩</button>
+        <button data-os="shutdown" title="Apagar">⏻</button>
+      </div>
+      <div class="os-sm-apps" id="osSmApps"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Botón flotante volver a ANIA (solo dentro del OS) -->
+<button id="returnFab" title="Volver a ANIA" aria-label="Volver a ANIA">
+  <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+</button>
 
 <div id="toasts"></div>
 <input type="file" id="docDir" webkitdirectory multiple style="display:none">
@@ -306,681 +550,5 @@
 <input type="file" id="imgFile" accept="image/*" style="display:none">
 <input type="file" id="ggufFile" accept=".gguf" style="display:none">
 <input type="file" id="engineFiles" accept=".mjs,.js,.wasm" multiple style="display:none">
-
-<!-- ═══════════════════════════════════════════════════════════════
-     ⭐ ANIA-OS · BOTÓN + ESCRITORIO (añadido, no rompe nada)
-═══════════════════════════════════════════════════════════════ -->
-
-<!-- Botón flotante para abrir/cerrar el OS -->
-<button id="osFab" title="Abrir escritorio ANIA-OS" aria-label="Abrir escritorio">
-  <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-    <path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>
-  </svg>
-</button>
-
-<!-- Escritorio del mini-OS -->
-<div id="osDesktop" aria-hidden="true">
-  <div id="osWallpaper"></div>
-  <div id="osIcons"></div>
-  <div id="osWinLayer"></div>
-
-  <div id="osTaskbar">
-    <button id="osStartBtn" title="Menú"><span class="os-orb">A</span></button>
-    <div id="osTasks"></div>
-    <div id="osClock"><span id="osClockT">--:--</span><span id="osClockD"></span></div>
-    <button id="osExitBtn" title="Volver a ANIA">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
-        <path d="M19 12H5M12 19l-7-7 7-7"/>
-      </svg>
-    </button>
-  </div>
-
-  <div id="osStartMenu">
-    <div class="os-sm-head"><span class="os-sm-user" id="osSmUser">A</span>ANIA-OS</div>
-    <div class="os-sm-apps" id="osSmApps"></div>
-    <div class="os-sm-foot">
-      <button data-os="exit">↩ Volver a ANIA</button>
-    </div>
-  </div>
-</div>
-
-<!-- ════════════ CSS del mini-OS ════════════ -->
-<style id="os-css">
-/* ═══ FAB flotante ═══ */
-#osFab{
-  position:fixed;
-  right:16px;
-  bottom:calc(80px + env(safe-area-inset-bottom));
-  z-index:9997;
-  width:52px;height:52px;border-radius:50%;
-  background:radial-gradient(circle at 30% 30%,#3d9ae8,#0a4d8c 70%,#042247 100%);
-  border:2px solid rgba(140,200,255,.65);
-  color:#fff;
-  cursor:pointer;
-  display:none;place-items:center;
-  box-shadow:0 6px 20px rgba(10,77,140,.55),0 0 24px rgba(61,154,232,.5);
-  transition:transform .25s cubic-bezier(.2,.9,.3,1), box-shadow .25s;
-  user-select:none;-webkit-tap-highlight-color:transparent;
-}
-#osFab:hover{ transform:scale(1.08); }
-#osFab:active{ transform:scale(.94); }
-body.app-on #osFab{ display:grid; }
-body.os-on  #osFab{ display:none; }
-
-/* ═══ Escritorio (oculto por defecto) ═══ */
-#osDesktop{
-  position:fixed;inset:0;z-index:9990;
-  display:none;font-family:"Segoe UI",Arial,sans-serif;
-  color:#1b1b1b;overflow:hidden;background:#000;
-}
-body.os-on #osDesktop{ display:block; }
-body.os-on #app{ display:none; }
-body.os-on #dockFab{ display:none; }
-body.os-on #moodBubble{ display:none !important; }
-body.os-on #dockBackdrop{ display:none !important; }
-body.os-on #backdrop{ display:none !important; }
-
-#osWallpaper{
-  position:absolute;inset:0;
-  background-color:#040806;
-  background-image:linear-gradient(135deg,#04070d 0%,#0a2038 50%,#0d2b4a 100%);
-  background-size:cover;background-position:center;background-repeat:no-repeat;
-  overflow:hidden;
-}
-#osWallpaper img.wall-img{
-  position:absolute;top:0;left:0;width:100%;height:100%;
-  object-fit:cover;object-position:center;display:block;pointer-events:none;
-}
-#osWinLayer{ position:absolute;inset:0 0 44px 0; }
-#osIcons{
-  position:absolute;top:14px;left:14px;bottom:56px;
-  display:flex;flex-direction:column;flex-wrap:wrap;align-content:flex-start;
-  gap:6px;z-index:1;
-}
-.os-icon{
-  width:88px;padding:8px 4px;border:1px solid transparent;
-  display:flex;flex-direction:column;align-items:center;gap:6px;
-  cursor:default;border-radius:4px;user-select:none;
-  transition:background .15s,border-color .15s;
-}
-.os-icon:hover{ background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.18); }
-.os-icon.sel{ background:rgba(10,132,216,.35);border-color:rgba(140,200,255,.6); }
-.os-icon .ic{ height:44px;display:grid;place-items:center;font-size:34px;line-height:1; }
-.os-icon span{
-  color:#fff;font-size:11.5px;text-align:center;
-  text-shadow:0 1px 3px rgba(0,0,0,.9);line-height:1.25;
-  max-height:30px;overflow:hidden;word-break:break-word;
-}
-
-#osTaskbar{
-  position:absolute;left:0;right:0;bottom:0;height:44px;
-  background:rgba(12,16,22,.94);
-  display:flex;align-items:stretch;
-  z-index:10;color:#fff;
-  border-top:1px solid rgba(255,255,255,.08);
-}
-#osStartBtn{
-  width:56px;border:0;cursor:pointer;
-  background:radial-gradient(circle at 50% 30%,#3d9ae8,#0a4d8c 78%);
-  border-right:1px solid rgba(255,255,255,.12);
-  display:grid;place-items:center;
-}
-#osStartBtn:hover{ filter:brightness(1.18); }
-#osStartBtn .os-orb{
-  width:26px;height:26px;border-radius:50%;display:grid;place-items:center;
-  font-weight:700;font-size:14px;color:#fff;
-  background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.9),rgba(255,255,255,0) 55%);
-}
-#osTasks{ flex:1;display:flex;align-items:stretch;overflow:hidden;padding-left:6px; }
-.os-task{
-  min-width:46px;padding:0 12px;border:0;background:none;color:#fff;
-  position:relative;display:flex;align-items:center;gap:6px;cursor:pointer;
-  font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;
-}
-.os-task:hover{ background:rgba(255,255,255,.12); }
-.os-task.active{ background:rgba(255,255,255,.18); }
-#osClock{
-  display:flex;flex-direction:column;justify-content:center;align-items:flex-end;
-  padding:0 12px;font-size:11.5px;line-height:1.3;cursor:default;
-}
-#osExitBtn{
-  width:46px;border:0;background:rgba(10,132,216,.15);color:#8cc8ff;
-  cursor:pointer;display:grid;place-items:center;
-  border-left:1px solid rgba(255,255,255,.1);
-  transition:background .2s,color .2s;
-}
-#osExitBtn:hover{ background:#0a84d8;color:#fff; }
-
-#osStartMenu{
-  position:absolute;left:0;bottom:44px;width:min(400px,90vw);
-  background:rgba(18,22,28,.98);color:#fff;
-  z-index:20;display:none;flex-direction:column;
-  box-shadow:0 -4px 30px rgba(0,0,0,.6);border-radius:0 8px 0 0;
-  max-height:70vh;overflow:hidden;
-}
-#osStartMenu.on{ display:flex;animation:osSmIn .18s ease-out; }
-@keyframes osSmIn{ from{transform:translateY(8px);opacity:0;} }
-.os-sm-head{
-  padding:14px 16px;font-size:13px;letter-spacing:.15em;
-  color:#8cc8ff;border-bottom:1px solid rgba(255,255,255,.08);
-  display:flex;align-items:center;gap:10px;
-}
-.os-sm-user{
-  width:32px;height:32px;border-radius:50%;background:#274b70;
-  display:grid;place-items:center;font-size:14px;color:#fff;
-}
-.os-sm-apps{ flex:1;overflow-y:auto;padding:8px; }
-.os-sm-apps button{
-  display:flex;align-items:center;gap:12px;width:100%;
-  padding:10px 12px;background:none;border:0;color:#eee;
-  font-size:13px;cursor:pointer;border-radius:6px;text-align:left;
-  transition:background .15s;
-}
-.os-sm-apps button:hover{ background:rgba(255,255,255,.12); }
-.os-sm-apps button .sm-ic{
-  width:24px;height:24px;display:grid;place-items:center;
-  font-size:18px;line-height:1;
-}
-.os-sm-foot{
-  padding:10px 14px;border-top:1px solid rgba(255,255,255,.08);
-  display:flex;justify-content:flex-end;
-}
-.os-sm-foot button{
-  padding:8px 14px;border:1px solid rgba(140,200,255,.4);
-  background:transparent;color:#8cc8ff;border-radius:6px;
-  font-size:11px;letter-spacing:.1em;cursor:pointer;
-  font-family:inherit;
-}
-.os-sm-foot button:hover{ background:rgba(140,200,255,.15); }
-
-/* ═══ Ventanas del OS ═══ */
-.os-window{
-  position:absolute;display:flex;flex-direction:column;
-  background:#fff;color:#1b1b1b;
-  box-shadow:0 12px 38px rgba(0,0,0,.5);
-  border-radius:8px;overflow:hidden;
-  animation:osWinIn .18s ease-out;
-}
-@keyframes osWinIn{ from{transform:scale(.95);opacity:0;} }
-.os-window.closing{ transform:scale(.95);opacity:0;transition:.14s; }
-.os-window.maximized{ left:0!important;top:0!important;width:100vw!important;height:calc(100vh - 44px)!important;border-radius:0; }
-.os-titlebar{
-  height:34px;flex:0 0 auto;display:flex;align-items:center;
-  background:linear-gradient(180deg,#f5f5f5,#e8e8e8);
-  border-bottom:1px solid #d0d0d0;
-}
-.os-tb-ico{ width:34px;display:grid;place-items:center;font-size:16px; }
-.os-tb-title{ flex:1;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px; }
-.os-tb-btns{ display:flex;height:100%; }
-.os-tb-btn{
-  width:46px;border:0;background:none;color:#1b1b1b;
-  display:grid;place-items:center;cursor:pointer;font-size:14px;
-}
-.os-tb-btn:hover{ background:rgba(0,0,0,.06); }
-.os-tb-btn.close:hover{ background:#e81123;color:#fff; }
-.os-body{ flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;position:relative;background:#fafafa; }
-
-/* ═══ Responsive ═══ */
-@media(max-width:520px){
-  #osFab{ right:12px;bottom:calc(70px + env(safe-area-inset-bottom));width:46px;height:46px; }
-  #osFab svg{ width:20px;height:20px; }
-  #osIcons{ gap:2px;top:10px;left:10px;bottom:52px; }
-  .os-icon{ width:72px;padding:6px 2px; }
-  .os-icon span{ font-size:10.5px; }
-  .os-icon .ic{ height:38px;font-size:28px; }
-  #osStartMenu{ width:100%;border-radius:0;max-height:80vh; }
-  #osTaskbar{ height:40px; }
-  .os-task{ padding:0 8px;font-size:11px; }
-  #osClock{ padding:0 8px;font-size:10.5px; }
-  #osExitBtn{ width:42px; }
-}
-</style>
-
-<!-- ════════════ JS del mini-OS ════════════ -->
-<script>
-(function(){
-'use strict';
-
-// Espera a que TODO esté cargado (defer scripts incluidos)
-window.addEventListener('load', function(){
-  // Pequeño delay para que 14-boot.js termine
-  setTimeout(init, 300);
-});
-
-var _iniciado = false;
-function init(){
-  if(_iniciado) return;
-  _iniciado = true;
-
-  var $  = function(s){ return document.querySelector(s); };
-  var $$ = function(s){ return document.querySelectorAll(s); };
-  var el = function(t,c,h){ var e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e; };
-  var esc = function(s){ return String(s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
-
-  // ─── Estado del OS ───
-  var OS = {
-    zTop:100, winSeq:0, activeWin:null,
-    wins: new Map(),
-    FS: {
-      'Documentos':{ type:'folder', children:{
-        'Bienvenida.txt':{ type:'file', kind:'text', name:'Bienvenida.txt',
-          text:'Bienvenido a ANIA-OS.\n\nEscribe a Ania para controlar el OS:\n  · abre música\n  · abre documentos\n  · abre el navegador\n  · abre fondos\n  · abre word\n  · info sistema' }
-      }},
-      'Imágenes':{ type:'folder', children:{} },
-      'Música':{ type:'folder', children:{} },
-      'Programas':{ type:'folder', children:{} },
-      'Papelera':{ type:'folder', isTrash:true, children:{} }
-    }
-  };
-
-  // ─── Iconos SVG ───
-  var IC = {
-    folder:'<svg width="38" height="38" viewBox="0 0 48 48"><path d="M4 10h13l4 5h20v6H4z" fill="#e8a200"/><path d="M4 16h37v22a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" fill="#ffc933"/></svg>',
-    txt:'<svg width="38" height="38" viewBox="0 0 48 48"><path d="M11 4h20l6 6v34H11z" fill="#fff" stroke="#9aa5b1" stroke-width="1.4"/><path d="M31 4l6 6h-6z" fill="#dfe5ec" stroke="#9aa5b1" stroke-width="1.2"/><path d="M16 17h16M16 22h16M16 27h16M16 32h10" stroke="#5a9bd8" stroke-width="2"/></svg>',
-    doc:'<svg width="38" height="38" viewBox="0 0 48 48"><path d="M11 4h20l6 6v34H11z" fill="#fff" stroke="#9aa5b1" stroke-width="1.4"/><rect x="6" y="17" width="24" height="24" rx="2" fill="#2B579A"/><text x="18" y="35" font-family="Segoe UI" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">W</text></svg>',
-    calc:'<svg width="38" height="38" viewBox="0 0 48 48"><rect x="8" y="4" width="32" height="40" rx="3" fill="#4a4f57"/><rect x="12" y="8" width="24" height="9" rx="1" fill="#c9e6f5"/><rect x="12" y="21" width="6" height="5" rx="1" fill="#8d949e"/><rect x="21" y="21" width="6" height="5" rx="1" fill="#8d949e"/><rect x="30" y="21" width="6" height="5" rx="1" fill="#8d949e"/><rect x="12" y="29" width="6" height="5" rx="1" fill="#8d949e"/><rect x="21" y="29" width="6" height="5" rx="1" fill="#8d949e"/><rect x="30" y="29" width="6" height="12" rx="1" fill="#0a84d8"/><rect x="12" y="37" width="15" height="4" rx="1" fill="#8d949e"/></svg>',
-    term:'<svg width="38" height="38" viewBox="0 0 48 48"><rect x="4" y="6" width="40" height="36" rx="4" fill="#22282f"/><text x="12" y="30" font-family="Consolas,monospace" font-size="14" fill="#2de08a">&gt;_</text></svg>',
-    app:'<svg width="38" height="38" viewBox="0 0 48 48"><rect x="6" y="6" width="36" height="36" rx="6" fill="#4a4f57"/></svg>'
-  };
-
-  // ─── Crear ventana ───
-  function crearVentana(opts){
-    var id = 'osw' + (++OS.winSeq);
-    var w = Math.min(opts.w || 760, innerWidth - 20);
-    var h = Math.min(opts.h || 500, innerHeight - 64);
-    var x = Math.max(6, (innerWidth - w) / 2);
-    var y = Math.max(4, (innerHeight - 44 - h) / 2);
-
-    var win = el('div','os-window active');
-    win.style.cssText = 'width:'+w+'px;height:'+h+'px;left:'+x+'px;top:'+y+'px;z-index:'+(++OS.zTop);
-    win.innerHTML =
-      '<div class="os-titlebar">'+
-        '<div class="os-tb-ico">'+(opts.icon||'')+'</div>'+
-        '<div class="os-tb-title">'+esc(opts.title||'Ventana')+'</div>'+
-        '<div class="os-tb-btns">'+
-          '<button class="os-tb-btn bmax" title="Maximizar">▢</button>'+
-          '<button class="os-tb-btn close" title="Cerrar">✕</button>'+
-        '</div>'+
-      '</div>'+
-      '<div class="os-body"></div>';
-
-    var layer = $('#osWinLayer'); if(!layer) return null;
-    layer.appendChild(win);
-
-    var rec = { el:win, body:win.querySelector('.os-body'), title:opts.title };
-    OS.wins.set(id, rec);
-
-    var tb = el('button','os-task active', esc(opts.title||''));
-    tb.dataset.win = id;
-    tb.onclick = function(){ focusWin(id); };
-    var tasks = $('#osTasks'); if(tasks) tasks.appendChild(tb);
-
-    win.querySelector('.bmax').onclick = function(e){ e.stopPropagation(); win.classList.toggle('maximized'); };
-    win.querySelector('.close').onclick = function(e){ e.stopPropagation(); cerrarWin(id); };
-    win.addEventListener('pointerdown', function(){ focusWin(id); });
-
-    var tbar = win.querySelector('.os-titlebar');
-    tbar.addEventListener('dblclick', function(e){ if(!e.target.closest('.os-tb-btn')) win.classList.toggle('maximized'); });
-    tbar.addEventListener('pointerdown', function(e){
-      if(e.button!==0 || e.target.closest('.os-tb-btn')) return;
-      var sx=e.clientX, sy=e.clientY, ox=win.offsetLeft, oy=win.offsetTop, moved=false;
-      function mm(ev){
-        if(!moved){
-          if(Math.hypot(ev.clientX-sx, ev.clientY-sy)<4) return;
-          moved=true;
-          if(win.classList.contains('maximized')) win.classList.remove('maximized');
-          ox=win.offsetLeft; oy=win.offsetTop;
-        }
-        win.style.left=(ox+ev.clientX-sx)+'px';
-        win.style.top=Math.max(0,oy+ev.clientY-sy)+'px';
-      }
-      function mu(){ document.removeEventListener('pointermove',mm); }
-      document.addEventListener('pointermove',mm);
-      document.addEventListener('pointerup',mu,{once:true});
-    });
-
-    focusWin(id);
-    return {
-      win:win, body:rec.body, id:id,
-      setTitle:function(t){ rec.title=t; win.querySelector('.os-tb-title').textContent=t; tb.textContent=t; },
-      close:function(){ cerrarWin(id); }
-    };
-  }
-  function focusWin(id){
-    var w = OS.wins.get(id); if(!w) return;
-    w.el.style.zIndex = ++OS.zTop;
-    OS.wins.forEach(function(o){ o.el.classList.toggle('active', o===w); });
-    $$('#osTasks .os-task').forEach(function(b){ b.classList.toggle('active', b.dataset.win===id); });
-    OS.activeWin = id;
-  }
-  function cerrarWin(id){
-    var w = OS.wins.get(id); if(!w) return;
-    w.el.classList.add('closing');
-    setTimeout(function(){ if(w.el.parentNode) w.el.parentNode.removeChild(w.el); }, 160);
-    OS.wins.delete(id);
-    var tb = document.querySelector('#osTasks .os-task[data-win="'+id+'"]');
-    if(tb) tb.parentNode.removeChild(tb);
-    if(OS.activeWin===id) OS.activeWin = null;
-  }
-
-  // ─── Aplicaciones ───
-  function appExplorador(ruta){
-    var ctx = crearVentana({ title:'Explorador', icon:IC.folder, w:820, h:520 });
-    if(!ctx) return;
-    var cur = (ruta||['Documentos']).slice();
-    ctx.body.innerHTML =
-      '<div style="display:flex;align-items:center;gap:4px;padding:6px 8px;background:#f0f0f0;border-bottom:1px solid #d8d8d8">'+
-        '<button class="ex-nav" data-nav="up" style="width:32px;height:30px;border:0;background:none;cursor:pointer;font-size:14px">▲</button>'+
-        '<div class="ex-crumb" style="flex:1;background:#fff;border:1px solid #d8d8d8;height:30px;padding:0 10px;font-size:12.5px;display:flex;align-items:center;border-radius:4px"></div>'+
-      '</div>'+
-      '<div class="ex-grid" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-wrap:wrap;align-content:flex-start;gap:4px;background:#fff"></div>';
-    var grid = ctx.body.querySelector('.ex-grid');
-    var crumb = ctx.body.querySelector('.ex-crumb');
-    function nodo(p){
-      var n = { children: OS.FS };
-      for(var i=0;i<p.length;i++){ if(!n.children || !n.children[p[i]]) return null; n = n.children[p[i]]; }
-      return n;
-    }
-    function render(){
-      var node = nodo(cur);
-      if(!node){ cur = ['Documentos']; return render(); }
-      crumb.innerHTML = '';
-      var r = el('b','', 'ANIA-OS'); r.style.cursor='pointer';
-      r.onclick = function(){ cur=[]; render(); };
-      crumb.appendChild(r);
-      cur.forEach(function(p,i){
-        crumb.appendChild(el('span','',' › '));
-        var b = el('b','',esc(p)); b.style.cursor='pointer';
-        b.onclick = function(){ cur = cur.slice(0,i+1); render(); };
-        crumb.appendChild(b);
-      });
-      grid.innerHTML = '';
-      var keys = Object.keys(node.children||{});
-      keys.sort(function(a,b){
-        var A = node.children[a], B = node.children[b];
-        if(A.type!==B.type) return A.type==='folder'?-1:1;
-        return a.localeCompare(b,'es');
-      });
-      keys.forEach(function(k){
-        var n = node.children[k];
-        var ico = n.type==='folder' ? IC.folder : (n.kind==='text'?IC.txt:IC.app);
-        var it = el('div','',
-          '<div style="height:46px;display:grid;place-items:center">'+ico+'</div>'+
-          '<span style="font-size:12px;text-align:center;line-height:1.25;max-height:30px;overflow:hidden;word-break:break-word;color:#1b1b1b">'+esc(n.name)+'</span>');
-        it.style.cssText = 'width:104px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:7px;border:1px solid transparent;cursor:default;border-radius:4px;';
-        it.onmouseenter = function(){ it.style.background='#eaf3fb'; };
-        it.onmouseleave = function(){ it.style.background=''; };
-        it.ondblclick = function(){
-          if(n.type==='folder'){ cur = cur.concat([n.name]); render(); }
-        };
-        grid.appendChild(it);
-      });
-    }
-    ctx.body.querySelector('[data-nav="up"]').onclick = function(){
-      if(cur.length){ cur = cur.slice(0,-1); render(); }
-    };
-    render();
-  }
-
-  function appCalculadora(){
-    var ctx = crearVentana({ title:'Calculadora', icon:IC.calc, w:320, h:440 });
-    if(!ctx) return;
-    ctx.body.innerHTML = '<div style="flex:1;display:flex;flex-direction:column;padding:10px 12px 14px;background:#fff">'+
-      '<div class="cdisp" style="text-align:right;font-size:38px;font-weight:300;padding:2px 4px 12px;min-height:60px;overflow:hidden;white-space:nowrap">0</div>'+
-      '<div class="cgrid" style="flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:4px"></div></div>';
-    var disp = ctx.body.querySelector('.cdisp');
-    var grid = ctx.body.querySelector('.cgrid');
-    var keys = ['C','⌫','%','÷','7','8','9','×','4','5','6','−','1','2','3','+','±','0',',','='];
-    var acc=null, op=null, cur='0', fresh=true;
-    keys.forEach(function(k){
-      var cls = ['+','−','×','÷'].indexOf(k)>=0 ? 'background:#e6e6e6;' : (k==='='?'background:#0a84d8;color:#fff;':'');
-      var b = el('button','',k);
-      b.style.cssText = 'border:1px solid #d8d8d8;background:#f0f0f0;color:#1b1b1b;font-size:16px;cursor:pointer;border-radius:4px;'+cls;
-      b.dataset.k = k;
-      grid.appendChild(b);
-    });
-    grid.onclick = function(e){
-      var k = e.target.dataset.k; if(!k) return;
-      if(/[0-9]/.test(k)){ cur = fresh ? k : (cur==='0'?k:cur+k); fresh=false; }
-      else if(k===','){ if(cur.indexOf(',')<0){ cur+=','; fresh=false; } }
-      else if(k==='C'){ acc=null; op=null; cur='0'; fresh=true; }
-      else if(k==='⌫'){ cur = cur.length>1 ? cur.slice(0,-1) : '0'; }
-      else if(k==='±'){ cur = cur.charAt(0)==='-' ? cur.slice(1) : '-'+cur; }
-      else if(k==='%'){ cur = String(parseFloat(cur.replace(',','.'))/100).replace('.',','); }
-      else if(['+','−','×','÷'].indexOf(k)>=0){ acc=parseFloat(cur.replace(',','.')); op=k; fresh=true; }
-      else if(k==='=' && op!==null){
-        var b = parseFloat(cur.replace(',','.'));
-        var r = op==='+'?acc+b:op==='−'?acc-b:op==='×'?acc*b:(b===0?NaN:acc/b);
-        cur = isFinite(r) ? String(+r.toFixed(10)).replace('.',',') : 'Error';
-        acc=null; op=null; fresh=true;
-      }
-      disp.textContent = cur;
-    };
-  }
-
-  function appTerminal(){
-    var ctx = crearVentana({ title:'Terminal', icon:IC.term, w:680, h:420 });
-    if(!ctx) return;
-    ctx.body.innerHTML = '<div style="flex:1;display:flex;flex-direction:column;background:#0c0c0c;color:#cfcfcf;font-family:Consolas,monospace;font-size:13px;padding:8px 10px">'+
-      '<div class="t-out" style="flex:1;overflow-y:auto;white-space:pre-wrap;word-break:break-word"></div>'+
-      '<div style="display:flex;gap:6px;padding-top:4px"><span>ANIA-OS:\\&gt;</span>'+
-      '<input class="t-in" style="flex:1;background:none;border:0;outline:0;color:#cfcfcf;font:inherit"></div></div>';
-    var out = ctx.body.querySelector('.t-out'), inp = ctx.body.querySelector('.t-in');
-    function print(t){ out.textContent += t+'\n'; out.scrollTop = out.scrollHeight; }
-    print('ANIA-OS Shell · escribe "help"');
-    inp.addEventListener('keydown', function(e){
-      if(e.key!=='Enter') return;
-      var line = inp.value; inp.value='';
-      print('> '+line);
-      var cmd = line.trim().toLowerCase();
-      if(cmd==='help') print('Comandos: help, ver, date, clear, apps, files');
-      else if(cmd==='ver') print('ANIA-OS v10.0');
-      else if(cmd==='date') print(new Date().toString());
-      else if(cmd==='clear') out.textContent='';
-      else if(cmd==='files') print(Object.keys(OS.FS).join('\n'));
-      else if(cmd) print('No reconocido: '+cmd);
-    });
-    setTimeout(function(){ inp.focus(); }, 100);
-  }
-
-  function appNotas(){
-    var ctx = crearVentana({ title:'Notas', icon:IC.txt, w:560, h:420 });
-    if(!ctx) return;
-    ctx.body.innerHTML = '<textarea class="nota" style="flex:1;border:0;outline:0;resize:none;padding:12px;font-family:Consolas,monospace;font-size:14px;line-height:1.55;background:#fff;color:#1b1b1b" spellcheck="false" placeholder="Escribe algo..."></textarea>';
-    var ta = ctx.body.querySelector('.nota');
-    ta.value = localStorage.getItem('ania_os_nota') || '';
-    ta.addEventListener('input', function(){ localStorage.setItem('ania_os_nota', ta.value); });
-  }
-
-  // ─── Apps registradas ───
-  var APPS = {
-    explorer:{ name:'Explorador', icon:IC.folder, launch:function(){ appExplorador(); } },
-    calc:{ name:'Calculadora', icon:IC.calc, launch:function(){ appCalculadora(); } },
-    term:{ name:'Terminal', icon:IC.term, launch:function(){ appTerminal(); } },
-    notas:{ name:'Notas', icon:IC.txt, launch:function(){ appNotas(); } }
-  };
-
-  // ─── Desktop icons ───
-  function renderDesktop(){
-    var box = $('#osIcons'); if(!box) return; box.innerHTML='';
-    var items = [
-      ['Este equipo', IC.folder, function(){ appExplorador([]); }],
-      ['Documentos', IC.folder, function(){ appExplorador(['Documentos']); }],
-      ['Papelera', IC.folder, function(){ appExplorador(['Papelera']); }]
-    ];
-    // Apps remotas si está disponible el módulo
-    if(window.OSRemote){
-      items.push(['🎵 Música', '<span style="font-size:34px">🎵</span>', function(){ window.OSRemote.appOSMusic(); }]);
-      items.push(['📄 Documentos', '<span style="font-size:34px">📄</span>', function(){ window.OSRemote.appOSDocViewer(); }]);
-      items.push(['🌐 Navegador', '<span style="font-size:34px">🌐</span>', function(){ window.OSRemote.appOSBrowser(); }]);
-      items.push(['🎨 Fondos', '<span style="font-size:34px">🎨</span>', function(){ window.OSRemote.appOSWallpaper(); }]);
-    }
-    items.forEach(function(it){
-      var d = el('div','os-icon','<div class="ic">'+it[1]+'</div><span>'+esc(it[0])+'</span>');
-      d.onclick = function(e){ e.stopPropagation(); $$('.os-icon').forEach(function(x){ x.classList.remove('sel'); }); d.classList.add('sel'); };
-      d.ondblclick = it[2];
-      box.appendChild(d);
-    });
-  }
-
-  // ─── Start menu ───
-  function renderStartMenu(){
-    var sm = $('#osSmApps'); if(!sm) return; sm.innerHTML='';
-    Object.keys(APPS).forEach(function(k){
-      var a = APPS[k];
-      var b = el('button','','<span class="sm-ic">'+a.icon+'</span>'+esc(a.name));
-      b.onclick = function(){ closeStart(); a.launch(); };
-      sm.appendChild(b);
-    });
-  }
-  function openStart(){ var m = $('#osStartMenu'); if(m) m.classList.add('on'); }
-  function closeStart(){ var m = $('#osStartMenu'); if(m) m.classList.remove('on'); }
-  function toggleStart(){ var m = $('#osStartMenu'); if(m) m.classList.toggle('on'); }
-
-  // ─── Reloj ───
-  function tickClock(){
-    var d = new Date();
-    var t = d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
-    var f = d.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'});
-    if($('#osClockT')) $('#osClockT').textContent = t;
-    if($('#osClockD')) $('#osClockD').textContent = f;
-  }
-  setInterval(function(){ if(document.body.classList.contains('os-on')) tickClock(); }, 30000);
-
-  // ─── Abrir / cerrar OS ───
-  function enterOS(){
-    document.body.classList.add('os-on');
-    document.body.classList.remove('app-on');
-    tickClock();
-    renderDesktop();
-    renderStartMenu();
-    // Fondo guardado
-    var wp = $('#osWallpaper');
-    var wallUrl = localStorage.getItem('aniaos_wall_url');
-    if(wallUrl && wp){
-      wp.innerHTML = '';
-      var img = document.createElement('img');
-      img.className = 'wall-img'; img.src = wallUrl; img.alt = '';
-      img.onerror = function(){ img.remove(); };
-      wp.appendChild(img);
-    }
-  }
-  function exitOS(){
-    document.body.classList.remove('os-on');
-    document.body.classList.add('app-on');
-    closeStart();
-  }
-
-  // ─── Botón OS ───
-  var fab = $('#osFab');
-  if(fab){
-    fab.onclick = function(){
-      if(document.body.classList.contains('os-on')) exitOS();
-      else enterOS();
-    };
-  }
-
-  // ─── Mostrar botón tras login ───
-  // Detectar cuando #boot desaparece (login completado)
-  var boot = document.getElementById('boot');
-  if(boot){
-    var obs = new MutationObserver(function(){
-      var hidden = boot.style.display==='none' || boot.classList.contains('hide');
-      if(hidden && !document.body.classList.contains('app-on')){
-        document.body.classList.add('app-on');
-      }
-    });
-    obs.observe(boot, { attributes:true, attributeFilter:['style','class'] });
-    // Estado inicial
-    if(boot.style.display==='none' || boot.classList.contains('hide')){
-      document.body.classList.add('app-on');
-    }
-  }
-  // Fallback: si bootStart es clickeado
-  var bs = document.getElementById('bootStart');
-  if(bs){
-    bs.addEventListener('click', function(){
-      setTimeout(function(){ document.body.classList.add('app-on'); }, 800);
-    });
-  }
-
-  // ─── Eventos de botones del OS ───
-  var osStart = $('#osStartBtn'); if(osStart) osStart.onclick = function(e){ e.stopPropagation(); toggleStart(); };
-  var osExit = $('#osExitBtn'); if(osExit) osExit.onclick = function(){ exitOS(); };
-  document.addEventListener('pointerdown', function(e){
-    if(!e.target.closest('#osTaskbar') && !e.target.closest('#osStartMenu')) closeStart();
-  });
-  // Click en desktop limpia selección
-  var desk = $('#osDesktop');
-  if(desk) desk.addEventListener('click', function(e){
-    if(e.target.id==='osWallpaper' || e.target.id==='osIcons' || e.target.id==='osDesktop'){
-      $$('.os-icon').forEach(function(x){ x.classList.remove('sel'); });
-    }
-  });
-  // Botón salir del start menu
-  $$('#osStartMenu [data-os="exit"]').forEach(function(b){
-    b.onclick = function(){ closeStart(); exitOS(); };
-  });
-
-  // ─── OSBridge para Ania ───
-  window.OSBridge = {
-    abrirApp: function(id){
-      var a = APPS[id];
-      if(!a) return { ok:false, error:'app no reconocida: '+id };
-      try{ a.launch(); return { ok:true, app:id }; }
-      catch(e){ return { ok:false, error:e.message }; }
-    },
-    cerrarApp: function(){
-      var ids = []; OS.wins.forEach(function(w,id){ ids.push(id); });
-      ids.forEach(cerrarWin);
-      return { ok:true, cerrados:ids.length };
-    },
-    listarApps: function(){ return Object.keys(APPS).map(function(k){ return { id:k, nombre:APPS[k].name }; }); },
-    ventanasAbiertas: function(){ var out=[]; OS.wins.forEach(function(w){ out.push({ titulo:w.title }); }); return out; },
-    entrar: enterOS,
-    salir: exitOS,
-    abrirExplorador: function(){ appExplorador(); return { ok:true }; },
-    abrirCalculadora: function(){ appCalculadora(); return { ok:true }; },
-    abrirTerminal: function(){ appTerminal(); return { ok:true }; }
-  };
-
-  // ─── Hook a send() para que Ania controle el OS ───
-  if(typeof window.send === 'function' && !window.__osSendHooked){
-    window.__osSendHooked = true;
-    var orig = window.send;
-    window.send = async function(text){
-      var low = String(text||'').toLowerCase().trim();
-      // Abrir OS
-      if(/^(?:abre|muestra|abrir)\s+(?:el\s+)?(?:escritorio|os|minios|sistema)/.test(low)){
-        enterOS();
-        try{ if(typeof reply === 'function'){ reply('Escritorio abierto. Pulsa ↩ para volver.'); return; } }catch(e){}
-        return;
-      }
-      // Cerrar OS
-      if(/^(?:cierra|sal|volver|regresa)\s+(?:el\s+)?(?:escritorio|os|minios)/.test(low)){
-        exitOS();
-        try{ if(typeof reply === 'function'){ reply('De vuelta a ANIA.'); return; } }catch(e){}
-        return;
-      }
-      // Apps directas
-      var m = low.match(/^(?:abre|lanza)\s+(?:la\s+|el\s+)?(explorador|calculadora|terminal|notas)\b/);
-      if(m){
-        enterOS();
-        var name = m[1];
-        var map = { explorador:'explorer', calculadora:'calc', terminal:'term', notas:'notas' };
-        setTimeout(function(){ APPS[map[name]].launch(); }, 200);
-        try{ if(typeof reply === 'function'){ reply('✓ '+name+' abierto en el OS.'); return; } }catch(e){}
-        return;
-      }
-      return orig.call(this, text);
-    };
-    console.log('[OS] send() hooked ✓');
-  }
-
-  console.log('[OS] Mini-OS listo · '+Object.keys(APPS).length+' apps · Listo para móvil ✓');
-}
-})();
-</script>
-
 </body>
 </html>
