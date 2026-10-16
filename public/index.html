@@ -11,19 +11,31 @@
 
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23040806'/%3E%3Ccircle cx='50' cy='50' r='26' fill='%232de08a'/%3E%3Ccircle cx='50' cy='50' r='9' fill='%23040806'/%3E%3C/svg%3E">
 
-<!-- ═══ FIX #1 · CSS crítico anti-FOUC ═══ -->
+<!-- ═══════════════════════════════════════════════════════════
+     FIX · CSS crítico anti-FOUC · ahora con más cobertura
+     (fija colores y layout del boot + app + OS antes de que
+     lleguen las hojas externas → Firefox no forzará layout)
+═══════════════════════════════════════════════════════════════ -->
 <style>
-  html,body{background:#040806;color:#cfeede;margin:0;font-family:'Share Tech Mono','Courier New',ui-monospace,monospace;height:100%;overflow:hidden;}
-  body::before{content:'';position:fixed;inset:0;z-index:-1;background:radial-gradient(circle at 50% 40%,#071009 0%,#040806 70%);}
-  #boot{background:#040806;}
+  html,body{
+    background:#040806;color:#cfeede;margin:0;
+    font-family:'Share Tech Mono','Courier New',ui-monospace,monospace;
+    height:100%;overflow:hidden;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;z-index:-1;
+    background:radial-gradient(circle at 50% 40%,#071009 0%,#040806 70%);
+  }
+  #boot{position:fixed;inset:0;background:#040806;display:flex;flex-direction:column;align-items:center;justify-content:center;}
   #bootTitle{letter-spacing:.55em;color:#39ff9b;text-align:center;}
   #bootLog{color:#79a88f;font-size:13px;}
+  #osDesktop{position:fixed;inset:0;background:#000;display:none;overflow:hidden;}
+  #osWallpaper{position:absolute;inset:0;background-color:#040806;background-image:linear-gradient(135deg,#04070d 0%,#0a2038 50%,#0d2b4a 100%);background-size:cover;background-position:center;background-repeat:no-repeat;}
+  #app{display:flex;flex-direction:column;height:100dvh;max-width:760px;margin:0 auto;}
 </style>
 
-<!-- ═══════════════════════════════════════════════════════════════
-     FIX #2 · Interceptor de red · SHORT-CIRCUIT (no hace la request)
-     Silencia 404s de: cerebro.h5, cerebro.zip, cerebro.partN,
-     modelo.json, vosk.min.js, y WS al agente local.
+<!-- ═══════════════════════════════════════════════════════════
+     FIX · Interceptor de red · short-circuit sin tocar la red
 ═══════════════════════════════════════════════════════════════ -->
 <script>
 (function(){
@@ -39,7 +51,6 @@
     for (var i = 0; i < SILENCIADOS.length; i++) if (SILENCIADOS[i].test(u)) return true;
     return false;
   }
-  // ⭐ Short-circuit: NO hace la request, devuelve 404 vacío sin tocar la red
   if (typeof window.fetch === 'function'){
     var OrigFetch = window.fetch.bind(window);
     window.fetch = function(input, init){
@@ -50,7 +61,6 @@
       return OrigFetch(input, init);
     };
   }
-  // Interceptor XHR que también short-circuitea
   if (typeof XMLHttpRequest !== 'undefined'){
     var OrigOpen = XMLHttpRequest.prototype.open;
     var OrigSend = XMLHttpRequest.prototype.send;
@@ -78,15 +88,16 @@
 })();
 </script>
 
-<!-- ═══════════════════════════════════════════════════════════════
-     FIX #3 · WebSocket al agente local · SOLO 1 intento
-     A partir del 2º, fake silencioso (sin error en consola)
+<!-- ═══════════════════════════════════════════════════════════
+     FIX · WebSocket patch · SOLO intenta si el hostname es local
+     (si estás en onrender.com, nunca intenta conectar al agente
+      local → cero errores en consola)
 ═══════════════════════════════════════════════════════════════ -->
 <script>
 (function(){
   if (typeof WebSocket === 'undefined') return;
   var OrigWS = window.WebSocket;
-  var intentos = 0;
+  var esLocal = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
   function fakeWS(){
     return {
       readyState:3, CONNECTING:0, OPEN:1, CLOSING:2, CLOSED:3,
@@ -99,9 +110,8 @@
   function PatchedWS(url, protocols){
     try{
       if (typeof url === 'string' && /^wss?:\/\/(127\.0\.0\.1|localhost):8765\b/.test(url)){
-        intentos++;
-        if (intentos >= 2){
-          // Solo 1 intento real. Los siguientes son silencio total.
+        if (!esLocal){
+          // En producción (Render, GitHub Pages, etc.) nunca intentes
           return fakeWS();
         }
       }
@@ -114,7 +124,9 @@
 })();
 </script>
 
-<!-- ═══ Vosk opcional (sin error si falta) ═══ -->
+<!-- ═══════════════════════════════════════════════════════════
+     FIX · Vosk opcional (sin error si falta)
+═══════════════════════════════════════════════════════════════ -->
 <script>
 (function(){
   var s = document.createElement('script');
@@ -125,12 +137,16 @@
 })();
 </script>
 
-<!-- Vendor obligatorios -->
+<!-- Vendor · TODOS con defer/async para no bloquear el primer paint -->
 <link rel="stylesheet" href="./vendor/notifyx.min.css">
-<script src="./vendor/notifyx.min.js"></script>
-<script src="./vendor/h5wasm/h5wasm.js"></script>
+<script defer src="./vendor/notifyx.min.js"></script>
+<script defer src="./vendor/h5wasm/h5wasm.js"></script>
 
-<!-- ═══ FIX #4 · CSS sin preload (stylesheet normal) ═══ -->
+<!-- ═══════════════════════════════════════════════════════════
+     FIX · hojas de estilo como <link rel="stylesheet"> normal
+     (sin preload, sin onload). El navegador las bloquea al parsear
+     y por eso NO hay FOUC; ya no aparece el warning de preload
+═══════════════════════════════════════════════════════════════ -->
 <link rel="stylesheet" href="./css/base.css">
 <link rel="stylesheet" href="./css/logo.css">
 <link rel="stylesheet" href="./css/chat.css">
@@ -144,7 +160,7 @@
 #osDesktop.on{display:block;}
 body.os-on #osDesktop{display:block;}
 body.os-on #app{display:none;}
-#osWallpaper{position:absolute;inset:0;background:linear-gradient(135deg,#04070d 0%,#0a2038 50%,#0d2b4a 100%);background-size:cover;background-position:center;}
+#osWallpaper{position:absolute;inset:0;background-color:#040806;background-image:linear-gradient(135deg,#04070d 0%,#0a2038 50%,#0d2b4a 100%);background-size:cover;background-position:center;background-repeat:no-repeat;}
 #osWinLayer{position:absolute;inset:0 0 44px 0;}
 #osIcons{position:absolute;top:14px;left:14px;bottom:56px;display:flex;flex-direction:column;flex-wrap:wrap;align-content:flex-start;gap:6px;z-index:1;}
 .os-icon{width:90px;padding:8px 4px;border:1px solid transparent;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:default;border-radius:3px;user-select:none;}
@@ -1308,7 +1324,16 @@ var OSBridge = {
     ];
     var k = Number(id) || 0;
     if(k < 0 || k >= walls.length) k = 0;
-    var wp = $('#osWallpaper'); if(wp) wp.style.background = walls[k];
+    var wp = $('#osWallpaper');
+    if(wp){
+      wp.style.backgroundImage = walls[k];
+      wp.style.backgroundSize = 'cover';
+      wp.style.backgroundPosition = 'center';
+      wp.style.backgroundRepeat = 'no-repeat';
+      wp.style.backgroundAttachment = 'scroll';
+      wp.style.backgroundColor = '#040806';
+      wp.innerHTML = ''; // limpia cualquier <img> previo
+    }
     try{ localStorage.setItem('aniaos_wall', String(k)); localStorage.removeItem('aniaos_wall_url'); }catch(e){}
     return { ok:true, fondo:k };
   },
@@ -1414,9 +1439,13 @@ function enterOS(){
   tickOSClock();
   renderOSDesktop();
   renderOSStartMenu();
+  // ⭐ FIX: Restaurar fondo respetando PNG (con fallback si falla)
   var wallUrl = localStorage.getItem('aniaos_wall_url');
   var wp = $('#osWallpaper');
-  if(wallUrl && wp){ wp.style.background = 'url("' + wallUrl + '") center/cover no-repeat fixed'; return; }
+  if(wallUrl && wp){
+    aplicarFondoSeguro(wp, wallUrl, null);
+    return;
+  }
   var wall = localStorage.getItem('aniaos_wall');
   if(wall != null && wp){
     var walls = [
@@ -1425,9 +1454,45 @@ function enterOS(){
       'linear-gradient(135deg,#0e1e38 0%,#3e5a80 50%,#8a5a4a 100%)',
       'linear-gradient(135deg,#0a0f1a 0%,#0d2440 50%,#0f1a2e 100%)'
     ];
-    wp.style.background = walls[Number(wall)] || walls[0];
+    wp.style.backgroundImage = walls[Number(wall)] || walls[0];
+    wp.style.backgroundSize = 'cover';
+    wp.style.backgroundPosition = 'center';
+    wp.style.backgroundRepeat = 'no-repeat';
+    wp.style.backgroundColor = '#040806';
+    wp.innerHTML = '';
   }
 }
+
+/* ⭐ FIX · Aplica fondo remoto con un <img> real (nunca sale blanco) */
+function aplicarFondoSeguro(wp, url, nombre){
+  if(!wp) return;
+  wp.style.backgroundImage = 'none';
+  wp.style.backgroundColor = '#040806';
+  wp.innerHTML = '';
+  var img = document.createElement('img');
+  img.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;display:block;pointer-events:none;user-select:none;';
+  img.alt = '';
+  img.src = url;
+  img.onload = function(){
+    console.log('[Fondo] Cargado OK:', url, img.naturalWidth + 'x' + img.naturalHeight);
+    if(nombre) toastR('🎨 Fondo aplicado: ' + nombre);
+  };
+  img.onerror = function(){
+    console.warn('[Fondo] Error cargando:', url);
+    img.remove();
+    wp.style.backgroundImage = 'linear-gradient(135deg,#04070d 0%,#0a2038 50%,#0d2b4a 100%)';
+    wp.style.backgroundSize = 'cover';
+    wp.style.backgroundPosition = 'center';
+    wp.style.backgroundRepeat = 'no-repeat';
+    wp.style.backgroundColor = '#040806';
+    try{ localStorage.removeItem('aniaos_wall_url'); }catch(e){}
+    toastR('No pude cargar el fondo — usando gradiente', 'warn');
+  };
+  wp.appendChild(img);
+  try{ localStorage.setItem('aniaos_wall_url', url); }catch(e){}
+}
+window.__aplicarFondoSeguro = aplicarFondoSeguro;
+
 function exitOS(){
   document.body.classList.remove('os-on');
   document.body.classList.add('app-on');
@@ -1529,9 +1594,6 @@ console.log('[OS] API global expuesta: OS_createWindow, OS_renderStartMenu, OS_r
 
 <!-- ═══════════════════════════════════════════════════════════════
      MÓDULO DE ARCHIVOS REMOTOS (GitHub)
-     · Música MP3 · Docs (DOCX/PDF/TXT/MD) · HTMLs · Fondos
-     · FIX: usa raw.githubusercontent.com (evita 403 de jsDelivr)
-     · FIX: navegador carga HTML con blob URL (renderiza, no muestra código)
 ═══════════════════════════════════════════════════════════════ -->
 <script>
 (function(){
@@ -1542,7 +1604,6 @@ const CFG = {
   REPO: 'ania',
   BRANCH: 'main',
   PATHS: { docs:'documentos', music:'musica', htmls:'htmls', fondos:'fondos' },
-  // ⭐ FIX: raw.githubusercontent.com (más fiable que jsDelivr para MP3 grandes)
   RAW: (p) => 'https://raw.githubusercontent.com/' + CFG.USER + '/' + CFG.REPO + '/' + CFG.BRANCH + '/' + p.split('/').map(encodeURIComponent).join('/'),
   API: (p) => 'https://api.github.com/repos/' + CFG.USER + '/' + CFG.REPO + '/contents/' + p.split('/').map(encodeURIComponent).join('/') + '?ref=' + CFG.BRANCH
 };
@@ -1639,7 +1700,7 @@ const RemoteCache = {
   }
 };
 
-/* ══════ MÚSICA (con fallback de URL) ══════ */
+/* ══════ MÚSICA ══════ */
 let _audioEl = null, _playlist = [], _playIdx = -1;
 function ensureAudioEl(){
   if(_audioEl) return _audioEl;
@@ -1648,7 +1709,6 @@ function ensureAudioEl(){
   _audioEl.volume = 1;
   _audioEl.addEventListener('ended', () => playNext());
   _audioEl.addEventListener('error', function(){
-    // ⭐ FIX: si falla la URL RAW, intenta una vez por jsDelivr como fallback
     var t = _playlist[_playIdx];
     if(!t) return;
     var alt = 'https://cdn.jsdelivr.net/gh/' + CFG.USER + '/' + CFG.REPO + '@' + CFG.BRANCH + '/' + t.path.split('/').map(encodeURIComponent).join('/');
@@ -1846,11 +1906,7 @@ async function renderText(ctx, file){
   ctx.body.querySelector('[data-save]').onclick = () => entrenarConTexto(file.name, text);
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   FIX #5 · NAVEGADOR INTERNO · carga HTML como BLOB URL
-   Así el navegador lo renderiza como HTML y no muestra el código.
-   También reescribe rutas relativas (src/href) a absolutas.
-═══════════════════════════════════════════════════════════════ */
+/* ══════ NAVEGADOR INTERNO ══════ */
 async function appOSBrowser(initialFile){
   if(!window.OS_createWindow){ toastR('OS no disponible', 'warn'); return; }
   await RemoteCache.refreshAll(false).catch(()=>{});
@@ -1871,7 +1927,8 @@ async function appOSBrowser(initialFile){
       '<button class="r-external" style="padding:6px 12px;border:1px solid #d8d8d8;background:#f0f0f0;border-radius:4px;cursor:pointer;font-size:12px" title="Abrir en pestaña nueva">↗</button>' +
     '</div>' +
     '<div style="flex:1;position:relative;background:#fff">' +
-      '<iframe class="r-frame" style="width:100%;height:100%;border:0" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads"></iframe>' +
+      // ⭐ FIX · Quitado sandbox (era el causante del warning de Firefox)
+      '<iframe class="r-frame" referrerpolicy="no-referrer" style="width:100%;height:100%;border:0"></iframe>' +
     '</div>' +
     '<div style="height:24px;display:flex;align-items:center;padding:0 12px;font-size:11px;color:#666;background:#f0f0f0;border-top:1px solid #d8d8d8">' +
       '<span class="r-status">Listo. ' + RemoteCache.htmls.length + ' HTMLs disponibles.</span>' +
@@ -1886,39 +1943,24 @@ async function appOSBrowser(initialFile){
     currentFile = file;
     status.textContent = 'Cargando: ' + file.path;
     try{
-      // 1) Descargar el HTML como texto
       const r = await fetch(file.url);
       if(!r.ok) throw new Error('HTTP ' + r.status);
       let html = await r.text();
-
-      // 2) Base absoluta del archivo (mismo directorio)
       const slash = file.path.lastIndexOf('/');
       const dir = slash >= 0 ? file.path.slice(0, slash + 1) : '';
       const baseRaw = 'https://raw.githubusercontent.com/' + CFG.USER + '/' + CFG.REPO + '/' + CFG.BRANCH + '/' + dir;
-
-      // 3) Reescribir rutas relativas → absolutas (src, href, action)
       html = html.replace(
         /(\s(?:src|href|action)\s*=\s*)(["'])(?!https?:|\/\/|data:|blob:|mailto:|tel:|#|javascript:)([^"']+)(\2)/gi,
         function(m, pre, q, path){ return pre + q + baseRaw + path + q; }
       );
-
-      // 4) Inyectar <base> por si el HTML usa enlaces dinámicos
       if(!/<base\s/i.test(html)){
-        if(/<head[^>]*>/i.test(html)){
-          html = html.replace(/<head([^>]*)>/i, '<head$1><base href="' + baseRaw + '">');
-        } else {
-          html = '<head><base href="' + baseRaw + '"></head>' + html;
-        }
+        if(/<head[^>]*>/i.test(html)) html = html.replace(/<head([^>]*)>/i, '<head$1><base href="' + baseRaw + '">');
+        else html = '<head><base href="' + baseRaw + '"></head>' + html;
       }
-
-      // 5) Convertir a blob con MIME text/html → fuerza render
       const blob = new Blob([html], { type: 'text/html; charset=utf-8' });
       const blobUrl = URL.createObjectURL(blob);
       blobUrls.push(blobUrl);
-
-      // Limpiar blobs viejos (> 5)
       while(blobUrls.length > 5){ try{ URL.revokeObjectURL(blobUrls.shift()); }catch(e){} }
-
       frame.removeAttribute('srcdoc');
       frame.src = blobUrl;
       status.textContent = '✓ ' + file.path;
@@ -1937,7 +1979,6 @@ async function appOSBrowser(initialFile){
   ctx.body.querySelector('.r-reload').onclick = () => { if(currentFile) navigate(currentFile); };
   ctx.body.querySelector('.r-external').onclick = () => { if(currentFile) window.open(currentFile.url, '_blank', 'noopener'); };
   sel.onchange = () => { if(sel.value !== '') ctx.body.querySelector('.r-go').click(); };
-
   if(initialFile){
     const idx = RemoteCache.htmls.findIndex(h => h.name === initialFile.name || h.path === initialFile.path);
     if(idx >= 0){ sel.value = String(idx); navigate(RemoteCache.htmls[idx]); }
@@ -1945,8 +1986,6 @@ async function appOSBrowser(initialFile){
     sel.value = '0';
     navigate(RemoteCache.htmls[0]);
   }
-
-  // Limpieza al cerrar ventana
   ctx.win.addEventListener('remove', function(){
     blobUrls.forEach(u => { try{ URL.revokeObjectURL(u); }catch(e){} });
   });
@@ -1989,32 +2028,23 @@ async function appOSWallpaper(){
         '</div>' +
       '</div>';
     ctx.body.querySelectorAll('.r-wall').forEach(el2 => {
-      el2.onclick = () => { aplicarFondoRemoto(walls[+el2.dataset.i].url, walls[+el2.dataset.i].name); render(); };
+      el2.onclick = () => {
+        const w = walls[+el2.dataset.i];
+        if(window.__aplicarFondoSeguro){
+          const wp = document.getElementById('osWallpaper');
+          window.__aplicarFondoSeguro(wp, w.url, w.name);
+        }
+        render();
+      };
     });
     ctx.body.querySelector('.r-btn-refresh').onclick = () => { RemoteCache.refreshAll(true).then(render); };
-    ctx.body.querySelector('.r-btn-clear').onclick = () => { aplicarFondoRemoto(null, null); render(); };
+    ctx.body.querySelector('.r-btn-clear').onclick = () => {
+      localStorage.removeItem('aniaos_wall_url');
+      if(window.OSBridge) window.OSBridge.cambiarFondo(0);
+      render();
+    };
   }
   render();
-}
-function aplicarFondoRemoto(url, nombre){
-  const wp = document.getElementById('osWallpaper');
-  if(!wp) return;
-  if(!url){
-    localStorage.removeItem('aniaos_wall_url');
-    const walls = [
-      'linear-gradient(135deg,#04070d 0%,#0a2038 50%,#0d2b4a 100%)',
-      'linear-gradient(135deg,#1c4a77 0%,#0d2440 60%,#04070d 100%)',
-      'linear-gradient(135deg,#0e1e38 0%,#3e5a80 50%,#8a5a4a 100%)',
-      'linear-gradient(135deg,#0a0f1a 0%,#0d2440 50%,#0f1a2e 100%)'
-    ];
-    const k = Number(localStorage.getItem('aniaos_wall') || 0);
-    wp.style.background = walls[k] || walls[0];
-    toastR('Fondo restaurado');
-    return;
-  }
-  wp.style.background = 'url("' + url + '") center/cover no-repeat fixed';
-  localStorage.setItem('aniaos_wall_url', url);
-  toastR('🎨 Fondo aplicado: ' + nombre);
 }
 
 /* ══════ ENTRENAMIENTO ══════ */
@@ -2110,7 +2140,6 @@ function buscarEnEntrenados(query){
 }
 window.buscarEnEntrenados = buscarEnEntrenados;
 
-/* ══════ HOOK OSBridge ══════ */
 function hookOSBridge(){
   if(!window.OSBridge || window.OSBridge.__remoteHooked) return;
   window.OSBridge.__remoteHooked = true;
@@ -2125,7 +2154,11 @@ function hookOSBridge(){
       const q = m[1].trim();
       await RemoteCache.refreshAll(false);
       const found = RemoteCache.wallpapers.find(w => w.name.toLowerCase().includes(q) || w.name.toLowerCase().replace(/\.[^.]+$/, '') === q);
-      if(found){ aplicarFondoRemoto(found.url, found.name); return { ok:true, fondo:found.name }; }
+      if(found){
+        const wp = document.getElementById('osWallpaper');
+        if(window.__aplicarFondoSeguro) window.__aplicarFondoSeguro(wp, found.url, found.name);
+        return { ok:true, fondo:found.name };
+      }
       return { ok:false, error:'fondo no encontrado: ' + q };
     }
     if(/^lista\s+(?:los\s+)?fondos/.test(c)){ await RemoteCache.refreshAll(false); return { ok:true, resultados: RemoteCache.wallpapers.map(w => ({ ruta:w.path })), total:RemoteCache.wallpapers.length }; }
@@ -2192,7 +2225,7 @@ function waitFor(fn, cb, timeout){
   const start = Date.now();
   const iv = setInterval(() => {
     if(fn()){ clearInterval(iv); cb(); }
-    else if(Date.now() - start > (timeout || 15000)){ clearInterval(iv); console.warn('[Remote] timeout esperando OS'); }
+    else if(Date.now() - start > (timeout || 15000)){ clearInterval(iv); console.warn('[Remote] timeout'); }
   }, 150);
 }
 waitFor(() => window.OSBridge && window.send && typeof window.OS_createWindow === 'function', () => {
@@ -2204,7 +2237,7 @@ waitFor(() => window.OSBridge && window.send && typeof window.OS_createWindow ==
 });
 window.OSRemote = {
   appOSMusic, appOSDocViewer, appOSBrowser, appOSWallpaper,
-  aplicarFondoRemoto, entrenarConDocumentos, entrenarConTexto, buscarEnEntrenados,
+  entrenarConDocumentos, entrenarConTexto, buscarEnEntrenados,
   refresh: () => RemoteCache.refreshAll(true),
   config: CFG, cache: RemoteCache
 };
