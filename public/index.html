@@ -55,8 +55,12 @@
 <script defer src="./js/16-autonomo.js"></script>
 <script defer src="./js/17-sync-github.js"></script>
 
-<!-- Mini-OS · se carga justo antes del boot para estar listo al login -->
+<!-- Mini-OS · base (crea ventanas, FS virtual, OSBridge) -->
 <script defer src="./js/18-mini-os.js"></script>
+
+<!-- ⭐ NUEVO · Módulo de archivos remotos (GitHub)
+     Música MP3 · Docs DOCX/PDF/TXT/MD · Navegador HTML · Entrenamiento -->
+<script defer src="./js/19-remote-files.js"></script>
 
 <!-- Arranque -->
 <script defer src="./js/14-boot.js"></script>
@@ -147,7 +151,7 @@
   </form>
 </div>
 
-<!-- ============ DOCK · FAB + Drawer tipo control-center ============ -->
+<!-- ============ DOCK · FAB + Drawer ============ -->
 <button id="dockFab" title="Abrir menú" aria-label="Abrir menú de ANIA">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
     <path d="M12 2v6M12 16v6M2 12h6M16 12h6"/>
@@ -171,7 +175,6 @@
   <div id="dockBody">
     <div class="dock-grid">
 
-      <!-- SECCIÓN: DATOS -->
       <div class="dock-section"><span>◆</span>DATOS<span>◆</span></div>
 
       <button class="dock-item" id="btnTasks" title="Agenda">
@@ -195,13 +198,11 @@
         <span class="dock-label">Biblioteca</span>
       </button>
 
-      <!-- ⭐ NUEVO · Estado de ánimo (sincronizado con #moodBubble) -->
       <button class="dock-item" id="btnMood" title="Estado de ánimo de Ania">
         <span class="dock-icon" id="dockMoodIcon" style="font-size:22px;line-height:1;">😊</span>
         <span class="dock-label">Ánimo</span>
       </button>
 
-      <!-- SECCIÓN: NÚCLEO -->
       <div class="dock-section"><span>◆</span>NÚCLEO<span>◆</span></div>
 
       <button class="dock-item" id="btnDashboard" title="Panel principal">
@@ -219,7 +220,6 @@
         <span class="dock-label">HUD</span>
       </button>
 
-      <!-- ⭐ NUEVO · Acceso al Mini-OS -->
       <button class="dock-item" id="btnMiniOS" title="Abrir escritorio Mini-OS">
         <span class="dock-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -235,7 +235,6 @@
         <span class="dock-label">Ajustes</span>
       </button>
 
-      <!-- SECCIÓN: OPERADOR -->
       <div class="dock-section"><span>◆</span>OPERADOR<span>◆</span></div>
 
       <button class="dock-item" id="btnInstall" title="Instalar app">
@@ -261,7 +260,6 @@
   </div>
 </div>
 
-<!-- ⭐ moodBubble oculto · el emoji ahora vive en el dock (#btnMood) -->
 <div id="moodBubble" title="Estado emocional de Ania" style="display:none;">😊</div>
 
 <button id="ambBtn" title="Detener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.2 11.2A3.9 3.9 0 0 0 6.5 19z"/></svg></button>
@@ -296,7 +294,6 @@
   <div class="sheetFoot"><button class="bigbtn" id="clearLib">VACIAR BIBLIOTECA</button></div>
 </div>
 
-<!-- ============ INSTALAR ============ -->
 <div class="overlay" id="installModal">
   <div class="modal">
     <h2>INSTALAR ANIA<button class="xbtn" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
@@ -313,7 +310,6 @@
   </div>
 </div>
 
-<!-- ============ AJUSTES ============ -->
 <div class="overlay" id="settingsModal">
   <div class="modal">
     <h2>AJUSTES<button class="xbtn" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
@@ -388,28 +384,16 @@
     </div>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">🌙 NÚCLEO AUTÓNOMO</h2>
-    <p class="dim" style="font-size:11px;margin-bottom:12px;">
-      Ania trabaja sola en segundo plano. Estas son sus reglas y últimas acciones.
-    </p>
-    <div id="panelAutonomo">
-      <div class="empty">Cargando...</div>
-    </div>
-
+    <div id="panelAutonomo"><div class="empty">Cargando...</div></div>
     <hr>
     <h2 style="font-size:12px;letter-spacing:.25em;color:var(--acc);">☁️ SYNC GITHUB</h2>
-    <p class="dim" style="font-size:11px;margin-bottom:8px;">Sincroniza tus reglas entre dispositivos a través de tu repositorio GitHub.</p>
-    <div class="frow">
-      <label>TOKEN</label>
-      <input type="password" id="ghTokenInput" placeholder="ghp_..." style="flex:1;">
-    </div>
+    <div class="frow"><label>TOKEN</label><input type="password" id="ghTokenInput" placeholder="ghp_..." style="flex:1;"></div>
     <button class="bigbtn" id="btnGuardarGhToken">GUARDAR TOKEN</button>
     <p class="dim" id="ghTokenStatus" style="font-size:10px;margin-top:6px;"></p>
-
     <button class="bigbtn" id="forgetGeo">OLVIDAR UBICACIÓN</button>
   </div>
 </div>
 
-<!-- ============ CAMBIO CONTRASEÑA ============ -->
 <div class="overlay" id="passModal">
   <div class="modal">
     <h2>CAMBIAR CONTRASEÑA
@@ -423,7 +407,6 @@
   </div>
 </div>
 
-<!-- ============ ADMIN ============ -->
 <div class="overlay" id="adminModal">
   <div class="modal" style="width:min(1000px,100%);max-width:1000px;">
     <h2>PANEL DE ADMINISTRACIÓN
@@ -459,7 +442,6 @@
   </div>
 </div>
 
-<!-- ============ PERFIL ============ -->
 <div class="overlay" id="perfilModal">
   <div class="modal" style="width:min(720px,100%);max-width:720px;">
     <h2>MI PERFIL
@@ -484,7 +466,6 @@
   </div>
 </div>
 
-<!-- ============ DASHBOARD ============ -->
 <div class="overlay" id="dashboardModal">
   <div class="modal" style="width:min(1100px,100%);max-width:1100px;padding:16px 18px;">
     <h2 style="margin-bottom:14px;">PANEL PRINCIPAL
@@ -494,7 +475,6 @@
   </div>
 </div>
 
-<!-- ============ JARVIS ============ -->
 <div class="overlay" id="jarvisModal">
   <div class="modal" style="width:min(1100px,100%);max-width:1100px;">
     <h2>PANEL JARVIS
@@ -513,7 +493,6 @@
   </div>
 </div>
 
-<!-- ============ MINI-OS · marcado del escritorio ============ -->
 <div id="osDesktop">
   <div id="osWallpaper"></div>
   <div id="osWinLayer"></div>
@@ -539,7 +518,6 @@
   </div>
 </div>
 
-<!-- Botón flotante volver a ANIA (solo dentro del OS) -->
 <button id="returnFab" title="Volver a ANIA" aria-label="Volver a ANIA">
   <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
 </button>
