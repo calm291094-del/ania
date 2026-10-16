@@ -1,7 +1,8 @@
-// ania-agent.js v1.2 · puente local de ANIA con tu PC (Windows)
-// ⭐ FIX #4 · Sin inyección de comandos: execFile + validación estricta
+// ania-agent.js v1.3 · puente local de ANIA con tu PC (Windows)
+// ⭐ FIX #4 · Sin inyección de comandos: execFile/spawn + validación estricta
+// ⭐ v1.3 · runExe + listDir (lanzar programas portables)
 const { WebSocketServer } = require('ws');
-const { execFile } = require('child_process');
+const { execFile, spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -25,7 +26,10 @@ const ROOTS = [
   path.join(os.homedir(), 'Videos'),
   path.join(os.homedir(), 'Music'),
   'C:\\Users\\Public',
-  'D:\\', 'E:\\'
+  'C:\\Portables',      // ⭐ NUEVO · por si guardas .exe portables ahí
+  'C:\\Program Files',
+  'C:\\Program Files (x86)',
+  'D:\\', 'E:\\', 'F:\\'
 ].filter(p => { try{ return fs.existsSync(p); }catch(e){ return false; } });
 
 const APPS = {
@@ -35,11 +39,16 @@ const APPS = {
   code:'code', vscode:'code', spotify:'spotify'
 };
 
+// Extensiones permitidas para ejecutar
+const EXE_EXT = /\.(exe|bat|cmd|ps1|lnk|com)$/i;
+
 if(!fs.existsSync(SHOTS)) fs.mkdirSync(SHOTS, {recursive:true});
 
 const wss = new WebSocketServer({ host:'127.0.0.1', port:PORT });
-console.log('ANIA AGENTE v1.2 · ws://127.0.0.1:'+PORT);
+console.log('ANIA AGENTE v1.3 · ws://127.0.0.1:'+PORT);
 console.log('Raíces permitidas:', ROOTS.join(' | '));
+console.log('Lanzador .exe: ACTIVO');
+console.log('¿Corriendo cómo admin?', process.env.USERNAME || process.env.USER);
 
 /* ============================================================
    HELPERS SEGUROS
@@ -54,7 +63,6 @@ function _execDirecto(bin, args, cb){
   execFile(bin, args || [], { windowsHide:true, timeout:5000 }, err => cb && cb(err));
 }
 function _abrirNativo(target, cb){
-  // rundll32 url.dll,FileProtocolHandler es seguro y no pasa por cmd.exe
   execFile('rundll32', ['url.dll,FileProtocolHandler', target],
     { windowsHide:true, timeout:5000 }, err => cb && cb(err));
 }
@@ -94,12 +102,46 @@ function walk(root, pattern, out, depth, limit){
     if(e.name.startsWith('$') || e.name.startsWith('.')) continue;
     const full = path.join(root, e.name);
     if(e.isDirectory()){
-      if(/node_modules|AppData|Windows|WinSxS/i.test(e.name)) continue;
+      if(/node_modules|AppData|Windows|WinSxS|\\\$RECYCLE\.BIN/i.test(e.name)) continue;
       walk(full, pattern, out, depth+1, limit);
     } else if(e.name.toLowerCase().includes(pattern)){
       out.push({name:e.name, path:full});
     }
   }
+}
+
+/* ============================================================
+   FIX · VALIDACIÓN DE RUTA PARA LANZAMIENTO SEGURO
+============================================================ */
+function _rutaEjecutableOk(p){
+  if (typeof p !== 'string' || !p) return { ok:false, error:'ruta vacía' };
+  // Normalizar y resolver absoluta
+  let abs;
+  try { abs = path.resolve(p); } catch(e){ return { ok:false, error:'ruta inválida' }; }
+  // Bloquear traversal
+  if (abs.includes('..')) return { ok:false, error:'ruta con .. no permitida' };
+  // Debe existir
+  if (!fs.existsSync(abs)) return { ok:false, error:'no existe: ' + abs };
+  // Debe ser archivo
+  let stat;
+  try { stat = fs.statSync(abs); } catch(e){ return { ok:false, error:'no accesible' }; }
+  if (!stat.isFile()) return { ok:false, error:'no es archivo' };
+  // Extensión permitida
+  if (!EXE_EXT.test(abs)) return { ok:false, error:'extensión no permitida (usa .exe/.bat/.cmd/.lnk)' };
+  // Debe estar dentro de alguna raíz permitida
+  const enRaiz = ROOTS.some(r => {
+    const rAbs = path.resolve(r).toLowerCase();
+    const aAbs = abs.toLowerCase();
+    return aAbs === rAbs || aAbs.startsWith(rAbs + path.sep);
+  });
+  if (!enRaiz){
+    // Permitimos también rutas bajo el home del usuario (portables en cualquier subcarpeta)
+    const home = os.homedir().toLowerCase();
+    if (!abs.toLowerCase().startsWith(home)){
+      return { ok:false, error:'fuera de raíces permitidas (mueve el .exe a Desktop/Documents/Downloads/C:\\Portables)' };
+    }
+  }
+  return { ok:true, abs };
 }
 
 /* ============================================================
@@ -110,7 +152,6 @@ wss.on('connection', ws=>{
   ws.on('message', async raw=>{
     let m; try{ m = JSON.parse(raw); }catch{ return; }
 
-    // ⭐ FIX #4 · comparación de tiempo constante
     if(!_tokenOk(m.token)){
       return ws.send(JSON.stringify({id:m.id, ok:false, error:'token inválido'}));
     }
@@ -146,6 +187,106 @@ wss.on('connection', ws=>{
             return ws.send(JSON.stringify({id:m.id, ok:false, error:'solo http(s)'}));
           _abrirNativo(u.toString(), ()=> ws.send(JSON.stringify({id:m.id, ok:true})));
           return;
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           ⭐ NUEVO · runExe · Lanza programas portables
+           ⭐ spawn + detached + unref → no bloquea el agente
+           ⭐ Args pasan como array (sin shell → sin inyección)
+        ═══════════════════════════════════════════════════════ */
+        case 'runExe': {
+          const check = _rutaEjecutableOk(m.path);
+          if (!check.ok) return ws.send(JSON.stringify({ id:m.id, ok:false, error:check.error }));
+
+          const abs = check.abs;
+          const args = Array.isArray(m.args) ? m.args.map(String).slice(0, 20) : [];
+          const cwd = m.cwd ? String(m.cwd) : path.dirname(abs);
+
+          console.log('▶ Lanzando:', abs, args.length ? '· args: ' + args.join(' ') : '');
+
+          try {
+            // .bat / .cmd / .ps1 necesitan shell para ejecutarse en Windows
+            const needsShell = /\.(bat|cmd|ps1)$/i.test(abs);
+            let child;
+            if (needsShell){
+              // Usar cmd /c o powershell según extensión — sin interpolar argumentos
+              if (/\.ps1$/i.test(abs)){
+                child = spawn('powershell', ['-NoProfile','-ExecutionPolicy','Bypass','-File', abs, ...args], {
+                  cwd, detached:true, stdio:'ignore', windowsHide:false
+                });
+              } else {
+                child = spawn('cmd', ['/c', abs, ...args], {
+                  cwd, detached:true, stdio:'ignore', windowsHide:false
+                });
+              }
+            } else {
+              // .exe, .com, .lnk directos — sin shell (más seguro)
+              child = spawn(abs, args, {
+                cwd, detached:true, stdio:'ignore', windowsHide:false
+              });
+            }
+            child.unref();
+            return ws.send(JSON.stringify({
+              id:m.id, ok:true,
+              pid: child.pid,
+              path: abs,
+              args: args,
+              cwd: cwd
+            }));
+          } catch(e){
+            console.error('✗ Error lanzando:', e.message);
+            return ws.send(JSON.stringify({ id:m.id, ok:false, error:e.message }));
+          }
+        }
+
+        /* ⭐ NUEVO · listDir · Muestra contenido de una carpeta
+           Útil para el explorador de la interfaz (elegir .exe) */
+        case 'listDir': {
+          const p = String(m.path || os.homedir());
+          let abs;
+          try { abs = path.resolve(p); } catch(e){
+            return ws.send(JSON.stringify({id:m.id, ok:false, error:'ruta inválida'}));
+          }
+          if (!fs.existsSync(abs))
+            return ws.send(JSON.stringify({id:m.id, ok:false, error:'no existe'}));
+          try {
+            const entries = fs.readdirSync(abs, { withFileTypes:true });
+            const out = entries.slice(0, 500).map(e => {
+              const full = path.join(abs, e.name);
+              let size = null;
+              try { if (e.isFile()) size = fs.statSync(full).size; } catch(_){}
+              return {
+                name: e.name,
+                path: full,
+                isDir: e.isDirectory(),
+                size: size,
+                isExe: e.isFile() && EXE_EXT.test(e.name)
+              };
+            });
+            return ws.send(JSON.stringify({ id:m.id, ok:true, path:abs, entries:out }));
+          } catch(e){
+            return ws.send(JSON.stringify({ id:m.id, ok:false, error:'no puedo leer: ' + e.message }));
+          }
+        }
+
+        /* ⭐ NUEVO · listExes · Busca .exe en raíces permitidas */
+        case 'listExes': {
+          const out = [];
+          const max = 200;
+          for (const r of ROOTS){
+            if (out.length >= max) break;
+            try {
+              const entries = fs.readdirSync(r, { withFileTypes:true });
+              for (const e of entries){
+                if (out.length >= max) break;
+                if (!e.isFile()) continue;
+                if (EXE_EXT.test(e.name)){
+                  out.push({ name:e.name, path:path.join(r, e.name) });
+                }
+              }
+            } catch(_){}
+          }
+          return ws.send(JSON.stringify({ id:m.id, ok:true, total:out.length, exes:out }));
         }
 
         case 'search': {
@@ -202,7 +343,7 @@ wss.on('connection', ws=>{
           });
 
         case 'list':
-          return ws.send(JSON.stringify({id:m.id, ok:true, roots:ROOTS, apps:Object.keys(APPS)}));
+          return ws.send(JSON.stringify({id:m.id, ok:true, roots:ROOTS, apps:Object.keys(APPS), version:'1.3'}));
 
         default:
           return ws.send(JSON.stringify({id:m.id, ok:false, error:'comando desconocido: '+m.type}));
