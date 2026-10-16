@@ -1,0 +1,917 @@
+Introducción al Deep Learning
+
+Deep Learning
+
+El Deep Learning es sin duda el área de investigación más popular dentro del campo de la Inteligencia Artificial. La mayoría de las nuevas investigaciones que se realizan, trabajan con modelos basados en las técnicas de Deep Learning; ya que las mismas han logrado resultados sorprendes en campos como procesamiento del lenguaje natural y Visión por computadora. Pero... ¿qué es este misterioso concepto que ha ganado tanta popularidad? y... ¿cómo se relaciona con el campo de la Inteligencia Artificial y el Machine Learning?.
+Inteligencia artificial, Machine learning y Deep learning
+
+En general se suelen utilizar los términos de Inteligencia Artificial, Machine Learning y Deep Learning en forma intercambiada. Sin embargo, éstos términos no son los mismo y abarcan distintas cosas.
+Inteligencia Artificial
+
+El término Inteligencia Artificial es el más general y engloba a los campos de Machine Learning y Deep Learning junto con otras técnicas como los algoritmos de búsqueda, el razonamiento simbólico, el razonamiento lógico y la estadística. Nació en los años 1950s, cuando un grupo de pioneros de la computación comenzaron a preguntarse si se podía hacer que las computadoras pensaran. Una definición concisa de la Inteligencia Artificial sería: el esfuerzo para automatizar las tareas intelectuales que normalmente realizan los seres humanos.
+Machine Learning
+
+El Machine Learning o Aprendizaje automático se refiere a un amplio conjunto de técnicas informáticas que nos permiten dar a las computadoras la capacidad de aprender sin ser explícitamente programadas. Hay muchos tipos diferentes de algoritmos de Aprendizaje automático, entre los que se encuentran el aprendizaje por refuerzo, los algoritmos genéticos, el aprendizaje basado en reglas de asociación, los algoritmos de agrupamiento, los árboles de decisión, las máquinas de vectores de soporte y las redes neuronales. Actualmente, los algoritmos más populares dentro de este campo son los de Deep Learning.
+Deep Learning
+
+El Deep Learning o aprendizaje profundo es un subcampo dentro del Machine Learning, el cuál utiliza distintas estructuras de redes neuronales para lograr el aprendizaje de sucesivas capas de representaciones cada vez más significativas de los datos. El profundo o deep en Deep Learning hace referencia a la cantidad de capas de representaciones que se utilizan en el modelo; en general se suelen utilizar decenas o incluso cientos de capas de representación. las cuales aprenden automáticamente a medida que el modelo es entrenado con los datos.
+
+Deep Learning
+¿Qué es el Deep Learning?
+
+Antes de poder entender que es el Deep Learning, debemos en primer lugar conocer dos conceptos fundamentales: las redes neuronales artificiales y la Propagación hacia atrás.
+Redes Neuronales
+
+Las redes neuronales son un modelo computacional basado en un gran conjunto de unidades neuronales simples (neuronas artificiales), de forma aproximadamente análoga al comportamiento observado en los axones de las neuronas en los cerebros biológicos.
+
+Cada una de estas neuronas simples, va a tener una forma similar al siguiente diagrama:
+
+En donde sus componentes son:
+
+    x1,x2,…,xn
+
+: Los datos de entrada en la neurona, los cuales también puede ser que sean producto de la salida de otra neurona de la red.
+
+x0
+
+: La unidad de sesgo; un valor constante que se le suma a la entrada de la función de activación de la neurona. Generalmente tiene el valor 1. Este valor va a permitir cambiar la función de activación hacia la derecha o izquierda, otorgándole más flexibilidad para aprender a la neurona.
+
+w0,w1,w2,…,wn
+
+    : Los pesos relativos de cada entrada. Tener en cuenta que incluso la unidad de sesgo tiene un peso.
+
+    a: La salida de la neurona. Que va a ser calculada de la siguiente forma:
+
+a=f(?i=0nwi·xi)
+
+Aquí f
+
+es la función de activación de la neurona. Esta función es la que le otorga tanta flexibilidad a las redes neuronales y le permite estimar complejas relaciones no lineales en los datos. Puede ser tanto una función lineal, una función logística, hiperbólica, etc.
+
+Cada unidad neuronal está conectada con muchas otras y los enlaces entre ellas pueden incrementar o inhibir el estado de activación de las neuronas adyacentes. Estos sistemas aprenden y se forman a sí mismos, en lugar de ser programados de forma explícita, y sobresalen en áreas donde la detección de soluciones o características es difícil de expresar con la programación convencional.
+
+Propagación hacia atrás
+
+La propagación hacia atrás o backpropagation es un algoritmo que funciona mediante la determinación de la pérdida (o error) en la salida y luego propagándolo de nuevo hacia atrás en la red. De esta forma los pesos se van actualizando para minimizar el error resultante de cada neurona. Este algoritmo es lo que les permite a las redes neuronales aprender.
+
+Backprop
+¿Cómo funciona el Deep Learning?
+
+En general, cualquier técnica de Machine Learning trata de realizar la asignación de entradas (por ejemplo, imágenes) a salidas objetivo (Por ejemplo, la etiqueta "gato"), mediante la observación de un gran número de ejemplos de entradas y salidas. El Deep Learning realiza este mapeo de entrada-a-objetivo por medio de una red neuronal artificial que está compuesta de un número grande de capas dispuestas en forma de jerarquía. La red aprende algo simple en la capa inicial de la jerarquía y luego envía esta información a la siguiente capa. La siguiente capa toma esta información simple, lo combina en algo que es un poco más complejo, y lo pasa a la tercer capa. Este proceso continúa de forma tal que cada capa de la jerarquía construye algo más complejo de la entrada que recibió de la capa anterior. De esta forma, la red irá aprendiendo por medio de la exposición a los datos de ejemplo.
+
+La especificación de lo que cada capa hace a la entrada que recibe es almacenada en los pesos de la capa, que en esencia, no son más que números. Utilizando terminología más técnica podemos decir que la transformación de datos que se produce en la capa es parametrizada por sus pesos. Para que la red aprenda debemos encontrar los pesos de todas las capas de forma tal que la red realice un mapeo perfecto entre los ejemplos de entrada con sus respectivas salidas objetivo. Pero el problema reside en que una red de Deep Learning puede tener millones de parámetros, por lo que encontrar el valor correcto de todos ellos puede ser una tarea realmente muy difícil, especialmente si la modificación del valor de uno de ellos afecta a todos los demás.
+
+Deep Learning
+
+Para poder controlar algo, en primer lugar debemos poder observarlo. En este sentido, para controlar la salida de la red neuronal, deberíamos poder medir cuan lejos esta la salida que obtuvimos de la que se esperaba obtener. Este es el trabajo de la función de pérdida de la red. Esta función toma las predicciones que realiza el modelo y los valores objetivos (lo que realmente esperamos que la red produzca), y calcula cuán lejos estamos de ese valor, de esta manera, podemos capturar que tan bien esta funcionando el modelo para el ejemplo especificado. El truco fundamental del Deep Learning es utilizar el valor que nos devuelve esta función de pérdida para retroalimentar la red y ajustar los pesos en la dirección que vayan reduciendo la pérdida del modelo para cada ejemplo. Este ajuste, es el trabajo del optimizador, el cuál implementa la propagación hacia atrás.
+
+Deep Learning
+
+Resumiendo, el funcionamiento sería el siguiente: inicialmente, los pesos de cada capa son asignados en forma aleatoria, por lo que la red simplemente implementa una serie de transformaciones aleatorias. En este primer paso, obviamente la salida del modelo dista bastante del ideal que deseamos obtener, por lo que el valor de la función de pérdida va a ser bastante alto. Pero a medida que la red va procesando nuevos casos, los pesos se van ajustando de forma tal de ir reduciendo cada vez más el valor de la función de pérdida. Este proceso es el que se conoce como entrenamiento de la red, el cual repetido una suficiente cantidad de veces, generalmente 10 iteraciones de miles de ejemplos, logra que los pesos se ajusten a los que minimizan la función de pérdida. Una red que ha minimizado la pérdida es la que logra los resultados que mejor se ajustan a las salidas objetivo, es decir, que el modelo se encuentra entrenado.
+Arquitecturas de Deep Learning
+
+La estructura de datos fundamental de una red neuronal está vagamente inspirada en el cerebro humano. Cada una de nuestras células cerebrales (neuronas) está conectada a muchas otras neuronas por sinapsis. A medida que experimentamos e interactuamos con el mundo, nuestro cerebro crea nuevas conexiones, refuerza algunas conexiones y debilita a los demás. De esta forma, en nuestro cerebro se desarrollan ciertas regiones que se especializan en el procesamiento de determinadas entradas. Así vamos a tener un área especializada en la visión, otra que se especializa en la audición, otra para el lenguaje, etc. De forma similar, dependiendo del tipo de entradas con las que trabajemos, van a existir distintas arquitecturas de redes neuronales que mejor se adaptan para procesar esa información. Algunas de las arquitecturas más populares son:
+Redes neuronales prealimentadas
+
+Las Redes neuronales prealimentadas fueron las primeras que se desarrollaron y son el modelo más sencillo. En estas redes la información se mueve en una sola dirección: hacia adelante. Los principales exponentes de este tipo de arquitectura son el perceptrón y el perceptrón multicapa. Se suelen utilizar en problemas de clasificación simples.
+
+Perceptrón multicapa
+Redes neuronales convolucionales
+
+Las redes neuronales convolucionales son muy similares a las redes neuronales ordinarias como el perceptron multicapa; se componen de neuronas que tienen pesos y sesgos que pueden aprender. Cada neurona recibe algunas entradas, realiza un producto escalar y luego aplica una función de activación. Al igual que en el perceptron multicapa también vamos a tener una función de pérdida o costo sobre la última capa, la cual estará totalmente conectada. Lo que diferencia a las redes neuronales convolucionales es que suponen explícitamente que las entradas son imágenes, lo que nos permite codificar ciertas propiedades en la arquitectura; permitiendo ganar en eficiencia y reducir la cantidad de parámetros en la red.
+
+En general, las redes neuronales convolucionales van a estar construidas con una estructura que contendrá 3 tipos distintos de capas:
+
+    Una capa convolucional, que es la que le da le nombre a la red.
+    Una capa de reducción o de pooling, la cual va a reducir la cantidad de parámetros al quedarse con las características más comunes.
+    Una capa clasificadora totalmente conectada, la cual nos va dar el resultado final de la red.
+
+Algunas implementaciones específicas que podemos encontrar sobre este tipo de redes son: inception v3, ResNet, VGG16 y xception, entre otras. Todas ellas han logrado excelentes resultados.
+
+Redes neuronales convolucionales
+Redes neuronales recurrentes
+
+Los seres humanos no comenzamos nuestro pensamiento desde cero cada segundo, sino que los mismos tienen una persistencia. Las Redes neuronales prealimentadas tradicionales no cuentan con esta persistencia, y esto parece una deficiencia importante. Las Redes neuronales recurrentes abordan este problema. Son redes con bucles de retroalimentación, que permiten que la información persista.
+
+Una Red neural recurrente puede ser pensada como una red con múltiples copias de ella misma, en las que cada una de ellas pasa un mensaje a su sucesor. Esta naturaleza en forma de cadena revela que las Redes neurales recurrentes están íntimamente relacionadas con las secuencias y listas; por lo que son ideales para trabajar con este tipo de datos. En los últimos años, ha habido un éxito increíble aplicando Redes neurales recurrentes a una variedad de problemas como: reconocimiento de voz, modelado de lenguaje, traducción, subtítulos de imágenes y la lista continúa.
+
+Las redes de memoria de largo plazo a corto plazo - generalmente llamadas LSTMs - son un tipo especial de Redes neurales recurrentes, capaces de aprender dependencias a largo plazo. Ellas también tienen una estructura como cadena, pero el módulo de repetición tiene una estructura diferente. En lugar de tener una sola capa de red neuronal, tiene cuatro, que interactúan de una manera especial permitiendo tener una memoria a más largo plazo.
+
+Redes neuronales recurrentes
+
+Para más información sobre diferentes arquitecturas de redes neuronales pueden visitar el siguiente artículo de wikipedia.
+Logros del Deep Learning
+
+En los últimos años el Deep Learning ha producido toda una revolución en el campo del Machine Learning, con resultados notables en todos los problemas de percepción, como ver y escuchar, problemas que implican habilidades que parecen muy naturales e intuitivas para los seres humanos, pero que desde hace tiempo se han mostrado difíciles para las máquinas. En particular, el Deep Learning ha logrado los siguientes avances, todos ellos en áreas históricamente difíciles del Machine Learning.
+
+    Un nivel casi humano para la clasificación de imágenes.
+    Un nivel casi humano para el reconocimiento del lenguaje hablado.
+    Un nivel casi humano en el reconocimiento de escritura.
+    Grandes mejoras en traducciones de lenguas.
+    Grandes mejoras en conversaciones text-to-speech.
+    Asistentes digitales como Google Now o Siri.
+    Un nivel casi humano en autos autónomos.
+    Mejores resultados de búsqueda en la web.
+    Grandes mejoras para responder preguntas en lenguaje natural.
+    Alcanzado Nivel maestro (superior al humano) en varios juegos.
+
+En muchos sentidos, el Deep Learning todavía sigue siendo un campo misterioso para explorar, por lo que seguramente veremos nuevos avances en nuevas áreas utilizando estas técnicas. Tal vez algún día el Deep Learning ayuda a los seres humanos a hacer ciencia, desarrollar software y mucho más.
+¿Por qué estos sorprendentes resultados surgen ahora?
+
+Muchos de los conceptos del Deep Learning se desarrollaron en los años 80s y 90s, algunos incluso mucho antes. Sin embargo, los primeros resultados exitosos del Deep Learning surgieron en los últimos 5 años. ¿qué fue lo que cambio para lograr la popularidad y éxito de los modelos basados en Deep Learning en estos últimos años?
+
+Si bien existen múltiples factores para explicar esta revolución del Deep Learning, los dos principales componentes parecen ser la disponibilidad de masivos volúmenes de datos, lo que actualmente se conoce bajo el nombre de Big Data; y el progreso en el poder de computo, especialmente gracias a los GPUs. Entonces, dentro de los factores que explican esta popularidad de los modelos de Deep Learning podemos encontrar:
+
+    La disponibilidad de conjuntos de datos enormes y de buena calidad. Gracias a la revolución digital en que nos encontramos, podemos generar conjuntos de datos enormes con los cuales alimentar a los algoritmos de Deep Learning, los cuales necesitan de muchos datos para poder generalizar.
+
+    Computación paralela masiva con GPUs. En líneas generales, los modelos de redes neuronales no son más que complicados cálculos numéricos que se realizan en paralelo. Gracias al desarrollo de los GPUs estos cálculos ahora se pueden realizar en forma mucho más rápida, permitiendo que podamos entrenar modelos más profundos y grandes.
+
+    Funciones de activación amigables para Backpropagation. La progación hacia atrás o Backpropagation es el algoritmo fundamental que hace funcionar a las redes neuronales; pero la forma en que trabaja implica cálculos realmente complicados. La transición desde funciones de activación como tanh o sigmoid a funciones como ReLU o SELU han simplificado estos problemas.
+
+    Nuevas arquitecturas. Arquitecturas como Resnets, inception y GAN mantienen el campo actualizado y continúan aumentando las flexibilidad de los modelos.
+
+    Nuevas técnicas de regularización. Técnicas como dropout, batch normalization y data-augmentation nos permiten entrenar redes más grandes con menos peligro de sobreajuste.
+
+    Optimizadores más robustos. La optimización es fundamental para el funcionamiento de las redes neuronales. Mejoras sobre el tradicional procedimiento de SGD, como ADAM han ayudado a mejorar el rendimiento de los modelos.
+
+    Plataformas de software. Herramientas como TensorFlow, Theano, Keras, CNTK, PyTorch, Chainer, y mxnet nos permiten crear prototipos en forma más rápida y trabajar con GPUs sin tantas complicaciones. Nos permiten enfocarnos en la estructura del modelo sin tener que preocuparnos por los detalles de más bajo nivel.
+
+Otra razón por la que el Deep Learning ha tenido tanta repercusión últimamente además de ofrecer un mejor rendimiento en muchos problemas; es que el Deep Learning esta haciendo la resolución de problemas mucho más fácil, ya que automatiza completamente lo que solía ser uno de los pasos más difíciles y cruciales en el flujo de trabajo de Machine Learning: la ingeniería de atributos. Antes del Deep Learning, para poder entrenar un modelo, primero debíamos refinar las entradas para adaptarlas al tipo de transformación del modelo; teníamos que cuidadosamente seleccionar los atributos más representativos y desechar los poco informativos. El Deep Learning, en cambio, automatiza este proceso; aprendemos todos los atributos de una sola pasada y el mismo modelo se encarga de adaptarse y quedarse con lo más representativo.
+¿Cómo mantenerse actualizado en el campo de Deep Learning?
+
+El campo del Deep Learning se mueve muy rápidamente, con varios papers que se publican por mes; por tal motivo, mantenerse actualizado con las últimas tendencias del campo puede ser bastante complicado. Algunos consejos pueden ser:
+
+    Estarse atento a las publicaciones en arxiv, especialmente a la sección de machine learning. La mayoría de los papers más relevantes, los vamos a poder encontrar en esa plataforma.
+
+    Seguir el blog de keras en el cual podemos encontrar como implementar varios modelos utilizando esta genial librería.
+
+    Seguir el blog de openai en dónde detallan las investigaciones que van realizando, especialmente trabajando con GANs.
+
+    Seguir el blog de Google research; en dónde se viene haciendo bastante foco en los modelos de Deep Learning.
+
+    Utilizar la sección de Machine Learning de reddit.
+
+    Suscribirse al podcast Talking machines; en dónde se entrevista a los principales exponentes del campo de la Inteligencia Artificial.
+
+    Por último, obviamente estar atentos a las publicaciones que se realizan en IAAR.
+
+Introducción al Machine Learning
+
+Machine Learning
+
+Una de las ramas de estudio que cada vez esta ganando más popularidad dentro de las ciencias de la computación es el aprendizaje automático o Machine Learning. Muchos de los servicios que utilizamos en nuestro día a día como google, gmail, netflix, spotify o amazon se valen de las herramientas que les brinda el Machine Learning para alcanzar un servicio cada vez más personalizado y lograr así ventajas competitivas sobre sus rivales.
+¿Qué es Machine Learning?
+
+Pero, ¿qué es exactamente Machine Learning?. El Machine Learning es el diseño y estudio de las herramientas informáticas que utilizan la experiencia pasada para tomar decisiones futuras; es el estudio de programas que pueden aprender de los datos. El objetivo fundamental del Machine Learning es generalizar, o inducir una regla desconocida a partir de ejemplos donde esa regla es aplicada. El ejemplo más típico donde podemos ver el uso del Machine Learning es en el filtrado de los correo basura o spam. Mediante la observación de miles de correos electrónicos que han sido marcados previamente como basura, los filtros de spam aprenden a clasificar los mensajes nuevos. El Machine Learning combina conceptos y técnicas de diferentes áreas del conocimiento, como las matemáticas, estadísticas y las ciencias de la computación; por tal motivo, hay muchas maneras de aprender la disciplina.
+Tipos de Machine Learning
+
+El Machine Learning tiene una amplia gama de aplicaciones, incluyendo motores de búsqueda, diagnósticos médicos, detección de fraude en el uso de tarjetas de crédito, análisis del mercado de valores, clasificación de secuencias de ADN, reconocimiento del habla y del lenguaje escrito, juegos y robótica. Pero para poder abordar cada uno de estos temas es crucial en primer lugar distinguir los distintos tipos de problemas de Machine Learning con los que nos podemos encontrar.
+Aprendizaje supervisado
+
+En los problemas de aprendizaje supervisado se enseña o entrena al algoritmo a partir de datos que ya vienen etiquetados con la respuesta correcta. Cuanto mayor es el conjunto de datos más el algoritmo puede aprender sobre el tema. Una vez concluido el entrenamiento, se le brindan nuevos datos, ya sin las etiquetas de las respuestas correctas, y el algoritmo de aprendizaje utiliza la experiencia pasada que adquirió durante la etapa de entrenamiento para predecir un resultado. Esto es similar al método de aprendizaje que se utiliza en las escuelas, donde se nos enseñan problemas y las formas de resolverlos, para que luego podamos aplicar los mismos métodos en situaciones similares.
+Aprendizaje no supervisado
+
+En los problemas de aprendizaje no supervisado el algoritmo es entrenado usando un conjunto de datos que no tiene ninguna etiqueta; en este caso, nunca se le dice al algoritmo lo que representan los datos. La idea es que el algoritmo pueda encontrar por si solo patrones que ayuden a entender el conjunto de datos. El aprendizaje no supervisado es similar al método que utilizamos para aprender a hablar cuando somos bebes, en un principio escuchamos hablar a nuestros padres y no entendemos nada; pero a medida que vamos escuchando miles de conversaciones, nuestro cerebro comenzará a formar un modelo sobre cómo funciona el lenguaje y comenzaremos a reconocer patrones y a esperar ciertos sonidos.
+Aprendizaje por refuerzo
+
+En los problemas de aprendizaje por refuerzo, el algoritmo aprende observando el mundo que le rodea. Su información de entrada es el feedback o retroalimentación que obtiene del mundo exterior como respuesta a sus acciones. Por lo tanto, el sistema aprende a base de ensayo-error. Un buen ejemplo de este tipo de aprendizaje lo podemos encontrar en los juegos, donde vamos probando nuevas estrategias y vamos seleccionando y perfeccionando aquellas que nos ayudan a ganar el juego. A medida que vamos adquiriendo más practica, el efecto acumulativo del refuerzo a nuestras acciones victoriosas terminará creando una estrategia ganadora.
+Sobreajuste
+
+Como mencionamos cuando definimos al Machine Learning, la idea fundamental es encontrar patrones que podamos generalizar para luego poder aplicar esta generalización sobre los casos que todavía no hemos observado y realizar predicciones. Pero también puede ocurrir que durante el entrenamiento solo descubramos casualidades en los datos que se parecen a patrones interesantes, pero que no generalicen. Esto es lo que se conoce con el nombre de sobreajuste o sobreentrenamiento.
+
+El sobreajuste es la tendencia que tienen la mayoría de los algoritmos de Machine Learning a ajustarse a unas características muy específicas de los datos de entrenamiento que no tienen relación causal con la función objetivo que estamos buscando para generalizar. El ejemplo más extremo de un modelo sobreajustado es un modelo que solo memoriza las respuestas correctas; este modelo al ser utilizado con datos que nunca antes ha visto va a tener un rendimiento azaroso, ya que nunca logró generalizar un patrón para predecir.
+Como evitar el sobreajuste
+
+Como mencionamos anteriormente, todos los modelos de Machine Learning tienen tendencia al sobreajuste; es por esto que debemos aprender a convivir con el mismo y tratar de tomar medidas preventivas para reducirlo lo más posible. Las dos principales estrategias para lidiar son el sobreajuste son: la retención de datos y la validación cruzada.
+
+En el primer caso, la idea es dividir nuestro conjunto de datos, en uno o varios conjuntos de entrenamiento y otro/s conjuntos de evaluación. Es decir, que no le vamos a pasar todos nuestros datos al algoritmo durante el entrenamiento, sino que vamos a retener una parte de los datos de entrenamiento para realizar una evaluación de la efectividad del modelo. Con esto lo que buscamos es evitar que los mismos datos que usamos para entrenar sean los mismos que utilizamos para evaluar. De esta forma vamos a poder analizar con más precisión como el modelo se va comportando a medida que más lo vamos entrenando y poder detectar el punto crítico en el que el modelo deja de generalizar y comienza a sobreajustarse a los datos de entrenamiento.
+
+La validación cruzada es un procedimiento más sofisticado que el anterior. En lugar de solo obtener una simple estimación de la efectividad de la generalización; la idea es realizar un análisis estadístico para obtener otras medidas del rendimiento estimado, como la media y la varianza, y así poder entender cómo se espera que el rendimiento varíe a través de los distintos conjuntos de datos. Esta variación es fundamental para la evaluación de la confianza en la estimación del rendimiento. La validación cruzada también hace un mejor uso de un conjunto de datos limitado; ya que a diferencia de la simple división de los datos en uno el entrenamiento y otro de evaluación; la validación cruzada calcula sus estimaciones sobre todo el conjunto de datos mediante la realización de múltiples divisiones e intercambios sistemáticos entre datos de entrenamiento y datos de evaluación.
+Pasos para construir un modelo de machine learning
+
+Construir un modelo de Machine Learning, no se reduce solo a utilizar un algoritmo de aprendizaje o utilizar una librería de Machine Learning; sino que es todo un proceso que suele involucrar los siguientes pasos:
+
+    Recolectar los datos. Podemos recolectar los datos desde muchas fuentes, podemos por ejemplo extraer los datos de un sitio web o obtener los datos utilizando una API o desde una base de datos. Podemos también utilizar otros dispositivos que recolectan los datos por nosotros; o utilizar datos que son de dominio público. El número de opciones que tenemos para recolectar datos no tiene fin!. Este paso parece obvio, pero es uno de los que más complicaciones trae y más tiempo consume.
+
+    Preprocesar los datos. Una vez que tenemos los datos, tenemos que asegurarnos que tiene el formato correcto para nutrir nuestro algoritmo de aprendizaje. Es prácticamente inevitable tener que realizar varias tareas de preprocesamiento antes de poder utilizar los datos. Igualmente este punto suele ser mucho más sencillo que el paso anterior.
+
+    Explorar los datos. Una vez que ya tenemos los datos y están con el formato correcto, podemos realizar un pre análisis para corregir los casos de valores faltantes o intentar encontrar a simple vista algún patrón en los mismos que nos facilite la construcción del modelo. En esta etapa suelen ser de mucha utilidad las medidas estadísticas y los gráficos en 2 y 3 dimensiones para tener una idea visual de como se comportan nuestros datos. En este punto podemos detectar valores atípicos que debamos descartar; o encontrar las características que más influencia tienen para realizar una predicción.
+
+    Entrenar el algoritmo. Aquí es donde comenzamos a utilizar las técnicas de Machine Learning realmente. En esta etapa nutrimos al o los algoritmos de aprendizaje con los datos que venimos procesando en las etapas anteriores. La idea es que los algoritmos puedan extraer información útil de los datos que le pasamos para luego poder hacer predicciones.
+
+    Evaluar el algoritmo. En esta etapa ponemos a prueba la información o conocimiento que el algoritmo obtuvo del entrenamiento del paso anterior. Evaluamos que tan preciso es el algoritmo en sus predicciones y si no estamos muy conforme con su rendimiento, podemos volver a la etapa anterior y continuar entrenando el algoritmo cambiando algunos parámetros hasta lograr un rendimiento aceptable.
+
+    Utilizar el modelo. En esta ultima etapa, ya ponemos a nuestro modelo a enfrentarse al problema real. Aquí también podemos medir su rendimiento, lo que tal vez nos obligue a revisar todos los pasos anteriores.
+
+Librerías de Python para machine learning
+
+Como siempre me gusta comentar, una de las grandes ventajas que ofrece Python sobre otros lenguajes de programación; es lo grande y prolifera que es la comunidad de desarrolladores que lo rodean; comunidad que ha contribuido con una gran variedad de librerías de primer nivel que extienden la funcionalidades del lenguaje. Para el caso de Machine Learning, las principales librerías que podemos utilizar son:
+Scikit-Learn
+
+Scikit-learn es la principal librería que existe para trabajar con Machine Learning, incluye la implementación de un gran número de algoritmos de aprendizaje. La podemos utilizar para clasificaciones, extraccion de características, regresiones, agrupaciones, reducción de dimensiones, selección de modelos, o preprocesamiento. Posee una API que es consistente en todos los modelos y se integra muy bien con el resto de los paquetes científicos que ofrece Python. Esta librería también nos facilita las tareas de evaluación, diagnostico y validaciones cruzadas ya que nos proporciona varios métodos de fábrica para poder realizar estas tareas en forma muy simple.
+Statsmodels
+
+Statsmodels es otra gran librería que hace foco en modelos estadísticos y se utiliza principalmente para análisis predictivos y exploratorios. Al igual que Scikit-learn, también se integra muy bien con el resto de los paquetes científicos de Python. Si deseamos ajustar modelos lineales, hacer una análisis estadístico, o tal vez un poco de modelado predictivo, entonces Statsmodels es la librería ideal. Las pruebas estadísticas que ofrece son bastante amplias y abarcan tareas de validación para la mayoría de los casos.
+PyMC
+
+pyMC es un módulo de Python que implementa modelos estadísticos bayesianos, incluyendo la cadena de Markov Monte Carlo(MCMC). pyMC ofrece funcionalidades para hacer el análisis bayesiano lo mas simple posible. Incluye los modelos bayesianos, distribuciones estadísticas y herramientas de diagnostico para la covarianza de los modelos. Si queremos realizar un análisis bayesiano esta es sin duda la librería a utilizar.
+NTLK
+
+NLTK es la librería líder para el procesamiento del lenguaje natural o NLP por sus siglas en inglés. Proporciona interfaces fáciles de usar a más de 50 cuerpos y recursos léxicos, como WordNet, junto con un conjunto de bibliotecas de procesamiento de texto para la clasificación, tokenización, el etiquetado, el análisis y el razonamiento semántico.
+
+Obviamente, aquí solo estoy listando unas pocas de las muchas librerías que existen en Python para trabajar con problemas de Machine Learning, los invito a realizar su propia investigación sobre el tema.
+Algoritmos más utilizados
+
+Los algoritmos que más se suelen utilizar en los problemas de Machine Learning son los siguientes:
+
+    Regresión Lineal
+    Regresión Logística
+    Arboles de Decision
+    Random Forest
+    SVM o Máquinas de vectores de soporte.
+    KNN o K vecinos más cercanos.
+    K-means
+
+Todos ellos se pueden aplicar a casi cualquier problema de datos y obviamente están todos implementados por la excelente librería de Python, Scikit-learn. Veamos algunos ejemplos de ellos.
+Regresión Lineal
+
+Se utiliza para estimar los valores reales (costo de las viviendas, el número de llamadas, ventas totales, etc.) basados en variables continuas. La idea es tratar de establecer la relación entre las variables independientes y dependientes por medio de ajustar una mejor línea recta con respecto a los puntos. Esta línea de mejor ajuste se conoce como línea de regresión y esta representada por la siguiente ecuación lineal:
+
+Y=ß0+ß1X1+ß2X2+...+ßnXn
+
+Veamos un pequeño ejemplo de como se implementa en Python. En este ejemplo voy a utilizar el dataset Boston que ya viene junto con Scikit-learn y es ideal para practicar con Regresiones Lineales; el mismo contiene precios de casas de varias áreas de la ciudad de Boston.
+
+# importando pandas, numpy y matplotlib
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# importando los datasets de sklearn
+from sklearn import datasets
+
+boston = datasets.load_boston()
+boston_df = pd.DataFrame(boston.data, columns=boston.feature_names)
+boston_df['TARGET'] = boston.target
+boston_df.head() # estructura de nuestro dataset.
+
+	CRIM 	ZN 	INDUS 	CHAS 	NOX 	RM 	AGE 	DIS 	RAD 	TAX 	PTRATIO 	B 	LSTAT 	TARGET
+0 	0.00632 	18.0 	2.31 	0.0 	0.538 	6.575 	65.2 	4.0900 	1.0 	296.0 	15.3 	396.90 	4.98 	24.0
+1 	0.02731 	0.0 	7.07 	0.0 	0.469 	6.421 	78.9 	4.9671 	2.0 	242.0 	17.8 	396.90 	9.14 	21.6
+2 	0.02729 	0.0 	7.07 	0.0 	0.469 	7.185 	61.1 	4.9671 	2.0 	242.0 	17.8 	392.83 	4.03 	34.7
+3 	0.03237 	0.0 	2.18 	0.0 	0.458 	6.998 	45.8 	6.0622 	3.0 	222.0 	18.7 	394.63 	2.94 	33.4
+4 	0.06905 	0.0 	2.18 	0.0 	0.458 	7.147 	54.2 	6.0622 	3.0 	222.0 	18.7 	396.90 	5.33 	36.2
+
+# importando el modelo de regresión lineal
+from sklearn.linear_model import LinearRegression
+
+rl = LinearRegression() # Creando el modelo.
+rl.fit(boston.data, boston.target) # ajustando el modelo
+
+# haciendo las predicciones
+predicciones = rl.predict(boston.data)
+predicciones_df = pd.DataFrame(predicciones, columns=['Pred'])
+predicciones_df.head() # predicciones de las primeras 5 lineas
+
+	Pred
+0 	30.008213
+1 	25.029861
+2 	30.570232
+3 	28.608141
+4 	27.942882
+
+# Calculando el desvio
+np.mean(boston.target - predicciones)
+
+Como podemos ver, el desvío del modelo es pequeño, por lo que sus resultados para este ejemplo son bastante confiables.
+Regresión Logística
+
+Los modelos lineales, también pueden ser utilizados para clasificaciones; es decir, que primero ajustamos el modelo lineal a la probabilidad de que una cierta clase o categoría ocurra y, a luego, utilizamos una función para crear un umbral en el cual especificamos el resultado de una de estas clases o categorías. La función que utiliza este modelo, no es ni más ni menos que la función logística.
+
+f(x)=11+e-1
+
+Veamos, aquí también un pequeño ejemplo en Python.
+
+# Creando un dataset de ejemplo 
+from sklearn.datasets import make_classification
+X, y = make_classification(n_samples=1000, n_features=4)
+
+# Importando el modelo
+from sklearn.linear_model import LogisticRegression
+
+rlog = LogisticRegression() # Creando el modelo
+
+# Dividiendo el dataset en entrenamiento y evaluacion
+X_entrenamiento = X[:-200]
+X_evaluacion = X[-200:]
+y_entrenamiento = y[:-200]
+y_evaluacion = y[-200:]
+
+rlog.fit(X_entrenamiento, y_entrenamiento) #ajustando el modelo
+
+# Realizando las predicciones
+y_predic_entrenamiento = rlog.predict(X_entrenamiento) 
+y_predic_evaluacion = rlog.predict(X_evaluacion)
+
+# Verificando la exactitud del modelo
+entrenamiento = (y_predic_entrenamiento == y_entrenamiento).sum().astype(float) / y_entrenamiento.shape[0]
+print("sobre datos de entrenamiento: {0:.2f}".format(entrenamiento))
+evaluacion = (y_predic_evaluacion == y_evaluacion).sum().astype(float) / y_evaluacion.shape[0]
+print("sobre datos de evaluación: {0:.2f}".format(evaluacion))
+
+sobre datos de entrenamiento: 0.95
+sobre datos de evaluación: 0.94
+
+Como podemos ver en este ejemplo también nuestro modelo tiene bastante precisión clasificando las categorías de nuestro dataset.
+Arboles de decisión
+
+Los Arboles de Decision son diagramas con construcciones lógicas, muy similares a los sistemas de predicción basados en reglas, que sirven para representar y categorizar una serie de condiciones que ocurren de forma sucesiva, para la resolución de un problema. Los Arboles de Decision están compuestos por nodos interiores, nodos terminales y ramas que emanan de los nodos interiores. Cada nodo interior en el árbol contiene una prueba de un atributo, y cada rama representa un valor distinto del atributo. Siguiendo las ramas desde el nodo raíz hacia abajo, cada ruta finalmente termina en un nodo terminal creando una segmentación de los datos. Veamos aquí también un pequeño ejemplo en Python.
+
+# Creando un dataset de ejemplo
+X, y = datasets.make_classification(1000, 20, n_informative=3)
+
+# Importando el arbol de decisión
+from sklearn.tree import DecisionTreeClassifier
+from sklearn import tree
+
+ad = DecisionTreeClassifier(criterion='entropy', max_depth=5) # Creando el modelo
+ad.fit(X, y) # Ajustando el modelo
+
+#generando archivo para graficar el arbol
+with open("mi_arbol.dot", 'w') as archivo_dot:
+    tree.export_graphviz(ad, out_file = archivo_dot)
+
+# utilizando el lenguaje dot para graficar el arbol.
+!dot -Tjpeg mi_arbol.dot -o arbol_decision.jpeg
+
+Luego de usar el lenguaje dot para convertir nuestro arbol a formato jpeg, ya podemos ver la imagen del mismo.
+
+arbol de decision
+
+# verificando la precisión
+print("precisión del modelo: {0: .2f}".format((y == ad.predict(X)).mean()))
+
+precisión del modelo:  0.94
+
+En este ejemplo, nuestro árbol tiene una precisión del 89%. Tener en cuenta que los Arboles de Decision tienen tendencia al sobreajuste.
+Random Forest
+
+En lugar de utilizar solo un arbol para decidir, ¿por qué no utilizar todo un bosque?!!. Esta es la idea central detrás del algoritmo de Random Forest. Trabaja construyendo una gran cantidad de arboles de decision muy poco profundos, y luego toma la clase que cada árbol eligió. Esta idea es muy poderosa en Machine Learning. Si tenemos en cuenta que un sencillo clasificador entrenado podría tener sólo el 60 por ciento de precisión, podemos entrenar un montón de clasificadores que sean por lo general acertados y luego podemos utilizar la sabiduría de todos los aprendices juntos. Con Python los podemos utilizar de la siguiente manera:
+
+# Creando un dataset de ejemplo
+X, y = datasets.make_classification(1000)
+
+# Importando el random forest
+from sklearn.ensemble import RandomForestClassifier
+
+rf = RandomForestClassifier() # Creando el modelo
+rf.fit(X, y) # Ajustando el modelo
+
+# verificando la precisión
+print("precisión del modelo: {0: .2f}".format((y == rf.predict(X)).mean()))
+
+precisión del modelo:  1.00
+
+SVM o Máquinas de vectores de soporte
+
+La idea detrás de SVM es encontrar un plano que separe los grupos dentro de los datos de la mejor forma posible. Aquí, la separación significa que la elección del plano maximiza el margen entre los puntos más cercanos en el plano; éstos puntos se denominan vectores de soporte. Pasemos al ejemplo.
+
+# importando SVM
+from sklearn import svm
+
+# importando el dataset iris
+iris = datasets.load_iris()
+X = iris.data[:, :2]  # solo tomamos las primeras 2 características
+y = iris.target
+
+h = .02  # tamaño de la malla del grafico
+
+# Creando el SVM con sus diferentes métodos
+C = 1.0  # parametro de regulacion SVM 
+svc = svm.SVC(kernel='linear', C=C).fit(X, y)
+rbf_svc = svm.SVC(kernel='rbf', gamma=0.7, C=C).fit(X, y)
+poly_svc = svm.SVC(kernel='poly', degree=3, C=C).fit(X, y)
+lin_svc = svm.LinearSVC(C=C).fit(X, y)
+
+# crear el area para graficar
+x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
+y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
+xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                     np.arange(y_min, y_max, h))
+
+# titulos de los graficos
+titles = ['SVC con el motor lineal',
+          'LinearSVC',
+          'SVC con el motor RBF',
+          'SVC con el motor polinomial']
+
+
+for i, clf in enumerate((svc, lin_svc, rbf_svc, poly_svc)):
+    # Realizando el gráfico, se le asigna un color a cada punto
+    plt.subplot(2, 2, i + 1)
+    plt.subplots_adjust(wspace=0.4, hspace=0.4)
+
+    Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
+
+    Z = Z.reshape(xx.shape)
+    plt.contourf(xx, yy, Z, cmap=plt.cm.Paired, alpha=0.8)
+
+    # Graficando tambien los puntos de datos
+    plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Paired)
+    plt.xlabel('largo del petalo')
+    plt.ylabel('ancho del petalo')
+    plt.xlim(xx.min(), xx.max())
+    plt.ylim(yy.min(), yy.max())
+    plt.xticks(())
+    plt.yticks(())
+    plt.title(titles[i])
+
+plt.show()
+
+SVM
+KNN o k vecinos más cercanos
+
+Este es un método de clasificación no paramétrico, que estima el valor de la probabilidad a posteriori de que un elemento x
+
+pertenezca a una clase en particular a partir de la información proporcionada por el conjunto de prototipos. La regresión KNN se calcula simplemente tomando el promedio del punto k más cercano al punto que se está probando.
+
+
+# Creando el dataset iris
+iris = datasets.load_iris()
+X = iris.data
+y = iris.target
+
+# importando KNN 
+from sklearn.neighbors import KNeighborsRegressor
+
+knnr = KNeighborsRegressor(n_neighbors=10) # Creando el modelo con 10 vecinos
+knnr.fit(X, y) # Ajustando el modelo
+
+# Verificando el error medio del modelo
+print("El error medio del modelo es: {:.2f}".format(np.power(y - knnr.predict(X),
+2).mean()))
+
+El error medio del modelo es: 0.02
+
+K-means
+
+K-means es probablemente uno de los algoritmos de agrupamiento más conocidos y, en un sentido más amplio, una de las técnicas de aprendizaje no supervisado más conocidas. K-means es en realidad un algoritmo muy simple que funciona para reducir al mínimo la suma de las distancias cuadradas desde la media dentro del agrupamiento. Para hacer esto establece primero un número previamente especificado de conglomerados, K, y luego va asignando cada observación a la agrupación más cercana de acuerdo a su media. Veamos el ejemplo
+
+# Creando el dataset
+grupos, pos_correcta = datasets.make_blobs(1000, centers=3,
+cluster_std=1.75)
+
+# Graficando los grupos de datos
+f, ax = plt.subplots(figsize=(7, 5))
+colores = ['r', 'g', 'b']
+
+for i in range(3):
+    p = grupos[pos_correcta == i]
+    ax.scatter(p[:,0], p[:,1], c=colores[i],
+               label="Grupo {}".format(i))
+
+ax.set_title("Agrupamiento perfecto")
+ax.legend()
+
+plt.show()
+
+k-means
+
+# importando KMeans
+from sklearn.cluster import KMeans
+
+# Creando el modelo
+kmeans = KMeans(n_clusters=3)
+kmeans.fit(grupos) # Ajustando el modelo
+
+# verificando los centros de los grupos
+kmeans.cluster_centers_
+
+# Graficando segun modelo
+f, ax = plt.subplots(figsize=(7, 5))
+colores = ['r', 'g', 'b']
+
+for i in range(3):
+    p = grupos[pos_correcta == i]
+    ax.scatter(p[:,0], p[:,1], c=colores[i],
+               label="Grupo {}".format(i))
+
+ax.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 1], 
+           s=100, color='black', label='Centros')
+
+ax.set_title("Agrupamiento s/modelo")
+ax.legend()
+
+plt.show()    
+
+k-means
+
+
+Ciencia de datos
+
+Ciencia de datos
+
+En el mundo actual de la tecnología que nos rodea, donde la computación en la nube se va haciendo parte de nuestro día a día (quien no usa los servicios de Google, Facebook, Twitter, Dropbox, o Evernote); dónde hay cada vez una mayor cantidad de dispositivos que están las 24 horas del día conectadas a internet (desde teléfonos, tabletas y TVs hasta automóviles), acercándonos aún más al concepto de la Internet de las cosas. En este mundo dónde estamos generando datos constantemente, en el mundo de la Big Data; se esta haciendo cada vez más necesario un nuevo perfil de profesionales de la información que puedan aplicar las técnicas de la Ciencia de Datos.
+¿Qué es la Ciencia de Datos?
+
+La Ciencia de Datos es un campo interdisciplinario que involucra métodos científicos, procesos y sistemas para extraer conocimiento o un mejor entendimiento de datos en sus diferentes formas, ya sea estructurados o no estructurados. Es una continuación de algunos campos de análisis de datos como la estadística, la minería de datos, el aprendizaje automático y el análisis predictivo. Comprende tres áreas distintas y superpuestas: las habilidades de un estadístico que sabe cómo modelar y resumir conjuntos de datos (los cuales cada vez tienen mayor tamaño); las habilidades de un informático que pueda diseñar y utilizar algoritmos para almacenar, procesar y visualizar eficientemente estos datos; Y la experiencia sobre el campo o dominio, lo que podríamos pensar como una formación clásica en un tema; la cual es necesaria tanto para formular las preguntas correctas como para poner sus respuestas en contexto.
+El proceso de la Ciencia de Datos
+
+En general, el proceso que utiliza la Ciencia de Datos para explorar el mundo usando datos es el siguiente:
+
+    El primer paso consiste en establecer un objetivo de investigación. El propósito principal aquí es asegurarse de que todos los interesados comprendan el qué, cómo y por qué del proyecto. Siempre debemos tener bien en claro cual es la pregunta que queremos responder con la ayuda de los datos.
+
+    El segundo paso consiste en la obtención de los datos. Los datos deben estar disponibles para poder ser analizados. Este paso incluye encontrar los datos adecuados y obtener acceso a los mismos. El resultado de esta etapa suelen ser los datos en su forma cruda, que probablemente necesitarán ser pulidos y transformados antes de que puedan ser utilizados.
+
+    Ahora que ya tenemos los datos sin procesar, el siguiente paso es prepararlos. Esto incluye la transformación de los datos de una forma cruda a una forma en la que puedan ser utilizados directamente en los modelos. Para poder lograr esto, debemos detectar y corregir diferentes tipos de errores en los datos, combinar datos de diferentes fuentes y transformarlos. Una vez completado este paso, podemos avanzar hacia la visualización de datos y el modelado.
+
+    El cuarto paso es la exploración de datos. El objetivo de este etapa es obtener una comprensión profunda de los datos. Buscaremos patrones, correlaciones y desvíos basados en técnicas visuales y descriptivas. Los conocimientos adquiridos en esta fase nos permitirán comenzar con el armado del modelo.
+
+    Finalmente llegamos al paso principal y más importante: la construcción de modelos. En esta etapa intentamos obtener los conocimiento o hacer las predicciones de acuerdo a los lineamientos establecidos en la primer etapa. Aquí podemos utilizar todas las técnicas y herramientas que nos proporciona el Machine Learning. El objetivo es obtener el modelo o la combinación de modelos que mejor resultados nos proporcionen.
+
+    El último paso del proceso de la Ciencia de Datos es presentar los resultados y automatizar análisis. Un buen modelo no sirve de nada si no es utilizado para mejorar la eficiencia y obtener mejores resultados. En esta última etapa debemos presentarle los resultados del análisis a las personas responsables de tomar las decisiones en las organizaciones para que los modelos puedan ser adoptados.
+
+En general, estas etapas no siguen una progresión lineal desde el paso 1 al 6. Si no que, a menudo, debemos regresar e iterar entre las diferentes etapas de acuerdo a los resultados que vayamos obteniendo. Actualmente, a los profesionales que se dedican a esta disciplina, se los conoce como Científicos de datos
+Científico de datos
+
+Los Data Scientists o Científicos de datos son profesionales, generalmente con conocimientos multidisciplinarios, que poseen el entrenamiento y la curiosidad necesarias para realizar descubrimientos en el intrincado mundo de la Big Data. Ellos son capaces de darle forma a la enorme cantidad de datos desestructurados que generamos día a día y hacer su análisis posible. Se encargan de identificar potenciales fuentes de información, unirlas y depurar el conjunto de resultados; los Científicos de datos ayudan a los encargados de tomar las decisiones a moverse de un análisis ad hoc de los datos hacia una constante conversación con ellos.
+
+Los Científicos de datos se encargan de encontrar patrones en los datos, hacer descubrimientos en base a ellos, y comunicar las implicaciones de lo que han aprendido a través de su análisis, para indicar nuevas oportunidades de negocios. Ellos aconsejan a los ejecutivos y gerentes de productos sobre las implicaciones de los datos para los productos, procesos y decisiones.
+
+Si bien, una primera impresión, se imaginaría a los Científicos de datos como personas con un fuerte perfil analítico y mucho conocimiento estadístico y matemático, esta impresión estaría por demás errada. Ellos se caracterizan más por su parte científica; una de las facetas dominantes de su personalidad es su intensa curiosidad, el deseo por ir más allá de la superficie de los problemas, encontrar las preguntas en lo más profundo de ellos, e ir depurándolas hasta crear un claro conjunto de hipótesis que puedan ser probadas con datos concretos. Es por esto, que algunos de los más renombrados Científicos de datos en las principales empresas de tecnología del mundo, vienen de campos poco convencionales como la Física y las Ciencias Sociales.
+
+Lo que motiva a los Científicos de datos no es armar hermosos reportes con información estructurada, para eso ya existen los analistas financieros; lo que realmente motiva a los Científicos de datos es crear nuevas cosas, no solo dar consejo; ellos quieren crear soluciones que funcionen y generen un impacto innovador para el negocio y los consumidores.
+
+Una podría pensar a los Científicos de datos como un híbrido entre hacker, analista, comunicador y consejero; personas que tengan el conocimiento técnico necesario para manejar y analizar grandes cantidades de datos, pero que a su vez tengan la suficiente noción y entendimiento de los negocios y la habilidad para comunicar los datos de una forma efectiva. Una combinación realmente rara de darse, pero sumamente efectiva!.
+
+En lo que hace al apartado técnico, una de las habilidades básicas que todo buen Científicos de datos debería tener, es sin duda la habilidad de escribir código, programar. Un buen Científicos de datos debería ser eficiente con al menos un lenguaje de programación de alto rendimiento (como C, C++ o Java) y tener nociones sobre los principales lenguajes que se manejan en internet (HTML, CSS3, Javascript, PHP).
+
+También debería poseer buenos conocimientos sobre probabilidad y estadística, aquí lenguajes de programación con R y Python, pueden resultar realmente útiles.
+
+Y finalmente, debería poseer conocimientos sobre los principales frameworks para el manejo de la Big Data, como por ejemplo Hadoop; conocimientos sobre la infraestructura de la computación en la nube; y sobre las principales bases de datos, tanto SQL como NoSQL.
+
+Los siguientes son ejemplos del trabajo realizado por los Científicos de datos:
+
+    Evaluación de modelos estadísticos para determinar la validez de los análisis.
+    Utilizar el aprendizaje automático para construir mejores algoritmos predictivos.
+    Pruebas y mejora continua de la precisión de los modelos de aprendizaje automático.
+    Construir visualizaciones de datos para resumir la conclusión de un análisis avanzado.
+
+Los Científicos de datos aportan un enfoque y una perspectiva totalmente nuevos a la comprensión de los datos.
+Otros roles relacionados con datos
+
+Además del rol de científico de datos existen otros roles relacionados con el manejo de datos, los cuales muchas veces se confunden pero no son exactamente lo mismo. Estos roles son:
+Analista de datos
+
+Los Analistas de datos aportan valor a sus empresas mediante la obtención de datos, su utilización para responder preguntas y la comunicación de los resultados para ayudar a tomar decisiones. Las tareas más comunes realizadas por los analistas de datos incluyen la limpieza de datos, la realización de análisis y la creación de visualizaciones. Dependiendo de la industria, el Analista de datos puede tener varios títulos diferentes (por ejemplo, analista de negocios, analista de inteligencia de negocios, analista de operaciones, analista de bases de datos). Independientemente del título, el Analista de datos es un generalista que puede encajar en muchos roles y equipos para ayudar a otros a tomar mejores decisiones basadas en datos.
+
+La naturaleza de las habilidades requeridas dependerá de las necesidades específicas de la empresa, pero estas son algunas de ellas:
+
+    Limpieza y organización de datos en bruto.
+    Uso de estadísticas descriptivas para obtener una vista panorámica de sus datos.
+    Análisis de tendencias interesantes encontradas en los datos.
+    Creación de visualizaciones y cuadros de mando para ayudar a la empresa a interpretar y tomar decisiones con los datos.
+    Presentación de los resultados de un análisis técnico a clientes empresariales o equipos internos.
+
+El Analista de datos aporta un valor significativo tanto a los aspectos técnicos como no técnicos de una organización.
+Ingeniero de datos
+
+Los Ingenieros de datos construyen y optimizan los sistemas que permiten a los científicos y analistas de datos realizar su trabajo. Cada empresa depende de los datos sean exactos y accesibles, para que las personas puedan trabajar con ellos. El Ingeniero de datos se asegura de que cualquier dato sea recibido, transformado, almacenado y hecho accesible para otros usuarios.
+
+Los Ingenieros de datos son responsables de construir las herramientas para trabajar con datos y, a menudo, tienen que usar técnicas complejas para manejar los datos a escala. A diferencia de los científicos y analistas de datos, la ingeniería de datos se inclina mucho más hacia un conjunto de habilidades de desarrollo de software.
+
+Un buen Ingeniero de datos debe permitir que los científicos o analistas de datos puedan concentrarse en resolver problemas, en lugar de tener que preocuparse por aspectos más técnicos de la disciplina, como por ejemplo mover los datos de una fuente a otra.
+
+La mentalidad del Ingeniero de datos suele estar más centrada en la construcción y la optimización. Los siguientes son ejemplos de tareas en las que un ingeniero de datos podría estar trabajando:
+
+    Creación de APIs para el consumo de datos.
+    Integración de conjuntos de datos externos o nuevos en los procesos de datos existentes.
+    Aplicación de transformaciones de atributos para los modelos de aprendizaje automático.
+    Supervisar y probar continuamente los sistemas para asegurar un rendimiento optimizado.
+
+
+Introducción a la Big Data
+
+Big Data
+
+Actualmente estamos viviendo la Era de los datos, con el enorme crecimiento en el uso de herramientas digitales como internet y los dispositivos móviles, estamos generando datos constantemente, con cada movimiento que damos navegando en internet o interactuando en las redes sociales como Facebook o Twitter, estamos dejando una huella permanente que queda almacenada en algún Data Center. El volumen de información que estamos generando a cada segundo es enorme.
+
+Este gran crecimiento en el volumen de datos, ha obligado a rever la forma en la que diseñamos nuestros sistemas, y es así, como el concepto de Big Data y la nueva disciplina de los cientificos de datos ha surgido.
+¿Qué es la Big Data?
+
+La Big Data es la rama de las Teconlogías de la información que estudia las dificultades inherentes a la manipulación de grandes conjuntos de datos. El verdadero poder de la Big Data reside en que se trata sobre el comportamiento de la gente, y no sobre sus datos, consiste en encontrar los patrones de relaciones y comportamientos en el caos de los grandes volúmenes de datos que producimos. Los datos son tantos, que todos se vuelven estadístacamente significativos, lo que significa, que los métodos tradicionales que utilizamos para analizarlos se han vuelto obsoletos.
+
+Para hacer frente a los nuevos desafíos que provoca la Big Data, nuevas herramientas informáticas han aparecido, sobre todo en el mundo del software open source; es así, como el movimiento de NoSQL y proyectos como el de Apache Hadoop, han ganando popularidad.
+Bases de datos NoSQL
+
+El movimiento NoSQL hace referencia a una serie de nuevos sistemas de gestión de datos, que se alejan del tradicional modelo relacional que tienen las populares bases de datos actuales (Oracle, DB2, MsSQL, MySQL, PostgreSQL, etc); la principal diferencia que caracteriza a estas nuevas bases de datos es que no poseen un esquema estructurado (tablas y sus relaciones) y no utilizan el lenguaje SQL para realizar sus consultas. Las bases de datos NoSQL surgieron principalmente para hacer frente al tratamiento de datos que los sistemas tradicionales de RDBMS no podían manejar del todo bien (como ser toda la nueva información que surge del uso de las redes sociales). Se suelen agrupar en tres grandes grupos:
+
+    Bases de Datos Documentales: Donde la información se va almacenando en diferentes documentos, estos documentos son un conjunto ordenado de claves con valores asociados. El principal exponente de este tipo de base de datos NoSQL es MongoDB.
+    Bases de Datos clave-valor: Donde los datos se van almacenando en pares (clave-valor). Un ejemplo de este tipo de bases es Redis.
+    Big Tables: Grandes tablas de estructura tabular que se caracterizan por ser distribuidas y de alta eficiencia. Las principales exponentes de este grupo son Cassandra y HBase.
+
+Hadoop
+
+El proyecto Apache Hadoop es un framework de software, desarrollado en el lenguaje de programación Java, que permite el procesamiento distribuido de grandes conjuntos de datos a través de clusters de computadoras utilizando simples modelos de programación. La verdadera utilidad de Hadoop radica en su capacidad para escalar fácilmente de uno a miles de servidores distribuidos, cada uno aportando su poder de computación y su capacidad de almacenamiento.
+
+Los módulos que forman parte del framework Hadoop son:
+
+    Hadoop common: que incluye un conjunto de componentes e interfaces para el sistema de archivos distribuido que implementa Hadoop. Son las herramientas comunes que se utilizan en todos los módulos.
+    Hadoop Distributed File System (HDFS): Una de las herramientas principales del framework, el sistema de archivos distribuido que corre entre los clusters de computadoras y que brinda el acceso a los datos para las aplicaciones.
+    Hadoop YARN(Yet Another Resource Negotiator): Es un sistema general de gestión de trabajos para correr aplicaciones distribuidas.
+    Hadoop MapReduce: La herramienta principal del framework, y a la que Hadoop debe su gran popularidad. Consiste en un modelo de procesamiento de datos distribuidos que corre en forma paralela entre los clusters de computadoras que constituyen la arquitectura del framework Hadoop. MapReduce es todo un modelo de programación para el procesamientos de datos distribuidos.
+
+Hadoop ha cambiado la economía y la dinámica de la computación a gran escala. Su impacto puede sintetizarse en cuatro características principales.
+
+Hadoop posibilita una solución informática que es:
+
+    Redimensionable: Pueden agregarse tantos nuevos nodos como sea necesario, y agregarse sin tener que cambiar el formato de los datos, la forma en que se cargan los datos, la forma en que se escriben los procesos o las aplicaciones que están encima.
+
+    Rentable: Hadoop incorpora masivamente la computación paralela a los servidores básicos. El resultado de esto es una marcada reducción del costo por terabyte de almacenamiento, que a su vez abarata el modelado de sus datos.
+
+    Flexible: Hadoop funciona sin esquema y puede absorber cualquier tipo de datos, estructurados o no, provenientes de un número cualquiera de fuentes. Los datos de diversas fuentes pueden agruparse de manera arbitraria y así permitir análisis más profundos que los proporcionados por cualquier otro sistema.
+
+    Tolerante a fallas: Si usted pierde un nodo, el sistema redirige el trabajo a otra localización de los datos y continúa procesando sin perder el ritmo.
+
+Hadoop es la herramienta que grandes empresas como Facebook, Yahoo, Linkedin y Twitter han elegido para almacenar todos los datos de sus usuarios y saberlo todo sobre ellos.
+Spark
+
+Apache Spark es una de las nuevas estrellas en el análisis de datos masivos. Desarrollado en Scala, Apache Spark es una plataforma de computación de código abierto para el análisis y procesamiento de grandes volúmenes de datos.
+
+Algunas de las ventajas que nos ofrece Apache Spark sobre otros frameworks, son:
+
+    Velocidad: Sin dudas la velocidad es una de las principales fortalezas de Apache Spark, como esta diseñado para soportar el procesameinto en memoria, puede alcanzar una performance sorprendente en análisis avanzados de datos. Algunos programas escritos utilizando Apache Spark, pueden correr hasta 100x más rápido que utilizando Hadoop.
+
+    Fácil de usar: Podemos escribir programas en Python, Scala o Java que hagan uso de las herramientas que ofrece Apache Spark; asimismo nos permite trabajar en forma interactiva (con Python o con Scala) y su API es muy fácil de aprender.
+
+    Generalismo: El mundo del análisis de datos incluye muchos subgrupos de distinta índole, están los que hacen un análisis investigativo, los que que realizan análisis exploratorios, los que construyen sistemas de procesamientos de datos, etc. Los usuarios de cada uno de esos subgrupos, al tener objetivos distintos, suelen utilizar una gran variedad de herramientas totalmente diferentes. Apache Spark nos proporciona un gran número de herramientas de alto nivel como Spark SQL, MLlib para machine learning, GraphX, y Spark Streaming; las cuales pueden ser combinadas para crear aplicaciones multipropósito que ataquen los diferentes dominios del análisis de datos.
+
+Otras herramientas de Big data
+Kafka
+
+Kafka Es una plataforma distribuida de streaming. Es decir, que tiene tres capacidades clave:
+
+    Permite publicar y suscribirse a flujos de registros. A este respecto, es similar a una cola de mensajes o un sistema de mensajería empresarial.
+    Permite almacenar flujos de registros de forma tolerante a fallos.
+    Permite procesar flujos de registros a medida que ocurren.
+
+¿Para qué sirve Kafka?
+
+Se utiliza para dos clases de aplicación:
+
+    Creación de flujos de datos que fluyen en tiempo real entre distintos sistemas o aplicaciones.
+    Creación de aplicaciones de streaming en tiempo real que transforman o reaccionan a los flujos de datos.
+
+Storm
+
+Storm es una sistema de computación distribuida en tiempo real y de código abierto. Permite el procesamiento sencillo y fiable de grandes volúmenes de datos en analítica (por ejemplo para el estudio de información de modalidad continua procedente de redes sociales), RPC distribuida, procesos de ETL.
+
+Mientras que Hadoop se encarga del procesamiento de datos por lotes, Storm se encarga de hacerlo en tiempo real.
+
+Si bien la Big Data trae muchas oportunidades, también abre muchas interrogantes, como ser: ¿Cuán ética es esta recolección de datos silenciosa que realizan las grandes empresas sobre nuestros datos?; ¿Quienes son los verdaderos dueños de esos datos?¿Qué pueden hacer las empresas con ellos?, el debate esta abierto…
+
+
+Internet de las cosas
+
+Internet de las cosas
+
+Desde su creación en 1969, la internet, el mayor conjunto de información, personas, computadoras y software funcionando de manera cooperativa; lo ha cambiado todo. A partir de los avances tecnológicos, el acceso a internet de alta velocidad se ha hecho omnipresente; y con la introducción de los dispositivos móviles y la banda ancha móvil a través de las redes celulares, ha surgido una cultura siempre alerta y siempre conectada.
+
+Hoy en día, cada dispositivo conectado a la internet recibe una dirección IP y esta dirección permite que cada dispositivo se conecte a otros dispositivos, incluyendo teléfonos inteligentes, tabletas, consolas de juegos, automóviles, heladeras, lavadorropas, sistemas de iluminación, y muchas cosas más. Esto ha permitido que en los últimos años haya surgido una gran variedad de sistemas y plataformas interconectadas, un fenómeno que se conoce con el nombre de Internet de las cosas.
+¿Qué es la Internet de las cosas?
+
+Podemos definir a la Internet de las cosas o IoT como una colección de cosas u objetos que se conectan a internet, y entre sí. Como ya dijimos, estos objetos podrían ser casi cualquier cosa: desde una computadora, una tableta o un smartphone, a un dispositivo de aire acondicionado, una cerradura de una puerta, un libro, un motor de avión, o una heladera. Cada uno de estos dispositivos o cosas tiene un número de identificación único (UID) y una dirección IP. Estos objetos se pueden conectar a través de cables, fibra óptica o tecnologías inalámbricas, como ser redes celulares, redes satelitales, Wi-Fi y Bluetooth. Utilizan circuitos electrónicos incorporados, así como capacidades de identificación por radiofrecuencia (RFID) o de comunicación de campo cercano (NFC) que se añaden posteriormente a través de chips y plaquetas. Independientemente del enfoque exacto, el IoT implica el movimiento de datos a través de internet para permitir procesos desde una ubicación en particular hacia alguna parte al otro lado del mundo.
+
+La IoT está creando una explosión en la diversidad de dispositivos conectados a internet. Estamos viendo como objetos familiares ganan conectividad y potencia computacional, así como nuevas categorías de dispositivos que sólo pueden existir como resultado de las redes interconectadas. Los sensores y actuadores crean nuevas posibilidades para unir información y acciones en los mundos real y digital.
+Factores que hacen posible la Internet de las cosas
+
+Para que una tecnología despegue se necesita la combinación correcta de factores. La IoT está sucediendo ahora porque una serie de factores están disponibles juntos por primera vez:  
+Semiconductores de bajo costo y dispositivos inalámbricos
+
+Cada año se venden más de mil millones de teléfonos inteligentes en un mercado altamente competitivo, con nuevos diseños que se presentan cada 12-18 meses. Este crecimiento continuo y evolución del diseño reduce los costos de los componentes, especialmente para los mercados adyacentes que pueden utilizar los dispositivos más antiguos. No sólo la ley de Moore reduce el costo de los semiconductores y la capacidad de computación. La ley de Koomey también está ahí, reduciendo constantemente la energía necesaria para producir esa capacidad de computación. Si además tenemos en cuenta el crecimiento y la disponibilidad de las redes inalámbricas y la compatibilidad con IPV6, está claro que la infraestructura necesaria para proporcionar inteligencia conectada sobre el mundo que nos rodea está fácilmente disponible. Los fabricantes ahora pueden agregar pequeños microcontroladores y chips inalámbricos a casi cualquier objeto físico a bajo costo, creando de esta forma productos inteligentes. Esta computación y conectividad integradas eventualmente serán tan comunes como un enchufe de alimentación o una batería.  
+Computación en la nube de código abierto y en la web, Big Data y Ciencia de datos
+
+La tecnología en la nube continúa avanzando rápidamente y puede ser más segura y rentable que sus alternativas. Ahora es posible recopilar, almacenar y analizar de manera rápida y eficiente cantidades masivas de datos no estructurados a escala web y tomar medidas sobre las ideas que desarrollamos a partir de ese análisis. Podemos distribuir las tareas informáticas horizontal, vertical y geográficamente, tanto centralizadas como próximas a un equipo físico, proceso o cualquier otro objeto, permitiendo una capacidad virtualmente ilimitada para implementar los algoritmos inteligentes donde tendrán el mayor impacto posible. Utilizando los dispositivos de IoT podemos obtener datos sobre cualquier cosa de interés y aprovechar esa información que obtengamos en tiempo real o casi real. Los beneficios potenciales de estas capacidades son básicamente limitados sólo por nuestra creatividad.
+Ciudades inteligentes
+
+La nueva regla para el futuro que se acerca va a ser: "Cualquier cosa que pueda conectarse, estará conectada". Lo que nos va a permitir aplicar las tecnologías de la Internet de las cosas para crear Ciudades inteligentes que puedan ayudarnos a reducir el desperdicio y mejorar la eficiencia para cosas como el uso de energía o el transporte; y nos permitirá entender y mejorar cómo trabajamos y vivimos. En este sentido, las Ciudades inteligentes van a ser aquellas que utilicen la información obtenida a través de los dispositivos de IoT para mejorar la infraestructura, la seguridad, y los bienes y servicios públicos con el fin de mejorar la vida de sus ciudadanos.
+
+Algunas de las aplicaciones de los programas de Ciudades inteligentes incluyen: la iluminación de calles inteligente que se apagará para conservar energía cuando no haya nadie alrededor; el análisis del consumo de energía de la ciudad para entender mejor la demanda; el trazando de los movimientos de las personas para maximizar el uso de las bicicletas y caminos peatonales; sensores conectados a las luces de la calle y otros muebles urbanos medirán los niveles de ruido y la contaminación del aire; entre otras cosas.
+Revolución industrial 4.0
+
+Si aplicamos el concepto de IoT a la industria en lugar de las ciudades, obtenemos lo que se conoce como la Revolución industrial 4.0. Aquí la idea es crear fábricas inteligentes en las que las máquinas son aumentadas con conectividad web y conectadas a un sistema que puede visualizar toda la cadena de producción y tomar decisiones por su cuenta aplicando algoritmos inteligentes.
+
+Para que una fábrica o sistema sea considerado como de Industria 4.0, debe incluir:
+
+    Interoperabilidad: máquinas, dispositivos, sensores y personas que se conectan y se comunican entre sí.
+
+    Transparencia de la información: los sistemas crean una copia virtual del mundo físico a través de datos de sensores para contextualizar la información.
+
+    Asistencia técnica: tanto la capacidad de los sistemas para apoyar a los seres humanos en la toma de decisiones y la solución de problemas y la capacidad de ayudar a los seres humanos con tareas que son demasiado difíciles o inseguros para ellos.
+
+    La toma de decisiones descentralizada: la capacidad de los sistemas cibernéticos de tomar decisiones simples por sí mismos y llegar a ser lo más autónomos posible.
+
+La Ética y la Internet de las cosas
+
+La tecnología generalmente crea nuevas posibilidades por un lado y nuevos problemas por el otro. Conectar la internet al mundo real permite que nuestras acciones físicas se hagan públicas y, en la dirección contraria, que los eventos en internet afecten nuestro entorno. La aplicación de las tecnologías de la Internet de las cosas puede conducir a situaciones que involucren problemas éticos relacionados con la privacidad y el control.
+Privacidad
+
+La internet, como plataforma masiva de publicación abierta, ha sido una fuerza disruptiva en cuanto al concepto de privacidad. La mayorías de las cosas que escribimos en la web puede ser visible por cualquier persona. A medida que la utilización de los dispositivos de IoT se haga más masiva, vamos a estar abriendo nuevas puertas que afecten aún más nuestra privacidad.
+Control
+
+Otro tema que invita a debatir el concepto de Internet de las cosas es el del control de los datos. ¿Quienes son los dueños de los datos que se obtienen con los dispositivos de IoT? ¿Las personas dueñas de los dispositivos o los fabricantes de los mismos o los que brindan los servicios? En la era actual en la que vivimos, controlar la información puede ser una ventaja competitiva muy importante. Asimismo, al estar todo tan interconectado y automatizado, ¿qué pasaría si un ciberataque toma el control de nuestras fábricas inteligentes?.
+
+A medida que se va desarrollando la Internet de las cosas, veremos más claramente los próximos pasos a seguir. Tal vez algunos de los futuros que propone no se lleguen a concretar nunca. Será nuestra responsabilidad estar listos para ayudar a guiar la Internet de las cosas de tal manera que no se convierta en un instrumento invasor y opresivo, sino en un marco en el que podamos aprender mejor lo que es ser humano.
+
+
+Introducción al Procesamiento del Lenguaje Natural
+
+NLP
+
+El lenguaje es una de las herramientas centrales en nuestra vida social y profesional. Entre otras cosas, actúa como un medio para transmitir ideas, información, opiniones y sentimientos; así como para persuadir, pedir información, o dar ordenes. Asimismo, el lenguaje humano es algo que esta en constante cambio y evolución; y que puede llegar a ser muy ambiguo y variable. Tomemos por ejemplo la frase "comí una pizza con amigos" comparada con "comí una pizza con aceitunas"; su estructura es la misma, pero su significado es totalmente distinto. De la misma manera, un mismo mensaje puede ser expresado de formas diferentes; "comí una pizza con amigos" puede también ser expresado como "compartí una pizza con amigos".
+
+Los seres humanos somos muy buenos a la hora de producir e interpretar el lenguaje, podemos expresar, percibir e interpretar significados muy elaborados en fracción de segundos casi sin dificultades; pero al mismo tiempo, somos también muy malos a la hora de entender y describir formalmente las reglas que lo gobiernan. Por este motivo, entender y producir el lenguaje por medio de una computadora es un problema muy difícil de resolver. Éste problema, es el campo de estudio de lo que en inteligencia artificial se conoce como Procesamiento del Lenguaje Natural o NLP por sus siglas en inglés.
+¿Qué es el Procesamiento del Lenguaje Natural?
+
+El Procesamiento del Lenguaje Natural o NLP es una disciplina que se encuentra en la intersección de varias ciencias, tales como las Ciencias de la Computación, la inteligencia artificial y Psicología Cognitiva. Su idea central es la de darle a las máquinas la capacidad de leer y comprender los idiomas que hablamos los humanos. La investigación del Procesamiento del Lenguaje Natural tiene como objetivo responder a la pregunta de cómo las personas son capaces de comprender el significado de una oración oral / escrita y cómo las personas entienden lo que sucedió, cuándo y dónde sucedió; y las diferencias entre una suposición, una creencia o un hecho.
+
+Los elementos comunes de cualquier arquitectura estándar de un sistema para el Procesamiento del Lenguaje Natural son:
+
+    Reconocimiento de voz: Convertir una palabra hablada en un conjunto de palabras. Las palabras habladas se componen de una serie de parámetros relacionados con el sentido de la audición.
+
+    Comprensión del lenguaje: El objetivo de este elemento es generar un significado para las palabras habladas, y ese significado será utilizado por el siguiente elemento (gestión del diálogo).
+
+    Gestión del diálogo: La tarea principal de este elemento es coordinar y mantener unidas todas las partes del sistema y los usuarios, y conectarse con otros sistemas.
+
+    Comunicación con sistemas externos: como sistemas expertos, sistemas de bases de datos u otras aplicaciones informáticas.
+
+    Generación de respuesta: Establecer el mensaje que el sistema debe entregar.
+
+    Salida de voz: Uso de diferentes técnicas para producir el mensaje desde el sistema.
+
+En general, en Procesamiento del Lenguaje Natural se utilizan seis niveles de comprensión con el objetivo de descubrir el significado del discurso. Estos niveles son:
+
+    Nivel fonético: Aquí se presta atención a la fonética, la forma en que las palabras son pronunciadas. Este nivel es importante cuando procesamos la palabra hablada, no así cuando trabajamos con texto escrito.
+
+    Nivel morfológico: Aquí nos interesa realizar un análisis morfológico del discurso; estudiar la estructura de las palabras para delimitarlas y clasificarlas.
+
+    Nivel sintáctico: Aquí se realiza un análisis de sintaxis, el cual incluye la acción de dividir una oración en cada uno de sus componentes.
+
+    Nivel semántico: Este nivel es un complemente del anterior, en el análisis semántico se busca entender el significado de la oración. Las palabras pueden tener múltiples significados, la idea es identificar el significado apropiado por medio del contexto de la oración.
+
+    Nivel discursivo: El nivel discursivo examina el significado de la oración en relación a otra oración en el texto o párrafo del mismo documento.
+
+    Nivel pragmático: Este nivel se ocupa del análisis de oraciones y cómo se usan en diferentes situaciones. Además, también cómo su significado cambia dependiendo de la situación.
+
+Todos los niveles descritos aquí son inseparables y se complementan entre sí. El objetivo de los sistemas de NLP es incluir estas definiciones en una computadora y luego usarlas para crear una oración estructurada y sin ambigüedades con un significado bien definido.
+Aplicaciones del Procesamiento del Lenguaje Natural
+
+Los algoritmos de Procesamiento del Lenguaje Natural suelen basarse en algoritmos de aprendizaje automático. En lugar de codificar manualmente grandes conjuntos de reglas, el NLP puede confiar en el aprendizaje automático para aprender estas reglas automáticamente analizando un conjunto de ejemplos y haciendo una inferencia estadística. En general, cuanto más datos analizados, más preciso será el modelo. Estos algoritmos pueden ser utilizados en algunas de las siguientes aplicaciones:
+
+    Resumir texto: Podemos utilizar los modelos de NLP para extraer las ideas más importantes y centrales mientras ignoramos la información irrelevante.
+
+    Crear chatbots: Podemos utilizar las técnicas de NLP para crear chatbots que puedan interactuar con las personas.
+
+    Generar automáticamente etiquetas de palabras clave: Con NLP también podemos realizar un análisis de contenido aprovechando el algoritmo de LDA para asignar palabras claves a párrafos del texto.
+
+    Reconocer entidades: Con NLP podemos identificar a las distintas entidades del texto como ser una persona, lugar u organización.
+
+    Análisis de sentimiento: También podemos utilizar NLP para identificar el sentimiento de una cadena de texto, desde muy negativo a neutral y a muy positivo.
+
+Corpus lingüístico
+
+Hoy en día, es indispensable el uso de buenos recursos lingüísticos para el desarrollo de los sistemas de NLP. Estos recursos son esenciales para la creación de gramáticas, en el marco de aproximaciones simbólicas; o para llevar a cabo la formación de módulos basados en el aprendizaje automático.
+
+Un corpus lingüístico es un conjunto amplio y estructurado de ejemplos reales de uso de la lengua. Estos ejemplos pueden ser textos (los más comunes), o muestras orales (generalmente transcritas). Un corpus lingüístico es un conjunto de textos relativamente grande, creado independientemente de sus posibles formas o usos. Es decir, en cuanto a su estructura, variedad y complejidad, un corpus debe reflejar una lengua, o su modalidad, de la forma más exacta posible; en cuanto a su uso, preocuparse de que su representación sea real. La idea es que representen al lenguaje de la mejor forma posible para que los modelos de NLP puedan aprender los patrones necesarios para entender el lenguaje. Encontrar un buen corpus sobre el cual trabajar no suele ser una tarea sencilla; uno que se suele utilizar para entrenar modelos es la información de wikipedia.
+Librerías de Python para Procesamiento del Lenguaje Natural
+
+Actualmente, Python es uno de los lenguajes más populares para trabajar en el campo la inteligencia artificial. Para abordar los problemas relacionados con el Procesamiento del Lenguaje Natural Python nos proporciona las siguientes librerías:
+
+    NLTK: Es la librería líder para el Procesamiento del Lenguaje Natural. Proporciona interfaces fáciles de usar a más de 50 corpus y recursos léxicos, junto con un conjunto de bibliotecas de procesamiento de texto para la clasificación, tokenización, el etiquetado, el análisis y el razonamiento semántico.
+
+    Spacy: Es una librería relativamente nueva que sobresale por su facilidad de uso y su velocidad a la hora de realizar el procesamiento de texto.
+
+    Gensim: Es una librería diseñada para extraer automáticamente los temas semánticos de los documentos de la forma más eficiente y con menos complicaciones posible.
+
+    pyLDAvis: Esta librería está diseñado para ayudar a los usuarios a interpretar los temas que surgen de un análisis de tópicos. Nos permite visualizar en forma muy sencilla cada uno de los temas incluidos en el texto.
+
+Actualmente el NLP se esta sumando a la popularidad del Deep Learning, por lo que muchos de los frameworks que se utilizan en Deep Learning pueden ser aplicados para realizar modelos de NLP.
+Deep Learning y Procesamiento del Lenguaje Natural
+
+Durante mucho tiempo, las técnicas principales de Procesamiento del Lenguaje Natural fueron dominadas por métodos de aprendizaje automático que utilizaron modelos lineales como las máquinas de vectores de soporte o la regresión logística, entrenados sobre vectores de características de muy alta dimensional pero muy escasos. Recientemente, el campo ha tenido cierto éxito en el cambio hacia modelos de deep learning sobre entradas densas.
+
+Las redes neuronales proporcionan una poderosa maquina de aprendizaje que es muy atractiva para su uso en problemas de lenguaje natural. Un componente importante en las redes neuronales para el lenguaje es el uso de una capa de word embedding, una asignación de símbolos discretos a vectores continuos en un espacio dimensional relativamente bajo. Cuando se utiliza word embedding, se transforman los distintos símbolos en objetos matemáticos sobre los que se pueden realizar operaciones. En particular, la distancia entre vectores puede equipararse a la distancia entre palabras, facilitando la generalización del comportamiento de una palabra sobre otra. Esta representación de palabras como vectores es aprendida por la red como parte del proceso de entrenamiento. Subiendo en la jerarquía, la red también aprende a combinar los vectores de palabras de una manera que es útil para la predicción. Esta capacidad alivia en cierta medida los problemas de dispersión de los datos. Hay dos tipos principales de arquitecturas de redes neuronales que resultan muy útiles en los problemas de Procesamiento del Lenguaje Natural: las Redes neuronales prealimentadas y las Redes neuronales recurrentes.
+
+
+Visión por Computadora
+
+Visión artificial
+
+De nuestros cinco sentidos, la visión es sin duda uno de los más importantes y uno de los que más dependemos. Hay quienes dicen incluso, que los ojos son una ventana hacia nuestro cerebro; ya que alrededor del 50 % de las áreas de nuestro cerebro se utilizan en funciones para procesar la gran cantidad de información que ingresa a través de nuestra vista.
+
+En cierto sentido se podría decir que la visión es, en primer lugar, una tarea de procesamiento de información; pero a si mismo, es algo mucho más complejo, ya que para poder saber que es lo qué hay en el mundo nuestros cerebros deben ser capaces de representar esta información en toda su abundancia de color, forma, movimiento, detalle y belleza. El estudio de la visión debe entonces incluir, no solo el estudio de cómo extraer de las imágenes los diversos aspectos del mundo que nos son útiles, sino también una investigación sobre la naturaleza de las representaciones internas mediante las cuales captamos esta información y la utilizamos como base para las decisiones sobre nuestros pensamientos y acciones. Esta dualidad, de representación y procesamiento de información esta en el corazón de la mayoría de las tareas de procesamiento de la información y se profundizará más en el estudio de los problemas relacionados con la Visión por computadora.
+¿Qué es la visión por computadora?
+
+Hoy en día, podemos encontrar imágenes y videos por todas partes. Los sitios para compartir videos y las redes sociales los tienen por billones. Prácticamente todos los teléfonos móviles y computadoras poseen cámaras incorporadas. Es muy común que las personas tengan varios giga-bytes de fotos y videos en sus dispositivos. Programar una computadora y diseñar los algoritmos para entender qué hay en esas fotos y videos, es el campo de estudio de la Visión por computadora o Computer vision.
+
+La Visión por computadora consiste en la extracción automatizada de información de las imágenes. Por información podemos entender casi cualquier cosa; desde modelos 3D, posición de la cámara, reconocimiento de objetos, y agrupación y búsqueda de contenido. También puede incluir la deformación de las imágenes, la eliminación de ruidos y la realidad aumentada. Muchas veces la Visión por computadora trata de imitar a la visión humana, pero otras ves la geometría o un enfoque más estadístico puede ser fundamental para resolver un problema. La Visión por computadora contiene una mezcla de programación, modelado y matemática que lo convierte en un campo de estudio sumamente atractivo.
+Aplicaciones de visión por computadora
+
+La Visión por computadora es un área con más de 40 años de investigación, por lo que ya contamos con varias aplicaciones de las técnicas desarrolladas. Estas aplicaciones incluyen:
+
+    Reconocimiento óptico de caracteres (OCR): Que consiste en la identificación automáticamente a partir de una imagen de símbolos o caracteres que pertenecen a un determinado alfabeto, para luego almacenarlos en forma de datos.
+
+    Inspección robotizada: La inspección rápida de las piezas para garantizar la calidad de los componentes de fabricación utilizando una visión estéreo con iluminación especializada.
+
+    Venta al por menor: Como ser los clásicos lectores de barras que encontramos en los supermercados para reconocer los precios de los productos en la línea de cajas.
+
+    Construcción de modelos 3D: La construcción automatizada de modelos 3D a partir de fotografías.
+
+    Imágenes médicas: Como ser la tecnología utilizada para tomar radiografías y las técnicas para detectar tumores malignos y anomalías en las mismas.
+
+    Seguridad automotriz: Ayudando a detectar obstáculos mediante un sistema de conducción asistida utilizando diferentes cámaras.
+
+    Captura de movimiento: Utilizando marcadores retro-reflexivos vistos desde múltiples cámaras u otras técnicas para la captura de movimientos de los actores para utilizar en animación por computadora.
+
+    Vigilancia: Monitoreo de intrusos, análisis del tráfico vial, y monitoreo de piscinas para víctimas de ahogamiento.
+
+    Reconocimiento de huellas dactilares y biometría: Para la identificación automática de accesos y también utilizada para aplicaciones forenses.
+
+    Detección de caras: Utilizado para mejorar el foco de las cámaras y para hacer una búsqueda más relevante de personas en imágenes.
+
+Como estas, existen muchas más aplicaciones de las técnicas de Visión por computadora; muchas de las cuales son algo ya común para nosotros, como la sugerencia para etiquetar de Facebook.
+Redes neuronales convolucionales
+
+Gracias a que el área del cerebro responsable de la visión es una de las zonas más estudiadas y que más conocemos; sabemos que la corteza visual contiene una disposición jerárquica compleja de neuronas. Por ejemplo, la información visual es introducida en la corteza a través del área visual primaria, llamada V1. Las neuronas de V1 se ocupan de características visuales de bajo nivel, tales como pequeños segmentos de contorno, componentes de pequeña escala del movimiento, disparidad binocular, e información básica de contraste y color. V1 luego alimenta de información a otras áreas, como V2, V4 y V5. Cada una de estas áreas se ocupa de los aspectos más específicos o abstractas de la información. Por ejemplo, las neuronas en V4 se ocupan de objetos de mediana complejidad, tales como formas de estrellas en diferentes colores. La corteza visual de los animales es el más potente sistema de procesamiento visual que conocemos, por lo que suena lógico inspirarse en ella para crear una variante de redes neuronales artificiales que ayude a identificar imágenes; es así como surgen las redes neuronales convolucionales.
+
+Las redes neuronales convolucionales se componen de neuronas que tienen pesos y sesgos que pueden aprender. Cada neurona recibe algunas entradas, realiza un producto escalar y luego aplica una función de activación. Lo que diferencia a las redes neuronales convolucionales es que suponen explícitamente que las entradas son imágenes, lo que nos permite codificar ciertas propiedades en la arquitectura; permitiendo ganar en eficiencia y reducir la cantidad de parámetros en la red. Las redes neuronales convolucionales trabajan modelando de forma consecutiva pequeñas piezas de información, y luego combinando esta información en las capas más profundas de la red. Una manera de entenderlas es que la primera capa intentará detectar los bordes y establecer patrones de detección de bordes. Luego, las capas posteriores trataran de combinarlos en formas más simples y, finalmente, en patrones de las diferentes posiciones de los objetos, iluminación, escalas, etc. Las capas finales intentarán hacer coincidir una imagen de entrada con todos los patrones y arribar a una predicción final como una suma ponderada de todos ellos. De esta forma las redes neuronales convolucionales son capaces de modelar complejas variaciones y comportamientos dando predicciones bastantes precisas.
+Estructura de las Redes Neuronales Convolucionales
+
+En general, las redes neuronales convolucionales van a estar construidas con una estructura que contendrá 3 tipos distintos de capas:
+Capa convolucional
+
+Esta es la capa que le nombre a la red, lo que distingue a las redes neuronales convolucionales de cualquier otra red neuronal es utilizan un operación llamada convolución en alguna de sus capas; en lugar de utilizar la multiplicación de matrices que se aplica generalmente. La operación de convolución recibe como entrada o input la imagen y luego aplica sobre ella un filtro o kernel que nos devuelve un mapa de las características de la imagen original, de esta forma logramos reducir el tamaño de los parámetros. La convolución aprovecha tres ideas importantes que pueden ayudar a mejorar cualquier sistema de Machine Learning, ellas son: interacciones dispersas, ya que al aplicar un filtro de menor tamaño sobre la entrada original podemos reducir drásticamente la cantidad de parámetros y cálculos; los parámetros compartidos, que hace referencia a compartir los parámetros entre los distintos tipos de filtros, ayudando también a mejorar la eficiencia del sistema; y las representaciones equivariante, que indican que si las entradas cambian, las salidas van a cambiar también en forma similar.
+
+Por otra parte, la convolución proporciona un medio para trabajar con entradas de tamaño variable, lo que puede ser también muy conveniente.
+
+Convolución
+Capa de reducción o pooling
+
+La capa de reducción o pooling se coloca generalmente después de la capa convolucional. Su utilidad principal radica en la reducción de las dimensiones espaciales (ancho x alto) del volumen de entrada para la siguiente capa convolucional. No afecta a la dimensión de profundidad del volumen. La operación realizada por esta capa también se llama reducción de muestreo, ya que la reducción de tamaño conduce también a la pérdida de información. Sin embargo, una pérdida de este tipo puede ser beneficioso para la red por dos razones:
+
+    la disminución en el tamaño conduce a una menor sobrecarga de cálculo para las próximas capas de la red;
+    también trabaja para reducir el sobreajuste.
+
+La operación que se suele utilizar en esta capa es max-pooling, que divide a la imagen de entrada en un conjunto de rectángulos y, respecto de cada subregión, se va quedando con el máximo valor.
+
+max pooling
+Capa clasificadora totalmente conectada
+
+Al final de las capas convolucional y de pooling, las redes utilizan generalmente capas completamente conectados en la que cada pixel se considera como una neurona separada al igual que en una red neuronal regular. Esta última capa clasificadora tendrá tantas neuronas como el número de clases que se debe predecir.
+
+Los modelos de Deep Learning basados en redes neuronales convolucionales han logrado resultados sorprendentes en varios problemas de Visión por computadora, como ser los casos de clasificación de imágenes y detección de objetos.
+OpenCV
+
+OpenCV es una librería Open Source de Visión por computadora que nos permite manipular imágenes y videos para realizar una variedad de tareas que van desde la detección automática de caras, a la visualización de las imágenes de una cámara Web; o hasta enseñarle a un robot a reconocer objetos en la vida real. Fue creada en 1999, por Gary Bradski, quien trabajaba en Intel, y que lanzó OpenCV con la intensión de acelerar la Visión por computadora y la Inteligencia Artificial proporcionando una infraestructura sólida para todos los que trabajan en el campo. La librería está escrita en C y C++ y se puede ejecutar bajo Linux, Windows y Mac OS X. Posee un desarrollo activo de interfaces para Python, Java , MATLAB y otros lenguajes, incluyendo el soporte para plataformas como Android e iOS para aplicaciones móviles.
+
+OpenCV contiene más de 500 funciones que abarcan muchas áreas de Visión por computadora, incluyendo tales como: inspección de productos de fábrica, imágenes médicas, seguridad, interfaz de usuario, calibración de cámara, visión estéreo y robótica. Debido a que la Visión por computadora y el Machine Learning a menudo van de la mano, OpenCV también contiene una librería completa de uso general de Machine Learning (ML); la cual se centra en el reconocimiento de patrones estadísticos y el agrupamiento. OpenCV es sin dudas el lugar por dónde comenzar para empezar a incursionar en el mundo de la Visión por computadora.
+
+Interfaz cerebro computadora (BCI)
+
+Interfaz cerebro computadora
+
+Desde hace mucho tiempo la fantasía de poder comunicarnos con las máquinas con solo utilizar nuestro pensamiento ha cautivado nuestra imaginación. Estamos tan acostumbrados a nuestros cuerpos, que no tomamos conciencia de los complejos mecanismos biológicos, químicos y eléctricos que ocurren entre nuestro cerebro y nuestro cuerpo para poder comunicarse fácilmente e interactuar con el mundo. Los nuevos avances tecnológicos están haciendo cada vez más sencillo que nuestro cerebro pueda transcender nuestro cuerpo y logre comunicarse con el mundo exterior utilizando otros dispositivos. El incipiente campo de la interfaz cerebro computadora o BCI, por sus siglas en inglés, consiste en el estudio multidisciplinario de los avances en neurociencia, procesamiento de señales, machine learning y las tecnologías de la información para explorar la forma de comunicar nuestro cerebro en forma directa con las máquinas de la misma forma en que lo hacemos con nuestro cuerpo.
+¿Qué es la interfaz cerebro computadora?
+
+La forma natural de comunicación entre el cerebro y nuestro cuerpo requiere de nervios y músculos. El proceso comienza con nuestra intención. Esta intención desencadena un proceso complejo en el que algunas áreas del cerebro son activadas y luego se envían señales a través de nuestro sistema nervioso periférico a los músculos correspondientes, que son los que en definitiva terminan realizando la tarea que comenzó en nuestro pensamiento. La interfaz cerebro computadora nos ofrece una alternativa a esta forma natural de comunicación y control. Consiste en un sistema artificial, que en lugar de depender de nervios y músculos, mide directamente la actividad cerebral asociada a nuestra intención y la traduce en señalas que pueden ser luego interpretadas por diferentes dispositivos. Esta traducción involucra procesamiento de señales y reconocimiento de patrones que son generalmente realizadas por una computadora.
+¿Cómo funciona?
+
+El objetivo de los sistemas de interfaz cerebro computadora es el de traducir la actividad cerebral en comandos de control para dispositivos y en estimular el cerebro para provocar una respuesta sensorial o recuperar una función neuronal. En todo sistema BCI podemos encontrar una o varias de las siguientes etapas de procesamiento:
+
+    Obtención de la actividad cerebral: Las señales de la actividad cerebral se obtiene utilizando tanto métodos invasivos como no invasivos.
+
+    Procesamiento de señales: Las señales en bruto son procesadas luego de ser adquiridas; se utilizan diferentes técnicas de Reducción de dimensionalidad y de selección de atributos para procesarlas.
+
+    Reconocimiento de patrones y machine learning: En esta etapa se utilizan las técnicas de machine learning para generar las señales de control para los dispositivos.
+
+    Respuesta sensorial: La señal de control de la etapa anterior genera un cambio en el entorno. Algunos de estos cambios pueden ser escuchados, vistos o sentidos por el usuario; pero en general se pueden utilizar sensores en el ambiente (sensores táctiles, cámaras, micrófonos) para enviar una respuesta directa al cerebro vía estimulación.
+
+    Procesamiento de señales por estimulación: Se requiere un buen entendimiento de la región del cerebro que se quiere estimular para lograr la respuesta deseada; Aquí se utilizan técnicas de procesamiento de señales y machine learning para intentar encontrar el correcto patrón de estimulación.
+
+    Estimulación cerebral: El patrón de estimulación obtenido en el punto anterior es utilizado en conjunción con técnicas invasivas o no invasivas de estimulación para estimular el cerebro.
+
+A continuación podemos ver un diagrama de como funciona una interfaz cerebro computadora.
+
+Interfaz cerebro computadora
+
+Formas de medir la actividad cerebral
+
+La actividad cerebral produce actividad eléctrica y magnética. Por lo tanto, se pueden utilizar sensores para detectar diferentes tipos de cambios en la actividad eléctrica o magnética, en diferentes momentos,sobre diferentes áreas del cerebro para ,de esta forma, poder estudiar la actividad cerebral. La mayoría de los sistemas BCI se basan en mediciones eléctricas de actividad cerebral y dependen de sensores colocados sobre la cabeza para medir esta actividad. La electroencefalografía (EEG) es una de las principales herramientas que se utiliza y consiste en capturar la actividad cerebral por medio de colocar unos electrodos sobre el cuero cabelludo. Otros dispositivos, pero ya no tan comunes por su alto costo que se pueden utilizar para medir la actividad cerebral son: la magnetoencefalografía (MEG), la cual registra los campos magnéticos asociados con la actividad cerebral; La resonancia magnética funcional (fMRI) que mide pequeños cambios en las señales dependientes del nivel de oxigenación de la sangre (BOLD) asociadas con la activación cortical. Al igual que la fMRI, la espectroscopía de infrarrojo cercano (NIRS) es una técnica hemodinámica para la evaluación de la actividad funcional en la corteza humana.
+
+Interfaz cerebro computadora
+
+Aplicaciones
+
+Los sistemas BCI pueden tener muchas aplicaciones terapéuticas, por ejemplo se pueden utilizar para proporcionar comunicación y control a usuarios con discapacidades leves, e incluso a usuarios sanos en algunas situaciones. Los sistemas BCI también pueden proporcionar nuevos medios para tratar los accidentes cerebrovasculares, el autismo y otros trastornos cerebrales.
+
+Aquí concluye esta introducción a la interfaz cerebro computadora el reciente resurgimiento del interés en este campo se debe principalmente a que existen computadoras más rápidas y baratas; a los avances en el conocimiento de cómo el cerebro procesa la información sensorial y produce una salida motriz; a la mayor disponibilidad de dispositivos para registrar señales cerebrales; y a las técnicas cada vez más poderosas de procesamiento de señales y algoritmos de machine learning.
+

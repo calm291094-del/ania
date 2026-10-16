@@ -1,0 +1,70 @@
+
+Introducción a R
+
+R
+
+¿Qué es R?
+
+R es un lenguaje de programación interpretado diseñado específicamente para el análisis estadístico y la manipulación de datos. Esta inspirado, y es en su mayor medida compatible, por el lenguaje de programación S desarrollado por AT&T. Es ampliamente utilizado en todos los campos donde se deben manipular datos, como ser: los negocios, la industria, el gobierno, la medicina, el ámbito académico, y demás.
+¿Por qué utilizar R?
+
+R cuenta con varias virtudes, como ser:
+
+    Es una implementación de dominio público del lenguaje estadístico S; y la plataforma R/S se ha convertido en el defecto dentro del círculo de los profesionales de la estadística.
+
+    Es comparable, y a menudo superior en funcionalidad a productos comerciales; ya sea en gráficas, variedad de operaciones, y algoritmos implementados.
+
+    Es multiplataforma, se encuentra disponible para los sistemas operativos Windows, Mac y Linux.
+
+    Además de proporcionar operaciones estadísticas, R es un lenguaje de programación de propósito general; es decir, que puede ser utilizado para automatizar análisis y crear nuevas funciones que amplíen las funcionalidades existentes.
+
+    Incorpora características encontradas en la programación orientados a objetos y funcional.
+
+    El sistema guarda los conjuntos de datos entre sesiones, por lo que no es necesario volver a cargar los datos cada vez que ingresamos. También guarda nuestro historial de comandos, lo que nos ahorra bastante tiempo y mejora la productividad.
+
+    Debido a que R es un software de código abierto, es fácil obtener ayuda de la comunidad de usuarios. Además, muchas nuevas funciones son aportadas por los usuarios, los cuales son prominentes estadísticos.
+
+Si bien existe una pequeña curva de aprendizaje, ésta es bastante mínima en comparación con otros lenguajes y programas. Asimismo existe una enorme red de colaboradores que constantemente están creando nuevos paquetes que hacen que sea mucho más fácil aplicar todo tipo de técnicas y funciones para manipular y analizar nuestros datos con la ayuda de R.
+¿Cómo obtengo R?
+
+Para descargar R, deben dirigirse a CRAN, la red de archivos de R. CRAN se compone de un conjunto de servidores distribuidos en todo el mundo y se utiliza para distribuir R junto con sus paquetes.
+RStudio
+
+RStudio es un entorno de desarrollo integrado, o IDE, diseñado específicamente para la programación con R. RStudio hace que R sea más fácil de usar. Incluye un editor de código, herramientas de depuración y visualización. Si estas dando tus primeros pasos con R, RStudio hace la experiencia mucho más amigable.
+Librerías para Ciencia de datos
+
+Bien, luego de este paseo por las principales estructuras de datos que podemos encontrar en R, llegó el momento de adentrarnos en el fascinante mundo de la ciencia de datos. Algunas de las librerías que se han vuelto sumamente útiles para analizar y manipular datos con R, son las siguientes:
+Tidyverse
+
+Una de las tareas más importantes en cualquier proceso de análisis de datos consiste en ordenarlos y darles una estructura. En general recibimos datos en crudo y debemos procesarlos para poder luego utilizarlos en nuestros modelos. Si de explorar, ordenar y analizar datos se trata el paquete tidiverse es fundamental. Este paquete incluye las librerías ggplot2, tibble, tidyr, readr, purrr, y dplyr; las cuales comparten una filosofía propia y están diseñados para trabajar naturalmente entre ellos.
+Caret
+
+A la hora de simplificar el proceso de Machine Learning, el paquete Caret puede sernos de gran ayuda. Este paquete nos ofrece una serie de herramientas para la construcción de modelos de Machine Learning en R. Caret nos proporciona herramientas esenciales para: la etapa de preparación de los datos, para dividir el conjunto de datos, seleccionar los principales atributos, y para evaluar los modelos.
+Data.table
+
+Si de organizar grandes volúmenes de datos de una manera intuitiva se trata, data.table es el paquete indicado. Esta librería nos extiende la estructura de datos del dataFrame para poder trabajar con archivos realmente extensos, y poder realizar operaciones de agregado, agrupado y uniones de una forma más sencilla.
+Otras librerías que deberíamos conocer
+E1071
+
+Si lo que buscamos es trabajar con Máquinas de vectores de soporte, SVM; o con cualquiera de las principales funciones que podemos encontrar en las clases de probabilidad y estadística; entonces el paquete E1071 es exactamente lo que necesitamos.
+randomForest
+
+Para trabajar específicamente con modelos de Random Forest el paquete randomForest puede ser una buena opción; este paquete nos permite crear este tipo de modelos en forma muy sencilla.
+rpart
+
+El paquete rpart es una buena alternativa para trabajar con árboles de clasificaciones. Implementa los principales algoritmos para trabajar con este tipo de modelos.
+nnet
+
+Las redes neuronales han recibido mucha atención últimamente por sus habilidades para aprender las relaciones entre las variables. Representan una técnica innovadora para la adaptación de los modelo que no se basa en los supuestos convencionales necesarios por el modelado estándar; y que además pueden manejar muy eficazmente los datos multivariantes. Un gran paquete para trabajar con redes neuronales en forma muy sencilla es nnet.
+igraph
+
+Si lo que necesitamos es analizar y visualizar redes y grafos, el paquete igraph es la mejor opción. Este paquete nos proporciona una serie de rutinas altamente eficientes para visualizar y analizar las conexiones de las redes.
+Outliers
+
+Si lo que necesitamos es encontrar valores atípicos, entonces outliers es el paquete que debemos utilizar. Esta librería nos ofrece varias funciones y tests para poder identificar los valores atípicos.
+Survival
+
+Survival es un paquete que nos facilita la tarea de realizar análisis de supervivencia.
+Forecast
+
+Forecast proporciona métodos y herramientas para mostrar y analizar predicciones univariadas de series de tiempo, incluyendo el suavizado exponencial a través de modelos de espacios de estados y el modelado ARIMA automático.
