@@ -11,6 +11,35 @@
 
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23040806'/%3E%3Ccircle cx='50' cy='50' r='26' fill='%232de08a'/%3E%3Ccircle cx='50' cy='50' r='9' fill='%23040806'/%3E%3C/svg%3E">
 
+<!-- ═══ FIX #1 · Silenciar reintentos infinitos WebSocket al agente local (evita spam en consola) ═══ -->
+<script>
+(function(){
+  if (typeof WebSocket === 'undefined') return;
+  const OrigWS = window.WebSocket;
+  let localAttempts = 0;
+  function fakeWS(){
+    return {
+      readyState: 3, CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3,
+      addEventListener: function(){}, removeEventListener: function(){},
+      dispatchEvent: function(){ return false; }, send: function(){}, close: function(){},
+      onopen: null, onclose: null, onerror: null, onmessage: null
+    };
+  }
+  function PatchedWS(url, protocols){
+    try {
+      if (typeof url === 'string' && /^wss?:\/\/(127\.0\.0\.1|localhost):8765\b/.test(url)){
+        localAttempts++;
+        if (localAttempts > 2) return fakeWS();
+      }
+    } catch(e){}
+    return protocols ? new OrigWS(url, protocols) : new OrigWS(url);
+  }
+  PatchedWS.prototype = OrigWS.prototype;
+  PatchedWS.CONNECTING = 0; PatchedWS.OPEN = 1; PatchedWS.CLOSING = 2; PatchedWS.CLOSED = 3;
+  try { window.WebSocket = PatchedWS; } catch(e){}
+})();
+</script>
+
 <!-- Vendor -->
 <link rel="stylesheet" href="./vendor/notifyx.min.css">
 <script src="./vendor/notifyx.min.js"></script>
@@ -27,7 +56,6 @@
 
 <!-- ══════════ CSS DEL MINI-OS (inline) ══════════ -->
 <style id="os-css">
-/* Desktop OS · namespace #osDesktop para no chocar con nada */
 #osDesktop{
   position:fixed;inset:0;z-index:800;display:none;
   font-family:"Segoe UI","Open Sans",Arial,sans-serif;color:#1b1b1b;
@@ -157,7 +185,6 @@ body.os-on #app{display:none;}
 .os-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;position:relative;}
 .os-rz{position:absolute;right:0;bottom:0;width:17px;height:17px;cursor:nwse-resize;z-index:5;}
 
-/* Apps internas */
 .os-explorer-toolbar{display:flex;align-items:center;gap:4px;padding:6px 8px;background:#f0f0f0;border-bottom:1px solid #d8d8d8;}
 .os-explorer-nav{width:32px;height:30px;border:0;background:none;color:#1b1b1b;cursor:pointer;border-radius:2px;}
 .os-explorer-nav:hover{background:rgba(0,0,0,.06);}
@@ -207,33 +234,20 @@ body.os-on #app{display:none;}
 .os-weather-search input{flex:1;padding:8px 10px;border:1px solid #d8d8d8;background:#fff;color:#1b1b1b;outline:0;border-radius:4px;}
 .os-weather-search button{padding:8px 16px;border:1px solid #d8d8d8;background:#f0f0f0;cursor:pointer;border-radius:4px;}
 
-/* Modo OS: convertimos #app en panel flotante */
 body.os-on #app{
   position:fixed!important;
-  right:16px!important;
-  bottom:56px!important;
-  left:auto!important;
-  top:auto!important;
+  right:16px!important;bottom:56px!important;left:auto!important;top:auto!important;
   width:min(380px, calc(100vw - 32px))!important;
   height:min(560px, calc(100vh - 120px))!important;
-  max-width:none!important;
-  margin:0!important;
+  max-width:none!important;margin:0!important;
   background:var(--bg2,#071009)!important;
   border:1px solid var(--line2,rgba(45,224,138,.45))!important;
-  border-radius:14px!important;
-  z-index:9999!important;
+  border-radius:14px!important;z-index:9999!important;
   box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 40px rgba(45,224,138,.18)!important;
-  overflow:hidden!important;
-  padding:0!important;
-  display:flex!important;
-  flex-direction:column!important;
+  overflow:hidden!important;padding:0!important;
+  display:flex!important;flex-direction:column!important;
 }
-body.os-on #app header{
-  padding:8px 10px!important;
-  border-bottom:1px solid var(--line,rgba(45,224,138,.2))!important;
-  flex-wrap:nowrap!important;
-  gap:6px!important;
-}
+body.os-on #app header{padding:8px 10px!important;border-bottom:1px solid var(--line,rgba(45,224,138,.2))!important;flex-wrap:nowrap!important;gap:6px!important;}
 body.os-on #app header .pill{display:none!important;}
 body.os-on #app header #logoTAG{display:none!important;}
 body.os-on #app header #headRight{margin-left:auto!important;}
@@ -243,7 +257,6 @@ body.os-on #app #chat{flex:1!important;padding:8px!important;}
 body.os-on #app #inputBar{padding:6px 8px 8px!important;}
 body.os-on #app .line{font-size:13px!important;}
 
-/* Toggle button del OS dentro del header de la app */
 #osToggleBtn{
   display:none;background:transparent;border:1px solid var(--line,rgba(45,224,138,.2));
   border-radius:6px;color:var(--acc2,#39ff9b);font-family:var(--mono,monospace);
@@ -256,10 +269,7 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
   #osIcons{gap:2px;}
   .os-icon{width:74px;padding:6px 2px;}
   .os-icon span{font-size:10.5px;}
-  body.os-on #app{
-    right:8px!important;bottom:52px!important;
-    width:calc(100vw - 16px)!important;height:calc(100vh - 110px)!important;
-  }
+  body.os-on #app{right:8px!important;bottom:52px!important;width:calc(100vw - 16px)!important;height:calc(100vh - 110px)!important;}
   #osStartMenu{width:96vw;}
 }
 </style>
@@ -304,9 +314,6 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
   <canvas id="hudCanvas"></canvas>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════ -->
-<!-- BOOT + LOGIN + REGISTRO (corregido)                     -->
-<!-- ═══════════════════════════════════════════════════════ -->
 <div id="boot">
   <div id="bootBox">
     <div id="bootTitle">ANIA<small>EDICIÓN JARVIS · v10.0</small></div>
@@ -336,9 +343,6 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════ -->
-<!-- APP ANIA (panel flotante cuando el OS está activo)      -->
-<!-- ═══════════════════════════════════════════════════════ -->
 <div id="app">
   <header>
     <span id="logo" class="logo-idle">
@@ -361,7 +365,6 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
     <span class="pill" id="relayPill"><span class="dot"></span><span>SESIÓN</span></span>
     <span id="operator"></span>
 
-    <!-- ⭐ Nuevo: botón para mostrar/ocultar el OS -->
     <button id="osToggleBtn" title="Cambiar entre ANIA y el escritorio OS">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
       <span id="osToggleTxt">OS</span>
@@ -389,9 +392,6 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
   </form>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════ -->
-<!-- MINI-OS (escritorio Kalm)                                -->
-<!-- ═══════════════════════════════════════════════════════ -->
 <div id="osDesktop">
   <div id="osWallpaper"></div>
   <div id="osWinLayer"></div>
@@ -418,7 +418,6 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
   </div>
 </div>
 
-<!-- ============ DOCK · FAB + Drawer tipo control-center ============ -->
 <button id="dockFab" title="Abrir menú" aria-label="Abrir menú de ANIA">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
     <path d="M12 2v6M12 16v6M2 12h6M16 12h6"/>
@@ -527,7 +526,6 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
   <div class="sheetFoot"><button class="bigbtn" id="clearLib">VACIAR BIBLIOTECA</button></div>
 </div>
 
-<!-- ============ INSTALAR ============ -->
 <div class="overlay" id="installModal">
   <div class="modal">
     <h2>INSTALAR ANIA<button class="xbtn" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
@@ -544,7 +542,6 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
   </div>
 </div>
 
-<!-- ============ AJUSTES ============ -->
 <div class="overlay" id="settingsModal">
   <div class="modal">
     <h2>AJUSTES<button class="xbtn" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
@@ -631,7 +628,6 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
   </div>
 </div>
 
-<!-- ============ CAMBIO CONTRASEÑA ============ -->
 <div class="overlay" id="passModal">
   <div class="modal">
     <h2>CAMBIAR CONTRASEÑA<button class="xbtn" data-close style="margin-left:auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
@@ -643,7 +639,6 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
   </div>
 </div>
 
-<!-- ============ ADMIN ============ -->
 <div class="overlay" id="adminModal">
   <div class="modal" style="width:min(1000px,100%);max-width:1000px;">
     <h2>PANEL DE ADMINISTRACIÓN<button class="xbtn" data-close style="margin-left:auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
@@ -653,10 +648,7 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
       <div class="bento-tile tile-stat"><div class="stat-num" id="bentoActivos">—</div><div class="stat-lbl">Activos 7d</div></div>
       <div class="bento-tile tile-stat tile-amber"><div class="stat-num" id="bentoBloqueados">—</div><div class="stat-lbl">Bloqueados</div></div>
       <div class="bento-tile tile-stat"><div class="stat-num" id="bentoConocimiento">—</div><div class="stat-lbl">Conocimiento</div></div>
-      <div class="bento-tile tile-full">
-        <div class="tile-head"><span class="tile-title">Usuarios registrados</span><span class="tile-badge" id="bentoUserCount">0</span></div>
-        <div class="tile-body" id="adminUsersList"><div class="empty">Cargando...</div></div>
-      </div>
+      <div class="bento-tile tile-full"><div class="tile-head"><span class="tile-title">Usuarios registrados</span><span class="tile-badge" id="bentoUserCount">0</span></div><div class="tile-body" id="adminUsersList"><div class="empty">Cargando...</div></div></div>
       <div class="bento-tile tile-wide"><div class="tile-head"><span class="tile-title">Sugerencias del agente</span></div><div class="tile-body" id="adminSugerencias"><div class="empty">Cargando...</div></div></div>
       <div class="bento-tile tile-wide"><div class="tile-head"><span class="tile-title">Reporte de seguridad</span></div><div class="tile-body" id="adminSecurityReport"><div class="empty">Cargando...</div></div></div>
       <div class="bento-tile tile-wide"><div class="tile-head"><span class="tile-title">Conocimiento compartido</span></div><div class="tile-body" id="adminKBList"><div class="empty">Cargando...</div></div></div>
@@ -665,7 +657,6 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
   </div>
 </div>
 
-<!-- ============ PERFIL ============ -->
 <div class="overlay" id="perfilModal">
   <div class="modal" style="width:min(720px,100%);max-width:720px;">
     <h2>MI PERFIL<button class="xbtn" data-close style="margin-left:auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
@@ -681,7 +672,6 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
   </div>
 </div>
 
-<!-- ============ DASHBOARD ============ -->
 <div class="overlay" id="dashboardModal">
   <div class="modal" style="width:min(1100px,100%);max-width:1100px;padding:16px 18px;">
     <h2 style="margin-bottom:14px;">PANEL PRINCIPAL<button class="xbtn" data-close style="margin-left:auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
@@ -689,7 +679,6 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
   </div>
 </div>
 
-<!-- ============ JARVIS ============ -->
 <div class="overlay" id="jarvisModal">
   <div class="modal" style="width:min(1100px,100%);max-width:1100px;">
     <h2>PANEL JARVIS<button class="xbtn" data-close style="margin-left:auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></h2>
@@ -714,1078 +703,1009 @@ body.os-on #osToggleBtn{display:inline-flex;align-items:center;gap:4px;}
 <input type="file" id="engineFiles" accept=".mjs,.js,.wasm" multiple style="display:none">
 
 <!-- ═══════════════════════════════════════════════════════ -->
-<!-- MINI-OS · Script (se ejecuta tras cargar los módulos)   -->
+<!-- MINI-OS · Script                                         -->
 <!-- ═══════════════════════════════════════════════════════ -->
 <script>
 /* ============================================================
    MINI-OS ANIA · integración con ANIA (v10)
-   Se ejecuta después de los scripts defer.
+   FIX: expone createOSWindow, closeOSWin, focusOSWin, renderOSStartMenu, renderOSDesktop
+        y OSRemoteWait (para que el módulo remoto espere correctamente).
    ============================================================ */
 (function(){
-  'use strict';
+'use strict';
 
-  // ── Esperar a que ANIA esté lista (globals definidos) ──
-  function waitFor(fn, cb, timeout){
-    var start = Date.now();
-    var iv = setInterval(function(){
-      if(fn()){ clearInterval(iv); cb(); }
-      else if(Date.now() - start > (timeout||8000)){ clearInterval(iv); console.warn('[OS] timeout esperando ANIA'); }
-    }, 120);
-  }
+function waitFor(fn, cb, timeout){
+  var start = Date.now();
+  var iv = setInterval(function(){
+    if(fn()){ clearInterval(iv); cb(); }
+    else if(Date.now() - start > (timeout||8000)){ clearInterval(iv); console.warn('[OS] timeout esperando ANIA'); }
+  }, 120);
+}
 
-  // ── ICONOS SVG (evita emojis rotos) ──
-  var IC = {
-    folder: '<svg width="42" height="42" viewBox="0 0 48 48"><path d="M4 10h13l4 5h20v6H4z" fill="#e8a200"/><path d="M4 16h37v22a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" fill="#ffc933"/></svg>',
-    txt:    '<svg width="42" height="42" viewBox="0 0 48 48"><path d="M11 4h20l6 6v34H11z" fill="#fff" stroke="#9aa5b1" stroke-width="1.4"/><path d="M31 4l6 6h-6z" fill="#dfe5ec" stroke="#9aa5b1" stroke-width="1.2"/><path d="M16 17h16M16 22h16M16 27h16M16 32h10" stroke="#5a9bd8" stroke-width="2"/></svg>',
-    doc:    '<svg width="42" height="42" viewBox="0 0 48 48"><path d="M11 4h20l6 6v34H11z" fill="#fff" stroke="#9aa5b1" stroke-width="1.4"/><rect x="6" y="17" width="24" height="24" rx="2" fill="#2B579A"/><text x="18" y="35" font-family="Segoe UI" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">W</text></svg>',
-    xls:    '<svg width="42" height="42" viewBox="0 0 48 48"><path d="M11 4h20l6 6v34H11z" fill="#fff" stroke="#9aa5b1" stroke-width="1.4"/><rect x="6" y="17" width="24" height="24" rx="2" fill="#217346"/><text x="18" y="35" font-family="Segoe UI" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">X</text></svg>',
-    img:    '<svg width="42" height="42" viewBox="0 0 48 48"><rect x="5" y="9" width="38" height="30" rx="2.5" fill="#fff" stroke="#8f9aa6" stroke-width="1.4"/><path d="M8 34l10-12 7 8 5-5 10 9z" fill="#2f9e63"/><circle cx="33" cy="17" r="3.6" fill="#ffb900"/></svg>',
-    audio:  '<svg width="42" height="42" viewBox="0 0 48 48"><rect x="4" y="4" width="40" height="40" rx="4" fill="#C30052"/><circle cx="19" cy="32" r="4.6" fill="#fff"/><rect x="22" y="12" width="3.4" height="20" fill="#fff"/></svg>',
-    app:    '<svg width="42" height="42" viewBox="0 0 48 48"><rect x="6" y="6" width="36" height="36" rx="6" fill="#4a4f57"/></svg>',
-    calc:   '<svg width="42" height="42" viewBox="0 0 48 48"><rect x="8" y="4" width="32" height="40" rx="3" fill="#4a4f57"/><rect x="12" y="8" width="24" height="9" rx="1" fill="#c9e6f5"/><rect x="12" y="21" width="6" height="5" rx="1" fill="#8d949e"/><rect x="21" y="21" width="6" height="5" rx="1" fill="#8d949e"/><rect x="30" y="21" width="6" height="5" rx="1" fill="#8d949e"/><rect x="12" y="29" width="6" height="5" rx="1" fill="#8d949e"/><rect x="21" y="29" width="6" height="5" rx="1" fill="#8d949e"/><rect x="30" y="29" width="6" height="12" rx="1" fill="#0a84d8"/><rect x="12" y="37" width="15" height="4" rx="1" fill="#8d949e"/></svg>',
-    term:   '<svg width="42" height="42" viewBox="0 0 48 48"><rect x="4" y="6" width="40" height="36" rx="4" fill="#22282f"/><text x="12" y="30" font-family="Consolas,monospace" font-size="14" fill="#2de08a">&gt;_</text></svg>',
-    paint:  '<svg width="42" height="42" viewBox="0 0 48 48"><path d="M24 5C13 5 5 13 5 23.5 5 34 13 42 23.5 42c2.8 0 4.4-1.8 4.4-3.8 0-1.9-1.4-2.7-1.4-4.4 0-1.9 1.6-3.3 3.7-3.3h4.2C39.5 30.5 43 26.6 43 21.4 43 11.8 34.6 5 24 5z" fill="#f2f5f8" stroke="#8f9aa6" stroke-width="1.5"/><circle cx="14.5" cy="18" r="3" fill="#e81123"/><circle cx="22.5" cy="13" r="3" fill="#ff8c00"/><circle cx="31.5" cy="15.5" r="3" fill="#107c10"/><circle cx="13.5" cy="27" r="3" fill="#0078d7"/></svg>',
-    mines:  '<svg width="42" height="42" viewBox="0 0 48 48"><circle cx="24" cy="26" r="14" fill="#333"/><path d="M24 6v6M24 40v6M4 26h6M38 26h6M8 10l4 4M36 10l-4 4M8 42l4-4M36 42l-4-4" stroke="#333" stroke-width="2"/></svg>',
-    weather:'<svg width="42" height="42" viewBox="0 0 48 48"><circle cx="18" cy="20" r="8" fill="#ffb900"/><path d="M12 32c-4 0-8-3-8-8s4-8 8-8c1 0 2 0 3 1 2-5 7-8 12-8 6 0 11 4 12 10 4 1 7 4 7 9 0 5-4 9-9 9H14c-1 0-2-1-2-2s1-3 0-3z" fill="#9ad0ff"/></svg>',
-    photos: '<svg width="42" height="42" viewBox="0 0 48 48"><rect x="5" y="9" width="38" height="30" rx="2.5" fill="#fff" stroke="#8f9aa6" stroke-width="1.4"/><path d="M8 34l10-12 7 8 5-5 10 9z" fill="#2f9e63"/><circle cx="33" cy="17" r="3.6" fill="#ffb900"/></svg>'
-  };
+var IC = {
+  folder: '<svg width="42" height="42" viewBox="0 0 48 48"><path d="M4 10h13l4 5h20v6H4z" fill="#e8a200"/><path d="M4 16h37v22a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" fill="#ffc933"/></svg>',
+  txt:    '<svg width="42" height="42" viewBox="0 0 48 48"><path d="M11 4h20l6 6v34H11z" fill="#fff" stroke="#9aa5b1" stroke-width="1.4"/><path d="M31 4l6 6h-6z" fill="#dfe5ec" stroke="#9aa5b1" stroke-width="1.2"/><path d="M16 17h16M16 22h16M16 27h16M16 32h10" stroke="#5a9bd8" stroke-width="2"/></svg>',
+  doc:    '<svg width="42" height="42" viewBox="0 0 48 48"><path d="M11 4h20l6 6v34H11z" fill="#fff" stroke="#9aa5b1" stroke-width="1.4"/><rect x="6" y="17" width="24" height="24" rx="2" fill="#2B579A"/><text x="18" y="35" font-family="Segoe UI" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">W</text></svg>',
+  xls:    '<svg width="42" height="42" viewBox="0 0 48 48"><path d="M11 4h20l6 6v34H11z" fill="#fff" stroke="#9aa5b1" stroke-width="1.4"/><rect x="6" y="17" width="24" height="24" rx="2" fill="#217346"/><text x="18" y="35" font-family="Segoe UI" font-size="17" font-weight="700" fill="#fff" text-anchor="middle">X</text></svg>',
+  img:    '<svg width="42" height="42" viewBox="0 0 48 48"><rect x="5" y="9" width="38" height="30" rx="2.5" fill="#fff" stroke="#8f9aa6" stroke-width="1.4"/><path d="M8 34l10-12 7 8 5-5 10 9z" fill="#2f9e63"/><circle cx="33" cy="17" r="3.6" fill="#ffb900"/></svg>',
+  audio:  '<svg width="42" height="42" viewBox="0 0 48 48"><rect x="4" y="4" width="40" height="40" rx="4" fill="#C30052"/><circle cx="19" cy="32" r="4.6" fill="#fff"/><rect x="22" y="12" width="3.4" height="20" fill="#fff"/></svg>',
+  app:    '<svg width="42" height="42" viewBox="0 0 48 48"><rect x="6" y="6" width="36" height="36" rx="6" fill="#4a4f57"/></svg>',
+  calc:   '<svg width="42" height="42" viewBox="0 0 48 48"><rect x="8" y="4" width="32" height="40" rx="3" fill="#4a4f57"/><rect x="12" y="8" width="24" height="9" rx="1" fill="#c9e6f5"/><rect x="12" y="21" width="6" height="5" rx="1" fill="#8d949e"/><rect x="21" y="21" width="6" height="5" rx="1" fill="#8d949e"/><rect x="30" y="21" width="6" height="5" rx="1" fill="#8d949e"/><rect x="12" y="29" width="6" height="5" rx="1" fill="#8d949e"/><rect x="21" y="29" width="6" height="5" rx="1" fill="#8d949e"/><rect x="30" y="29" width="6" height="12" rx="1" fill="#0a84d8"/><rect x="12" y="37" width="15" height="4" rx="1" fill="#8d949e"/></svg>',
+  term:   '<svg width="42" height="42" viewBox="0 0 48 48"><rect x="4" y="6" width="40" height="36" rx="4" fill="#22282f"/><text x="12" y="30" font-family="Consolas,monospace" font-size="14" fill="#2de08a">&gt;_</text></svg>',
+  paint:  '<svg width="42" height="42" viewBox="0 0 48 48"><path d="M24 5C13 5 5 13 5 23.5 5 34 13 42 23.5 42c2.8 0 4.4-1.8 4.4-3.8 0-1.9-1.4-2.7-1.4-4.4 0-1.9 1.6-3.3 3.7-3.3h4.2C39.5 30.5 43 26.6 43 21.4 43 11.8 34.6 5 24 5z" fill="#f2f5f8" stroke="#8f9aa6" stroke-width="1.5"/><circle cx="14.5" cy="18" r="3" fill="#e81123"/><circle cx="22.5" cy="13" r="3" fill="#ff8c00"/><circle cx="31.5" cy="15.5" r="3" fill="#107c10"/><circle cx="13.5" cy="27" r="3" fill="#0078d7"/></svg>',
+  mines:  '<svg width="42" height="42" viewBox="0 0 48 48"><circle cx="24" cy="26" r="14" fill="#333"/><path d="M24 6v6M24 40v6M4 26h6M38 26h6M8 10l4 4M36 10l-4 4M8 42l4-4M36 42l-4-4" stroke="#333" stroke-width="2"/></svg>',
+  weather:'<svg width="42" height="42" viewBox="0 0 48 48"><circle cx="18" cy="20" r="8" fill="#ffb900"/><path d="M12 32c-4 0-8-3-8-8s4-8 8-8c1 0 2 0 3 1 2-5 7-8 12-8 6 0 11 4 12 10 4 1 7 4 7 9 0 5-4 9-9 9H14c-1 0-2-1-2-2s1-3 0-3z" fill="#9ad0ff"/></svg>',
+  photos: '<svg width="42" height="42" viewBox="0 0 48 48"><rect x="5" y="9" width="38" height="30" rx="2.5" fill="#fff" stroke="#8f9aa6" stroke-width="1.4"/><path d="M8 34l10-12 7 8 5-5 10 9z" fill="#2f9e63"/><circle cx="33" cy="17" r="3.6" fill="#ffb900"/></svg>'
+};
 
-  // ── ESTADO DEL OS ──
-  var OS = {
-    zTop: 100, winSeq: 0, activeWin: null,
-    wins: new Map(),
-    FS: null,
-    // FS virtual persistente
-    loadFS: function(){
-      var saved = null;
-      try{ saved = JSON.parse(localStorage.getItem('aniaos_fs')||'null'); }catch(e){}
-      if(saved && typeof saved === 'object'){ this.FS = saved; return; }
-      this.FS = {
-        'Documentos':{ type:'folder', children:{
-          'Bienvenida.txt':{ type:'file', kind:'text', name:'Bienvenida.txt', size:420,
-            text:'Bienvenido a ANIA-OS.\n\nEscribe a Ania (panel flotante) comandos como:\n  · abre word\n  · crea archivo notas.txt con hola\n  · busca archivo bienvenida\n  · cambia el fondo a aurora\n  · info sistema\n\nTodo se controla por voz o chat.' }
-        }},
-        'Imágenes':{ type:'folder', children:{} },
-        'Música':{ type:'folder', children:{} },
-        'Apps':{ type:'folder', children:{} },
-        'Descargas':{ type:'folder', children:{} },
-        'Papelera':{ type:'folder', isTrash:true, children:{} }
-      };
-      this.saveFS();
-    },
-    saveFS: function(){ try{ localStorage.setItem('aniaos_fs', JSON.stringify(this.FS)); }catch(e){} },
-    getNode: function(path){
-      var n = { children: this.FS };
-      for(var i = 0; i < path.length; i++){
-        if(!n.children || !n.children[path[i]]) return null;
-        n = n.children[path[i]];
-      }
-      return n;
-    },
-    ensureFolder: function(path){
-      var cur = { children: this.FS };
-      for(var i = 0; i < path.length; i++){
-        var p = path[i];
-        if(!cur.children) cur.children = {};
-        if(!cur.children[p]) cur.children[p] = { type:'folder', children:{} };
-        cur = cur.children[p];
-        if(cur.type === 'file') return null;
-      }
+var OS = {
+  zTop: 100, winSeq: 0, activeWin: null,
+  wins: new Map(),
+  FS: null,
+  loadFS: function(){
+    var saved = null;
+    try{ saved = JSON.parse(localStorage.getItem('aniaos_fs')||'null'); }catch(e){}
+    if(saved && typeof saved === 'object'){ this.FS = saved; return; }
+    this.FS = {
+      'Documentos':{ type:'folder', children:{
+        'Bienvenida.txt':{ type:'file', kind:'text', name:'Bienvenida.txt', size:420,
+          text:'Bienvenido a ANIA-OS.\n\nComandos:\n  · abre word\n  · abre música\n  · abre documentos\n  · abre el navegador\n  · entrena con documentos\n  · busca archivo bienvenida\n  · cambia el fondo a aurora\n  · info sistema' }
+      }},
+      'Imágenes':{ type:'folder', children:{} },
+      'Música':{ type:'folder', children:{} },
+      'Apps':{ type:'folder', children:{} },
+      'Descargas':{ type:'folder', children:{} },
+      'Papelera':{ type:'folder', isTrash:true, children:{} }
+    };
+    this.saveFS();
+  },
+  saveFS: function(){ try{ localStorage.setItem('aniaos_fs', JSON.stringify(this.FS)); }catch(e){} },
+  getNode: function(path){
+    var n = { children: this.FS };
+    for(var i = 0; i < path.length; i++){
+      if(!n.children || !n.children[path[i]]) return null;
+      n = n.children[path[i]];
+    }
+    return n;
+  },
+  ensureFolder: function(path){
+    var cur = { children: this.FS };
+    for(var i = 0; i < path.length; i++){
+      var p = path[i];
       if(!cur.children) cur.children = {};
-      return cur;
-    },
-    addFile: function(folderPath, node){
-      var f = this.ensureFolder(folderPath);
-      if(!f) return null;
-      var nm = String(node.name || 'archivo');
-      var dot = nm.lastIndexOf('.');
-      var base = dot > 0 ? nm.slice(0, dot) : nm;
-      var ext = dot > 0 ? nm.slice(dot) : '';
-      var name = nm, i = 2;
-      while(f.children[name]){ name = base + ' (' + i + ')' + ext; i++; }
-      node.name = name;
-      f.children[name] = node;
-      this.saveFS();
-      return name;
-    },
-    deleteNode: function(path){
-      var parent = this.getNode(path.slice(0, -1));
-      var name = path[path.length - 1];
-      if(!parent || !parent.children || !parent.children[name]) return;
-      var node = parent.children[name];
-      if(parent.isTrash){ delete parent.children[name]; this.saveFS(); return; }
-      var trash = this.ensureFolder(['Papelera']);
-      var tn = node.name, i = 2;
-      while(trash.children[tn]){ tn = node.name + ' (' + i + ')'; i++; }
-      node.name = tn;
-      trash.children[tn] = node;
-      delete parent.children[name];
-      this.saveFS();
+      if(!cur.children[p]) cur.children[p] = { type:'folder', children:{} };
+      cur = cur.children[p];
+      if(cur.type === 'file') return null;
     }
+    if(!cur.children) cur.children = {};
+    return cur;
+  },
+  addFile: function(folderPath, node){
+    var f = this.ensureFolder(folderPath);
+    if(!f) return null;
+    var nm = String(node.name || 'archivo');
+    var dot = nm.lastIndexOf('.');
+    var base = dot > 0 ? nm.slice(0, dot) : nm;
+    var ext = dot > 0 ? nm.slice(dot) : '';
+    var name = nm, i = 2;
+    while(f.children[name]){ name = base + ' (' + i + ')' + ext; i++; }
+    node.name = name;
+    f.children[name] = node;
+    this.saveFS();
+    return name;
+  },
+  deleteNode: function(path){
+    var parent = this.getNode(path.slice(0, -1));
+    var name = path[path.length - 1];
+    if(!parent || !parent.children || !parent.children[name]) return;
+    var node = parent.children[name];
+    if(parent.isTrash){ delete parent.children[name]; this.saveFS(); return; }
+    var trash = this.ensureFolder(['Papelera']);
+    var tn = node.name, i = 2;
+    while(trash.children[tn]){ tn = node.name + ' (' + i + ')'; i++; }
+    node.name = tn;
+    trash.children[tn] = node;
+    delete parent.children[name];
+    this.saveFS();
+  }
+};
+
+var $ = function(s){ return document.querySelector(s); };
+var $$ = function(s){ return document.querySelectorAll(s); };
+var el = function(t, c, h){ var e = document.createElement(t); if(c) e.className = c; if(h != null) e.innerHTML = h; return e; };
+var esc = function(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+function toastOS(txt){ if(typeof toast === 'function'){ try{ toast(txt); return; }catch(e){} } console.log('[OS]', txt); }
+
+function createOSWindow(opts){
+  var id = 'osw' + (++OS.winSeq);
+  var w = Math.min(opts.w || 760, innerWidth - 30);
+  var h = Math.min(opts.h || 500, innerHeight - 70);
+  var cnt = OS.wins.size;
+  var x = Math.max(8, (innerWidth - w) / 2 + ((cnt % 7) - 3) * 30);
+  var y = Math.max(4, (innerHeight - 44 - h) / 2 + ((cnt % 7) - 3) * 22);
+
+  var win = el('div', 'os-window active');
+  win.style.cssText = 'width:' + w + 'px;height:' + h + 'px;left:' + x + 'px;top:' + y + 'px;z-index:' + (++OS.zTop);
+  win.innerHTML =
+    '<div class="os-titlebar">' +
+      '<div class="os-tb-ico">' + (opts.icon || '') + '</div>' +
+      '<div class="os-tb-title">' + esc(opts.title || 'Ventana') + '</div>' +
+      '<div class="os-tb-btns">' +
+        '<button class="os-tb-btn bmin" title="Minimizar">─</button>' +
+        '<button class="os-tb-btn bmax" title="Maximizar">▢</button>' +
+        '<button class="os-tb-btn close" title="Cerrar">✕</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="os-body"></div>' +
+    '<div class="os-rz"></div>';
+  $('#osWinLayer').appendChild(win);
+
+  var rec = { el: win, body: win.querySelector('.os-body'), title: opts.title };
+  OS.wins.set(id, rec);
+
+  var tb = el('button', 'os-task active', (opts.icon || '') + esc(opts.title || ''));
+  tb.dataset.win = id; tb.title = opts.title;
+  tb.onclick = function(){
+    if(OS.activeWin === id && !win.classList.contains('minimized')) minimizeOSWin(id);
+    else { win.classList.remove('minimized'); focusOSWin(id); }
   };
+  $('#osTasks').appendChild(tb);
 
-  // ── UTILIDADES ──
-  var $ = function(s){ return document.querySelector(s); };
-  var $$ = function(s){ return document.querySelectorAll(s); };
-  var el = function(t, c, h){ var e = document.createElement(t); if(c) e.className = c; if(h != null) e.innerHTML = h; return e; };
-  var esc = function(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
-  function toastOS(txt){
-    if(typeof toast === 'function'){ try{ toast(txt); return; }catch(e){} }
-    console.log('[OS]', txt);
-  }
-  function replyOS(txt){
-    if(typeof reply === 'function'){ try{ reply(txt); return; }catch(e){} }
-    if(typeof personaReply === 'function'){ try{ personaReply(txt); return; }catch(e){} }
-    console.log('[OS→chat]', txt);
-  }
+  win.querySelector('.bmin').onclick = function(e){ e.stopPropagation(); minimizeOSWin(id); };
+  win.querySelector('.bmax').onclick = function(e){ e.stopPropagation(); toggleOSMax(id); };
+  win.querySelector('.close').onclick = function(e){ e.stopPropagation(); closeOSWin(id); };
+  win.addEventListener('pointerdown', function(){ focusOSWin(id); });
 
-  // ── VENTANA ──
-  function createOSWindow(opts){
-    var id = 'osw' + (++OS.winSeq);
-    var w = Math.min(opts.w || 760, innerWidth - 30);
-    var h = Math.min(opts.h || 500, innerHeight - 70);
-    var cnt = OS.wins.size;
-    var x = Math.max(8, (innerWidth - w) / 2 + ((cnt % 7) - 3) * 30);
-    var y = Math.max(4, (innerHeight - 44 - h) / 2 + ((cnt % 7) - 3) * 22);
-
-    var win = el('div', 'os-window active');
-    win.style.cssText = 'width:' + w + 'px;height:' + h + 'px;left:' + x + 'px;top:' + y + 'px;z-index:' + (++OS.zTop);
-    win.innerHTML =
-      '<div class="os-titlebar">' +
-        '<div class="os-tb-ico">' + (opts.icon || '') + '</div>' +
-        '<div class="os-tb-title">' + esc(opts.title || 'Ventana') + '</div>' +
-        '<div class="os-tb-btns">' +
-          '<button class="os-tb-btn bmin" title="Minimizar">─</button>' +
-          '<button class="os-tb-btn bmax" title="Maximizar">▢</button>' +
-          '<button class="os-tb-btn close" title="Cerrar">✕</button>' +
-        '</div>' +
-      '</div>' +
-      '<div class="os-body"></div>' +
-      '<div class="os-rz"></div>';
-    $('#osWinLayer').appendChild(win);
-
-    var rec = { el: win, body: win.querySelector('.os-body'), title: opts.title };
-    OS.wins.set(id, rec);
-
-    var tb = el('button', 'os-task active', (opts.icon || '') + esc(opts.title || ''));
-    tb.dataset.win = id; tb.title = opts.title;
-    tb.onclick = function(){
-      if(OS.activeWin === id && !win.classList.contains('minimized')) minimizeOSWin(id);
-      else { win.classList.remove('minimized'); focusOSWin(id); }
-    };
-    $('#osTasks').appendChild(tb);
-
-    win.querySelector('.bmin').onclick = function(e){ e.stopPropagation(); minimizeOSWin(id); };
-    win.querySelector('.bmax').onclick = function(e){ e.stopPropagation(); toggleOSMax(id); };
-    win.querySelector('.close').onclick = function(e){ e.stopPropagation(); closeOSWin(id); };
-    win.addEventListener('pointerdown', function(){ focusOSWin(id); });
-
-    var tbar = win.querySelector('.os-titlebar');
-    tbar.addEventListener('dblclick', function(e){ if(!e.target.closest('.os-tb-btn')) toggleOSMax(id); });
-    tbar.addEventListener('pointerdown', function(e){
-      if(e.button !== 0 || e.target.closest('.os-tb-btn')) return;
-      var sx = e.clientX, sy = e.clientY, moved = false, ox = 0, oy = 0;
-      function mm(ev){
-        if(!moved){
-          if(Math.hypot(ev.clientX - sx, ev.clientY - sy) < 4) return;
-          moved = true;
-          if(win.classList.contains('maximized')){
-            win.classList.remove('maximized');
-            win.style.width = w + 'px'; win.style.height = h + 'px';
-            win.style.left = Math.max(0, ev.clientX - w / 2) + 'px';
-            win.style.top = Math.max(0, ev.clientY - 16) + 'px';
-          }
-          ox = win.offsetLeft; oy = win.offsetTop;
+  var tbar = win.querySelector('.os-titlebar');
+  tbar.addEventListener('dblclick', function(e){ if(!e.target.closest('.os-tb-btn')) toggleOSMax(id); });
+  tbar.addEventListener('pointerdown', function(e){
+    if(e.button !== 0 || e.target.closest('.os-tb-btn')) return;
+    var sx = e.clientX, sy = e.clientY, moved = false, ox = 0, oy = 0;
+    function mm(ev){
+      if(!moved){
+        if(Math.hypot(ev.clientX - sx, ev.clientY - sy) < 4) return;
+        moved = true;
+        if(win.classList.contains('maximized')){
+          win.classList.remove('maximized');
+          win.style.width = w + 'px'; win.style.height = h + 'px';
+          win.style.left = Math.max(0, ev.clientX - w / 2) + 'px';
+          win.style.top = Math.max(0, ev.clientY - 16) + 'px';
         }
-        win.style.left = (ox + ev.clientX - sx) + 'px';
-        win.style.top = Math.max(0, oy + ev.clientY - sy) + 'px';
+        ox = win.offsetLeft; oy = win.offsetTop;
       }
-      function mu(){ document.removeEventListener('pointermove', mm); }
-      document.addEventListener('pointermove', mm);
-      document.addEventListener('pointerup', mu, { once:true });
-    });
-
-    var rz = win.querySelector('.os-rz');
-    rz.addEventListener('pointerdown', function(e){
-      e.stopPropagation();
-      var sx = e.clientX, sy = e.clientY;
-      var ow = win.offsetWidth, oh = win.offsetHeight;
-      function mm(ev){
-        win.style.width = Math.max(320, ow + ev.clientX - sx) + 'px';
-        win.style.height = Math.max(220, oh + ev.clientY - sy) + 'px';
-      }
-      document.addEventListener('pointermove', mm);
-      document.addEventListener('pointerup', function(){ document.removeEventListener('pointermove', mm); }, { once:true });
-    });
-
-    focusOSWin(id);
-    return {
-      win: win, body: rec.body, id: id,
-      setTitle: function(t){ rec.title = t; win.querySelector('.os-tb-title').textContent = t; tb.title = t; tb.textContent = t; },
-      close: function(){ closeOSWin(id); }
-    };
-  }
-  function focusOSWin(id){
-    var w = OS.wins.get(id); if(!w) return;
-    w.el.style.zIndex = ++OS.zTop;
-    OS.wins.forEach(function(o){ o.el.classList.toggle('active', o === w); });
-    $$('#osTasks .os-task').forEach(function(b){ b.classList.toggle('active', b.dataset.win === id); });
-    OS.activeWin = id;
-  }
-  function minimizeOSWin(id){
-    var w = OS.wins.get(id); if(!w) return;
-    w.el.classList.add('minimized'); w.el.classList.remove('active');
-    var tb = document.querySelector('#osTasks .os-task[data-win="' + id + '"]');
-    if(tb) tb.classList.remove('active');
-    if(OS.activeWin === id) OS.activeWin = null;
-  }
-  function toggleOSMax(id){
-    var w = OS.wins.get(id); if(!w) return;
-    w.el.classList.toggle('maximized');
-  }
-  function closeOSWin(id){
-    var w = OS.wins.get(id); if(!w) return;
-    w.el.classList.add('closing');
-    setTimeout(function(){ if(w.el.parentNode) w.el.parentNode.removeChild(w.el); }, 160);
-    OS.wins.delete(id);
-    var tb = document.querySelector('#osTasks .os-task[data-win="' + id + '"]');
-    if(tb) tb.parentNode.removeChild(tb);
-    if(OS.activeWin === id) OS.activeWin = null;
-  }
-
-  // ── ICONO DE ARCHIVO ──
-  function fileIconOS(node){
-    if(!node) return '';
-    if(node.type !== 'file') return IC.folder;
-    switch(node.kind){
-      case 'doc': return IC.doc;
-      case 'sheet': return IC.xls;
-      case 'text': return IC.txt;
-      case 'image': return IC.img;
-      case 'audio': return IC.audio;
-      default: return IC.app;
+      win.style.left = (ox + ev.clientX - sx) + 'px';
+      win.style.top = Math.max(0, oy + ev.clientY - sy) + 'px';
     }
-  }
-
-  // ══════════════════════════════════════════════
-  // APLICACIONES DEL OS
-  // ══════════════════════════════════════════════
-  function appOSExplorer(startPath){
-    var ctx = createOSWindow({ title:'Explorador', icon:IC.folder, w:880, h:560 });
-    var cur = (startPath || ['Documentos']).slice();
-    ctx.body.innerHTML =
-      '<div class="os-explorer-toolbar">' +
-        '<button class="os-explorer-nav nback">◀</button>' +
-        '<button class="os-explorer-nav nup">▲</button>' +
-        '<div class="os-explorer-crumb"></div>' +
-        '<button class="os-explorer-nav breload">⟳</button>' +
-      '</div>' +
-      '<div class="os-explorer-grid"></div>' +
-      '<div class="os-status"><span class="s1"></span><span class="s2"></span></div>';
-    var grid = ctx.body.querySelector('.os-explorer-grid');
-    var crumb = ctx.body.querySelector('.os-explorer-crumb');
-    function render(){
-      var node = OS.getNode(cur);
-      if(!node){ cur = ['Documentos']; return render(); }
-      crumb.innerHTML = '';
-      var root = el('b', '', 'ANIA-OS'); root.style.cursor = 'pointer';
-      root.onclick = function(){ cur = []; render(); };
-      crumb.appendChild(root);
-      cur.forEach(function(p, i){
-        crumb.appendChild(el('span', '', ' › '));
-        var b = el('b', '', esc(p)); b.style.cursor = 'pointer';
-        b.onclick = function(){ cur = cur.slice(0, i+1); render(); };
-        crumb.appendChild(b);
-      });
-      grid.innerHTML = '';
-      var entries = Object.keys(node.children || {}).map(function(k){ return node.children[k]; });
-      entries.sort(function(a, b){
-        if(a.type !== b.type) return a.type === 'folder' ? -1 : 1;
-        return a.name.localeCompare(b.name, 'es');
-      });
-      entries.forEach(function(n){
-        var it = el('div', 'os-file', '<div class="ic">' + fileIconOS(n) + '</div><span>' + esc(n.name) + '</span>');
-        it.onclick = function(e){
-          e.stopPropagation();
-          grid.querySelectorAll('.os-file').forEach(function(x){ x.classList.remove('sel'); });
-          it.classList.add('sel');
-        };
-        it.ondblclick = function(){
-          if(n.type === 'folder'){ cur = cur.concat([n.name]); render(); }
-          else openOSNode(n);
-        };
-        grid.appendChild(it);
-      });
-      ctx.body.querySelector('.s1').textContent = entries.length + ' elemento(s)';
-      ctx.body.querySelector('.s2').textContent = cur.join(' \\ ');
-      ctx.setTitle((cur[cur.length-1] || 'ANIA-OS') + ' · Explorador');
-    }
-    ctx.body.querySelector('.nback').onclick = function(){ if(cur.length){ cur = cur.slice(0,-1); render(); } };
-    ctx.body.querySelector('.nup').onclick = function(){ cur = []; render(); };
-    ctx.body.querySelector('.breload').onclick = render;
-    render();
-  }
-
-  function appOSNotepad(node){
-    var ctx = createOSWindow({ title:(node && node.name || 'Sin título') + ' · Notas', icon:IC.txt, w:640, h:480 });
-    ctx.body.innerHTML = '<textarea class="os-textarea" spellcheck="false">' + esc(node && node.text || '') + '</textarea>' +
-      '<div class="os-status"><span class="np-n"></span><span>Guardado local</span></div>';
-    var ta = ctx.body.querySelector('.os-textarea');
-    function upd(){ ctx.body.querySelector('.np-n').textContent = ta.value.length + ' caracteres'; }
-    ta.addEventListener('input', upd);
-    ta.addEventListener('keydown', function(e){
-      if(e.ctrlKey && e.key === 's'){
-        e.preventDefault();
-        if(!node){
-          var name = prompt('Guardar como:', 'nota-' + Date.now() + '.txt');
-          if(!name) return;
-          OS.addFile(['Documentos'], { type:'file', kind:'text', name:name, text:ta.value, size:ta.value.length });
-          ctx.setTitle(name + ' · Notas');
-        } else {
-          node.text = ta.value;
-          node.size = ta.value.length;
-          OS.saveFS();
-        }
-      }
-    });
-    upd();
-  }
-
-  function appOSWord(node){
-    var ctx = createOSWindow({ title:(node && node.name || 'Documento') + ' · Word', icon:IC.doc, w:900, h:660 });
-    ctx.body.innerHTML =
-      '<div class="os-wp-toolbar">' +
-        '<button class="os-wp-btn" data-cmd="bold"><b>B</b></button>' +
-        '<button class="os-wp-btn" data-cmd="italic"><i>I</i></button>' +
-        '<button class="os-wp-btn" data-cmd="underline"><u>U</u></button>' +
-        '<button class="os-wp-btn" data-cmd="insertUnorderedList">•</button>' +
-        '<span style="flex:1"></span>' +
-        '<button class="os-wp-btn" data-save="1" style="width:auto;padding:0 12px;">Guardar</button>' +
-      '</div>' +
-      '<div class="os-wp-canvas"><div class="os-page" contenteditable="true">' + (node && node.html || '<p>Empieza a escribir…</p>') + '</div></div>';
-    var page = ctx.body.querySelector('.os-page');
-    ctx.body.querySelectorAll('[data-cmd]').forEach(function(b){
-      b.onmousedown = function(e){ e.preventDefault(); };
-      b.onclick = function(){ page.focus(); document.execCommand(b.dataset.cmd); };
-    });
-    ctx.body.querySelector('[data-save]').onclick = function(){
-      if(!node){
-        var name = prompt('Guardar como:', 'documento-' + Date.now() + '.html');
-        if(!name) return;
-        OS.addFile(['Documentos'], { type:'file', kind:'doc', name:name, html:page.innerHTML, size:page.innerHTML.length });
-        ctx.setTitle(name + ' · Word');
-      } else {
-        node.html = page.innerHTML;
-        node.size = page.innerHTML.length;
-        OS.saveFS();
-      }
-    };
-  }
-
-  function appOSCalc(){
-    var ctx = createOSWindow({ title:'Calculadora', icon:IC.calc, w:340, h:470 });
-    ctx.body.innerHTML = '<div class="os-calc"><div class="disp">0</div><div class="grid"></div></div>';
-    var disp = ctx.body.querySelector('.disp');
-    var acc = null, op = null, cur = '0', fresh = true;
-    var keys = ['C','⌫','%','÷','7','8','9','×','4','5','6','−','1','2','3','+','±','0',',','='];
-    var grid = ctx.body.querySelector('.grid');
-    keys.forEach(function(k){
-      var cls = ['+','−','×','÷'].indexOf(k) >= 0 ? 'op' : (k === '=' ? 'eq' : '');
-      var b = el('button', cls, k); b.dataset.k = k; grid.appendChild(b);
-    });
-    grid.onclick = function(e){
-      var k = e.target.dataset.k;
-      if(!k) return;
-      if(/[0-9]/.test(k)){ cur = fresh ? k : (cur === '0' ? k : cur + k); fresh = false; }
-      else if(k === ','){ if(cur.indexOf(',') < 0){ cur += ','; fresh = false; } }
-      else if(k === 'C'){ acc = null; op = null; cur = '0'; fresh = true; }
-      else if(k === '⌫'){ cur = cur.length > 1 ? cur.slice(0,-1) : '0'; }
-      else if(k === '±'){ cur = cur.charAt(0) === '-' ? cur.slice(1) : '-' + cur; }
-      else if(k === '%'){ cur = String(parseFloat(cur.replace(',','.')) / 100).replace('.',','); }
-      else if(['+','−','×','÷'].indexOf(k) >= 0){ acc = parseFloat(cur.replace(',','.')); op = k; fresh = true; }
-      else if(k === '=' && op !== null){
-        var b = parseFloat(cur.replace(',','.'));
-        var r = op === '+' ? acc + b : op === '−' ? acc - b : op === '×' ? acc * b : (b === 0 ? NaN : acc / b);
-        cur = isFinite(r) ? String(+r.toFixed(10)).replace('.',',') : 'Error';
-        acc = null; op = null; fresh = true;
-      }
-      disp.textContent = cur;
-    };
-  }
-
-  function appOSTerminal(){
-    var ctx = createOSWindow({ title:'Terminal', icon:IC.term, w:720, h:440 });
-    ctx.body.innerHTML = '<div class="os-term"><div class="os-term-out"></div><div class="os-term-line"><span class="os-term-ps">ANIA-OS:\\&gt;</span><input class="os-term-in"></div></div>';
-    var out = ctx.body.querySelector('.os-term-out');
-    var inp = ctx.body.querySelector('.os-term-in');
-    function print(t){ out.textContent += t + '\n'; out.scrollTop = out.scrollHeight; }
-    print('ANIA-OS Shell · escribe "help"');
-    inp.addEventListener('keydown', function(e){
-      if(e.key !== 'Enter') return;
-      var line = inp.value; inp.value = '';
-      print('> ' + line);
-      var cmd = line.trim().toLowerCase();
-      if(cmd === 'help') print('Comandos: help, ver, date, whoami, clear, apps, files, os <cmd>');
-      else if(cmd === 'ver') print('ANIA-OS v1.0');
-      else if(cmd === 'date') print(new Date().toString());
-      else if(cmd === 'whoami') print('operador');
-      else if(cmd === 'clear') out.textContent = '';
-      else if(cmd === 'apps') print(Object.keys(APPS).join(', '));
-      else if(cmd === 'files'){ var f = OS.getNode(['Documentos']); print(Object.keys(f.children || {}).join('\n') || '(vacío)'); }
-      else if(cmd.indexOf('os ') === 0) window.OSBridge.ejecutar(line.slice(3)).then(function(r){ print(JSON.stringify(r, null, 2)); });
-      else if(cmd) print('No reconocido: ' + cmd);
-    });
-    setTimeout(function(){ inp.focus(); }, 100);
-  }
-
-  function appOSPaint(){
-    var ctx = createOSWindow({ title:'Paint', icon:IC.paint, w:820, h:600 });
-    ctx.body.innerHTML =
-      '<div class="os-wp-toolbar">' +
-        '<input type="color" value="#1b6fb8" id="os-pt-color" style="width:34px;height:26px;border:1px solid #d8d8d8;padding:0">' +
-        '<label style="font-size:12px;display:flex;gap:6px;align-items:center">Grosor <input type="range" id="os-pt-size" min="1" max="30" value="4" style="width:90px"></label>' +
-        '<button class="os-wp-btn" id="os-pt-clear" style="width:auto;padding:0 12px;">Limpiar</button>' +
-        '<button class="os-wp-btn" id="os-pt-save" style="width:auto;padding:0 12px;">Guardar</button>' +
-      '</div>' +
-      '<div class="os-paint-wrap"><canvas width="1000" height="560" style="background:#fff"></canvas></div>';
-    var cv = ctx.body.querySelector('canvas');
-    var x = cv.getContext('2d');
-    x.fillStyle = '#fff'; x.fillRect(0, 0, cv.width, cv.height);
-    x.lineCap = x.lineJoin = 'round';
-    var draw = false;
-    function pos(e){ var r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; }
-    cv.addEventListener('pointerdown', function(e){ draw = true; try{ cv.setPointerCapture(e.pointerId); }catch(_){}; var p = pos(e); x.beginPath(); x.moveTo(p[0], p[1]); });
-    cv.addEventListener('pointermove', function(e){
-      if(!draw) return;
-      x.strokeStyle = ctx.body.querySelector('#os-pt-color').value;
-      x.lineWidth = +ctx.body.querySelector('#os-pt-size').value;
-      var p = pos(e); x.lineTo(p[0], p[1]); x.stroke();
-    });
-    cv.addEventListener('pointerup', function(){ draw = false; });
-    ctx.body.querySelector('#os-pt-clear').onclick = function(){ x.fillStyle = '#fff'; x.fillRect(0, 0, cv.width, cv.height); };
-    ctx.body.querySelector('#os-pt-save').onclick = function(){
-      var u = cv.toDataURL('image/png');
-      OS.addFile(['Imágenes'], { type:'file', kind:'image', name:'dibujo-' + Date.now() + '.png', url:u, size:Math.round(u.length * 0.75) });
-    };
-  }
-
-  function appOSMines(){
-    var ctx = createOSWindow({ title:'Buscaminas', icon:IC.mines, w:360, h:470 });
-    var R = 9, C = 9, M = 10;
-    var mines, open, flag, dead, won, started, timer;
-    ctx.body.innerHTML =
-      '<div class="os-mines">' +
-        '<div class="os-mines-top"><span id="os-m-mines">010</span><button id="os-m-reset" style="border:0;background:#e6e6e6;font-size:18px;cursor:pointer;padding:0 8px;">🙂</button><span id="os-m-time">000</span></div>' +
-        '<div class="os-mines-grid"></div>' +
-      '</div>';
-    var grid = ctx.body.querySelector('.os-mines-grid');
-    function reset(){
-      mines = {}; open = {}; flag = {}; dead = false; won = false; started = false;
-      if(timer){ clearInterval(timer); timer = null; }
-      ctx.body.querySelector('#os-m-mines').textContent = '010';
-      ctx.body.querySelector('#os-m-time').textContent = '000';
-      render();
-    }
-    function neighbors(i){
-      var r = Math.floor(i / C), c = i % C, out = [];
-      for(var dr = -1; dr <= 1; dr++) for(var dc = -1; dc <= 1; dc++){
-        if(!dr && !dc) continue;
-        var nr = r + dr, nc = c + dc;
-        if(nr >= 0 && nr < R && nc >= 0 && nc < C) out.push(nr * C + nc);
-      }
-      return out;
-    }
-    function countAdj(i){ return neighbors(i).filter(function(n){ return mines[n]; }).length; }
-    function place(safe){
-      var forb = {}; forb[safe] = 1; neighbors(safe).forEach(function(n){ forb[n] = 1; });
-      var count = 0;
-      while(count < M){
-        var i = Math.floor(Math.random() * R * C);
-        if(!forb[i] && !mines[i]){ mines[i] = 1; count++; }
-      }
-    }
-    function reveal(i){
-      if(open[i] || flag[i]) return;
-      open[i] = 1;
-      if(mines[i]){ dead = true; if(timer) clearInterval(timer); render(); return; }
-      if(countAdj(i) === 0) neighbors(i).forEach(reveal);
-      var opened = 0; for(var k in open) opened++;
-      if(opened === R * C - M){ won = true; if(timer) clearInterval(timer); }
-      render();
-    }
-    function render(){
-      grid.innerHTML = '';
-      for(var i = 0; i < R * C; i++){
-        (function(i){
-          var d = document.createElement('div');
-          d.className = 'os-mines-cell';
-          if(open[i]){
-            d.classList.add('open');
-            if(mines[i]){ d.classList.add('mine'); d.textContent = '💣'; }
-            else { var n = countAdj(i); if(n) d.textContent = n; }
-          } else if(flag[i]) d.textContent = '🚩';
-          d.onclick = function(){
-            if(dead || won || flag[i]) return;
-            if(!started){
-              started = true; place(i);
-              var t = 0;
-              timer = setInterval(function(){ t++; ctx.body.querySelector('#os-m-time').textContent = String(Math.min(999, t)).padStart(3, '0'); }, 1000);
-            }
-            reveal(i);
-          };
-          d.oncontextmenu = function(e){
-            e.preventDefault();
-            if(dead || won || open[i]) return;
-            flag[i] ? delete flag[i] : (flag[i] = 1);
-            render();
-          };
-          grid.appendChild(d);
-        })(i);
-      }
-    }
-    ctx.body.querySelector('#os-m-reset').onclick = reset;
-    reset();
-  }
-
-  function appOSWeather(){
-    var ctx = createOSWindow({ title:'Clima', icon:IC.weather, w:560, h:480 });
-    ctx.body.innerHTML = '<div class="os-weather"><div class="os-weather-search"><input placeholder="Ciudad… ej: Madrid"><button>Buscar</button></div><div class="os-wx-out"></div></div>';
-    var inp = ctx.body.querySelector('input');
-    var out = ctx.body.querySelector('.os-wx-out');
-    function buscar(q){
-      out.innerHTML = '<div style="color:#6b6b6b">Buscando…</div>';
-      fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(q) + '&count=1&language=es&format=json')
-        .then(function(r){ return r.json(); })
-        .then(function(g){
-          if(!g.results || !g.results.length){ out.innerHTML = '<div style="color:#d05050">No encontrada</div>'; return; }
-          var p = g.results[0];
-          return fetch('https://api.open-meteo.com/v1/forecast?latitude=' + p.latitude + '&longitude=' + p.longitude + '&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto')
-            .then(function(r){ return r.json(); })
-            .then(function(w){
-              var c = w.current;
-              out.innerHTML =
-                '<div style="background:linear-gradient(135deg,#2f7fbf,#5aa7e0);color:#fff;padding:20px;border-radius:8px;margin-top:10px">' +
-                  '<div style="font-size:48px;font-weight:300;line-height:1">' + Math.round(c.temperature_2m) + '°C</div>' +
-                  '<div style="font-size:18px;margin-top:6px">' + esc(p.name) + '</div>' +
-                  '<div style="opacity:.9;font-size:13px;margin-top:8px">Sensación ' + Math.round(c.apparent_temperature) + '° · Humedad ' + c.relative_humidity_2m + '% · Viento ' + Math.round(c.wind_speed_10m) + ' km/h</div>' +
-                '</div>';
-            });
-        })
-        .catch(function(e){ out.innerHTML = '<div style="color:#d05050">Error: ' + esc(e.message) + '</div>'; });
-    }
-    ctx.body.querySelector('button').onclick = function(){ inp.value.trim() && buscar(inp.value.trim()); };
-    inp.addEventListener('keydown', function(e){ if(e.key === 'Enter' && inp.value.trim()) buscar(inp.value.trim()); });
-  }
-
-  // ── REGISTRO DE APPS ──
-  var APPS = {
-    explorer:  { name:'Explorador',   icon:IC.folder,  launch:function(a){ appOSExplorer(a && a.path); } },
-    notepad:   { name:'Bloc de notas',icon:IC.txt,     launch:function(a){ appOSNotepad(a && a.node); } },
-    word:      { name:'Word',         icon:IC.doc,     launch:function(a){ appOSWord(a && a.node); } },
-    calc:      { name:'Calculadora',  icon:IC.calc,    launch:function(){ appOSCalc(); } },
-    terminal:  { name:'Terminal',     icon:IC.term,    launch:function(){ appOSTerminal(); } },
-    paint:     { name:'Paint',        icon:IC.paint,   launch:function(){ appOSPaint(); } },
-    mines:     { name:'Buscaminas',   icon:IC.mines,   launch:function(){ appOSMines(); } },
-    weather:   { name:'Clima',        icon:IC.weather, launch:function(){ appOSWeather(); } },
-    photos:    { name:'Fotos',        icon:IC.photos,  launch:function(){ abrirFotos(); } }
-  };
-
-  function abrirFotos(){
-    var carpeta = OS.getNode(['Imágenes']);
-    var imgs = Object.keys(carpeta && carpeta.children || {}).map(function(k){ return carpeta.children[k]; }).filter(function(n){ return n.kind === 'image' && n.url; });
-    if(!imgs.length){ toastOS('No hay imágenes aún. Dibuja algo en Paint.'); return; }
-    var ctx = createOSWindow({ title:'Fotos', icon:IC.photos, w:700, h:560 });
-    ctx.body.innerHTML = '<div style="flex:1;display:grid;place-items:center;background:#14161a"><img style="max-width:92%;max-height:92%"></div>';
-    var img = ctx.body.querySelector('img'); var i = 0;
-    img.src = imgs[i].url;
-    setInterval(function(){ i = (i + 1) % imgs.length; img.src = imgs[i].url; }, 4000);
-  }
-
-  function openOSNode(node){
-    if(!node) return;
-    if(node.type !== 'file'){ appOSExplorer(); return; }
-    switch(node.kind){
-      case 'doc':   appOSWord(node); break;
-      case 'text':  appOSNotepad(node); break;
-      case 'image': abrirFotos(); break;
-      default:      toastOS('No sé abrir: ' + node.name);
-    }
-  }
-
-  // ══════════════════════════════════════════════
-  // ESCRITORIO + TASKBAR + START MENU
-  // ══════════════════════════════════════════════
-  function renderOSDesktop(){
-    var box = $('#osIcons'); box.innerHTML = '';
-    var items = [
-      ['Este equipo', IC.folder, function(){ appOSExplorer([]); }],
-      ['Documentos',  IC.folder, function(){ appOSExplorer(['Documentos']); }],
-      ['Papelera',    IC.folder, function(){ appOSExplorer(['Papelera']); }],
-      ['🎵 Música',   '<span style="font-size:36px">🎵</span>', function(){ window.OSRemote.appOSMusic(); }],
-      ['📄 Documentos', '<span style="font-size:36px">📄</span>', function(){ window.OSRemote.appOSDocViewer(); }],
-      ['🌐 Navegador', '<span style="font-size:36px">🌐</span>', function(){ window.OSRemote.appOSBrowser(); }]
-    ];
-    items.forEach(function(it){
-      var d = el('div', 'os-icon', '<div class="ic">' + it[1] + '</div><span>' + it[0] + '</span>');
-      d.onclick = function(e){
-        e.stopPropagation();
-        $$('.os-icon').forEach(function(x){ x.classList.remove('sel'); });
-        d.classList.add('sel');
-      };
-      d.ondblclick = it[2];
-      box.appendChild(d);
-    });
-  }
-
-  function renderOSStartMenu(){
-    var sm = $('#osSmApps');
-    sm.innerHTML = '';
-    Object.keys(APPS).forEach(function(k){
-      var a = APPS[k];
-      var b = el('button', '', '<span style="width:26px;display:inline-grid;place-items:center">' + a.icon + '</span>' + esc(a.name));
-      b.onclick = function(){ closeOSStart(); a.launch(); };
-      sm.appendChild(b);
-    });
-  }
-
-  function toggleOSStart(){
-    var sm = $('#osStartMenu');
-    sm.classList.toggle('on');
-  }
-  function closeOSStart(){ $('#osStartMenu').classList.remove('on'); }
-
-  function tickOSClock(){
-    var d = new Date();
-    var t = d.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
-    var f = d.toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric' });
-    if($('#osClockT')) $('#osClockT').textContent = t;
-    if($('#osClockD')) $('#osClockD').textContent = f;
-  }
-
-  // ══════════════════════════════════════════════
-  // OSBRIDGE · API PARA ANIA
-  // ══════════════════════════════════════════════
-  var OSBridge = {
-    listarApps: function(){ return Object.keys(APPS).map(function(k){ return { id:k, nombre:APPS[k].name }; }); },
-    abrirApp: function(id){
-      var a = APPS[id];
-      if(!a) return { ok:false, error:'app desconocida: ' + id };
-      try{ a.launch(); return { ok:true, app:id }; }
-      catch(e){ return { ok:false, error:e.message }; }
-    },
-    cerrarApp: function(id, titulo){
-      var n = 0;
-      OS.wins.forEach(function(w, wid){
-        var match = titulo ? (w.title && w.title.toLowerCase().indexOf(String(titulo).toLowerCase()) >= 0) :
-          (!id || w.title.toLowerCase().indexOf((APPS[id] && APPS[id].name || id).toLowerCase()) >= 0);
-        if(match){ closeOSWin(wid); n++; }
-      });
-      return { ok:true, cerrados:n };
-    },
-    ventanasAbiertas: function(){
-      var out = []; OS.wins.forEach(function(w){ out.push({ titulo:w.title }); }); return out;
-    },
-    listarArchivos: function(carpeta){
-      var node = OS.getNode(carpeta ? [carpeta] : []);
-      if(!node) return { ok:false, error:'no existe' };
-      return {
-        ok:true, carpeta:carpeta || '(raíz)',
-        items: Object.keys(node.children || {}).map(function(k){ var c = node.children[k]; return { nombre:c.name, tipo:c.type, kind:c.kind || null, tamaño:c.size || 0 }; })
-      };
-    },
-    crearArchivo: function(carpeta, nombre, contenido){
-      var path = [carpeta || 'Documentos'];
-      if(!OS.getNode(path)) return { ok:false, error:'carpeta no existe' };
-      var kind = inferirKind(nombre);
-      var real = OS.addFile(path, { type:'file', kind:kind, name:nombre, text:contenido || '', size:(contenido || '').length });
-      return { ok:true, archivo:real, carpeta:path[0], kind:kind };
-    },
-    leerArchivo: function(carpeta, nombre){
-      var node = OS.getNode([carpeta || 'Documentos', nombre]);
-      if(!node) return { ok:false, error:'no existe' };
-      return { ok:true, contenido: node.text || node.html || '(binario)', tamaño: node.size || 0 };
-    },
-    borrarArchivo: function(carpeta, nombre){
-      if(!OS.getNode([carpeta || 'Documentos', nombre])) return { ok:false, error:'no existe' };
-      OS.deleteNode([carpeta || 'Documentos', nombre]);
-      return { ok:true };
-    },
-    buscarArchivos: function(q){
-      var ql = String(q || '').toLowerCase().trim();
-      if(!ql) return { ok:false, error:'falta término' };
-      var hits = [];
-      (function walk(node, path){
-        if(!node || !node.children) return;
-        for(var k in node.children){
-          var c = node.children[k];
-          var np = path.concat([c.name]);
-          if(c.type === 'file' && c.name.toLowerCase().indexOf(ql) >= 0) hits.push({ ruta:np.join('/'), tamaño:c.size || 0 });
-          if(c.type !== 'file') walk(c, np);
-        }
-      })(OS.getNode([]), []);
-      return { ok:true, resultados: hits.slice(0, 30) };
-    },
-    cambiarFondo: function(id){
-      var walls = [
-        'linear-gradient(135deg,#04070d 0%,#0a2038 50%,#0d2b4a 100%)',
-        'linear-gradient(135deg,#1c4a77 0%,#0d2440 60%,#04070d 100%)',
-        'linear-gradient(135deg,#0e1e38 0%,#3e5a80 50%,#8a5a4a 100%)',
-        'linear-gradient(135deg,#0a0f1a 0%,#0d2440 50%,#0f1a2e 100%)'
-      ];
-      var k = Number(id) || 0;
-      if(k < 0 || k >= walls.length) k = 0;
-      $('#osWallpaper').style.background = walls[k];
-      try{ localStorage.setItem('aniaos_wall', String(k)); }catch(e){}
-      return { ok:true, fondo:k };
-    },
-    infoSistema: function(){
-      var n = 0;
-      (function walk(node){
-        if(!node || !node.children) return;
-        for(var k in node.children){ n++; if(node.children[k].type !== 'file') walk(node.children[k]); }
-      })(OS.FS);
-      var hm = performance.memory;
-      return {
-        ok:true, ventanas:OS.wins.size, apps:Object.keys(APPS).length, archivos:n,
-        memoriaJS: hm ? Math.round(hm.usedJSHeapSize / 1048576) + ' MB' : '—',
-        nucleos: navigator.hardwareConcurrency || '—',
-        online: navigator.onLine
-      };
-    },
-    apagar: function(){ osShutdown(); return { ok:true }; },
-    bloquear: function(){ osLock(); return { ok:true }; },
-    ejecutar: function(cmd){
-      var c = String(cmd || '').toLowerCase().trim();
-      if(!c) return Promise.resolve({ ok:false, error:'comando vacío' });
-      var m;
-
-      // abrir app
-      m = c.match(/^(?:abre|abrir|lanza|inicia|ejecuta|arranca)\s+(?:la\s+|el\s+|los\s+|las\s+)?(.+?)$/);
-      if(m){
-        var q = m[1].trim();
-        var aliases = {
-          'explorador':'explorer','archivos':'explorer','documentos':'explorer','papelera':'explorer',
-          'word':'word','documento':'word',
-          'texto':'notepad','bloc':'notepad','notas':'notepad','notepad':'notepad','bloc de notas':'notepad',
-          'calc':'calc','calculadora':'calc','cuenta':'calc',
-          'terminal':'terminal','consola':'terminal','cmd':'terminal',
-          'paint':'paint','dibujo':'paint','dibujar':'paint',
-          'buscaminas':'mines','minas':'mines',
-          'clima':'weather','tiempo':'weather',
-          'fotos':'photos','imagenes':'photos','galeria':'photos'
-        };
-        var found = aliases[q];
-        if(!found){
-          for(var k in APPS){ if(k === q || APPS[k].name.toLowerCase().indexOf(q) >= 0){ found = k; break; } }
-        }
-        if(found) return Promise.resolve(OSBridge.abrirApp(found));
-        return Promise.resolve({ ok:false, error:'app no reconocida: ' + q });
-      }
-
-      // cerrar
-      m = c.match(/^cierra\s+(?:la\s+|el\s+|las\s+|los\s+)?(?:ventana\s+de\s+|app\s+)?(.+)$/);
-      if(m){
-        var q2 = m[1].trim();
-        if(/todas|ventanas/.test(q2)) return Promise.resolve(OSBridge.cerrarApp());
-        return Promise.resolve(OSBridge.cerrarApp(null, q2));
-      }
-
-      // crear archivo
-      m = c.match(/^(?:crea|crear|nuevo|guarda|escribe)\s+(?:un\s+|el\s+|la\s+)?(?:archivo|documento|nota|doc)\s+(?:llamado\s+|con\s+nombre\s+|de\s+nombre\s+)?["']?([^"']+?)["']?(?:\s+con\s+(?:contenido|texto)\s+["']?(.+?)["']?)?$/);
-      if(m) return Promise.resolve(OSBridge.crearArchivo('Documentos', m[1].trim(), (m[2] || '').trim()));
-
-      // buscar archivos
-      m = c.match(/^(?:busca|b[uú]scame|encuentra)\s+(?:el\s+archivo\s+|el\s+documento\s+|archivo\s+)?(.+)$/);
-      if(m){
-        var q3 = m[1].trim();
-        if(/en\s+internet|en\s+la\s+web|en\s+wikipedia/.test(q3)) return Promise.resolve({ ok:false, error:'buscar web → usa chat' });
-        return Promise.resolve(OSBridge.buscarArchivos(q3));
-      }
-
-      // cambiar fondo
-      m = c.match(/^(?:cambia|cambiar|pon)\s+(?:el\s+)?fondo\s+(?:a\s+|por\s+|al?\s+)?(.+)$/);
-      if(m){
-        var map = { 'aurora':0,'0':0,'ventana':1,'1':1,'montaña':2,'montanas':2,'2':2,'lineas':3,'líneas':3,'3':3 };
-        var kk = map[m[1].trim()];
-        if(kk != null) return Promise.resolve(OSBridge.cambiarFondo(kk));
-      }
-
-      if(/^(?:apaga|apagar|shutdown)\s*(?:el\s+)?(?:pc|sistema|equipo|os)?$/.test(c)) return Promise.resolve(OSBridge.apagar());
-      if(/^(?:bloquea|bloquear|lock)\s*(?:la\s+)?(?:pantalla|sesi[oó]n|pc)?$/.test(c)) return Promise.resolve(OSBridge.bloquear());
-      if(/^(?:info|estado|status)\s*(?:del\s+)?(?:sistema|os)?$/.test(c)) return Promise.resolve(OSBridge.infoSistema());
-      if(/ventanas?\s+abiertas?/.test(c)) return Promise.resolve({ ok:true, ventanas:OSBridge.ventanasAbiertas() });
-      m = c.match(/^(?:lista|listar|muestra|qu[eé]\s+hay\s+en)\s+(?:los\s+|las\s+)?(?:archivos\s+de\s+|carpeta\s+)?(.+)$/);
-      if(m) return Promise.resolve(OSBridge.listarArchivos(m[1].trim()));
-
-      return Promise.resolve({ ok:false, error:'comando no reconocido' });
-    }
-  };
-  window.OSBridge = OSBridge;
-
-  function inferirKind(nombre){
-    var e = String(nombre).split('.').pop().toLowerCase();
-    if(['txt','md','log','csv'].indexOf(e) >= 0) return 'text';
-    if(['doc','docx'].indexOf(e) >= 0) return 'doc';
-    if(['xls','xlsx'].indexOf(e) >= 0) return 'sheet';
-    if(['png','jpg','jpeg','gif','webp','svg'].indexOf(e) >= 0) return 'image';
-    if(['mp3','wav','ogg','m4a','flac'].indexOf(e) >= 0) return 'audio';
-    return 'generic';
-  }
-
-  // ══════════════════════════════════════════════
-  // HOOK EN send() PARA CAPTURAR COMANDOS OS
-  // ══════════════════════════════════════════════
-  function hookSend(){
-    if(!window.send){ return false; }
-    if(window.__osSendHooked) return true;
-    window.__osSendHooked = true;
-    var origSend = window.send;
-    window.send = async function(text){
-      // Probar OSBridge primero (rápido)
-      try{
-        var r = await OSBridge.ejecutar(text);
-        if(r && r.ok){
-          var msg = '✓ ';
-          if(r.app) msg += 'App «' + r.app + '» abierta.';
-          else if(r.archivo) msg += 'Archivo «' + r.archivo + '» creado en ' + r.carpeta + '.';
-          else if(r.cerrados != null) msg += r.cerrados + ' ventana(s) cerrada(s).';
-          else if(r.items) msg += r.carpeta + ': ' + (r.items.slice(0,8).map(function(i){ return i.nombre; }).join(', ') || '(vacía)');
-          else if(r.resultados) msg += r.resultados.length ? r.resultados.length + ' encontrado(s):\n' + r.resultados.map(function(x){ return '· ' + x.ruta; }).join('\n') : 'Sin resultados.';
-          else if(r.ventanas) msg += r.ventanas.length + ' ventana(s): ' + (r.ventanas.map(function(v){ return v.titulo; }).join(', ') || 'ninguna');
-          else if(r.fondo != null) msg += 'Fondo cambiado a ' + r.fondo + '.';
-          else if(r.memoriaJS) msg += 'Ventanas: ' + r.ventanas + ' · Apps: ' + r.apps + ' · Archivos: ' + r.archivos + ' · Memoria: ' + r.memoriaJS;
-          else msg += 'Hecho.';
-          try{ if(typeof addChat === 'function') addChat('you', text); }catch(e){}
-          try{ if(typeof reply === 'function'){ reply(msg); return; } }catch(e){}
-          try{ if(typeof personaReply === 'function'){ personaReply(msg); return; } }catch(e){}
-          return;
-        }
-      }catch(e){ /* continuar con ANIA normal */ }
-      return origSend.call(this, text);
-    };
-    console.log('[OS] send() hooked');
-    return true;
-  }
-
-  // ══════════════════════════════════════════════
-  // ENTRAR / SALIR DEL OS
-  // ══════════════════════════════════════════════
-  function enterOS(){
-    document.body.classList.add('os-on');
-    document.body.classList.remove('app-on');
-    $('#osToggleTxt').textContent = 'ANIA';
-    tickOSClock();
-    renderOSDesktop();
-    renderOSStartMenu();
-    // Restaurar fondo guardado
-    var wall = localStorage.getItem('aniaos_wall');
-    if(wall != null){
-      var walls = [
-        'linear-gradient(135deg,#04070d 0%,#0a2038 50%,#0d2b4a 100%)',
-        'linear-gradient(135deg,#1c4a77 0%,#0d2440 60%,#04070d 100%)',
-        'linear-gradient(135deg,#0e1e38 0%,#3e5a80 50%,#8a5a4a 100%)',
-        'linear-gradient(135deg,#0a0f1a 0%,#0d2440 50%,#0f1a2e 100%)'
-      ];
-      $('#osWallpaper').style.background = walls[Number(wall)] || walls[0];
-    }
-  }
-  function exitOS(){
-    document.body.classList.remove('os-on');
-    document.body.classList.add('app-on');
-    $('#osToggleTxt').textContent = 'OS';
-    closeOSStart();
-  }
-
-  function osLock(){
-    exitOS();
-    var lock = document.getElementById('lock');
-    if(lock){ lock.classList.add('on'); }
-    else {
-      // Si no hay lock, ir al boot
-      osShutdown();
-    }
-  }
-
-  function osShutdown(){
-    // Volver al boot con login visible
-    document.body.classList.remove('os-on');
-    document.body.classList.remove('app-on');
-    // Ocultar #app para que solo se vea el boot
-    var app = document.getElementById('app');
-    if(app) app.style.display = 'none';
-    var lock = document.getElementById('lock');
-    if(lock) lock.classList.remove('on');
-    var boot = document.getElementById('boot');
-    if(boot){
-      boot.style.display = 'flex';
-      boot.classList.remove('hide');
-    }
-    // Resetear formularios del boot
-    var lb = document.getElementById('loginBox');
-    var rb = document.getElementById('registerBox');
-    var bs = document.getElementById('bootStart');
-    if(lb) lb.style.display = 'flex';
-    if(rb) rb.style.display = 'none';
-    if(bs) bs.style.display = 'none';
-    // Cerrar todas las ventanas OS
-    var ids = [];
-    OS.wins.forEach(function(w, id){ ids.push(id); });
-    ids.forEach(function(id){ closeOSWin(id); });
-    // Limpiar el log del boot
-    var log = document.getElementById('bootLog');
-    if(log) log.innerHTML = '';
-    // Cerrar overlays
-    document.querySelectorAll('.overlay.on').forEach(function(o){ o.classList.remove('on'); });
-    // Resetear la app para que el próximo login la muestre
-    if(app) app.style.display = '';
-    // Forzar recarga del flujo de boot (re-ejecuta el script 14-boot.js)
-    // Simplemente llamamos a nuestra propia función para mostrar login
-    setTimeout(function(){
-      if(typeof bootSequence === 'function'){
-        // Si ANIA tiene su propia secuencia, la respetamos
-      }
-    }, 100);
-    console.log('[OS] Shutdown → login');
-  }
-  window.OSShutdown = osShutdown;
-  window.OSLock = osLock;
-
-  // ══════════════════════════════════════════════
-  // WIRING DE BOTONES
-  // ══════════════════════════════════════════════
-  function wireButtons(){
-    // Start button
-    $('#osStartBtn').onclick = function(e){
-      e.stopPropagation();
-      toggleOSStart();
-    };
-    // Cerrar menú al hacer clic fuera
-    document.addEventListener('pointerdown', function(e){
-      if(!e.target.closest('#osTaskbar') && !e.target.closest('#osStartMenu')) closeOSStart();
-    });
-    // Botones del rail del start menu
-    $$('#osStartMenu [data-os]').forEach(function(b){
-      b.onclick = function(){
-        var a = b.dataset.os;
-        closeOSStart();
-        if(a === 'toggleAnia') exitOS();
-        else if(a === 'lock') osLock();
-        else if(a === 'shutdown') osShutdown();
-      };
-    });
-    // Exit del taskbar
-    $('#osExit').onclick = function(){ osShutdown(); };
-    // Toggle desde el header de ANIA
-    var toggleBtn = document.getElementById('osToggleBtn');
-    if(toggleBtn){
-      toggleBtn.onclick = function(){
-        if(document.body.classList.contains('os-on')) exitOS();
-        else enterOS();
-      };
-    }
-    // Click en desktop limpia selección
-    $('#osDesktop').addEventListener('click', function(e){
-      if(e.target.id === 'osWallpaper' || e.target.id === 'osIcons' || e.target.id === 'osDesktop'){
-        $$('.os-icon').forEach(function(x){ x.classList.remove('x'); x.classList.remove('sel'); });
-      }
-    });
-  }
-
-  // ══════════════════════════════════════════════
-  // INIT
-  // ══════════════════════════════════════════════
-  function initOS(){
-    OS.loadFS();
-    wireButtons();
-
-    // Estado inicial: si hay sesión recordada, entrar al OS.
-    // Si no, quedarse en boot/login (que ya lo gestiona 14-boot.js)
-    var hasSession = false;
-    try{
-      var s = localStorage.getItem('ania_session');
-      if(s){ var p = JSON.parse(s); if(p && (p.user || p.username)) hasSession = true; }
-    }catch(e){}
-
-    // Escuchar clicks en bootStart y en login/register para entrar al OS
-    // (14-boot.js ya gestiona esto internamente, aquí solo añadimos el OS)
-    var bootStart = document.getElementById('bootStart');
-    if(bootStart){
-      bootStart.addEventListener('click', function(){
-        setTimeout(function(){
-          document.body.classList.add('app-on');
-          enterOS();
-        }, 600);
-      });
-    }
-    // Si el usuario ya tenía sesión y boot ya se ocultó, entrar al OS
-    setTimeout(function(){
-      var boot = document.getElementById('boot');
-      if(boot && (boot.style.display === 'none' || boot.classList.contains('hide'))){
-        // Boot ya pasó → entrar al OS
-        document.body.classList.add('app-on');
-        enterOS();
-      }
-    }, 2500);
-
-    console.log('[OS] Mini-OS listo ·', Object.keys(APPS).length, 'apps ·', Object.keys(OS.FS).length, 'carpetas');
-  }
-
-  // Esperar a que ANIA esté lista (globals + DOM)
-  waitFor(function(){
-    return typeof window.send === 'function' && typeof window.reply === 'function' && document.getElementById('osDesktop');
-  }, function(){
-    hookSend();
-    initOS();
-  }, 10000);
-
-  // También por si los globals tardan más
-  window.addEventListener('load', function(){
-    setTimeout(function(){
-      hookSend();
-      if(!document.body.classList.contains('app-on') && !document.body.classList.contains('os-on')){
-        // Si nada ha activado la app, no forzamos nada (dejamos el login visible)
-      }
-    }, 1200);
+    function mu(){ document.removeEventListener('pointermove', mm); }
+    document.addEventListener('pointermove', mm);
+    document.addEventListener('pointerup', mu, { once:true });
   });
 
-  // Exponer API global
-  window.OS = OS;
-  window.OS_APPS = APPS;
-  window.IC = IC;
+  var rz = win.querySelector('.os-rz');
+  rz.addEventListener('pointerdown', function(e){
+    e.stopPropagation();
+    var sx = e.clientX, sy = e.clientY;
+    var ow = win.offsetWidth, oh = win.offsetHeight;
+    function mm(ev){
+      win.style.width = Math.max(320, ow + ev.clientX - sx) + 'px';
+      win.style.height = Math.max(220, oh + ev.clientY - sy) + 'px';
+    }
+    document.addEventListener('pointermove', mm);
+    document.addEventListener('pointerup', function(){ document.removeEventListener('pointermove', mm); }, { once:true });
+  });
+
+  focusOSWin(id);
+  return {
+    win: win, body: rec.body, id: id,
+    setTitle: function(t){ rec.title = t; win.querySelector('.os-tb-title').textContent = t; tb.title = t; tb.textContent = t; },
+    close: function(){ closeOSWin(id); }
+  };
+}
+function focusOSWin(id){
+  var w = OS.wins.get(id); if(!w) return;
+  w.el.style.zIndex = ++OS.zTop;
+  OS.wins.forEach(function(o){ o.el.classList.toggle('active', o === w); });
+  $$('#osTasks .os-task').forEach(function(b){ b.classList.toggle('active', b.dataset.win === id); });
+  OS.activeWin = id;
+}
+function minimizeOSWin(id){
+  var w = OS.wins.get(id); if(!w) return;
+  w.el.classList.add('minimized'); w.el.classList.remove('active');
+  var tb = document.querySelector('#osTasks .os-task[data-win="' + id + '"]');
+  if(tb) tb.classList.remove('active');
+  if(OS.activeWin === id) OS.activeWin = null;
+}
+function toggleOSMax(id){
+  var w = OS.wins.get(id); if(!w) return;
+  w.el.classList.toggle('maximized');
+}
+function closeOSWin(id){
+  var w = OS.wins.get(id); if(!w) return;
+  w.el.classList.add('closing');
+  setTimeout(function(){ if(w.el.parentNode) w.el.parentNode.removeChild(w.el); }, 160);
+  OS.wins.delete(id);
+  var tb = document.querySelector('#osTasks .os-task[data-win="' + id + '"]');
+  if(tb) tb.parentNode.removeChild(tb);
+  if(OS.activeWin === id) OS.activeWin = null;
+}
+
+function fileIconOS(node){
+  if(!node) return '';
+  if(node.type !== 'file') return IC.folder;
+  switch(node.kind){
+    case 'doc': return IC.doc;
+    case 'sheet': return IC.xls;
+    case 'text': return IC.txt;
+    case 'image': return IC.img;
+    case 'audio': return IC.audio;
+    default: return IC.app;
+  }
+}
+
+function appOSExplorer(startPath){
+  var ctx = createOSWindow({ title:'Explorador', icon:IC.folder, w:880, h:560 });
+  var cur = (startPath || ['Documentos']).slice();
+  ctx.body.innerHTML =
+    '<div class="os-explorer-toolbar">' +
+      '<button class="os-explorer-nav nback">◀</button>' +
+      '<button class="os-explorer-nav nup">▲</button>' +
+      '<div class="os-explorer-crumb"></div>' +
+      '<button class="os-explorer-nav breload">⟳</button>' +
+    '</div>' +
+    '<div class="os-explorer-grid"></div>' +
+    '<div class="os-status"><span class="s1"></span><span class="s2"></span></div>';
+  var grid = ctx.body.querySelector('.os-explorer-grid');
+  var crumb = ctx.body.querySelector('.os-explorer-crumb');
+  function render(){
+    var node = OS.getNode(cur);
+    if(!node){ cur = ['Documentos']; return render(); }
+    crumb.innerHTML = '';
+    var root = el('b', '', 'ANIA-OS'); root.style.cursor = 'pointer';
+    root.onclick = function(){ cur = []; render(); };
+    crumb.appendChild(root);
+    cur.forEach(function(p, i){
+      crumb.appendChild(el('span', '', ' › '));
+      var b = el('b', '', esc(p)); b.style.cursor = 'pointer';
+      b.onclick = function(){ cur = cur.slice(0, i+1); render(); };
+      crumb.appendChild(b);
+    });
+    grid.innerHTML = '';
+    var entries = Object.keys(node.children || {}).map(function(k){ return node.children[k]; });
+    entries.sort(function(a, b){
+      if(a.type !== b.type) return a.type === 'folder' ? -1 : 1;
+      return a.name.localeCompare(b.name, 'es');
+    });
+    entries.forEach(function(n){
+      var it = el('div', 'os-file', '<div class="ic">' + fileIconOS(n) + '</div><span>' + esc(n.name) + '</span>');
+      it.onclick = function(e){
+        e.stopPropagation();
+        grid.querySelectorAll('.os-file').forEach(function(x){ x.classList.remove('sel'); });
+        it.classList.add('sel');
+      };
+      it.ondblclick = function(){
+        if(n.type === 'folder'){ cur = cur.concat([n.name]); render(); }
+        else openOSNode(n);
+      };
+      grid.appendChild(it);
+    });
+    ctx.body.querySelector('.s1').textContent = entries.length + ' elemento(s)';
+    ctx.body.querySelector('.s2').textContent = cur.join(' \\ ');
+    ctx.setTitle((cur[cur.length-1] || 'ANIA-OS') + ' · Explorador');
+  }
+  ctx.body.querySelector('.nback').onclick = function(){ if(cur.length){ cur = cur.slice(0,-1); render(); } };
+  ctx.body.querySelector('.nup').onclick = function(){ cur = []; render(); };
+  ctx.body.querySelector('.breload').onclick = render;
+  render();
+}
+
+function appOSNotepad(node){
+  var ctx = createOSWindow({ title:(node && node.name || 'Sin título') + ' · Notas', icon:IC.txt, w:640, h:480 });
+  ctx.body.innerHTML = '<textarea class="os-textarea" spellcheck="false">' + esc(node && node.text || '') + '</textarea>' +
+    '<div class="os-status"><span class="np-n"></span><span>Guardado local</span></div>';
+  var ta = ctx.body.querySelector('.os-textarea');
+  function upd(){ ctx.body.querySelector('.np-n').textContent = ta.value.length + ' caracteres'; }
+  ta.addEventListener('input', upd);
+  ta.addEventListener('keydown', function(e){
+    if(e.ctrlKey && e.key === 's'){
+      e.preventDefault();
+      if(!node){
+        var name = prompt('Guardar como:', 'nota-' + Date.now() + '.txt');
+        if(!name) return;
+        OS.addFile(['Documentos'], { type:'file', kind:'text', name:name, text:ta.value, size:ta.value.length });
+        ctx.setTitle(name + ' · Notas');
+      } else {
+        node.text = ta.value;
+        node.size = ta.value.length;
+        OS.saveFS();
+      }
+    }
+  });
+  upd();
+}
+
+function appOSWord(node){
+  var ctx = createOSWindow({ title:(node && node.name || 'Documento') + ' · Word', icon:IC.doc, w:900, h:660 });
+  ctx.body.innerHTML =
+    '<div class="os-wp-toolbar">' +
+      '<button class="os-wp-btn" data-cmd="bold"><b>B</b></button>' +
+      '<button class="os-wp-btn" data-cmd="italic"><i>I</i></button>' +
+      '<button class="os-wp-btn" data-cmd="underline"><u>U</u></button>' +
+      '<button class="os-wp-btn" data-cmd="insertUnorderedList">•</button>' +
+      '<span style="flex:1"></span>' +
+      '<button class="os-wp-btn" data-save="1" style="width:auto;padding:0 12px;">Guardar</button>' +
+    '</div>' +
+    '<div class="os-wp-canvas"><div class="os-page" contenteditable="true">' + (node && node.html || '<p>Empieza a escribir…</p>') + '</div></div>';
+  var page = ctx.body.querySelector('.os-page');
+  ctx.body.querySelectorAll('[data-cmd]').forEach(function(b){
+    b.onmousedown = function(e){ e.preventDefault(); };
+    b.onclick = function(){ page.focus(); document.execCommand(b.dataset.cmd); };
+  });
+  ctx.body.querySelector('[data-save]').onclick = function(){
+    if(!node){
+      var name = prompt('Guardar como:', 'documento-' + Date.now() + '.html');
+      if(!name) return;
+      OS.addFile(['Documentos'], { type:'file', kind:'doc', name:name, html:page.innerHTML, size:page.innerHTML.length });
+      ctx.setTitle(name + ' · Word');
+    } else {
+      node.html = page.innerHTML;
+      node.size = page.innerHTML.length;
+      OS.saveFS();
+    }
+  };
+}
+
+function appOSCalc(){
+  var ctx = createOSWindow({ title:'Calculadora', icon:IC.calc, w:340, h:470 });
+  ctx.body.innerHTML = '<div class="os-calc"><div class="disp">0</div><div class="grid"></div></div>';
+  var disp = ctx.body.querySelector('.disp');
+  var acc = null, op = null, cur = '0', fresh = true;
+  var keys = ['C','⌫','%','÷','7','8','9','×','4','5','6','−','1','2','3','+','±','0',',','='];
+  var grid = ctx.body.querySelector('.grid');
+  keys.forEach(function(k){
+    var cls = ['+','−','×','÷'].indexOf(k) >= 0 ? 'op' : (k === '=' ? 'eq' : '');
+    var b = el('button', cls, k); b.dataset.k = k; grid.appendChild(b);
+  });
+  grid.onclick = function(e){
+    var k = e.target.dataset.k;
+    if(!k) return;
+    if(/[0-9]/.test(k)){ cur = fresh ? k : (cur === '0' ? k : cur + k); fresh = false; }
+    else if(k === ','){ if(cur.indexOf(',') < 0){ cur += ','; fresh = false; } }
+    else if(k === 'C'){ acc = null; op = null; cur = '0'; fresh = true; }
+    else if(k === '⌫'){ cur = cur.length > 1 ? cur.slice(0,-1) : '0'; }
+    else if(k === '±'){ cur = cur.charAt(0) === '-' ? cur.slice(1) : '-' + cur; }
+    else if(k === '%'){ cur = String(parseFloat(cur.replace(',','.')) / 100).replace('.',','); }
+    else if(['+','−','×','÷'].indexOf(k) >= 0){ acc = parseFloat(cur.replace(',','.')); op = k; fresh = true; }
+    else if(k === '=' && op !== null){
+      var b = parseFloat(cur.replace(',','.'));
+      var r = op === '+' ? acc + b : op === '−' ? acc - b : op === '×' ? acc * b : (b === 0 ? NaN : acc / b);
+      cur = isFinite(r) ? String(+r.toFixed(10)).replace('.',',') : 'Error';
+      acc = null; op = null; fresh = true;
+    }
+    disp.textContent = cur;
+  };
+}
+
+function appOSTerminal(){
+  var ctx = createOSWindow({ title:'Terminal', icon:IC.term, w:720, h:440 });
+  ctx.body.innerHTML = '<div class="os-term"><div class="os-term-out"></div><div class="os-term-line"><span class="os-term-ps">ANIA-OS:\\&gt;</span><input class="os-term-in"></div></div>';
+  var out = ctx.body.querySelector('.os-term-out');
+  var inp = ctx.body.querySelector('.os-term-in');
+  function print(t){ out.textContent += t + '\n'; out.scrollTop = out.scrollHeight; }
+  print('ANIA-OS Shell · escribe "help"');
+  inp.addEventListener('keydown', function(e){
+    if(e.key !== 'Enter') return;
+    var line = inp.value; inp.value = '';
+    print('> ' + line);
+    var cmd = line.trim().toLowerCase();
+    if(cmd === 'help') print('Comandos: help, ver, date, whoami, clear, apps, files, os <cmd>');
+    else if(cmd === 'ver') print('ANIA-OS v1.0');
+    else if(cmd === 'date') print(new Date().toString());
+    else if(cmd === 'whoami') print('operador');
+    else if(cmd === 'clear') out.textContent = '';
+    else if(cmd === 'apps') print(Object.keys(APPS).join(', '));
+    else if(cmd === 'files'){ var f = OS.getNode(['Documentos']); print(Object.keys(f.children || {}).join('\n') || '(vacío)'); }
+    else if(cmd.indexOf('os ') === 0) window.OSBridge.ejecutar(line.slice(3)).then(function(r){ print(JSON.stringify(r, null, 2)); });
+    else if(cmd) print('No reconocido: ' + cmd);
+  });
+  setTimeout(function(){ inp.focus(); }, 100);
+}
+
+function appOSPaint(){
+  var ctx = createOSWindow({ title:'Paint', icon:IC.paint, w:820, h:600 });
+  ctx.body.innerHTML =
+    '<div class="os-wp-toolbar">' +
+      '<input type="color" value="#1b6fb8" id="os-pt-color" style="width:34px;height:26px;border:1px solid #d8d8d8;padding:0">' +
+      '<label style="font-size:12px;display:flex;gap:6px;align-items:center">Grosor <input type="range" id="os-pt-size" min="1" max="30" value="4" style="width:90px"></label>' +
+      '<button class="os-wp-btn" id="os-pt-clear" style="width:auto;padding:0 12px;">Limpiar</button>' +
+      '<button class="os-wp-btn" id="os-pt-save" style="width:auto;padding:0 12px;">Guardar</button>' +
+    '</div>' +
+    '<div class="os-paint-wrap"><canvas width="1000" height="560" style="background:#fff"></canvas></div>';
+  var cv = ctx.body.querySelector('canvas');
+  var x = cv.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, cv.width, cv.height);
+  x.lineCap = x.lineJoin = 'round';
+  var draw = false;
+  function pos(e){ var r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; }
+  cv.addEventListener('pointerdown', function(e){ draw = true; try{ cv.setPointerCapture(e.pointerId); }catch(_){}; var p = pos(e); x.beginPath(); x.moveTo(p[0], p[1]); });
+  cv.addEventListener('pointermove', function(e){
+    if(!draw) return;
+    x.strokeStyle = ctx.body.querySelector('#os-pt-color').value;
+    x.lineWidth = +ctx.body.querySelector('#os-pt-size').value;
+    var p = pos(e); x.lineTo(p[0], p[1]); x.stroke();
+  });
+  cv.addEventListener('pointerup', function(){ draw = false; });
+  ctx.body.querySelector('#os-pt-clear').onclick = function(){ x.fillStyle = '#fff'; x.fillRect(0, 0, cv.width, cv.height); };
+  ctx.body.querySelector('#os-pt-save').onclick = function(){
+    var u = cv.toDataURL('image/png');
+    OS.addFile(['Imágenes'], { type:'file', kind:'image', name:'dibujo-' + Date.now() + '.png', url:u, size:Math.round(u.length * 0.75) });
+  };
+}
+
+function appOSMines(){
+  var ctx = createOSWindow({ title:'Buscaminas', icon:IC.mines, w:360, h:470 });
+  var R = 9, C = 9, M = 10;
+  var mines, open, flag, dead, won, started, timer;
+  ctx.body.innerHTML =
+    '<div class="os-mines">' +
+      '<div class="os-mines-top"><span id="os-m-mines">010</span><button id="os-m-reset" style="border:0;background:#e6e6e6;font-size:18px;cursor:pointer;padding:0 8px;">🙂</button><span id="os-m-time">000</span></div>' +
+      '<div class="os-mines-grid"></div>' +
+    '</div>';
+  var grid = ctx.body.querySelector('.os-mines-grid');
+  function reset(){
+    mines = {}; open = {}; flag = {}; dead = false; won = false; started = false;
+    if(timer){ clearInterval(timer); timer = null; }
+    ctx.body.querySelector('#os-m-mines').textContent = '010';
+    ctx.body.querySelector('#os-m-time').textContent = '000';
+    render();
+  }
+  function neighbors(i){
+    var r = Math.floor(i / C), c = i % C, out = [];
+    for(var dr = -1; dr <= 1; dr++) for(var dc = -1; dc <= 1; dc++){
+      if(!dr && !dc) continue;
+      var nr = r + dr, nc = c + dc;
+      if(nr >= 0 && nr < R && nc >= 0 && nc < C) out.push(nr * C + nc);
+    }
+    return out;
+  }
+  function countAdj(i){ return neighbors(i).filter(function(n){ return mines[n]; }).length; }
+  function place(safe){
+    var forb = {}; forb[safe] = 1; neighbors(safe).forEach(function(n){ forb[n] = 1; });
+    var count = 0;
+    while(count < M){
+      var i = Math.floor(Math.random() * R * C);
+      if(!forb[i] && !mines[i]){ mines[i] = 1; count++; }
+    }
+  }
+  function reveal(i){
+    if(open[i] || flag[i]) return;
+    open[i] = 1;
+    if(mines[i]){ dead = true; if(timer) clearInterval(timer); render(); return; }
+    if(countAdj(i) === 0) neighbors(i).forEach(reveal);
+    var opened = 0; for(var k in open) opened++;
+    if(opened === R * C - M){ won = true; if(timer) clearInterval(timer); }
+    render();
+  }
+  function render(){
+    grid.innerHTML = '';
+    for(var i = 0; i < R * C; i++){
+      (function(i){
+        var d = document.createElement('div');
+        d.className = 'os-mines-cell';
+        if(open[i]){
+          d.classList.add('open');
+          if(mines[i]){ d.classList.add('mine'); d.textContent = '💣'; }
+          else { var n = countAdj(i); if(n) d.textContent = n; }
+        } else if(flag[i]) d.textContent = '🚩';
+        d.onclick = function(){
+          if(dead || won || flag[i]) return;
+          if(!started){
+            started = true; place(i);
+            var t = 0;
+            timer = setInterval(function(){ t++; ctx.body.querySelector('#os-m-time').textContent = String(Math.min(999, t)).padStart(3, '0'); }, 1000);
+          }
+          reveal(i);
+        };
+        d.oncontextmenu = function(e){
+          e.preventDefault();
+          if(dead || won || open[i]) return;
+          flag[i] ? delete flag[i] : (flag[i] = 1);
+          render();
+        };
+        grid.appendChild(d);
+      })(i);
+    }
+  }
+  ctx.body.querySelector('#os-m-reset').onclick = reset;
+  reset();
+}
+
+function appOSWeather(){
+  var ctx = createOSWindow({ title:'Clima', icon:IC.weather, w:560, h:480 });
+  ctx.body.innerHTML = '<div class="os-weather"><div class="os-weather-search"><input placeholder="Ciudad… ej: Madrid"><button>Buscar</button></div><div class="os-wx-out"></div></div>';
+  var inp = ctx.body.querySelector('input');
+  var out = ctx.body.querySelector('.os-wx-out');
+  function buscar(q){
+    out.innerHTML = '<div style="color:#6b6b6b">Buscando…</div>';
+    fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(q) + '&count=1&language=es&format=json')
+      .then(function(r){ return r.json(); })
+      .then(function(g){
+        if(!g.results || !g.results.length){ out.innerHTML = '<div style="color:#d05050">No encontrada</div>'; return; }
+        var p = g.results[0];
+        return fetch('https://api.open-meteo.com/v1/forecast?latitude=' + p.latitude + '&longitude=' + p.longitude + '&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto')
+          .then(function(r){ return r.json(); })
+          .then(function(w){
+            var c = w.current;
+            out.innerHTML =
+              '<div style="background:linear-gradient(135deg,#2f7fbf,#5aa7e0);color:#fff;padding:20px;border-radius:8px;margin-top:10px">' +
+                '<div style="font-size:48px;font-weight:300;line-height:1">' + Math.round(c.temperature_2m) + '°C</div>' +
+                '<div style="font-size:18px;margin-top:6px">' + esc(p.name) + '</div>' +
+                '<div style="opacity:.9;font-size:13px;margin-top:8px">Sensación ' + Math.round(c.apparent_temperature) + '° · Humedad ' + c.relative_humidity_2m + '% · Viento ' + Math.round(c.wind_speed_10m) + ' km/h</div>' +
+              '</div>';
+          });
+      })
+      .catch(function(e){ out.innerHTML = '<div style="color:#d05050">Error: ' + esc(e.message) + '</div>'; });
+  }
+  ctx.body.querySelector('button').onclick = function(){ inp.value.trim() && buscar(inp.value.trim()); };
+  inp.addEventListener('keydown', function(e){ if(e.key === 'Enter' && inp.value.trim()) buscar(inp.value.trim()); });
+}
+
+var APPS = {
+  explorer:  { name:'Explorador',   icon:IC.folder,  launch:function(a){ appOSExplorer(a && a.path); } },
+  notepad:   { name:'Bloc de notas',icon:IC.txt,     launch:function(a){ appOSNotepad(a && a.node); } },
+  word:      { name:'Word',         icon:IC.doc,     launch:function(a){ appOSWord(a && a.node); } },
+  calc:      { name:'Calculadora',  icon:IC.calc,    launch:function(){ appOSCalc(); } },
+  terminal:  { name:'Terminal',     icon:IC.term,    launch:function(){ appOSTerminal(); } },
+  paint:     { name:'Paint',        icon:IC.paint,   launch:function(){ appOSPaint(); } },
+  mines:     { name:'Buscaminas',   icon:IC.mines,   launch:function(){ appOSMines(); } },
+  weather:   { name:'Clima',        icon:IC.weather, launch:function(){ appOSWeather(); } },
+  photos:    { name:'Fotos',        icon:IC.photos,  launch:function(){ abrirFotos(); } }
+};
+
+function abrirFotos(){
+  var carpeta = OS.getNode(['Imágenes']);
+  var imgs = Object.keys(carpeta && carpeta.children || {}).map(function(k){ return carpeta.children[k]; }).filter(function(n){ return n.kind === 'image' && n.url; });
+  if(!imgs.length){ toastOS('No hay imágenes aún. Dibuja algo en Paint.'); return; }
+  var ctx = createOSWindow({ title:'Fotos', icon:IC.photos, w:700, h:560 });
+  ctx.body.innerHTML = '<div style="flex:1;display:grid;place-items:center;background:#14161a"><img style="max-width:92%;max-height:92%"></div>';
+  var img = ctx.body.querySelector('img'); var i = 0;
+  img.src = imgs[i].url;
+  setInterval(function(){ i = (i + 1) % imgs.length; img.src = imgs[i].url; }, 4000);
+}
+
+function openOSNode(node){
+  if(!node) return;
+  if(node.type !== 'file'){ appOSExplorer(); return; }
+  switch(node.kind){
+    case 'doc':   appOSWord(node); break;
+    case 'text':  appOSNotepad(node); break;
+    case 'image': abrirFotos(); break;
+    default:      toastOS('No sé abrir: ' + node.name);
+  }
+}
+
+/* Desktop y start menu */
+function renderOSDesktop(){
+  var box = $('#osIcons'); if(!box) return; box.innerHTML = '';
+  var items = [
+    ['Este equipo', IC.folder, function(){ appOSExplorer([]); }],
+    ['Documentos',  IC.folder, function(){ appOSExplorer(['Documentos']); }],
+    ['Papelera',    IC.folder, function(){ appOSExplorer(['Papelera']); }]
+  ];
+  // Añadir apps remotas si el módulo remoto ya cargó
+  if(window.OSRemote){
+    items.push(['🎵 Música',   '<span style="font-size:36px">🎵</span>', function(){ window.OSRemote.appOSMusic(); }]);
+    items.push(['📄 Documentos', '<span style="font-size:36px">📄</span>', function(){ window.OSRemote.appOSDocViewer(); }]);
+    items.push(['🌐 Navegador', '<span style="font-size:36px">🌐</span>', function(){ window.OSRemote.appOSBrowser(); }]);
+    if(window.OSRemote.appOSWallpaper){
+      items.push(['🎨 Fondos', '<span style="font-size:36px">🎨</span>', function(){ window.OSRemote.appOSWallpaper(); }]);
+    }
+  }
+  items.forEach(function(it){
+    var d = el('div', 'os-icon', '<div class="ic">' + it[1] + '</div><span>' + it[0] + '</span>');
+    d.onclick = function(e){
+      e.stopPropagation();
+      $$('.os-icon').forEach(function(x){ x.classList.remove('sel'); });
+      d.classList.add('sel');
+    };
+    d.ondblclick = it[2];
+    box.appendChild(d);
+  });
+}
+
+function renderOSStartMenu(){
+  var sm = $('#osSmApps'); if(!sm) return; sm.innerHTML = '';
+  Object.keys(APPS).forEach(function(k){
+    var a = APPS[k];
+    var b = el('button', '', '<span style="width:26px;display:inline-grid;place-items:center">' + a.icon + '</span>' + esc(a.name));
+    b.onclick = function(){ closeOSStart(); a.launch(); };
+    sm.appendChild(b);
+  });
+}
+
+function toggleOSStart(){
+  var sm = $('#osStartMenu');
+  if(!sm) return;
+  sm.classList.toggle('on');
+}
+function closeOSStart(){ var sm = $('#osStartMenu'); if(sm) sm.classList.remove('on'); }
+
+function tickOSClock(){
+  var d = new Date();
+  var t = d.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
+  var f = d.toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit', year:'numeric' });
+  if($('#osClockT')) $('#osClockT').textContent = t;
+  if($('#osClockD')) $('#osClockD').textContent = f;
+}
+
+/* OSBridge */
+var OSBridge = {
+  listarApps: function(){ return Object.keys(APPS).map(function(k){ return { id:k, nombre:APPS[k].name }; }); },
+  abrirApp: function(id){
+    var a = APPS[id];
+    if(!a) return { ok:false, error:'app desconocida: ' + id };
+    try{ a.launch(); return { ok:true, app:id }; }
+    catch(e){ return { ok:false, error:e.message }; }
+  },
+  cerrarApp: function(id, titulo){
+    var n = 0;
+    OS.wins.forEach(function(w, wid){
+      var match = titulo ? (w.title && w.title.toLowerCase().indexOf(String(titulo).toLowerCase()) >= 0) :
+        (!id || w.title.toLowerCase().indexOf((APPS[id] && APPS[id].name || id).toLowerCase()) >= 0);
+      if(match){ closeOSWin(wid); n++; }
+    });
+    return { ok:true, cerrados:n };
+  },
+  ventanasAbiertas: function(){
+    var out = []; OS.wins.forEach(function(w){ out.push({ titulo:w.title }); }); return out;
+  },
+  listarArchivos: function(carpeta){
+    var node = OS.getNode(carpeta ? [carpeta] : []);
+    if(!node) return { ok:false, error:'no existe' };
+    return {
+      ok:true, carpeta:carpeta || '(raíz)',
+      items: Object.keys(node.children || {}).map(function(k){ var c = node.children[k]; return { nombre:c.name, tipo:c.type, kind:c.kind || null, tamaño:c.size || 0 }; })
+    };
+  },
+  crearArchivo: function(carpeta, nombre, contenido){
+    var path = [carpeta || 'Documentos'];
+    if(!OS.getNode(path)) return { ok:false, error:'carpeta no existe' };
+    var kind = inferirKind(nombre);
+    var real = OS.addFile(path, { type:'file', kind:kind, name:nombre, text:contenido || '', size:(contenido || '').length });
+    return { ok:true, archivo:real, carpeta:path[0], kind:kind };
+  },
+  leerArchivo: function(carpeta, nombre){
+    var node = OS.getNode([carpeta || 'Documentos', nombre]);
+    if(!node) return { ok:false, error:'no existe' };
+    return { ok:true, contenido: node.text || node.html || '(binario)', tamaño: node.size || 0 };
+  },
+  borrarArchivo: function(carpeta, nombre){
+    if(!OS.getNode([carpeta || 'Documentos', nombre])) return { ok:false, error:'no existe' };
+    OS.deleteNode([carpeta || 'Documentos', nombre]);
+    return { ok:true };
+  },
+  buscarArchivos: function(q){
+    var ql = String(q || '').toLowerCase().trim();
+    if(!ql) return { ok:false, error:'falta término' };
+    var hits = [];
+    (function walk(node, path){
+      if(!node || !node.children) return;
+      for(var k in node.children){
+        var c = node.children[k];
+        var np = path.concat([c.name]);
+        if(c.type === 'file' && c.name.toLowerCase().indexOf(ql) >= 0) hits.push({ ruta:np.join('/'), tamaño:c.size || 0 });
+        if(c.type !== 'file') walk(c, np);
+      }
+    })(OS.getNode([]), []);
+    return { ok:true, resultados: hits.slice(0, 30) };
+  },
+  cambiarFondo: function(id){
+    var walls = [
+      'linear-gradient(135deg,#04070d 0%,#0a2038 50%,#0d2b4a 100%)',
+      'linear-gradient(135deg,#1c4a77 0%,#0d2440 60%,#04070d 100%)',
+      'linear-gradient(135deg,#0e1e38 0%,#3e5a80 50%,#8a5a4a 100%)',
+      'linear-gradient(135deg,#0a0f1a 0%,#0d2440 50%,#0f1a2e 100%)'
+    ];
+    var k = Number(id) || 0;
+    if(k < 0 || k >= walls.length) k = 0;
+    $('#osWallpaper').style.background = walls[k];
+    try{ localStorage.setItem('aniaos_wall', String(k)); }catch(e){}
+    return { ok:true, fondo:k };
+  },
+  infoSistema: function(){
+    var n = 0;
+    (function walk(node){
+      if(!node || !node.children) return;
+      for(var k in node.children){ n++; if(node.children[k].type !== 'file') walk(node.children[k]); }
+    })(OS.FS);
+    var hm = performance.memory;
+    return {
+      ok:true, ventanas:OS.wins.size, apps:Object.keys(APPS).length, archivos:n,
+      memoriaJS: hm ? Math.round(hm.usedJSHeapSize / 1048576) + ' MB' : '—',
+      nucleos: navigator.hardwareConcurrency || '—',
+      online: navigator.onLine
+    };
+  },
+  apagar: function(){ osShutdown(); return { ok:true }; },
+  bloquear: function(){ osLock(); return { ok:true }; },
+  ejecutar: function(cmd){
+    var c = String(cmd || '').toLowerCase().trim();
+    if(!c) return Promise.resolve({ ok:false, error:'comando vacío' });
+    var m;
+
+    m = c.match(/^(?:abre|abrir|lanza|inicia|ejecuta|arranca)\s+(?:la\s+|el\s+|los\s+|las\s+)?(.+?)$/);
+    if(m){
+      var q = m[1].trim();
+      var aliases = {
+        'explorador':'explorer','archivos':'explorer','documentos':'explorer','papelera':'explorer',
+        'word':'word','documento':'word',
+        'texto':'notepad','bloc':'notepad','notas':'notepad','notepad':'notepad','bloc de notas':'notepad',
+        'calc':'calc','calculadora':'calc','cuenta':'calc',
+        'terminal':'terminal','consola':'terminal','cmd':'terminal',
+        'paint':'paint','dibujo':'paint','dibujar':'paint',
+        'buscaminas':'mines','minas':'mines',
+        'clima':'weather','tiempo':'weather',
+        'fotos':'photos','imagenes':'photos','galeria':'photos'
+      };
+      var found = aliases[q];
+      if(!found){
+        for(var k in APPS){ if(k === q || APPS[k].name.toLowerCase().indexOf(q) >= 0){ found = k; break; } }
+      }
+      if(found) return Promise.resolve(OSBridge.abrirApp(found));
+      return Promise.resolve({ ok:false, error:'app no reconocida: ' + q });
+    }
+
+    m = c.match(/^cierra\s+(?:la\s+|el\s+|las\s+|los\s+)?(?:ventana\s+de\s+|app\s+)?(.+)$/);
+    if(m){
+      var q2 = m[1].trim();
+      if(/todas|ventanas/.test(q2)) return Promise.resolve(OSBridge.cerrarApp());
+      return Promise.resolve(OSBridge.cerrarApp(null, q2));
+    }
+
+    m = c.match(/^(?:crea|crear|nuevo|guarda|escribe)\s+(?:un\s+|el\s+|la\s+)?(?:archivo|documento|nota|doc)\s+(?:llamado\s+|con\s+nombre\s+|de\s+nombre\s+)?["']?([^"']+?)["']?(?:\s+con\s+(?:contenido|texto)\s+["']?(.+?)["']?)?$/);
+    if(m) return Promise.resolve(OSBridge.crearArchivo('Documentos', m[1].trim(), (m[2] || '').trim()));
+
+    m = c.match(/^(?:busca|b[uú]scame|encuentra)\s+(?:el\s+archivo\s+|el\s+documento\s+|archivo\s+)?(.+)$/);
+    if(m){
+      var q3 = m[1].trim();
+      if(/en\s+internet|en\s+la\s+web|en\s+wikipedia/.test(q3)) return Promise.resolve({ ok:false, error:'buscar web → usa chat' });
+      return Promise.resolve(OSBridge.buscarArchivos(q3));
+    }
+
+    m = c.match(/^(?:cambia|cambiar|pon)\s+(?:el\s+)?fondo\s+(?:a\s+|por\s+|al?\s+)?(.+)$/);
+    if(m){
+      var map = { 'aurora':0,'0':0,'ventana':1,'1':1,'montaña':2,'montanas':2,'2':2,'lineas':3,'líneas':3,'3':3 };
+      var kk = map[m[1].trim()];
+      if(kk != null) return Promise.resolve(OSBridge.cambiarFondo(kk));
+    }
+
+    if(/^(?:apaga|apagar|shutdown)\s*(?:el\s+)?(?:pc|sistema|equipo|os)?$/.test(c)) return Promise.resolve(OSBridge.apagar());
+    if(/^(?:bloquea|bloquear|lock)\s*(?:la\s+)?(?:pantalla|sesi[oó]n|pc)?$/.test(c)) return Promise.resolve(OSBridge.bloquear());
+    if(/^(?:info|estado|status)\s*(?:del\s+)?(?:sistema|os)?$/.test(c)) return Promise.resolve(OSBridge.infoSistema());
+    if(/ventanas?\s+abiertas?/.test(c)) return Promise.resolve({ ok:true, ventanas:OSBridge.ventanasAbiertas() });
+    m = c.match(/^(?:lista|listar|muestra|qu[eé]\s+hay\s+en)\s+(?:los\s+|las\s+)?(?:archivos\s+de\s+|carpeta\s+)?(.+)$/);
+    if(m) return Promise.resolve(OSBridge.listarArchivos(m[1].trim()));
+
+    return Promise.resolve({ ok:false, error:'comando no reconocido' });
+  }
+};
+window.OSBridge = OSBridge;
+
+function inferirKind(nombre){
+  var e = String(nombre).split('.').pop().toLowerCase();
+  if(['txt','md','log','csv'].indexOf(e) >= 0) return 'text';
+  if(['doc','docx'].indexOf(e) >= 0) return 'doc';
+  if(['xls','xlsx'].indexOf(e) >= 0) return 'sheet';
+  if(['png','jpg','jpeg','gif','webp','svg'].indexOf(e) >= 0) return 'image';
+  if(['mp3','wav','ogg','m4a','flac'].indexOf(e) >= 0) return 'audio';
+  return 'generic';
+}
+
+/* Hook send() */
+function hookSend(){
+  if(!window.send) return false;
+  if(window.__osSendHooked) return true;
+  window.__osSendHooked = true;
+  var origSend = window.send;
+  window.send = async function(text){
+    try{
+      var r = await OSBridge.ejecutar(text);
+      if(r && r.ok){
+        var msg = '✓ ';
+        if(r.app) msg += 'App «' + r.app + '» abierta.';
+        else if(r.archivo) msg += 'Archivo «' + r.archivo + '» creado en ' + r.carpeta + '.';
+        else if(r.cerrados != null) msg += r.cerrados + ' ventana(s) cerrada(s).';
+        else if(r.items) msg += r.carpeta + ': ' + (r.items.slice(0,8).map(function(i){ return i.nombre; }).join(', ') || '(vacía)');
+        else if(r.resultados) msg += r.resultados.length ? r.resultados.length + ' encontrado(s):\n' + r.resultados.map(function(x){ return '· ' + x.ruta; }).join('\n') : 'Sin resultados.';
+        else if(r.ventanas) msg += r.ventanas.length + ' ventana(s): ' + (r.ventanas.map(function(v){ return v.titulo; }).join(', ') || 'ninguna');
+        else if(r.fondo != null) msg += 'Fondo cambiado a ' + r.fondo + '.';
+        else if(r.memoriaJS) msg += 'Ventanas: ' + r.ventanas + ' · Apps: ' + r.apps + ' · Archivos: ' + r.archivos + ' · Memoria: ' + r.memoriaJS;
+        else msg += 'Hecho.';
+        try{ if(typeof addChat === 'function') addChat('you', text); }catch(e){}
+        try{ if(typeof reply === 'function'){ reply(msg); return; } }catch(e){}
+        try{ if(typeof personaReply === 'function'){ personaReply(msg); return; } }catch(e){}
+        return;
+      }
+    }catch(e){}
+    return origSend.call(this, text);
+  };
+  console.log('[OS] send() hooked');
+  return true;
+}
+
+/* Enter/exit OS */
+function enterOS(){
+  document.body.classList.add('os-on');
+  document.body.classList.remove('app-on');
+  var t = $('#osToggleTxt'); if(t) t.textContent = 'ANIA';
+  tickOSClock();
+  renderOSDesktop();
+  renderOSStartMenu();
+  var wall = localStorage.getItem('aniaos_wall');
+  if(wall != null){
+    var walls = [
+      'linear-gradient(135deg,#04070d 0%,#0a2038 50%,#0d2b4a 100%)',
+      'linear-gradient(135deg,#1c4a77 0%,#0d2440 60%,#04070d 100%)',
+      'linear-gradient(135deg,#0e1e38 0%,#3e5a80 50%,#8a5a4a 100%)',
+      'linear-gradient(135deg,#0a0f1a 0%,#0d2440 50%,#0f1a2e 100%)'
+    ];
+    var wp = $('#osWallpaper');
+    if(wp) wp.style.background = walls[Number(wall)] || walls[0];
+  }
+  // Re-aplicar fondo remoto si existe
+  var wallUrl = localStorage.getItem('aniaos_wall_url');
+  if(wallUrl){
+    var wp2 = $('#osWallpaper');
+    if(wp2) wp2.style.background = 'url("' + wallUrl + '") center/cover no-repeat fixed';
+  }
+}
+function exitOS(){
+  document.body.classList.remove('os-on');
+  document.body.classList.add('app-on');
+  var t = $('#osToggleTxt'); if(t) t.textContent = 'OS';
+  closeOSStart();
+}
+
+function osLock(){
+  exitOS();
+  var lock = document.getElementById('lock');
+  if(lock){ lock.classList.add('on'); }
+  else { osShutdown(); }
+}
+
+function osShutdown(){
+  document.body.classList.remove('os-on');
+  document.body.classList.remove('app-on');
+  var app = document.getElementById('app');
+  if(app) app.style.display = 'none';
+  var lock = document.getElementById('lock');
+  if(lock) lock.classList.remove('on');
+  var boot = document.getElementById('boot');
+  if(boot){ boot.style.display = 'flex'; boot.classList.remove('hide'); }
+  var lb = document.getElementById('loginBox');
+  var rb = document.getElementById('registerBox');
+  var bs = document.getElementById('bootStart');
+  if(lb) lb.style.display = 'flex';
+  if(rb) rb.style.display = 'none';
+  if(bs) bs.style.display = 'none';
+  var ids = [];
+  OS.wins.forEach(function(w, id){ ids.push(id); });
+  ids.forEach(function(id){ closeOSWin(id); });
+  var log = document.getElementById('bootLog');
+  if(log) log.innerHTML = '';
+  document.querySelectorAll('.overlay.on').forEach(function(o){ o.classList.remove('on'); });
+  if(app) app.style.display = '';
+  console.log('[OS] Shutdown → login');
+}
+window.OSShutdown = osShutdown;
+window.OSLock = osLock;
+
+function wireButtons(){
+  var sb = $('#osStartBtn'); if(sb) sb.onclick = function(e){ e.stopPropagation(); toggleOSStart(); };
+  document.addEventListener('pointerdown', function(e){
+    if(!e.target.closest('#osTaskbar') && !e.target.closest('#osStartMenu')) closeOSStart();
+  });
+  $$('#osStartMenu [data-os]').forEach(function(b){
+    b.onclick = function(){
+      var a = b.dataset.os;
+      closeOSStart();
+      if(a === 'toggleAnia') exitOS();
+      else if(a === 'lock') osLock();
+      else if(a === 'shutdown') osShutdown();
+    };
+  });
+  var ex = $('#osExit'); if(ex) ex.onclick = function(){ osShutdown(); };
+  var tb = document.getElementById('osToggleBtn');
+  if(tb){
+    tb.onclick = function(){
+      if(document.body.classList.contains('os-on')) exitOS();
+      else enterOS();
+    };
+  }
+  var desk = $('#osDesktop');
+  if(desk) desk.addEventListener('click', function(e){
+    if(e.target.id === 'osWallpaper' || e.target.id === 'osIcons' || e.target.id === 'osDesktop'){
+      $$('.os-icon').forEach(function(x){ x.classList.remove('sel'); });
+    }
+  });
+}
+
+function initOS(){
+  OS.loadFS();
+  wireButtons();
+
+  var bs = document.getElementById('bootStart');
+  if(bs){
+    bs.addEventListener('click', function(){
+      setTimeout(function(){
+        document.body.classList.add('app-on');
+        enterOS();
+      }, 600);
+    });
+  }
+
+  setTimeout(function(){
+    var boot = document.getElementById('boot');
+    if(boot && (boot.style.display === 'none' || boot.classList.contains('hide'))){
+      document.body.classList.add('app-on');
+      enterOS();
+    }
+  }, 2500);
+
+  console.log('[OS] Mini-OS listo ·', Object.keys(APPS).length, 'apps ·', Object.keys(OS.FS).length, 'carpetas');
+}
+
+waitFor(function(){
+  return typeof window.send === 'function' && typeof window.reply === 'function' && document.getElementById('osDesktop');
+}, function(){
+  hookSend();
+  initOS();
+}, 10000);
+
+window.addEventListener('load', function(){
+  setTimeout(function(){ hookSend(); }, 1200);
+});
+
+/* ═══════════════════════════════════════════════════════════
+   FIX CRÍTICO · EXPONER API GLOBAL
+   (Sin esto, window.OS_createWindow no existe y el módulo
+   remoto falla con «OS_createWindow is not a function»).
+═══════════════════════════════════════════════════════════ */
+window.OS = OS;
+window.OS_APPS = APPS;
+window.IC = IC;
+window.OS_createWindow = createOSWindow;
+window.OS_closeWindow = closeOSWin;
+window.OS_focusWindow = focusOSWin;
+window.OS_minimizeWindow = minimizeOSWin;
+window.OS_toggleMaxWindow = toggleOSMax;
+window.OS_renderStartMenu = renderOSStartMenu;
+window.OS_renderDesktop = renderOSDesktop;
+window.OS_enter = enterOS;
+window.OS_exit = exitOS;
 })();
 </script>
 
-
 <!-- ═══════════════════════════════════════════════════════════
      ANIA-OS · MÓDULO DE ARCHIVOS REMOTOS (GitHub)
-     Añade: música MP3, visor DOCX/PDF, navegador interno HTML,
-     y entrenamiento de Ania con documentos del repo.
 ═══════════════════════════════════════════════════════════════ -->
 <script>
 (function(){
 'use strict';
 
-/* ═══════════════════════════════════════════════════════════
-   CONFIGURACIÓN · Edita si tu repo cambia
-═══════════════════════════════════════════════════════════ */
 const CFG = {
   USER:   'calm291094-del',
   REPO:   'ania',
   BRANCH: 'main',
   PATHS: {
-    docs:  'documentos',
-    music: 'musica',
-    htmls: 'htmls'
+    docs:   'documentos',
+    music:  'musica',
+    htmls:  'htmls',
+    fondos: 'fondos'
   },
-  // CDNs para archivos (jsDelivr es más rápido y soporta CORS + subcarpetas)
   CDN: (p) => 'https://cdn.jsdelivr.net/gh/' + CFG.USER + '/' + CFG.REPO + '@' + CFG.BRANCH + '/' + p.split('/').map(encodeURIComponent).join('/'),
-  // API de GitHub para listar carpetas
   API: (p) => 'https://api.github.com/repos/' + CFG.USER + '/' + CFG.REPO + '/contents/' + p.split('/').map(encodeURIComponent).join('/') + '?ref=' + CFG.BRANCH
 };
 
-/* ═══════════════════════════════════════════════════════════
-   UTILIDADES
-═══════════════════════════════════════════════════════════ */
 const $  = s => document.querySelector(s);
 const el = (t, c, h) => { const e = document.createElement(t); if(c) e.className = c; if(h != null) e.innerHTML = h; return e; };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1803,9 +1723,6 @@ function getExt(name){
   return m ? m[1].toLowerCase() : '';
 }
 
-/* ═══════════════════════════════════════════════════════════
-   CARGA DINÁMICA DE LIBRERÍAS (Mammoth, PDF.js) — solo cuando se usan
-═══════════════════════════════════════════════════════════ */
 const Libs = {
   _loaded: {},
   loadMammoth(){
@@ -1836,10 +1753,6 @@ const Libs = {
   }
 };
 
-/* ═══════════════════════════════════════════════════════════
-   LISTADO Y DESCARGA DESDE GITHUB
-   Cachea en localStorage 10 min para no saturar la API
-═══════════════════════════════════════════════════════════ */
 const GH = {
   cacheKey(p){ return 'aniaos_gh_' + p; },
   async list(folder, force){
@@ -1847,34 +1760,24 @@ const GH = {
     if(!force){
       try{
         const cached = JSON.parse(localStorage.getItem(key) || 'null');
-        if(cached && cached.t && Date.now() - cached.t < 600000){
-          return cached.items;
-        }
+        if(cached && cached.t && Date.now() - cached.t < 600000){ return cached.items; }
       }catch(e){}
     }
     try{
       const r = await fetch(CFG.API(folder));
-      if(r.status === 404) return [];  // carpeta no existe aún
+      if(r.status === 404) return [];
       if(!r.ok) throw new Error('HTTP ' + r.status);
       const j = await r.json();
       if(!Array.isArray(j)) return [];
       const items = j.map(it => ({
-        name: it.name,
-        path: it.path,
-        type: it.type,                // 'file' | 'dir'
-        size: it.size || 0,
-        ext: getExt(it.name),
+        name: it.name, path: it.path, type: it.type,
+        size: it.size || 0, ext: getExt(it.name),
         url: it.type === 'file' ? CFG.CDN(it.path) : null
       }));
       try{ localStorage.setItem(key, JSON.stringify({ t:Date.now(), items })); }catch(e){}
       return items;
     }catch(e){
-      console.warn('[GH.list]', folder, e.message);
-      // Fallback: devolver la caché aunque esté vieja
-      try{
-        const cached = JSON.parse(localStorage.getItem(key) || 'null');
-        if(cached) return cached.items;
-      }catch(_){}
+      try{ const cached = JSON.parse(localStorage.getItem(key) || 'null'); if(cached) return cached.items; }catch(_){}
       return [];
     }
   },
@@ -1903,36 +1806,30 @@ const GH = {
   }
 };
 
-/* ═══════════════════════════════════════════════════════════
-   CACHÉ DE RECURSOS CARGADOS (para no re-descargar)
-═══════════════════════════════════════════════════════════ */
 const RemoteCache = {
-  docs: [],       // { name, path, ext, url, text, t }
-  music: [],
-  htmls: [],
+  docs: [], music: [], htmls: [], wallpapers: [],
   listeners: new Set(),
   emit(){ this.listeners.forEach(fn => { try{ fn(); }catch(e){} }); },
   on(fn){ this.listeners.add(fn); },
-
   async refreshAll(force){
     chatR('Actualizando archivos del repositorio…');
-    const [docs, music, htmls] = await Promise.all([
+    const [docs, music, htmls, walls] = await Promise.all([
       GH.listRecursive(CFG.PATHS.docs, 3),
       GH.listRecursive(CFG.PATHS.music, 3),
-      GH.listRecursive(CFG.PATHS.htmls, 3)
+      GH.listRecursive(CFG.PATHS.htmls, 3),
+      GH.listRecursive(CFG.PATHS.fondos, 3)
     ]);
     this.docs  = docs.filter(f => ['docx','pdf','txt','md'].includes(f.ext));
     this.music = music.filter(f => ['mp3','wav','m4a','ogg','flac','opus','aac'].includes(f.ext));
     this.htmls = htmls.filter(f => ['html','htm'].includes(f.ext));
+    this.wallpapers = walls.filter(f => ['jpg','jpeg','png','webp','gif','svg'].includes(f.ext));
     this.emit();
-    toastR('📁 Repo: ' + this.docs.length + ' docs · ' + this.music.length + ' pistas · ' + this.htmls.length + ' HTMLs');
-    return { docs: this.docs.length, music: this.music.length, htmls: this.htmls.length };
+    toastR('📁 Repo: ' + this.docs.length + ' docs · ' + this.music.length + ' pistas · ' + this.htmls.length + ' HTMLs · ' + this.wallpapers.length + ' fondos');
+    return { docs: this.docs.length, music: this.music.length, htmls: this.htmls.length, fondos: this.wallpapers.length };
   }
 };
 
-/* ═══════════════════════════════════════════════════════════
-   APP · REPRODUCTOR DE MÚSICA REMOTA
-═══════════════════════════════════════════════════════════ */
+/* ══════ REPRODUCTOR DE MÚSICA ══════ */
 let _audioEl = null;
 let _playlist = [];
 let _playIdx = -1;
@@ -1943,37 +1840,29 @@ function ensureAudioEl(){
   _audioEl.crossOrigin = 'anonymous';
   _audioEl.volume = 1;
   _audioEl.addEventListener('ended', () => playNext());
-  _audioEl.addEventListener('error', (e) => {
-    toastR('Error reproduciendo: ' + (_playlist[_playIdx] && _playlist[_playIdx].name || '?'), 'warn');
-  });
   return _audioEl;
 }
-
 function playTrack(idx){
   if(idx < 0 || idx >= _playlist.length) return;
   _playIdx = idx;
   const t = _playlist[idx];
   const a = ensureAudioEl();
   a.src = t.url;
-  a.play().then(() => toastR('🎵 ' + t.name.replace(/\.[^.]+$/, '')))
-    .catch(e => toastR('No pude reproducir: ' + e.message, 'warn'));
-  // Actualizar UI si la ventana está abierta
+  a.play().then(() => toastR('🎵 ' + t.name.replace(/\.[^.]+$/, ''))).catch(e => toastR('No pude reproducir: ' + e.message, 'warn'));
   document.dispatchEvent(new CustomEvent('remote-music-change', { detail:{ idx, track:t } }));
 }
 function playNext(){ if(_playIdx < _playlist.length - 1) playTrack(_playIdx + 1); }
 function playPrev(){ if(_playIdx > 0) playTrack(_playIdx - 1); }
 
-async function appOSMusic(initialIndex){
+async function appOSMusic(){
   await RemoteCache.refreshAll(false).catch(()=>{});
   _playlist = RemoteCache.music.slice();
-
-  const ctx = window.OS ? window.OS_createWindow({
+  if(!window.OS_createWindow){ toastR('OS no disponible', 'warn'); return; }
+  const ctx = window.OS_createWindow({
     title:'🎵 Música del repositorio',
     icon: '<svg width="36" height="36" viewBox="0 0 48 48"><rect x="4" y="4" width="40" height="40" rx="6" fill="#C30052"/><circle cx="19" cy="32" r="4.6" fill="#fff"/><rect x="22" y="12" width="3.4" height="20" fill="#fff"/></svg>',
     w:720, h:520
-  }) : null;
-  if(!ctx){ toastR('OS no disponible'); return; }
-
+  });
   function render(){
     if(!_playlist.length){
       ctx.body.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#888;font-size:14px">No hay pistas en <b>' + CFG.PATHS.music + '/</b> del repo.<br><br>Sube archivos <b>.mp3</b> (o .wav, .m4a, .ogg) a esa carpeta en GitHub y pulsa «Actualizar».</div>';
@@ -2014,27 +1903,20 @@ async function appOSMusic(initialIndex){
           '</div>' +
         '</div>' +
       '</div>';
-
-    // Wire tracks
-    ctx.body.querySelectorAll('.r-track').forEach(tr => {
-      tr.onclick = () => playTrack(+tr.dataset.i);
-    });
-    // Wire buttons
+    ctx.body.querySelectorAll('.r-track').forEach(tr => { tr.onclick = () => playTrack(+tr.dataset.i); });
     ctx.body.querySelectorAll('[data-act]').forEach(b => {
       b.onclick = () => {
         const a = b.dataset.act;
         if(a === 'refresh'){ RemoteCache.refreshAll(true).then(() => { _playlist = RemoteCache.music.slice(); render(); }); }
         else if(a === 'play'){
           const el = ensureAudioEl();
-          if(el.paused) el.play();
-          else el.pause();
+          if(el.paused) el.play(); else el.pause();
           setTimeout(render, 50);
         }
         else if(a === 'next') playNext();
         else if(a === 'prev') playPrev();
       };
     });
-    // Progress
     const a = ensureAudioEl();
     const prog = ctx.body.querySelector('.r-prog');
     const t0 = ctx.body.querySelector('.r-t0');
@@ -2051,22 +1933,14 @@ async function appOSMusic(initialIndex){
     prog.oninput = () => { try{ a.currentTime = +prog.value; }catch(e){} };
     upd();
   }
-
   render();
-
-  // Re-render cuando cambia pista
   const onChange = () => render();
   document.addEventListener('remote-music-change', onChange);
-  ctx.win.addEventListener('remove', () => document.removeEventListener('remote-music-change', onChange));
 }
 
-/* ═══════════════════════════════════════════════════════════
-   APP · VISOR DOCX/PDF/TXT/MD
-═══════════════════════════════════════════════════════════ */
+/* ══════ VISOR DOCX/PDF/TXT/MD ══════ */
 async function appOSDocViewer(file){
   await RemoteCache.refreshAll(false).catch(()=>{});
-
-  // Si no se especifica archivo, mostrar selector
   if(!file){
     const ctx = window.OS_createWindow({
       title:'📄 Documentos del repositorio',
@@ -2100,20 +1974,11 @@ async function appOSDocViewer(file){
       ctx.body.querySelector('.r-train').onclick = () => { entrenarConDocumentos(); };
     }
     renderList();
-    const onChange = () => renderList();
-    RemoteCache.on(onChange);
     return;
   }
-
-  // Abrir archivo concreto
   const ext = file.ext;
-  const ctx = window.OS_createWindow({
-    title: file.name,
-    icon: ext === 'pdf' ? '📕' : '📄',
-    w: 900, h: 700
-  });
+  const ctx = window.OS_createWindow({ title: file.name, icon: ext === 'pdf' ? '📕' : '📄', w: 900, h: 700 });
   ctx.body.innerHTML = '<div style="padding:30px;text-align:center;color:#888">Cargando ' + esc(file.name) + '…</div>';
-
   try{
     if(ext === 'docx')      await renderDocx(ctx, file);
     else if(ext === 'pdf')  await renderPdf(ctx, file);
@@ -2140,11 +2005,9 @@ async function renderDocx(ctx, file){
     const txt = ctx.body.querySelector('.os-page').innerText;
     entrenarConTexto(file.name, txt);
   };
-  toastR('✓ ' + file.name + ' convertido (' + Math.round(buf.byteLength/1024) + ' KB)');
 }
 
 async function renderPdf(ctx, file){
-  toastR('Cargando PDF…');
   const pdfjsLib = await Libs.loadPdfJs();
   const buf = await GH.fetchBuffer(file.url);
   const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
@@ -2155,39 +2018,25 @@ async function renderPdf(ctx, file){
       '<span style="font-size:11px;color:#666">' + esc(file.path) + ' · ' + pdf.numPages + ' páginas</span>' +
     '</div>' +
     '<div class="os-wp-canvas" id="pdf-viewer" style="flex-direction:column;background:#3d434c;padding:20px;gap:14px"></div>';
-
   const viewer = ctx.body.querySelector('#pdf-viewer');
   const allText = [];
-
-  // Renderizar hasta 30 páginas (evitar colgar el navegador)
   const maxPages = Math.min(pdf.numPages, 30);
   for(let i = 1; i <= maxPages; i++){
     const page = await pdf.getPage(i);
     const viewport = page.getViewport({ scale: 1.4 });
     const canvas = document.createElement('canvas');
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
+    canvas.width = viewport.width; canvas.height = viewport.height;
     canvas.style.cssText = 'background:#fff;box-shadow:0 3px 16px rgba(0,0,0,.4);max-width:100%';
     viewer.appendChild(canvas);
     const c = canvas.getContext('2d');
     await page.render({ canvasContext:c, viewport }).promise;
-
-    // Extraer texto
     try{
       const textContent = await page.getTextContent();
       const pageText = textContent.items.map(it => it.str).join(' ');
       if(pageText.trim()) allText.push(pageText);
     }catch(e){}
   }
-
-  if(pdf.numPages > maxPages){
-    viewer.appendChild(el('div', '', '<div style="color:#fff;text-align:center;padding:20px">… ' + (pdf.numPages - maxPages) + ' páginas más no mostradas (límite 30)</div>'));
-  }
-
-  ctx.body.querySelector('[data-save]').onclick = () => {
-    entrenarConTexto(file.name, allText.join('\n\n'));
-  };
-  toastR('✓ ' + file.name + ' · ' + pdf.numPages + ' páginas');
+  ctx.body.querySelector('[data-save]').onclick = () => entrenarConTexto(file.name, allText.join('\n\n'));
 }
 
 async function renderText(ctx, file){
@@ -2199,15 +2048,10 @@ async function renderText(ctx, file){
       '<span style="font-size:11px;color:#666">' + esc(file.path) + '</span>' +
     '</div>' +
     '<div class="os-wp-canvas"><div class="os-page" style="font-family:Consolas,monospace;font-size:13px;white-space:pre-wrap">' + esc(text) + '</div></div>';
-  ctx.body.querySelector('[data-save]').onclick = () => {
-    entrenarConTexto(file.name, text);
-  };
-  toastR('✓ ' + file.name + ' cargado');
+  ctx.body.querySelector('[data-save]').onclick = () => entrenarConTexto(file.name, text);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   APP · NAVEGADOR INTERNO DE HTMLs
-═══════════════════════════════════════════════════════════ */
+/* ══════ NAVEGADOR INTERNO ══════ */
 async function appOSBrowser(initialFile){
   await RemoteCache.refreshAll(false).catch(()=>{});
   const ctx = window.OS_createWindow({
@@ -2215,7 +2059,6 @@ async function appOSBrowser(initialFile){
     icon: '<svg width="36" height="36" viewBox="0 0 48 48"><rect x="4" y="6" width="40" height="36" rx="4" fill="#1954A0"/><path d="M12 20h24M12 26h24M12 32h14" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
     w:980, h:680
   });
-
   ctx.body.innerHTML =
     '<div style="display:flex;gap:6px;padding:8px;background:#f0f0f0;border-bottom:1px solid #d8d8d8;align-items:center">' +
       '<select class="r-url" style="flex:1;padding:6px 10px;border:1px solid #d8d8d8;background:#fff;border-radius:4px;font-size:12px;min-width:0">' +
@@ -2232,19 +2075,16 @@ async function appOSBrowser(initialFile){
     '<div style="height:24px;display:flex;align-items:center;padding:0 12px;font-size:11px;color:#666;background:#f0f0f0;border-top:1px solid #d8d8d8">' +
       '<span class="r-status">Listo. ' + RemoteCache.htmls.length + ' HTMLs disponibles.</span>' +
     '</div>';
-
   const sel = ctx.body.querySelector('.r-url');
   const frame = ctx.body.querySelector('.r-frame');
   const status = ctx.body.querySelector('.r-status');
   let currentUrl = '';
-
   function navigate(url, name){
     currentUrl = url;
     frame.src = url;
     status.textContent = 'Cargando: ' + (name || url);
     setTimeout(() => { status.textContent = '✓ ' + (name || url); }, 800);
   }
-
   ctx.body.querySelector('.r-go').onclick = () => {
     const i = sel.value;
     if(i === '') return;
@@ -2254,7 +2094,6 @@ async function appOSBrowser(initialFile){
   ctx.body.querySelector('.r-reload').onclick = () => { if(currentUrl) frame.src = currentUrl; };
   ctx.body.querySelector('.r-external').onclick = () => { if(currentUrl) window.open(currentUrl, '_blank', 'noopener'); };
   sel.onchange = () => { if(sel.value !== '') ctx.body.querySelector('.r-go').click(); };
-
   if(initialFile){
     const idx = RemoteCache.htmls.findIndex(h => h.name === initialFile.name || h.path === initialFile.path);
     if(idx >= 0){ sel.value = String(idx); navigate(RemoteCache.htmls[idx].url, RemoteCache.htmls[idx].path); }
@@ -2264,44 +2103,88 @@ async function appOSBrowser(initialFile){
   }
 }
 
-/* ═══════════════════════════════════════════════════════════
-   ENTRENAMIENTO DE ANIA CON DOCUMENTOS
-═══════════════════════════════════════════════════════════ */
+/* ══════ SELECTOR DE FONDOS ══════ */
+async function appOSWallpaper(){
+  await RemoteCache.refreshAll(false).catch(()=>{});
+  const ctx = window.OS_createWindow({
+    title:'🎨 Fondos del repositorio',
+    icon: '<svg width="36" height="36" viewBox="0 0 48 48"><rect x="4" y="6" width="40" height="36" rx="4" fill="#5a3a8a"/><circle cx="14" cy="16" r="3" fill="#ffb900"/><path d="M4 34l12-14 8 10 6-6 14 16z" fill="#2f9e63"/></svg>',
+    w:820, h:600
+  });
+  function render(){
+    const walls = RemoteCache.wallpapers;
+    if(!walls.length){
+      ctx.body.innerHTML = '<div style="padding:40px 20px;text-align:center;color:#888;font-size:14px">No hay fondos en <b>' + CFG.PATHS.fondos + '/</b> del repo.<br><br>Sube imágenes (.jpg, .png, .webp) a esa carpeta y pulsa «Actualizar».</div>';
+      return;
+    }
+    const currentUrl = localStorage.getItem('aniaos_wall_url') || '';
+    ctx.body.innerHTML =
+      '<div style="display:flex;flex-direction:column;height:100%;background:#14161a;color:#eee">' +
+        '<div style="padding:12px 16px;border-bottom:1px solid #23262e;display:flex;gap:8px;align-items:center">' +
+          '<b style="flex:1;font-size:13px;letter-spacing:.1em">🎨 ' + walls.length + ' fondos</b>' +
+          '<button class="r-btn-refresh" style="padding:6px 12px;border:1px solid #333;background:#222;color:#eee;cursor:pointer;border-radius:6px;font-size:11px">⟳ Actualizar</button>' +
+          '<button class="r-btn-clear" style="padding:6px 12px;border:1px solid #333;background:#222;color:#eee;cursor:pointer;border-radius:6px;font-size:11px">✕ Por defecto</button>' +
+        '</div>' +
+        '<div style="flex:1;overflow-y:auto;padding:14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">' +
+          walls.map((w, i) => {
+            const isActive = w.url === currentUrl;
+            return '<div class="r-wall" data-i="' + i + '" style="cursor:pointer;border:2px solid ' + (isActive ? '#0a84d8' : 'transparent') + ';border-radius:8px;overflow:hidden;background:#000;aspect-ratio:16/9;position:relative">' +
+              '<img src="' + w.url + '" style="width:100%;height:100%;object-fit:cover;display:block" loading="lazy">' +
+              '<div style="position:absolute;left:0;right:0;bottom:0;padding:6px 8px;background:linear-gradient(transparent,rgba(0,0,0,.85));font-size:10px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
+                (isActive ? '✓ ' : '') + esc(w.name) +
+              '</div>' +
+            '</div>';
+          }).join('') +
+        '</div>' +
+      '</div>';
+    ctx.body.querySelectorAll('.r-wall').forEach(el => {
+      el.onclick = () => { aplicarFondoRemoto(walls[+el.dataset.i].url, walls[+el.dataset.i].name); render(); };
+    });
+    ctx.body.querySelector('.r-btn-refresh').onclick = () => { RemoteCache.refreshAll(true).then(render); };
+    ctx.body.querySelector('.r-btn-clear').onclick = () => { aplicarFondoRemoto(null, null); render(); };
+  }
+  render();
+}
+
+function aplicarFondoRemoto(url, nombre){
+  const wp = document.getElementById('osWallpaper');
+  if(!wp) return;
+  if(!url){
+    localStorage.removeItem('aniaos_wall_url');
+    const walls = [
+      'linear-gradient(135deg,#04070d 0%,#0a2038 50%,#0d2b4a 100%)',
+      'linear-gradient(135deg,#1c4a77 0%,#0d2440 60%,#04070d 100%)',
+      'linear-gradient(135deg,#0e1e38 0%,#3e5a80 50%,#8a5a4a 100%)',
+      'linear-gradient(135deg,#0a0f1a 0%,#0d2440 50%,#0f1a2e 100%)'
+    ];
+    const k = Number(localStorage.getItem('aniaos_wall') || 0);
+    wp.style.background = walls[k] || walls[0];
+    toastR('Fondo restaurado');
+    return;
+  }
+  wp.style.background = 'url("' + url + '") center/cover no-repeat fixed';
+  localStorage.setItem('aniaos_wall_url', url);
+  toastR('🎨 Fondo aplicado: ' + nombre);
+}
+
+/* ══════ ENTRENAMIENTO ══════ */
 const Trained = {
   KEY: 'aniaos_trained',
   data: null,
-  load(){
-    try{ this.data = JSON.parse(localStorage.getItem(this.KEY) || 'null') || {}; }
-    catch(e){ this.data = {}; }
-    return this.data;
-  },
+  load(){ try{ this.data = JSON.parse(localStorage.getItem(this.KEY) || 'null') || {}; } catch(e){ this.data = {}; } return this.data; },
   save(){ try{ localStorage.setItem(this.KEY, JSON.stringify(this.data)); }catch(e){} },
   count(){ this.load(); return Object.keys(this.data).length; }
 };
 
-/**
- * Añade un texto al "cerebro" de Ania.
- * 1) Si existe DocBrain.addChunks (tu módulo original), lo usa.
- * 2) Si no, guarda en localStorage bajo 'aniaos_trained'.
- * 3) También empuja a Mind.d.hechos si existe.
- */
 function entrenarConTexto(nombre, texto){
   const txt = String(texto || '').trim();
   if(txt.length < 40){ toastR('Texto muy corto para entrenar', 'warn'); return 0; }
-
   let chunks = 0;
-
-  // 1) Intentar con DocBrain original (07-localmind.js)
   if(typeof DocBrain !== 'undefined' && typeof DocBrain.addChunks === 'function'){
-    try{
-      chunks = DocBrain.addChunks('repo:' + nombre, txt);
-      if(typeof DocBrain.save === 'function') DocBrain.save();
-    }catch(e){ console.warn('[Train] DocBrain falló:', e.message); }
+    try{ chunks = DocBrain.addChunks('repo:' + nombre, txt); if(typeof DocBrain.save === 'function') DocBrain.save(); }
+    catch(e){}
   }
-
-  // 2) Guardar en nuestro propio índice (fallback + persistente)
   Trained.load();
-  // Trocear por párrafos de ~500 caracteres
   const trozos = [];
   const parrafos = txt.split(/\n{2,}/);
   let cur = '';
@@ -2315,29 +2198,24 @@ function entrenarConTexto(nombre, texto){
   Trained.data['repo:' + nombre] = { t:Date.now(), chunks: trozos, size: txt.length };
   Trained.save();
   chunks = Math.max(chunks, trozos.length);
-
-  // 3) Añadir a memoria general (Mind) si está disponible
   if(typeof Mind !== 'undefined' && Mind.d){
     Mind.d.hechos = Mind.d.hechos || [];
     Mind.d.hechos.push({ clave:'documento', valor:'Repo: ' + nombre, t:Date.now() });
     if(typeof Mind.save === 'function') Mind.save();
   }
-
   toastR('🧠 Entrenado: ' + nombre + ' (' + chunks + ' fragmentos)');
   return chunks;
 }
 
-/** Descarga recursivamente TODOS los documentos y los entrena */
 async function entrenarConDocumentos(){
-  toastR('🧠 Entrenando IA con documentos del repo…');
+  toastR('🧠 Entrenando IA con documentos…');
   await RemoteCache.refreshAll(true);
   const docs = RemoteCache.docs.slice();
   if(!docs.length){ toastR('No hay documentos para entrenar', 'warn'); return; }
-
   let total = 0, ok = 0, fail = 0;
   for(let i = 0; i < docs.length; i++){
     const d = docs[i];
-    toastR('[' + (i+1) + '/' + docs.length + '] Procesando: ' + d.name);
+    toastR('[' + (i+1) + '/' + docs.length + '] ' + d.name);
     try{
       let texto = '';
       if(d.ext === 'docx'){
@@ -2362,23 +2240,14 @@ async function entrenarConDocumentos(){
       else if(d.ext === 'txt' || d.ext === 'md'){
         texto = await GH.fetchText(d.url);
       }
-      if(texto){
-        total += entrenarConTexto(d.name, texto);
-        ok++;
-      } else fail++;
-    }catch(e){
-      console.warn('[Train]', d.name, e.message);
-      fail++;
-    }
-    // Pequeña pausa para no saturar la red
+      if(texto){ total += entrenarConTexto(d.name, texto); ok++; } else fail++;
+    }catch(e){ fail++; }
     await new Promise(r => setTimeout(r, 250));
   }
-
-  chatR('✅ Entrenamiento completo: ' + ok + ' documentos (' + total + ' fragmentos). ' + (fail ? fail + ' con error.' : ''));
-  toastR('✓ Entrenados ' + ok + '/' + docs.length + ' docs · ' + total + ' fragmentos');
+  chatR('✅ Entrenamiento completo: ' + ok + ' documentos (' + total + ' fragmentos).');
+  toastR('✓ Entrenados ' + ok + '/' + docs.length + ' · ' + total + ' fragmentos');
 }
 
-/** Busca en los docs entrenados (para que Ania responda) */
 function buscarEnEntrenados(query){
   Trained.load();
   const q = String(query || '').toLowerCase();
@@ -2397,89 +2266,65 @@ function buscarEnEntrenados(query){
 }
 window.buscarEnEntrenados = buscarEnEntrenados;
 
-/* ═══════════════════════════════════════════════════════════
-   INTEGRACIÓN CON OSBRIDGE (comandos extendidos)
-═══════════════════════════════════════════════════════════ */
+/* ══════ HOOK OSBridge (comandos extendidos) ══════ */
 function hookOSBridge(){
   if(!window.OSBridge || window.OSBridge.__remoteHooked) return;
   window.OSBridge.__remoteHooked = true;
-
   const origExec = window.OSBridge.ejecutar.bind(window.OSBridge);
 
   window.OSBridge.ejecutar = async function(cmd){
     const c = String(cmd || '').toLowerCase().trim();
+    let m;
 
-    // ── Música ──
     if(/^(?:abre|pon|reproduce)\s+(?:la\s+)?m[uú]sica(?:\s+(?:del?\s+repo(?:sitorio)?|de\s+github))?$/.test(c)){
-      appOSMusic();
-      return { ok:true, app:'musica' };
+      appOSMusic(); return { ok:true, app:'musica' };
     }
-    if(/^(?:pausa|para)\s+(?:la\s+)?m[uú]sica$/.test(c)){
-      if(_audioEl) _audioEl.pause();
-      return { ok:true, accion:'pausa' };
+    if(/^(?:abre|cambia|pon|muestra|elige)\s+(?:los?\s+|el\s+|un\s+)?(?:fondo|fondos|wallpaper)/.test(c)){
+      appOSWallpaper(); return { ok:true, app:'fondos' };
     }
-    if(/^(?:siguiente|next)\s+(?:pista|canci[oó]n)?$/.test(c)){
-      playNext();
-      return { ok:true, accion:'next' };
+    if(/^pon(?:me)?\s+(?:el\s+)?fondo\s+(?:de\s+|llamado\s+|que\s+se\s+llame\s+)?(.+)$/.test(c)){
+      const q = c.match(/^pon(?:me)?\s+(?:el\s+)?fondo\s+(?:de\s+|llamado\s+|que\s+se\s+llame\s+)?(.+)$/)[1].trim();
+      await RemoteCache.refreshAll(false);
+      const found = RemoteCache.wallpapers.find(w => w.name.toLowerCase().includes(q) || w.name.toLowerCase().replace(/\.[^.]+$/, '') === q);
+      if(found){ aplicarFondoRemoto(found.url, found.name); return { ok:true, fondo:found.name }; }
+      return { ok:false, error:'fondo no encontrado: ' + q };
     }
-    if(/^(?:anterior|prev)\s+(?:pista|canci[oó]n)?$/.test(c)){
-      playPrev();
-      return { ok:true, accion:'prev' };
+    if(/^lista\s+(?:los\s+)?fondos/.test(c)){
+      await RemoteCache.refreshAll(false);
+      return { ok:true, resultados: RemoteCache.wallpapers.map(w => ({ ruta:w.path })), total:RemoteCache.wallpapers.length };
     }
+    if(/^(?:pausa|para)\s+(?:la\s+)?m[uú]sica$/.test(c)){ if(_audioEl) _audioEl.pause(); return { ok:true, accion:'pausa' }; }
+    if(/^(?:siguiente|next)\s+(?:pista|canci[oó]n)?$/.test(c)){ playNext(); return { ok:true }; }
+    if(/^(?:anterior|prev)\s+(?:pista|canci[oó]n)?$/.test(c)){ playPrev(); return { ok:true }; }
 
-    // ── Listar carpetas ──
     if(/^lista\s+(?:los\s+)?(?:m[uú]sica|canciones|pistas)/.test(c)){
       await RemoteCache.refreshAll(false);
-      const m = RemoteCache.music.slice(0, 30);
-      return { ok:true, resultados: m.map(x => ({ ruta:x.path })), total:RemoteCache.music.length };
+      return { ok:true, resultados: RemoteCache.music.slice(0,30).map(x => ({ ruta:x.path })), total:RemoteCache.music.length };
     }
     if(/^lista\s+(?:los\s+)?(?:documentos|docs|documentaciones)/.test(c)){
       await RemoteCache.refreshAll(false);
-      const d = RemoteCache.docs.slice(0, 30);
-      return { ok:true, resultados: d.map(x => ({ ruta:x.path })), total:RemoteCache.docs.length };
+      return { ok:true, resultados: RemoteCache.docs.slice(0,30).map(x => ({ ruta:x.path })), total:RemoteCache.docs.length };
     }
     if(/^lista\s+(?:los\s+)?htmls?/.test(c)){
       await RemoteCache.refreshAll(false);
-      const h = RemoteCache.htmls.slice(0, 30);
-      return { ok:true, resultados: h.map(x => ({ ruta:x.path })), total:RemoteCache.htmls.length };
+      return { ok:true, resultados: RemoteCache.htmls.slice(0,30).map(x => ({ ruta:x.path })), total:RemoteCache.htmls.length };
     }
 
-    // ── Abrir documento concreto (por nombre aproximado) ──
-    let m;
     m = c.match(/^(?:abre|muestra|lee)\s+(?:el\s+)?(?:documento|doc|archivo|pdf)\s+(.+)$/);
     if(m){
       const q = m[1].trim();
       await RemoteCache.refreshAll(false);
-      const found = RemoteCache.docs.find(d =>
-        d.name.toLowerCase().includes(q) ||
-        d.path.toLowerCase().includes(q) ||
-        d.name.toLowerCase().replace(/\.[^.]+$/, '') === q
-      );
+      const found = RemoteCache.docs.find(d => d.name.toLowerCase().includes(q) || d.path.toLowerCase().includes(q) || d.name.toLowerCase().replace(/\.[^.]+$/, '') === q);
       if(found){ appOSDocViewer(found); return { ok:true, archivo:found.path }; }
       return { ok:false, error:'documento no encontrado: ' + q };
     }
 
-    // ── Abrir PDF ──
-    m = c.match(/^abre\s+pdf\s+(.+)$/);
-    if(m){
-      const q = m[1].trim();
-      await RemoteCache.refreshAll(false);
-      const found = RemoteCache.docs.find(d => d.ext === 'pdf' && d.name.toLowerCase().includes(q));
-      if(found){ appOSDocViewer(found); return { ok:true, archivo:found.path }; }
-      return { ok:false, error:'pdf no encontrado: ' + q };
-    }
-
-    // ── Navegador interno ──
     m = c.match(/^(?:navega|abre\s+el\s+navegador|abre\s+html)\s*(?:a\s+|hacia\s+|el?\s+html\s+)?(.+)?$/);
     if(m){
       const q = (m[1] || '').trim();
       await RemoteCache.refreshAll(false);
       if(q){
-        const found = RemoteCache.htmls.find(h =>
-          h.name.toLowerCase().includes(q) ||
-          h.path.toLowerCase().includes(q) ||
-          h.name.toLowerCase().replace(/\.[^.]+$/, '') === q
-        );
+        const found = RemoteCache.htmls.find(h => h.name.toLowerCase().includes(q) || h.path.toLowerCase().includes(q) || h.name.toLowerCase().replace(/\.[^.]+$/, '') === q);
         if(found){ appOSBrowser(found); return { ok:true, archivo:found.path }; }
         return { ok:false, error:'html no encontrado: ' + q };
       }
@@ -2487,32 +2332,23 @@ function hookOSBridge(){
       return { ok:true, app:'navegador' };
     }
 
-    // ── Entrenar ──
     if(/^(?:entrena|entrenar|aprende)\s*(?:te\s+)?(?:con\s+)?(?:los\s+)?(?:documentos|docs)/.test(c)){
-      entrenarConDocumentos();
-      return { ok:true, accion:'entrenando' };
+      entrenarConDocumentos(); return { ok:true, accion:'entrenando' };
     }
     if(/^cu[aá]ntos?\s+(?:documentos|docs)\s+(?:tienes|hay)\s+(?:entrenados?|aprendidos?)/.test(c)){
       return { ok:true, total:Trained.count(), mensaje:Trained.count() + ' documentos entrenados' };
     }
 
-    // Fallback al ejecutor original
     return origExec(cmd);
   };
   console.log('[Remote] OSBridge extendido ✓');
 }
 
-/* ═══════════════════════════════════════════════════════════
-   INTEGRACIÓN CON ANIA: buscar en docs entrenados en respond()
-   Envolvemos send() para que, si la respuesta normal no encuentra
-   nada, busque en los documentos entrenados.
-═══════════════════════════════════════════════════════════ */
 function hookRespond(){
   if(!window.send || window.send.__remoteHooked) return;
   window.send.__remoteHooked = true;
   const orig = window.send;
   window.send = async function(text){
-    // Si el texto matchea una pregunta de "qué dice X doc" → buscar en entrenados
     const found = buscarEnEntrenados(text);
     if(found && /qu[eé]\s+(?:dice|sabes|hay)|busca|seg[uú]n|en\s+(?:el\s+)?documento|informaci[oó]n\s+sobre/i.test(text)){
       try{
@@ -2527,25 +2363,21 @@ function hookRespond(){
   console.log('[Remote] send() extendido ✓');
 }
 
-/* ═══════════════════════════════════════════════════════════
-   REGISTRAR APPS EN EL REGISTRO DEL OS
-═══════════════════════════════════════════════════════════ */
+/* FIX: re-render del start menu + desktop después de registrar apps */
 function registrarEnOS(){
-  if(!window.OS_APPS) return;
-  // Añadir apps al registro global
-  window.OS_APPS.music  = { name:'🎵 Música',   icon:'🎵', launch: () => appOSMusic() };
-  window.OS_APPS.docs   = { name:'📄 Documentos', icon:'📄', launch: () => appOSDocViewer() };
-  window.OS_APPS.browser= { name:'🌐 Navegador', icon:'🌐', launch: () => appOSBrowser() };
-
-  // Re-render del start menu si existe
+  if(!window.OS_APPS){ console.warn('[Remote] OS_APPS no disponible'); return; }
+  window.OS_APPS.music     = { name:'🎵 Música',   icon:'🎵', launch: () => appOSMusic() };
+  window.OS_APPS.docs      = { name:'📄 Documentos', icon:'📄', launch: () => appOSDocViewer() };
+  window.OS_APPS.browser   = { name:'🌐 Navegador', icon:'🌐', launch: () => appOSBrowser() };
+  window.OS_APPS.wallpaper = { name:'🎨 Fondos',   icon:'🎨', launch: () => appOSWallpaper() };
   if(typeof window.OS_renderStartMenu === 'function'){
-    try{ window.OS_renderStartMenu(); }catch(e){}
+    try{ window.OS_renderStartMenu(); console.log('[Remote] Start menu re-renderizado ✓'); }catch(e){ console.warn(e); }
+  }
+  if(typeof window.OS_renderDesktop === 'function'){
+    try{ window.OS_renderDesktop(); console.log('[Remote] Desktop re-renderizado ✓'); }catch(e){ console.warn(e); }
   }
 }
 
-/* ═══════════════════════════════════════════════════════════
-   INIT — esperar a que OSBridge esté listo y montar todo
-═══════════════════════════════════════════════════════════ */
 function waitFor(fn, cb, timeout){
   const start = Date.now();
   const iv = setInterval(() => {
@@ -2554,20 +2386,20 @@ function waitFor(fn, cb, timeout){
   }, 150);
 }
 
-waitFor(() => window.OSBridge && window.send, () => {
+waitFor(() => window.OSBridge && window.send && typeof window.OS_createWindow === 'function', () => {
   hookOSBridge();
   hookRespond();
   registrarEnOS();
-  // Pre-cargar listados en background (no bloquea)
   setTimeout(() => { RemoteCache.refreshAll(false).catch(()=>{}); }, 2500);
-  console.log('[Remote] Módulo cargado · música, docs, pdf, htmls, entrenamiento ✓');
+  console.log('[Remote] Módulo cargado · música, docs, pdf, htmls, fondos, entrenamiento ✓');
 });
 
-// Exponer API pública
 window.OSRemote = {
   appOSMusic,
   appOSDocViewer,
   appOSBrowser,
+  appOSWallpaper,
+  aplicarFondoRemoto,
   entrenarConDocumentos,
   entrenarConTexto,
   buscarEnEntrenados,
@@ -2579,6 +2411,5 @@ window.OSRemote = {
 })();
 </script>
 
-  
 </body>
 </html>
