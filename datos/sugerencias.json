@@ -37,6 +37,53 @@
         "como": "Endpoint GET /ania/me/export que devuelva JSON con toda su memoria. Botón en Ajustes."
       }
     ],
+    "fecha": "2026-10-16T07:55:16.740Z",
+    "analizadoPor": "Ania Auto-Agent v3 (fallback-local (la IA no respondió))",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 28321,
+    "fuente": "fallback"
+  },
+  {
+    "mejoras": [
+      {
+        "titulo": "Rate limiting en login",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Sin límite de intentos, un atacante puede probar contraseñas por fuerza bruta. Añadir throttling protege las cuentas.",
+        "como": "Instalar express-rate-limit y aplicar 5 intentos por 15 min por IP en /ania/login. Guardar bloqueos en memoria."
+      },
+      {
+        "titulo": "Validación de email",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Se aceptan correos sin verificar. Un typo bloquea la cuenta para siempre y permite registros falsos.",
+        "como": "Enviar email de confirmación con token temporal al registrarse. Marcar usuario como verificado tras el clic."
+      },
+      {
+        "titulo": "HTTPS forzado en cookies",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "Los tokens viajan en headers pero no se fuerza HTTPS. En redes públicas podría haber interceptación.",
+        "como": "Añadir middleware que redirija HTTP a HTTPS en producción. En Render ya es automático, pero validar."
+      },
+      {
+        "titulo": "Compresión gzip",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "Las respuestas JSON viajan sin comprimir. Reducir tamaño mejora tiempos de carga en móvil.",
+        "como": "Añadir middleware compression de Express con umbral de 1KB. Beneficio doble si se cachean respuestas."
+      },
+      {
+        "titulo": "Exportar memoria del usuario",
+        "categoria": "feature",
+        "prioridad": "baja",
+        "descripcion": "El usuario no puede descargar sus datos. La portabilidad de datos es un derecho y mejora la confianza.",
+        "como": "Endpoint GET /ania/me/export que devuelva JSON con toda su memoria. Botón en Ajustes."
+      }
+    ],
     "fecha": "2026-10-15T08:00:42.825Z",
     "analizadoPor": "Ania Auto-Agent v3 (fallback-local (la IA no respondió))",
     "archivosAnalizados": [
@@ -186,52 +233,5 @@
     ],
     "duracionMs": 18556,
     "fuente": "fallback"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Cache GitHub con política LRU",
-        "categoria": "rendimiento",
-        "prioridad": "alta",
-        "descripcion": "Reduce las llamadas a la API de GitHub y mejora la latencia de lectura. Mantiene en memoria los archivos más usados durante más tiempo.",
-        "como": "Implementar un Map con LRU que limite el número de entradas. Actualizar GHCache.get y set para manejar la política."
-      },
-      {
-        "titulo": "Reforzar CORS y CSP en Helmet",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Evita que sitios maliciosos inyecten scripts o hagan peticiones no autorizadas. Proporciona una política de recursos estricta.",
-        "como": "Configurar helmet con contentSecurityPolicy y referrerPolicy adecuados. Definir cors con origen permitido y no permitir credenciales."
-      },
-      {
-        "titulo": "Sanitizar y validar datos de entrada",
-        "categoria": "seguridad",
-        "prioridad": "media",
-        "descripcion": "Previene inyección de XSS y ataques de inyección SQL en los endpoints. Garantiza que los datos cumplan el esquema esperado.",
-        "como": "Agregar middleware de validación con Joi o express-validator. Sanitizar strings antes de guardarlos y escapar al mostrar."
-      },
-      {
-        "titulo": "Añadir pruebas unitarias a cifrado y autenticación",
-        "categoria": "bug",
-        "prioridad": "media",
-        "descripcion": "Asegura que las funciones de encrypt/decrypt y token sigan funcionando tras cambios. Detecta regresiones tempranas.",
-        "como": "Usar Jest para testear encrypt/decrypt con casos de borde y falsificaciones. Testear makeToken/verifyToken con expiración y firmas inválidas."
-      },
-      {
-        "titulo": "Manejo consistente de errores y logs",
-        "categoria": "bug",
-        "prioridad": "baja",
-        "descripcion": "Elimina la exposición de mensajes internos al cliente y mejora la trazabilidad de fallos. Evita que errores no controlados arruinen la API.",
-        "como": "Centralizar la lógica de error en middleware. Utilizar winston o pino para registrar errores con contexto y nivel."
-      }
-    ],
-    "fecha": "2026-10-11T09:42:10.040Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 26753,
-    "fuente": "ia"
   }
 ]
