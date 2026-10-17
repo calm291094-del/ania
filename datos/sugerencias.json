@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Validación estricta de variables de entorno",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "El servidor arranca sin credenciales críticas, lo que causa errores inesperados. Validar todas las variables antes de iniciar.",
+        "como": "Añadir un módulo que compruebe la presencia de ANIA_SECRET, TOKEN_SECRET y GITHUB_TOKEN al inicio. Salir con mensaje claro si falta alguna."
+      },
+      {
+        "titulo": "Optimizar accesos a GitHub con caché compartida",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "Cada petición a GitHub provoca una llamada HTTP, aumentando latencia y costes. Usar un caché global reduce tráfico.",
+        "como": "Implementar un Map con TTL configurable y usarlo en ghRead y ghWrite. Invalidate cuando se escribe."
+      },
+      {
+        "titulo": "Reemplazar scrypt por Argon2 para hashing de contraseñas",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "scrypt puede ser vulnerable a ataques de GPU y es lento en Node. Argon2 ofrece mayor seguridad y rendimiento.",
+        "como": "Instalar argon2, cambiar hashPass y checkPass para usar argon2.hash y argon2.verify. Mantener formato de almacenamiento."
+      },
+      {
+        "titulo": "Implementar CORS restringido y protección CSRF",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "El middleware cors permite cualquier origen, lo que abre vector de ataque. CSRF puede comprometer sesiones.",
+        "como": "Configurar cors con whitelist de dominios permitidos. Añadir csurf middleware para generar tokens CSRF en formularios."
+      },
+      {
+        "titulo": "Expose métricas Prometheus y centralizar logs",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "Sin métricas ni logs centralizados, es difícil diagnosticar cuellos de botella. Exponer métricas ayuda a monitoreo.",
+        "como": "Integrar prom-client y crear endpoint /metrics. Usar Winston con transporte a Loki/ELK para logs estructurados."
+      }
+    ],
+    "fecha": "2026-10-17T07:32:58.499Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 19638,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Rate limiting en login",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -185,53 +232,6 @@
       "package.json"
     ],
     "duracionMs": 104720,
-    "fuente": "fallback"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Rate limiting en login",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Sin límite de intentos, un atacante puede probar contraseñas por fuerza bruta. Añadir throttling protege las cuentas.",
-        "como": "Instalar express-rate-limit y aplicar 5 intentos por 15 min por IP en /ania/login. Guardar bloqueos en memoria."
-      },
-      {
-        "titulo": "Validación de email",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Se aceptan correos sin verificar. Un typo bloquea la cuenta para siempre y permite registros falsos.",
-        "como": "Enviar email de confirmación con token temporal al registrarse. Marcar usuario como verificado tras el clic."
-      },
-      {
-        "titulo": "HTTPS forzado en cookies",
-        "categoria": "seguridad",
-        "prioridad": "media",
-        "descripcion": "Los tokens viajan en headers pero no se fuerza HTTPS. En redes públicas podría haber interceptación.",
-        "como": "Añadir middleware que redirija HTTP a HTTPS en producción. En Render ya es automático, pero validar."
-      },
-      {
-        "titulo": "Compresión gzip",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "Las respuestas JSON viajan sin comprimir. Reducir tamaño mejora tiempos de carga en móvil.",
-        "como": "Añadir middleware compression de Express con umbral de 1KB. Beneficio doble si se cachean respuestas."
-      },
-      {
-        "titulo": "Exportar memoria del usuario",
-        "categoria": "feature",
-        "prioridad": "baja",
-        "descripcion": "El usuario no puede descargar sus datos. La portabilidad de datos es un derecho y mejora la confianza.",
-        "como": "Endpoint GET /ania/me/export que devuelva JSON con toda su memoria. Botón en Ajustes."
-      }
-    ],
-    "fecha": "2026-10-12T10:16:33.440Z",
-    "analizadoPor": "Ania Auto-Agent v3 (fallback-local (la IA no respondió))",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 18556,
     "fuente": "fallback"
   }
 ]
