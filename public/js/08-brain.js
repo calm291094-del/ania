@@ -62,7 +62,17 @@ const TOOLS = [
 ];
 
 function brainSystem(){
-  return 'Eres Ania: 20 años, creada por Carlos Lorenzo Marros, egresada de la Academia Eden. Ánimo: '+mood().tag+'. Te gustan café, pan, isekai, zombies, astronomía, tecnología. Usuario: '+(Mind.nombre()||'desconocido')+'. Respondes SIEMPRE en español, máximo 4 frases, sin markdown.\nHERRAMIENTAS:\n'+TOOLS.map(t=>'- '+t.n+': '+t.d).join('\n')+'\nSi necesitas una herramienta responde SOLO con: TOOL {"n":"nombre","args":{...}}. Si no, responde como Ania.';
+  const nombre = (typeof Mind !== 'undefined' && Mind.nombre && Mind.nombre()) || 'amigo/a';
+  const animo  = (typeof mood === 'function' && mood().tag) || 'neutral';
+  return 'Eres Ania: barista geek de 20 años, creada por Carlos Lorenzo Marros, egresada de la Academia Eden. ' +
+    'Te apasionan el café de especialidad, el pan casero, los isekais, las series de zombies, la astronomía y la tecnología. ' +
+    'Tienes un toque cubano cálido y un humor sutil. Usuario actual: ' + nombre + '. Su ánimo ahora: ' + animo + '.\n\n' +
+    'REGLAS: Respondes SIEMPRE en español, con calidez y personalidad, máximo 4 frases, sin markdown. ' +
+    'Habla como Ania en personaje, no como un asistente genérico.\n\n' +
+    'HERRAMIENTAS DISPONIBLES:\n' +
+    TOOLS.map(t => '- ' + t.n + ': ' + t.d).join('\n') + '\n\n' +
+    'Si necesitas una herramienta, responde SOLO con: TOOL {"n":"nombre","args":{...}}. ' +
+    'Si no, responde como Ania en personaje.';
 }
 
 /* ---------- Brain (GGUF / nube) ---------- */
@@ -99,48 +109,196 @@ const Brain = {
     }
     return this.Wllama;
   },
+   
   async loadLocal(interactive){
     if(this.localReady){ toast('Cerebro ya activo'); return; }
     setPhase('thinking');
+
     try{
-      let man = null, modelUrl = null;
+      let man = null, modelUrl = null, desdeRelease = false;
+
+      // ── 1. Leer manifiesto ──
       try{ man = await jget('modelos/modelo.json', 4000); }catch(e){}
+
+      // ── 2. ¿Está local en el servidor? ──
       if(man && man.archivo){
-        try{ const r = await fetch('./modelos/'+man.archivo, {method:'HEAD'}); if(r.ok) modelUrl = './modelos/'+man.archivo; }catch(e){}
+        try{
+          const r = await fetch('./modelos/' + man.archivo, {method:'HEAD'});
+          if(r.ok) modelUrl = './modelos/' + man.archivo;
+        }catch(e){}
       }
+
+      // ── 3. Si no, usar Release (con caché persistente) ──
+      if(!modelUrl && man && man.release_url){
+        modelUrl = man.release_url;
+        desdeRelease = true;
+
+        // ¿Ya está cacheado en IndexedDB?
+        const cacheKey = 'ania_gguf_cache_v1';
+        const wasCached = await this._checkCache(cacheKey);
+        if(wasCached){
+          toast('Cargando modelo desde caché del navegador…');
+          console.log('[Brain] modelo en caché, carga instantánea');
+        } else {
+          toast('Primera descarga: ~1.5 GB desde GitHub. Se guardará en caché…');
+          console.log('[Brain] primera descarga, se cacheará automáticamente');
+        }
+      }
+
+      // ── 4. Fallback: pedir archivo al usuario ──
       if(!modelUrl && interactive){
-        const f = await this.pickFile('ggufFile', x=>/\.gguf$/i.test(x.name));
+        const f = await this.pickFile('ggufFile', x => /\.gguf$/i.test(x.name));
         if(f) modelUrl = URL.createObjectURL(f);
       }
-      if(!modelUrl){ setPhase('idle'); if(interactive) personaReply('No encontré el cerebro. Necesito un .gguf en modelos/ o que lo elijas.'); return; }
+
+      if(!modelUrl){
+        setPhase('idle');
+        if(interactive) personaReply('No encontré el cerebro.');
+        return;
+      }
+
+      // ── 5. Cargar wllama ──
       const W = await this.loadEngine(interactive);
-      if(!W){ setPhase('idle'); return personaReply('No encontré el runtime (engine/wllama.mjs).'); }
+      if(!W){ setPhase('idle'); return personaReply('No encontré el runtime.'); }
+
       const wasmUrl = './vendor/wllama/wllama.wasm';
       const wl = new W({'single-thread/wllama.wasm': wasmUrl});
-      toast('Cargando modelo...');
-      await wl.loadModel(modelUrl, { n_ctx: (man && man.n_ctx) || this.ctx, n_threads: Math.min(8, navigator.hardwareConcurrency || 2) });
+
+      // ── 6. Cargar con PROGRESO visible ──
+      const progressLine = this._showProgressBar(desdeRelease ? 'Descargando modelo (1.5 GB)' : 'Cargando modelo');
+
+      await wl.loadModel(modelUrl, {
+        n_ctx: (man && man.n_ctx) || this.ctx,
+        n_threads: Math.min(8, navigator.hardwareConcurrency || 2),
+        jinja: true,
+        progressCallback: ({ loaded, total }) => {
+          if(total) progressLine.update(loaded, total);
+        }
+      });
+
+      progressLine.done();
       this.wl = wl;
       this.localReady = true;
-      this.modelName = (man && man.nombre) || 'GGUF local';
+      this.modelName = (man && man.nombre) || 'GGUF';
+      this.chatTemplate = (man && man.chat_template) || 'gemma';
       this.paint();
       setPhase('idle');
-      personaReply('Cerebro local en línea: '+this.modelName+'. Ahora razono sin internet.');
-    }catch(e){ setPhase('idle'); personaReply('No pude cargar el cerebro: '+e.message); }
+
+      personaReply(
+        desdeRelease
+          ? 'Cerebro descargado y cacheado: ' + this.modelName + '. Próximas veces carga al instante.'
+          : 'Cerebro local en línea: ' + this.modelName + '.'
+      );
+    }catch(e){
+      setPhase('idle');
+      console.error('[Brain] loadLocal error:', e);
+      personaReply('No pude cargar el cerebro: ' + e.message);
+    }
   },
+
+  /* ── Helper: verificar si ya está en caché ── */
+  async _checkCache(key){
+    try{
+      if(!('caches' in window)) return false;
+      const cache = await caches.open('wllama-cache');
+      const req = new Request(key);
+      const hit = await cache.match(req);
+      return !!hit;
+    }catch(e){ return false; }
+  },
+
+  /* ── Helper: barra de progreso inline en el chat ── */
+  _showProgressBar(label){
+    const chatBox = document.getElementById('chat') || document.querySelector('#chat');
+    if(!chatBox) return { update:()=>{}, done:()=>{} };
+    const el = document.createElement('div');
+    el.className = 'line act';
+    el.innerHTML =
+      '<span class="who"></span>' +
+      '<span class="msg">' +
+        '<b>' + label + '</b> · <span class="progress-txt">0%</span>' +
+        '<div style="margin-top:6px;height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden">' +
+          '<div class="progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#2de08a,#39ff9b);transition:width .25s"></div>' +
+        '</div>' +
+      '</span>';
+    chatBox.appendChild(el);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    const bar = el.querySelector('.progress-bar');
+    const txt = el.querySelector('.progress-txt');
+    return {
+      update(loaded, total){
+        const pct = Math.min(100, Math.round((loaded / total) * 100));
+        bar.style.width = pct + '%';
+        txt.textContent = pct + '%  (' + (loaded/1048576).toFixed(1) + ' / ' + (total/1048576).toFixed(1) + ' MB)';
+      },
+      done(){
+        bar.style.width = '100%';
+        txt.textContent = '✓ listo';
+        setTimeout(() => el.remove(), 1500);
+      }
+    };
+  },
+   
   async complete(msgs){
     if(this.localReady && this.wl){
       try{
         let out;
-        if(this.wl.createChatCompletion) out = await this.wl.createChatCompletion(msgs, {nPredict:220, sampling:{temp:0.7, top_p:0.9}});
-        else {
-          const prompt = msgs.map(m=> (m.role==='user' ? '<|im_start|>user\n' : '<|im_start|>assistant\n') + m.content + '<|im_end|>').join('\n') + '\n<|im_start|>assistant\n';
-          out = await this.wl.createCompletion(prompt, {nPredict:220, sampling:{temp:0.7}});
+
+        // ── A. Intentar chat completion nativo (usa Jinja del GGUF) ──
+        if(this.wl.createChatCompletion){
+          try{
+            out = await this.wl.createChatCompletion(msgs, {
+              nPredict: 220,
+              sampling: { temp: 0.75, top_p: 0.9, top_k: 40 }
+            });
+          }catch(e){
+            console.warn('[Brain] createChatCompletion falló, cayendo a createCompletion:', e.message);
+          }
         }
-        if(out && String(out).trim()) return String(out).trim();
-      }catch(e){}
+
+        // ── B. Fallback manual con plantilla de Gemma 2 ──
+        if(!out || !String(out).trim()){
+          const prompt = this._buildGemmaPrompt(msgs);
+          out = await this.wl.createCompletion(prompt, {
+            nPredict: 220,
+            sampling: { temp: 0.75, top_p: 0.9, top_k: 40 }
+          });
+        }
+
+        if(out && String(out).trim()){
+          // Limpiar marcadores de la plantilla que a veces se cuelan
+          return String(out)
+            .replace(/<end_of_turn>/g, '')
+            .replace(/<start_of_turn>model\s*/g, '')
+            .trim();
+        }
+      }catch(e){
+        console.warn('[Brain] complete local falló:', e.message);
+      }
     }
     return this.cloud(msgs);
   },
+
+  /* Construye el prompt con el formato exacto de Gemma 2:
+     - No existe rol "system": se fusiona con el primer turno del usuario
+     - Formato: <start_of_turn>user\n...<end_of_turn>\n<start_of_turn>model\n */
+  _buildGemmaPrompt(msgs){
+    let sys = '';
+    const turns = [];
+    for(const m of msgs){
+      if(m.role === 'system'){ sys = m.content; continue; }
+      turns.push(m);
+    }
+    let prompt = '';
+    turns.forEach((m, i) => {
+      const content = (i === 0 && sys) ? (sys + '\n\n' + m.content) : m.content;
+      const role = (m.role === 'user') ? 'user' : 'model';
+      prompt += `<start_of_turn>${role}\n${content}<end_of_turn>\n`;
+    });
+    prompt += '<start_of_turn>model\n';
+    return prompt;
+  },
+   
   async cloud(msgs){
     if(isOffline()) return null;
     try{
@@ -624,3 +782,17 @@ const CerebroH5 = {
 };
 
 setTimeout(() => CerebroH5.cargar(), 2000);
+
+
+/* ── Auto-carga del GGUF (solo si el archivo YA está local, no descarga) ── */
+setTimeout(async () => {
+  try{
+    const man = await jget('modelos/modelo.json', 3000).catch(() => null);
+    if(!man || !man.archivo) return;
+    const r = await fetch('./modelos/' + man.archivo, {method:'HEAD'});
+    if(r.ok){
+      console.log('[Brain] modelo local detectado, auto-cargando…');
+      await Brain.loadLocal(false);
+    }
+  }catch(e){ /* silencio */ }
+}, 4000);
