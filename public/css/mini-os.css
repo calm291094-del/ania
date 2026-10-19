@@ -692,3 +692,255 @@ body.os-on #app .line { font-size: 13px !important; }
   #returnFab svg { width: 22px; height: 22px; }
   #returnFab::after { display: none; }
 }
+
+
+
+
+
+/* ═══════════════════════════════════════════════════════════════
+   v10.1 · MEJORAS MÓVIL + CHAT MINIMIZABLE
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Chat minimizado: ocultar el panel de ANIA en modo OS ── */
+body.os-on.os-chat-min #app {
+  display: none !important;
+}
+
+/* ── Botón minimizar en el header de ANIA (solo en OS mode) ── */
+#chatMinBtn {
+  display: none;
+  background: transparent;
+  border: 1px solid rgba(45, 224, 138, 0.35);
+  border-radius: 4px;
+  color: var(--acc2, #39ff9b);
+  padding: 3px 9px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-left: 6px;
+  line-height: 1;
+  font-family: inherit;
+  transition: background .15s, border-color .15s;
+}
+#chatMinBtn:hover { background: rgba(45, 224, 138, 0.12); border-color: var(--acc2, #39ff9b); }
+#chatMinBtn:active { transform: scale(0.95); }
+body.os-on #chatMinBtn { display: inline-flex; align-items: center; justify-content: center; }
+
+/* ── FAB para restaurar el chat (cuando está minimizado) ── */
+#chatFab {
+  position: fixed;
+  right: 16px;
+  bottom: 86px;               /* encima del returnFab */
+  z-index: 9998;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid rgba(57, 255, 155, 0.75);
+  background: radial-gradient(circle at 30% 30%, #39ff9b, #0a8a4a 70%, #043a1a 100%);
+  box-shadow: 0 8px 24px rgba(10, 138, 74, 0.65), 0 0 24px rgba(57, 255, 155, 0.55);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  padding: 0;
+  font-family: inherit;
+  opacity: 0;
+  transform: scale(0);
+  pointer-events: none;
+  transition: opacity .2s, transform .25s cubic-bezier(.2, .9, .3, 1);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  animation: chatFabPulse 3s ease-in-out infinite;
+}
+#chatFab.on {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+#chatFab.on:hover { transform: scale(1.08); }
+#chatFab.on:active { transform: scale(0.9); }
+#chatFab svg { filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6)); }
+#chatFab .chat-fab-label {
+  position: absolute;
+  bottom: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: #39ff9b;
+  font-family: monospace;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(57, 255, 155, 0.9);
+  pointer-events: none;
+  white-space: nowrap;
+}
+@keyframes chatFabPulse {
+  0%, 100% { box-shadow: 0 8px 24px rgba(10, 138, 74, 0.65), 0 0 24px rgba(57, 255, 155, 0.55); }
+  50%      { box-shadow: 0 8px 30px rgba(10, 138, 74, 0.9), 0 0 42px rgba(57, 255, 155, 0.95); }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MÓVIL · Ajustes generales (afectan a toda la OS)
+═══════════════════════════════════════════════════════════════ */
+
+/* Android + iOS: taskbar más grande para dedos */
+body.os-device-mobile #osTaskbar,
+body.os-device-tablet #osTaskbar {
+  height: 52px;
+}
+body.os-device-mobile #osStartBtn,
+body.os-device-tablet #osStartBtn {
+  width: 60px;
+}
+body.os-device-mobile .os-task,
+body.os-device-tablet .os-task {
+  padding: 0 14px;
+  font-size: 11.5px;
+  min-width: 44px;
+}
+body.os-device-mobile #osExit,
+body.os-device-tablet #osExit {
+  width: 52px;
+  font-size: 18px;
+}
+body.os-device-mobile #osClock,
+body.os-device-tablet #osClock {
+  padding: 0 12px;
+  font-size: 11px;
+}
+
+/* Iconos del escritorio más grandes en móvil */
+body.os-device-mobile .os-icon {
+  width: 78px;
+  padding: 8px 4px;
+}
+body.os-device-mobile .os-icon span {
+  font-size: 11px;
+}
+
+/* Start menu full width en móvil */
+body.os-device-mobile #osStartMenu {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  border-radius: 0;
+}
+body.os-device-mobile .os-sm-rail {
+  width: 56px;
+}
+body.os-device-mobile .os-sm-rail button {
+  width: 44px;
+  height: 44px;
+  font-size: 18px;
+}
+body.os-device-mobile .os-sm-apps button {
+  padding: 12px 14px;
+  font-size: 14px;
+}
+
+/* Ventanas: fullscreen en móvil (el JS ya las crea así, pero reforzamos) */
+body.os-device-mobile .os-window:not(.maximized) {
+  border-radius: 0;
+}
+body.os-device-mobile .os-window.maximized {
+  height: calc(100vh - 52px) !important;
+  height: calc(100dvh - 52px) !important;
+}
+
+/* Titlebar más grande en móvil para tap fácil */
+body.os-device-mobile .os-titlebar {
+  height: 42px;
+}
+body.os-device-mobile .os-tb-btn {
+  width: 52px;
+  font-size: 16px;
+}
+
+/* Status bar y toolbars más altos */
+body.os-device-mobile .os-status {
+  height: 30px;
+  font-size: 12px;
+}
+body.os-device-mobile .os-explorer-toolbar {
+  padding: 8px 10px;
+}
+body.os-device-mobile .os-explorer-nav {
+  width: 40px;
+  height: 36px;
+  font-size: 16px;
+}
+
+/* FAB del chat en móvil: más grande y mejor posicionado */
+body.os-device-mobile #chatFab {
+  right: 12px;
+  bottom: 78px;
+  width: 60px;
+  height: 60px;
+}
+body.os-device-mobile #chatFab svg { width: 28px; height: 28px; }
+body.os-device-mobile #chatFab .chat-fab-label {
+  font-size: 8px;
+  bottom: -14px;
+}
+
+/* Panel de ANIA en móvil: casi full width */
+body.os-device-mobile.os-on #app {
+  right: 8px !important;
+  left: 8px !important;
+  bottom: 60px !important;
+  width: auto !important;
+  max-width: none !important;
+  height: calc(100vh - 120px) !important;
+  height: calc(100dvh - 120px) !important;
+}
+
+/* El returnFab también más grande en móvil */
+body.os-device-mobile #returnFab {
+  width: 56px;
+  height: 56px;
+  bottom: 12px;
+  right: 12px;
+}
+body.os-device-mobile #returnFab svg { width: 26px; height: 26px; }
+
+/* Landscape en móvil: reducir un poco */
+body.os-device-mobile.os-landscape #osIcons {
+  gap: 2px;
+}
+body.os-device-mobile.os-landscape .os-icon {
+  width: 66px;
+  padding: 5px 2px;
+}
+body.os-device-mobile.os-landscape .os-icon span {
+  font-size: 10px;
+}
+body.os-device-mobile.os-landscape #osTaskbar {
+  height: 44px;
+}
+body.os-device-mobile.os-landscape #chatFab {
+  width: 50px;
+  height: 50px;
+  bottom: 68px;
+}
+body.os-device-mobile.os-landscape #chatFab .chat-fab-label {
+  display: none;
+}
+
+/* iOS: usar dvh para el layout general */
+@supports (height: 100dvh) {
+  body.os-device-mobile.os-on #osDesktop {
+    height: 100dvh;
+  }
+}
+
+/* Ajustes generales para dedos (touch) */
+body.os-touch .os-file,
+body.os-touch .os-sm-apps button {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Fullscreen en ventanas de apps pequeñas: permitir resize en tablet */
+body.os-device-tablet .os-window:not(.maximized) {
+  max-width: 90vw;
+  max-height: 85vh;
+}
