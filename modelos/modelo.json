@@ -1,6 +1,9 @@
 {
-  "nombre": "Qwen2.5 0.5B Instruct",
-  "archivo": "qwen2.5-0.5b-instruct-q4.gguf",
+  "nombre": "Gemma 2B Spanish Roleplay",
+  "archivo": "gemma2-2b-spanish-roleplay.Q4_K_M.gguf",
   "n_ctx": 2048,
-  "nota": "Cambia 'archivo' al nombre exacto de tu .gguf"
+  "chat_template": "gemma",
+  "release_url": "https://github.com/calm291094-del/ania/releases/latest/download/gemma2-2b-spanish-roleplay.Q4_K_M.gguf",
+  "release_tag": "v1.0-roleplay",
+  "nota": "Si el archivo existe en modelos/ se usa local; si no, se descarga del Release."
 }
