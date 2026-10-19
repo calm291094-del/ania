@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DocuMind · Generador de Documentos de Investigación (IA · Sin API keys)</title>
+<meta name="description" content="Escribe un tema y genera al instante un documento de investigación completo con portada, índice, desarrollo, cuadro comparativo, conclusiones, bibliografía y anexos. Gratis, sin API keys.">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="%236d5efc"/><stop offset="1" stop-color="%2322d3ee"/></linearGradient></defs><rect width="24" height="24" rx="6" fill="url(%23g)"/><path d="M7 5h7l4 4v10a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" fill="white" opacity=".95"/></svg>'>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+/* ============ Reset & tokens ============ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#05060f; --bg2:#0b0d20;
+  --card:rgba(255,255,255,.045); --card2:rgba(255,255,255,.07);
+  --line:rgba(255,255,255,.10); --line2:rgba(255,255,255,.18);
+  --txt:#eef0ff; --muted:#9aa0c3; --dim:#6b7099;
+  --acc:#6d5efc; --acc2:#a855f7; --acc3:#22d3ee;
+  --grad:linear-gradient(135deg,#6d5efc 0%,#a855f7 48%,#22d3ee 100%);
+  --ok:#34d399; --err:#f87171;
+  --r:16px; --r2:22px;
+  --shadow:0 20px 60px rgba(0,0,0,.5);
+  --glow:0 10px 40px rgba(109,94,252,.35);
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg); color:var(--txt); min-height:100vh;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+::selection{background:rgba(109,94,252,.45)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:8px}
+::-webkit-scrollbar-track{background:transparent}
+button{font-family:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit}
+.hidden{display:none!important}
+a{color:inherit}
+
+/* ============ Background FX ============ */
+.fx{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+.fx::before{content:"";position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+  background-size:44px 44px;
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 75%);
+  -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 75%)}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55;animation:float 16s ease-in-out infinite alternate}
+.o1{width:520px;height:520px;background:#6d5efc55;top:-180px;left:-120px}
+.o2{width:420px;height:420px;background:#a855f744;top:20%;right:-160px;animation-delay:-6s}
+.o3{width:380px;height:380px;background:#22d3ee33;bottom:-160px;left:30%;animation-delay:-11s}
+@keyframes float{from{transform:translateY(-25px) scale(1)}to{transform:translateY(30px) scale(1.08)}}
+@media (prefers-reduced-motion:reduce){.orb{animation:none}}
+
+/* ============ Appbar ============ */
+.appbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:14px;
+  padding:14px clamp(16px,4vw,40px);
+  background:rgba(6,7,18,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line)}
+.logo{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.12rem;letter-spacing:.2px}
+.logo .mark{width:34px;height:34px;border-radius:10px;background:var(--grad);display:grid;place-items:center;box-shadow:var(--glow)}
+.logo .mark svg{width:19px;height:19px}
+.logo b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.badge{margin-left:auto;font-size:.72rem;font-weight:600;letter-spacing:.6px;text-transform:uppercase;
+  color:#cfd3ff;border:1px solid var(--line2);border-radius:999px;padding:6px 12px;background:var(--card)}
+@media (max-width:560px){.badge{display:none}}
+
+/* ============ Layout ============ */
+main{max-width:1120px;margin:0 auto;padding:clamp(22px,4.5vw,54px) clamp(16px,4vw,36px) 60px}
+.screen{animation:rise .5s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* ============ Hero / Home ============ */
+.hero{max-width:820px;margin:0 auto;text-align:center}
+.kicker{display:inline-flex;align-items:center;gap:8px;font-size:.74rem;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:#c9c4ff;
+  border:1px solid rgba(141,120,255,.35);background:rgba(109,94,252,.12);border-radius:999px;padding:7px 14px}
+.kicker .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok);animation:pulse 2s infinite}
+@keyframes pulse{50%{opacity:.4}}
+h1.title{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.9rem,5vw,3.1rem);line-height:1.12;letter-spacing:-.5px;margin:18px 0 14px;font-weight:700}
+.grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--muted);font-size:clamp(.95rem,2vw,1.06rem);line-height:1.75;max-width:640px;margin:0 auto 30px}
+.sub b{color:#d9dcff;font-weight:600}
+
+/* Features */
+.feat-row{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:26px}
+.feat{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--muted);
+  border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 14px}
+.feat svg{width:15px;height:15px;color:var(--acc3)}
+
+/* Chips */
+.chips{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:18px}
+.chip{font-size:.8rem;color:#c7cbf0;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 15px;transition:.2s}
+.chip:hover{border-color:rgba(141,120,255,.6);background:rgba(109,94,252,.16);transform:translateY(-1px);color:#fff}
+.chips-label{margin-top:22px;font-size:.72rem;letter-spacing:1.4px;text-transform:uppercase;color:var(--dim)}
+
+/* ============ Cards & form ============ */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r2);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.search-card{max-width:760px;margin:0 auto;padding:clamp(18px,3vw,26px);text-align:left;box-shadow:var(--shadow)}
+.field{display:flex;flex-direction:column;gap:7px;min-width:0}
+.field label{font-size:.78rem;font-weight:600;letter-spacing:.3px;color:#b6badf}
+.field .hint{font-weight:400;color:var(--dim);font-size:.72rem}
+input[type=text],textarea,select{
+  width:100%;background:rgba(0,0,0,.28);border:1px solid var(--line);color:var(--txt);
+  border-radius:12px;padding:12px 14px;font-size:.92rem;outline:none;transition:.2s;resize:vertical}
+input[type=text]:focus,textarea:focus,select:focus{border-color:rgba(141,120,255,.75);box-shadow:0 0 0 3px rgba(109,94,252,.18);background:rgba(0,0,0,.4)}
+input::placeholder,textarea::placeholder{color:#5b6089}
+select{appearance:none;background-image:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path d="M1 1l5 5 5-5" stroke="%239aa0c3" stroke-width="2" fill="none" stroke-linecap="round"/></svg>');background-repeat:no-repeat;background-position:right 14px center;padding-right:38px}
+textarea{line-height:1.55}
+.sc-row{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap}
+.sc-row .grow{flex:1 1 320px}
+.sc-row .small{flex:0 0 132px}
+.sc-actions{display:flex;align-items:center;gap:12px;margin-top:16px;flex-wrap:wrap}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:1px solid var(--line2);
+  background:var(--card2);color:var(--txt);border-radius:12px;padding:11px 18px;font-size:.88rem;font-weight:600;transition:.2s;white-space:nowrap}
+.btn svg{width:16px;height:16px;flex:none}
+.btn:hover{transform:translateY(-1px);border-color:rgba(141,120,255,.65);background:rgba(109,94,252,.16)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.55;pointer-events:none}
+.btn.primary{background:var(--grad);border:none;color:#fff;box-shadow:var(--glow)}
+.btn.primary:hover{filter:brightness(1.12);background:var(--grad)}
+.btn.big{padding:14px 26px;font-size:.98rem;border-radius:14px}
+.btn.ghost{background:transparent}
+
+/* Details / options */
+.more{margin-top:16px;border:1px dashed var(--line2);border-radius:14px;padding:0 16px;background:rgba(0,0,0,.16)}
+.more summary{cursor:pointer;padding:13px 2px;font-size:.84rem;font-weight:600;color:#c5c9ef;list-style:none;display:flex;align-items:center;gap:8px}
+.more summary::-webkit-details-marker{display:none}
+.more summary::before{content:"+";font-family:'Space Grotesk',monospace;font-size:1.05rem;color:var(--acc3);width:18px}
+.more[open] summary::before{content:"–"}
+.more .inner{padding:6px 2px 18px;display:flex;flex-direction:column;gap:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:620px){.grid2{grid-template-columns:1fr}}
+
+/* Error box */
+.error{margin:18px auto 0;max-width:640px;text-align:left;display:flex;gap:11px;align-items:flex-start;
+  border:1px solid rgba(248,113,113,.4);background:rgba(248,113,113,.09);color:#fecaca;border-radius:14px;padding:13px 16px;font-size:.86rem;line-height:1.5}
+.error svg{width:17px;height:17px;flex:none;margin-top:2px;color:var(--err)}
+
+/* ============ Loading ============ */
+.load-card{max-width:680px;margin:8vh auto 0;padding:clamp(22px,4vw,34px)}
+.load-head{display:flex;align-items:center;gap:16px;margin-bottom:22px}
+.spinner{width:42px;height:42px;flex:none;border-radius:50%;background:conic-gradient(from 0deg,#6d5efc,#a855f7,#22d3ee,#6d5efc);
+  mask:radial-gradient(farthest-side,transparent 62%,#000 64%);-webkit-mask:radial-gradient(farthest-side,transparent 62%,#000 64%);
+  animation:spin 1.1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:1.08rem}
+.load-status{color:var(--muted);font-size:.85rem;margin-top:4px;min-height:1.2em}
+.pbar{height:7px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin-bottom:22px}
+.pbar i{display:block;height:100%;width:4%;background:var(--grad);border-radius:99px;transition:width .6s cubic-bezier(.22,1,.36,1);box-shadow:0 0 14px rgba(109,94,252,.8)}
+.steps{list-style:none;display:flex;flex-direction:column;gap:11px}
+.step{display:flex;align-items:center;gap:12px;font-size:.88rem;color:var(--dim);transition:.3s}
+.step .ic{width:24px;height:24px;flex:none;border-radius:50%;border:2px solid rgba(255,255,255,.16);display:grid;place-items:center;font-size:.68rem;transition:.3s}
+.step.active{color:#fff}
+.step.active .ic{border-color:var(--acc3);box-shadow:0 0 0 3px rgba(34,211,238,.15)}
+.step.active .ic::after{content:"";width:9px;height:9px;border-radius:50%;background:var(--acc3);animation:pulse 1s infinite}
+.step.done{color:#c9cdef}
+.step.done .ic{border-color:var(--ok);background:rgba(52,211,153,.12)}
+.step.done .ic::after{content:"✓";color:var(--ok);font-size:.72rem;font-weight:700}
+.src-cloud{display:flex;flex-wrap:wrap;gap:7px;margin-top:20px}
+.src-pill{font-size:.72rem;color:#b8bdf2;border:1px solid var(--line);background:rgba(0,0,0,.25);border-radius:999px;padding:5px 11px;animation:rise .4s ease both;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ============ Doc screen ============ */
+.doc-toolbar{position:sticky;top:63px;z-index:30;display:flex;gap:9px;flex-wrap:wrap;align-items:center;
+  padding:11px 14px;margin-bottom:16px;border-radius:16px;
+  background:rgba(8,9,22,.82);border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.doc-toolbar .spacer{flex:1}
+.doc-stats{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-bottom:18px}
+.stat{font-size:.76rem;color:var(--muted);border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 13px}
+.stat b{color:#e2e4ff;font-weight:600}
+
+/* ============ Paper (documento) ============ */
+.paper{background:#fff;color:#1c2340;width:min(900px,100%);margin:0 auto;border-radius:20px;
+  padding:clamp(26px,6vw,70px);box-shadow:0 30px 90px rgba(0,0,0,.55);
+  font-family:'Lora',Georgia,'Times New Roman',serif;font-size:1.02rem;line-height:1.85}
+.paper h1,.paper h2,.paper h3,.paper h4{font-family:'Space Grotesk','Inter',sans-serif;line-height:1.3}
+.paper p{margin:0 0 14px;text-align:justify;hyphens:auto}
+.paper .secnum{color:#5b4fe8;font-weight:700;margin-right:6px}
+
+/* Portada */
+.portada{text-align:center;padding:26px 0 40px;border-bottom:1px solid #e3e7f2;margin-bottom:34px}
+.portada .doc-type{font-size:.78rem;font-weight:700;letter-spacing:.42em;text-transform:uppercase;color:#5b4fe8}
+.portada .materia{font-size:.86rem;letter-spacing:.3em;text-transform:uppercase;color:#8a90ad;margin-top:10px}
+.portada h1.doc-title{font-size:clamp(1.7rem,4.2vw,2.5rem);font-weight:700;color:#10142e;margin:20px auto 6px;max-width:640px;text-transform:uppercase;letter-spacing:.5px}
+.portada .rule{width:120px;height:4px;border-radius:99px;background:var(--grad);margin:20px auto 26px}
+.portada .cover-img{max-width:340px;max-height:240px;border-radius:12px;margin:0 auto 8px;display:block;box-shadow:0 10px 30px rgba(16,20,46,.18);object-fit:cover}
+.portada .cover-cap{font-size:.72rem;color:#8a90ad;margin-bottom:16px;font-family:'Inter',sans-serif}
+.cover-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px 26px;max-width:560px;margin:0 auto;text-align:left;font-family:'Inter',sans-serif;font-size:.9rem}
+.cover-meta .lbl{font-size:.68rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#8a90ad}
+.cover-meta .val{color:#1c2340}
+.cover-meta .autores{grid-column:1/-1}
+.cover-meta .autores .val{white-space:pre-line}
+.portada .gen-note{margin-top:28px;font-size:.72rem;color:#9aa0b8;font-family:'Inter',sans-serif}
+@media (max-width:560px){.cover-meta{grid-template-columns:1fr}}
+
+/* Índice */
+.indice{margin-bottom:38px}
+.indice h2{font-size:1.3rem;color:#10142e;text-align:center;letter-spacing:.14em;text-transform:uppercase;margin-bottom:18px}
+.idx{list-style:none;font-family:'Inter',sans-serif;font-size:.92rem}
+.idx li{margin:0}
+.idx a{display:flex;align-items:baseline;gap:10px;text-decoration:none;color:#2a3153;padding:5px 0;border-radius:6px}
+.idx a:hover{color:#5b4fe8}
+.idx .n{color:#5b4fe8;font-weight:600;min-width:2.1em}
+.idx .dots{flex:1;border-bottom:2px dotted #c4cbdf;transform:translateY(-4px);min-width:24px}
+.idx .pg{color:#8a90ad;font-variant-numeric:tabular-nums;font-size:.84em}
+.idx li.lvl2 a{padding-left:2.4em;font-size:.89em}
+
+/* Secciones */
+.p-sec{margin-bottom:34px}
+.p-sec h2{font-size:1.32rem;color:#10142e;padding-bottom:8px;border-bottom:2px solid #eceef7;margin-bottom:16px}
+.p-sec h3{font-size:1.12rem;color:#241d63;margin:24px 0 10px}
+.p-sec h4{font-size:.95rem;margin:16px 0 8px;letter-spacing:.02em}
+h4.h-pos{color:#047857}
+h4.h-neg{color:#b91c1c}
+h4.h-code{color:#33334d}
+.paper ul.ve{margin:0 0 16px 4px;list-style:none}
+.paper ul.ve li{position:relative;padding-left:24px;margin-bottom:9px;text-align:justify}
+.paper ul.ve li::before{content:"";position:absolute;left:4px;top:.62em;width:8px;height:8px;border-radius:2px;transform:rotate(45deg)}
+.paper ul.ve.pos li::before{background:#10b981}
+.paper ul.ve.neg li::before{background:#f87171}
+.paper ul.ve b{color:#10142e}
+.paper ol.concl{margin:0 0 8px;padding-left:24px}
+.paper ol.concl li{margin-bottom:12px;text-align:justify}
+
+/* Cuadro comparativo */
+.tbl-wrap{overflow-x:auto;margin:6px 0 14px;border:1px solid #dfe3f0;border-radius:12px}
+table.cmp{border-collapse:collapse;width:100%;min-width:640px;font-family:'Inter',sans-serif;font-size:.8rem;line-height:1.5}
+table.cmp th{background:#141838;color:#fff;text-align:left;padding:10px 12px;font-weight:600;font-size:.78rem;letter-spacing:.02em}
+table.cmp th:first-child{background:#5b4fe8}
+table.cmp td{border-top:1px solid #e7eaf5;padding:10px 12px;vertical-align:top;color:#2a3153}
+table.cmp tbody tr:nth-child(odd){background:#f7f8fc}
+table.cmp td.asp{font-weight:600;color:#10142e;white-space:nowrap;background:#eef0fa}
+.paper .tbl-note{font-size:.76rem;color:#8a90ad;font-family:'Inter',sans-serif}
+
+/* Código */
+.codeblock{background:#0d1026;color:#e6e9ff;border-radius:12px;padding:14px 16px;margin:10px 0 16px;overflow-x:auto;
+  font-family:'Consolas','Courier New',monospace;font-size:.82rem;line-height:1.6;text-align:left}
+.codeblock .lang{display:block;font-family:'Inter',sans-serif;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:#8f95c4;margin-bottom:8px}
+.paper pre{margin:0;white-space:pre;font-family:inherit}
+
+/* Bibliografía y anexos */
+.paper ol.biblio{margin:0;padding-left:22px;font-size:.92rem}
+.paper ol.biblio li{margin-bottom:11px}
+.paper ol.biblio a{color:#4338ca;text-decoration:none;border-bottom:1px solid rgba(67,56,202,.35);word-break:break-all}
+.paper ol.biblio a:hover{border-bottom-color:#4338ca}
+.anexos{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:14px}
+.anx{border:1px solid #e3e7f2;border-radius:14px;padding:14px 16px;background:#f8f9fe;transition:.2s;display:block;text-decoration:none}
+.anx:hover{border-color:#5b4fe8;transform:translateY(-2px);box-shadow:0 10px 24px rgba(67,56,202,.12)}
+.anx .t{font-family:'Inter',sans-serif;font-weight:600;font-size:.86rem;color:#10142e;margin-bottom:5px}
+.anx .u{font-family:'Inter',sans-serif;font-size:.72rem;color:#5b4fe8;word-break:break-all}
+.anx .d{font-family:'Inter',sans-serif;font-size:.74rem;color:#6a7090;margin-top:6px}
+.paper .limit-note{font-size:.85rem;color:#8a6d1f;background:#fdf6e3;border:1px solid #f1e3b3;border-radius:10px;padding:9px 13px;font-family:'Inter',sans-serif}
+
+/* Related */
+.related-wrap{max-width:900px;margin:30px auto 0;text-align:center}
+.rel-title{font-size:.72rem;letter-spacing:1.4px;text-transform:uppercase;color:var(--dim);margin-bottom:12px}
+
+/* ============ Toast & footer ============ */
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);z-index:60;opacity:0;pointer-events:none;
+  background:rgba(16,18,40,.95);border:1px solid var(--line2);color:#e8eaff;border-radius:12px;padding:11px 18px;
+  font-size:.84rem;box-shadow:var(--shadow);transition:.3s;max-width:88vw}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.appfooter{max-width:900px;margin:0 auto;padding:26px 20px 40px;text-align:center;color:var(--dim);font-size:.76rem;line-height:1.7}
+
+/* ============ Responsive ============ */
+@media (max-width:640px){
+  .doc-toolbar{top:57px}
+  .doc-toolbar .btn{padding:9px 13px;font-size:.8rem}
+  .paper{border-radius:14px}
+}
+
+/* ============ Print ============ */
+@media print{
+  @page{margin:15mm 16mm}
+  body{background:#fff!important}
+  .fx,.appbar,.doc-toolbar,.doc-stats,.related-wrap,.appfooter,.toast,.no-print{display:none!important}
+  main{padding:0!important;max-width:none}
+  .screen{animation:none}
+  .paper{box-shadow:none!important;border-radius:0!important;width:100%!important;max-width:none!important;padding:0!important;font-size:10.5pt}
+  .paper a{color:#111;text-decoration:none}
+  .codeblock{background:#f3f4fa!important;color:#111!important;border:1px solid #ddd;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  table.cmp th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .idx a{color:#000}
+  .portada{break-after:page}
+  .indice{break-after:page}
+}
+</style>
+</head>
+<body>
+<div class="fx" aria-hidden="true">
+  <span class="orb o1"></span><span class="orb o2"></span><span class="orb o3"></span>
+</div>
+
+<header class="appbar">
+  <div class="logo">
+    <span class="mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg>
+    </span>
+    <span>Docu<b>Mind</b></span>
+  </div>
+  <span class="badge">IA · Gratis · Sin API keys</span>
+</header>
+
+<main>
+
+  <!-- ============ PANTALLA: INICIO ============ -->
+  <section id="scr-home" class="screen">
+    <div class="hero">
+      <span class="kicker"><span class="dot"></span> Generador de documentos de investigación</span>
+      <h1 class="title">Escribe un tema,<br><span class="grad-text">obtén el informe completo.</span></h1>
+      <p class="sub">Investiga en fuentes abiertas con <b>IA y APIs gratuitas (sin claves)</b> y genera al instante un documento académico con
+        <b>portada, índice, introducción, desarrollo con ventajas y desventajas, cuadro comparativo, conclusiones, bibliografía y anexos</b> — con el formato del trabajo original.</p>
+
+      <form id="form" class="card search-card" autocomplete="off">
+        <div class="sc-row">
+          <div class="field grow">
+            <label for="f-topic">Tema o categoría a investigar</label>
+            <input type="text" id="f-topic" maxlength="120" placeholder="Ej.: Sistemas ORM, Bases de datos NoSQL, Frameworks de JavaScript…">
+          </div>
+          <div class="field small">
+            <label for="f-n">Elementos</label>
+            <select id="f-n">
+              <option value="3">3</option><option value="4">4</option>
+              <option value="5" selected>5</option><option value="6">6</option>
+              <option value="7">7</option><option value="8">8</option>
+            </select>
+          </div>
+        </div>
+        <div class="sc-actions">
+          <button type="submit" class="btn primary big" id="btn-go">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.9 2.4L22 18l-2.1.6L19 21l-.9-2.4L16 18l2.1-.6z"/></svg>
+            <span>Investigar y generar</span>
+          </button>
+          <span class="field"><label>&nbsp;</label></span>
+        </div>
+
+        <details class="more">
+          <summary>Datos de portada y opciones (autores, grupo, profesor, elementos)</summary>
+          <div class="inner">
+            <div class="grid2">
+              <div class="field"><label for="f-materia">Materia (portada)</label><input type="text" id="f-materia" maxlength="60" value="Base de Datos"></div>
+              <div class="field"><label for="f-grupo">Grupo</label><input type="text" id="f-grupo" maxlength="80" value="4to Año Ingeniería Informática CPE"></div>
+              <div class="field"><label for="f-profesor">Profesor(a) <span class="hint">(opcional)</span></label><input type="text" id="f-profesor" maxlength="80" placeholder="Nombre del profesor"></div>
+              <div class="field"><label for="f-fecha">Fecha del documento</label><input type="text" id="f-fecha" readonly></div>
+            </div>
+            <div class="field">
+              <label for="f-autores">Autores <span class="hint">(uno por línea)</span></label>
+              <textarea id="f-autores" rows="4"></textarea>
+            </div>
+            <div class="field">
+              <label for="f-elements">Elementos a comparar <span class="hint">(uno por línea — opcional; si lo dejas vacío, la IA los elige)</span></label>
+              <textarea id="f-elements" rows="3" placeholder="Ej.:&#10;Entity Framework (.NET)&#10;Hibernate (Java)&#10;TypeORM (TypeScript)"></textarea>
+            </div>
+          </div>
+        </details>
+      </form>
+
+      <div id="home-error" class="error hidden" role="alert"></div>
+
+      <div class="chips" id="chips-examples"></div>
+      <div id="recent-wrap" class="hidden">
+        <div class="chips-label">Búsquedas recientes</div>
+        <div class="chips" id="chips-recent"></div>
+      </div>
+
+      <div class="feat-row">
+        <span class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Fuentes verificables (Wikipedia)</span>
+        <span class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> 0 claves de API · 100% en tu navegador</span>
+        <span class="feat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg> Exporta a PDF, Word o HTML</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PANTALLA: CARGA ============ -->
+  <section id="scr-load" class="screen hidden">
+    <div class="card load-card">
+      <div class="load-head">
+        <div class="spinner" aria-hidden="true"></div>
+        <div>
+          <div class="load-title">Investigando «<span id="load-topic"></span>»</div>
+          <div class="load-status" id="load-status">Iniciando motor de investigación…</div>
+        </div>
+      </div>
+      <div class="pbar"><i id="pfill"></i></div>
+      <ol class="steps" id="steps"></ol>
+      <div class="src-cloud" id="src-cloud" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- ============ PANTALLA: DOCUMENTO ============ -->
+  <section id="scr-doc" class="screen hidden">
+    <div class="doc-toolbar no-print">
+      <button class="btn ghost" id="btn-back" title="Volver al inicio">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        <span>Nuevo tema</span>
+      </button>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="btn-copy" title="Copiar el documento como texto">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span>Copiar</span>
+      </button>
+      <button class="btn ghost" id="btn-word" title="Descargar como Word (.doc)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13l2 5 2-5 2 5 2-5" transform="scale(.8) translate(3 4)"/></svg>
+        <span>Word</span>
+      </button>
+      <button class="btn ghost" id="btn-html" title="Descargar como HTML autónomo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>
+        <span>HTML</span>
+      </button>
+      <button class="btn primary" id="btn-print" title="Imprimir o guardar como PDF">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        <span>Imprimir / PDF</span>
+      </button>
+    </div>
+
+    <div class="doc-stats no-print" id="doc-stats"></div>
+    <article class="paper" id="paper" aria-live="polite"></article>
+    <div class="related-wrap no-print" id="related-wrap">
+      <div class="rel-title">Explorar temas relacionados</div>
+      <div class="chips" id="related"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="appfooter no-print">
+  DocuMind genera documentos automáticamente a partir de fuentes abiertas (Wikipedia, licencia CC BY-SA) y, si está disponible, los enriquece con IA gratuita (Pollinations).
+  La información es orientativa: <b style="color:#9aa0c3">verifícala antes de usarla académicamente</b>.
+</footer>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   DocuMind · Generador de documentos de investigación en un solo HTML
+   Fuentes: Wikipedia (API pública, sin keys) + IA gratuita opcional
+   ===================================================================== */
+
+/* ---------------- Utilidades ---------------- */
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+const esc = t => String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const uniq = a => [...new Set(a)];
+
+function slugify(t){
+  return (t||'documento').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,60) || 'documento';
+}
+const cap = t => t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
+
+const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function fechaLarga(){
+  const d = new Date();
+  return `${d.getDate()} de ${MESES[d.getMonth()]} del ${d.getFullYear()}`;
+}
+function fechaCorta(){
+  const d = new Date();
+  return String(d.getDate()).padStart(2,'0') + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + d.getFullYear();
+}
+
+async function fetchT(url, opts = {}, ms = 20000){
+  const c = new AbortController();
+  const t = setTimeout(() => c.abort(), ms);
+  try { return await fetch(url, { ...opts, signal: c.signal }); }
+  finally { clearTimeout(t); }
+}
+async function getJSON(url, opts = {}, ms = 20000){
+  const r = await fetchT(url, opts, ms);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+function toast(msg, ms = 2800){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove('show'), ms);
+}
+function showScreen(id){
+  $$('.screen').forEach(s => s.classList.add('hidden'));
+  $(id).classList.remove('hidden');
+  window.scrollTo(0, 0);
+}
+function download(name, content, type){
+  const blob = content instanceof Blob ? content : new Blob([content], { type });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+function copyText(txt){
+  if (navigator.clipboard && window.isSecureContext){
+    return navigator.clipboard.writeText(txt);
+  }
+  return new Promise((res, rej) => {
+    const ta = document.createElement('textarea');
+    ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy') ? res() : rej(new Error('copy')); }
+    catch(e){ rej(e); } finally { ta.remove(); }
+  });
+}
+async function mapLimit(items, limit, fn){
+  const out = new Array(items.length);
+  let i = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (i < items.length){ const k = i++; out[k] = await fn(items[k], k); }
+  });
+  await Promise.all(workers);
+  return out;
+}
+function escapeRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+/* ---------------- NLP local (síntesis extractiva, sin IA externa) ---------------- */
+const STOP = new Set(`a al algo alguna algunas alguno algunos ante antes aquella aquellas aquello aquellos esas ese eso esos esta estaba estaban estan estar este esto estos fue fueron ha habia han hasta hay la las le les lo los mas más me mi mis mucho muy nada ni no nos nuestra nuestras nuestro nuestros o os otra otras otro otros para pero poco por porque que quien quienes se sea sean segun ser si sin sobre son su sus tambien tampoco tan tanto te tu tus un una unos usted ustedes yo el ella ellos ellas como cuando donde entre desde entonces aun aún asi así cada cual cuales con contra era eran es esta está estos estos mas más mis sin sino sobre tal tambien tampoco tras vez vez yo`.split(/\s+/));
+
+function sentences(text){
+  const clean = String(text || '').replace(/\s+/g, ' ');
+  const m = clean.match(/[^.!?¿¡]+[.!?]+["')\]]?/g) || [];
+  return m.map(s => s.trim()).filter(s => s.length > 30 && s.length < 700);
+}
+function tokens(t){
+  return (String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .match(/[a-z0-9]{3,}/g) || []).filter(w => !STOP.has(w));
+}
+function kwFreq(texts){
+  const f = {};
+  for (const t of texts){
+    const seen = new Set();
+    for (const w of tokens(t)){ if (seen.has(w)) continue; seen.add(w); f[w] = (f[w]||0)+1; }
+  }
+  return f;
+}
+function topSentences(pool, n, freq){
+  return pool
+    .map((text, i) => {
+      const ws = tokens(text);
+      let s = 0; ws.forEach(w => s += (freq[w]||0));
+      return { i, text, score: s / Math.sqrt(ws.length || 1) };
+    })
+    .sort((a,b) => b.score - a.score)
+    .slice(0, n)
+    .sort((a,b) => a.i - b.i)
+    .map(x => x.text);
+}
+function cutAtSentence(t, max){
+  t = String(t || '').trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max);
+  const m = cut.match(/^(.*[.!?;])(\s|$)/s);
+  return (m ? m[1] : cut.replace(/\s+\S*$/,'')) .replace(/[,;:\s]+$/,'') + '…';
+}
+function mergeShort(paras){
+  const out = []; let buf = '';
+  for (const p of paras){
+    if (p.length < 70){
+      buf += (buf ? ' ' : '') + p;
+      if (buf.length >= 220){ out.push(buf); buf = ''; }
+    } else {
+      if (buf){ out.push(buf); buf = ''; }
+      out.push(p);
+    }
+  }
+  if (buf) out.push(buf);
+  return out;
+}
+const POS = /ventaja|beneficio|permite|facilita|mejora|optimiza|destaca|ofrece|proporciona|flexibilidad|eficiente|eficiencia|popular|potente|sencillo|robustez|robusto|escalable|escalabilidad|reduce|automatiza|madurez|ampliamente|productividad|abstracci/i;
+const NEG = /desventaja|limitaci|problema|inconvenient|dificult|complejidad|coste|costo|riesgo|carece|falta|obsoleto|lento|exige|requiere|curva de aprendizaje|incompatib|sobrecarga|deprecad|consumo|propiedad|licencia comercial/i;
+
+function baseName(name){
+  return name.replace(/\(.*?\)/g, '').replace(/\s+-\s.*$/, '').trim() || name;
+}
+function toBullet(s){
+  const i = s.indexOf(':');
+  if (i > 6 && i < 72){
+    return { t: s.slice(0, i).replace(/^[-•\s]+/,'').trim(), d: cap(s.slice(i+1).trim()) };
+  }
+  const ws = s.split(/\s+/);
+  return { t: ws.slice(0, 4).join(' ').replace(/[.,;:]$/,''), d: s };
+}
+
+/* ---------------- Capa Wikipedia (API pública, CORS, sin keys) ---------------- */
+const WAPI = 'https://es.wikipedia.org/w/api.php';
+
+async function wikiSearch(q, limit = 8){
+  const url = `${WAPI}?action=query&format=json&origin=*&list=search&srlimit=${limit}&srsearch=${encodeURIComponent(q)}`;
+  let lastErr = null;
+  for (let i = 0; i < 3; i++){
+    try {
+      const d = await getJSON(url, {}, 15000);
+      return ((d.query && d.query.search) || []).map(r => ({ title: r.title, snippet: String(r.snippet||'').replace(/<[^>]*>/g,'') }));
+    } catch(e){ lastErr = e; await sleep(900 + i * 1600); }
+  }
+  try {
+    const d = await getJSON(`https://es.wikipedia.org/w/rest.php/v1/search/page?q=${encodeURIComponent(q)}&limit=${limit}`, {}, 15000);
+    return ((d && d.pages) || []).map(p => ({ title: p.title, snippet: String(p.excerpt||'').replace(/<[^>]*>/g,'') }));
+  } catch(e){}
+  throw lastErr || new Error('No se pudo conectar con la fuente de búsqueda.');
+}
+async function wikiExtract(title){
+  const url = `${WAPI}?action=query&format=json&origin=*&prop=extracts&explaintext=1&exsectionformat=wiki&redirects=1&converttitles=1&titles=${encodeURIComponent(title)}`;
+  let d = null;
+  for (let i = 0; i < 2; i++){
+    try { d = await getJSON(url, {}, 20000); break; }
+    catch(e){ if (i === 1) return null; await sleep(800); }
+  }
+  if (!d) return null;
+  const p = Object.values((d.query && d.query.pages) || {})[0];
+  return (p && p.extract) ? { title: p.title, text: p.extract } : null;
+}
+const isDisambig = t => /puede referirse a|puede designar a|desambiguaci/i.test(String(t||'').slice(0, 450));
+async function wikiSummary(title){
+  try {
+    return await getJSON(`https://es.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`, {}, 12000);
+  } catch(e){ return null; }
+}
+const wikiURL = t => `https://es.wikipedia.org/wiki/${encodeURIComponent(String(t).replace(/ /g,'_'))}`;
+
+function parseSections(text){
+  const out = [];
+  let cur = { level: 0, title: '', paras: [] };
+  const push = () => { if (cur.title !== '' || cur.paras.length) out.push(cur); };
+  for (const raw of String(text||'').split('\n')){
+    const line = raw.trim();
+    const m = line.match(/^(={2,})\s*(.+?)\s*\1$/);
+    if (m){ push(); cur = { level: m[1].length - 1, title: m[2], paras: [] }; }
+    else if (line){ cur.paras.push(line.replace(/^[*#]+\s*/,'')); }
+  }
+  push();
+  return out;
+}
+
+/* ---------------- IA gratuita opcional (Pollinations, sin keys) ---------------- */
+/* Repara JSON con saltos de línea reales dentro de cadenas o comas colgantes */
+function repairJSON(s){
+  let out = ''; let inStr = false, escCh = false;
+  for (const ch of s){
+    if (escCh){ out += ch; escCh = false; continue; }
+    if (ch === '\\' && inStr){ out += ch; escCh = true; continue; }
+    if (ch === '"'){ inStr = !inStr; out += ch; continue; }
+    if (inStr){
+      if (ch === '\n'){ out += '\\n'; continue; }
+      if (ch === '\r'){ out += '\\r'; continue; }
+      if (ch === '\t'){ out += '\\t'; continue; }
+    }
+    out += ch;
+  }
+  return out;
+}
+async function aiJSON(prompt, ms = 60000){
+  try {
+    const r = await fetchT('https://text.pollinations.ai/openai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'openai',
+        temperature: 0.45,
+        messages: [
+          { role: 'system', content: 'Eres un redactor académico. Responde ÚNICAMENTE con JSON válido, sin markdown, sin comentarios y sin texto adicional.' },
+          { role: 'user', content: prompt }
+        ]
+      })
+    }, ms);
+    if (!r.ok) return null;
+    const d = await r.json();
+    const raw = (d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || '';
+    const txt = String(raw).replace(/```json|```/g, '');
+    const m = txt.match(/\{[\s\S]*\}/);
+    if (!m) return null;
+    try { return JSON.parse(m[0]); } catch(e){}
+    try { return JSON.parse(repairJSON(m[0]).replace(/,\s*([}\]])/g, '$1')); } catch(e){}
+    return null;
+  } catch(e){ return null; }
+}
+
+/* ---------------- Modelo y construcción del documento ---------------- */
+const stripTags = t => String(t||'').replace(/<[^>]*>/g,'');
+const normName = s => String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+function uniqBy(arr, f){ const seen = new Set(); return arr.filter(x => { const k = f(x); if (seen.has(k)) return false; seen.add(k); return true; }); }
+function shortURL(u){ u = String(u||'').replace(/^https?:\/\/(www\.)?/,''); return u.length > 52 ? u.slice(0,52) + '…' : u; }
+
+const state = { doc: null, busy: false };
+
+/* --- Selección de los N elementos a comparar --- */
+async function pickElements(cfg, catResults){
+  if (cfg.elements && cfg.elements.length >= 2){
+    return cfg.elements.slice(0,8).map(n => ({ name: n }));
+  }
+  setStatus('Pidiendo sugerencias a la IA gratuita…');
+  const ai = await aiJSON(
+    `Lista los ${cfg.n} elementos más representativos, conocidos y comparables de la categoría "${cfg.topic}". ` +
+    `Devuelve SOLO este JSON: {"elementos":["Nombre 1","Nombre 2"]}`, 30000);
+  if (ai && Array.isArray(ai.elementos)){
+    const names = uniq(ai.elementos
+      .map(x => stripTags(String(x)).replace(/^[-\d.)\s"«»]+/,'').replace(/["»]+$/,'').trim())
+      .filter(n => n && n.length < 70))
+      .slice(0, cfg.n);
+    if (names.length >= 3) return names.map(n => ({ name: n, viaAI: true }));
+  }
+  const skip = /^anexo|desambiguaci|wikipedi|portal:|categor[ií]a|lista de|^índice/i;
+  const names = catResults.filter(r => !skip.test(r.title)).slice(0, cfg.n).map(r => r.title);
+  return (names.length ? names : [cfg.topic]).map(n => ({ name: n }));
+}
+
+/* --- Investigación de un elemento en Wikipedia --- */
+async function researchElement(el, cfg, onSource){
+  let page = '', url = '', snippet = '', text = '';
+  try {
+    const rs = await wikiSearch(el.name, 5);
+    if (rs.length){
+      snippet = rs[0].snippet;
+      const lower = el.name.toLowerCase();
+      const ordered = [...rs].sort((a,b) =>
+        (b.title.toLowerCase().includes(lower) ? 1 : 0) - (a.title.toLowerCase().includes(lower) ? 1 : 0));
+      for (const r of ordered.slice(0,3)){
+        const ex = await wikiExtract(r.title).catch(() => null);
+        if (ex && !isDisambig(ex.text) && ex.text.length > 400){ page = ex.title; text = ex.text; break; }
+      }
+      if (page) url = wikiURL(page);
+    }
+  } catch(e){}
+  if (!text){
+    try {
+      const rs = await wikiSearch(cfg.topic, 3);
+      for (const r of rs.slice(0,2)){
+        const ex = await wikiExtract(r.title).catch(() => null);
+        if (ex && !isDisambig(ex.text)){ page = page || ex.title; text = text || ex.text; url = url || wikiURL(ex.title); break; }
+      }
+    } catch(e){}
+  }
+  if (page && onSource) onSource(page);
+  return { el, page, url, snippet, text };
+}
+
+/* --- Extracción de material (definición, características, ventajas, desventajas) --- */
+function elementMaterial(res, freq){
+  const empty = { definicion: '', caracteristicas: [], ventajas: [], desventajas: [], origen: '', ideal: '' };
+  if (!res.text || res.text.length < 200) return { ...empty, definicion: res.snippet || '' };
+  const SKIP = /referencias|bibliograf|v[eé]ase tambi|enlaces externos|^notas$|^notas\b|anexos|^fuentes|lecturas|etimolog/i;
+  const secs = parseSections(res.text);
+  const lead = mergeShort(secs.filter(s => s.level === 0).flatMap(s => s.paras)).filter(p => p.length >= 80);
+  const bodyParas = secs.filter(s => s.level >= 1 && !SKIP.test(s.title)).flatMap(s => s.paras);
+  const allParas = [...lead, ...bodyParas].map(p => cutAtSentence(p, 1000)).slice(0, 30);
+  const sents = []; const seen = new Set();
+  for (const p of allParas){
+    for (const s of sentences(p)){
+      const k = s.slice(0, 64).toLowerCase();
+      if (!seen.has(k)){ seen.add(k); sents.push(s); }
+    }
+  }
+  if (!sents.length) return { ...empty, definicion: res.snippet || '' };
+  const base = baseName(res.el.name);
+  let nameRe = null;
+  try { nameRe = new RegExp(escapeRe(base), 'i'); } catch(e){}
+  const about = nameRe ? sents.filter(s => nameRe.test(s)) : [];
+  const pool = about.length >= 2 ? about : sents;
+  const definicion = pool.slice(0, 3).join(' ');
+  const caracteristicas = topSentences(
+    sents.filter(s => /caracter[íi]z|permite|soporta|incluye|ofrece|proporciona|dise[nñ]ad|implementa|funciona|utiliza|compatib/.test(s)),
+    3, freq);
+  const ventajas = topSentences(sents.filter(s => POS.test(s) && !NEG.test(s)), 3, freq);
+  const desventajas = topSentences(sents.filter(s => NEG.test(s)), 3, freq);
+  const origen = sents.find(s => /\b(19|20)\d{2}\b/.test(s) && /cread|desarroll|lanza|aparec|public|fundad|estrenad|liberad|surgi/.test(s))
+    || sents.find(s => /\b(19|20)\d{2}\b/.test(s)) || '';
+  const ideal = topSentences(
+    sents.filter(s => /ideal|recomienda|adecuad|se utiliza para|usado para|aplicaciones|empleado en|popular en|ampliamente usado/.test(s)),
+    1, freq)[0] || '';
+  const extraPool = sents.filter(s =>
+    definicion.indexOf(s) === -1 &&
+    caracteristicas.indexOf(s) === -1 &&
+    s !== origen && s !== ideal);
+  const extra = topSentences(extraPool, 2, freq).join(' ');
+  return { definicion, caracteristicas, ventajas, desventajas, origen, ideal, extra };
+}
+
+/* --- Síntesis local (sin IA): tabla, introducción, conclusiones --- */
+function localTable(els){
+  const rows = [
+    ['¿Qué es?',            m => cutAtSentence(m.definicion, 160) || '—'],
+    ['Origen / año',        m => cutAtSentence(m.origen, 150) || '—'],
+    ['Características clave', m => cutAtSentence(m.caracteristicas.join(' '), 180) || '—'],
+    ['Ventajas principales',  m => m.ventajas.length ? cutAtSentence(m.ventajas.map(v => toBullet(v).t).join(' · '), 170) : '—'],
+    ['Desventajas principales', m => m.desventajas.length ? cutAtSentence(m.desventajas.map(v => toBullet(v).t).join(' · '), 170) : '—'],
+    ['Ideal para',           m => cutAtSentence(m.ideal, 150) || '—']
+  ];
+  return rows.map(([aspecto, fn]) => ({ aspecto, vals: els.map(e => fn(e.material)) }));
+}
+
+function localIntro(cfg, els, catText, freq){
+  const names = els.map(e => e.el.name);
+  const catS = sentences(catText).slice(0, 4);
+  const p1 = (catS.slice(0,2).join(' ') || `El presente trabajo aborda la categoría «${cfg.topic}».`) +
+    ' El presente documento tiene como propósito analizar este tema con un enfoque comparativo, examinando sus fundamentos, características y aplicaciones más relevantes.';
+  const p2 = `Para ello se estudian ${names.length} elementos representativos: ${names.join(', ')}. ` +
+    'De cada uno se presenta su definición y contexto, sus características principales, así como sus ventajas y desventajas, con el fin de disponer de una visión equilibrada que facilite la evaluación. ' +
+    'Finalmente, se incluye un cuadro comparativo que sintetiza los aspectos clave de cada opción y apoya la toma de decisiones según las necesidades específicas de cada proyecto.';
+  return [p1, p2];
+}
+
+function localConcl(cfg, els, catText, freq){
+  const catS = sentences(catText);
+  const names = els.map(e => e.el.name);
+  const items = [];
+  const s1 = topSentences(catS, 2, freq).join(' ');
+  items.push(s1
+    ? `Sobre «${cfg.topic}»: ${s1}`
+    : `El estudio de «${cfg.topic}» demuestra que se trata de un campo amplio y en constante evolución, donde cada propuesta responde a prioridades distintas: productividad, rendimiento, control o ecosistema.`);
+  const listaNombres = names.length > 1
+    ? names.slice(0, -1).join(', ') + ' y ' + names[names.length - 1]
+    : names[0];
+  items.push(`La comparación de ${listaNombres} evidencia que no existe una opción universalmente superior: cada elemento optimiza aspectos diferentes y su valor depende del contexto de uso, de la plataforma de trabajo y de los requerimientos del proyecto.`);
+  const conVen = els.filter(e => e.material.ventajas.length).slice(0, 3);
+  if (conVen.length){
+    items.push(`En términos de fortalezas, ${conVen.map(e => `${e.el.name} se distingue por ${toBullet(e.material.ventajas[0]).t.toLowerCase()}`).join('; ')}.`);
+  }
+  const conDes = els.filter(e => e.material.desventajas.length).slice(0, 2);
+  if (conDes.length){
+    items.push(`No obstante, deben considerarse las limitaciones señaladas en el análisis, como ${conDes.map(e => toBullet(e.material.desventajas[0]).t.toLowerCase()).join(' y ')}, que pueden influir en la decisión final según la experiencia del equipo y las restricciones técnicas.`);
+  }
+  items.push('Como recomendación final, la elección del elemento más adecuado debe fundamentarse en las características del proyecto: el lenguaje utilizado, los requerimientos de rendimiento, la madurez del ecosistema y la documentación disponible. El cuadro comparativo presentado en este documento sintetiza dichos criterios y constituye una herramienta de apoyo para tomar una decisión informada.');
+  return items;
+}
+
+/* --- Síntesis con IA gratuita (opcional, con fallback local) ---
+   Se parte en llamadas CORTAS porque la API gratuita limita la salida
+   (finish_reason=length con prompts grandes). 4 llamadas pequeñas:
+   3 por elemento (definición, ventajas, desventajas, ejemplo) y
+   1 de documento (introducción, tabla, conclusiones).             */
+function condensedMaterial(e){
+  const m = e.material;
+  return `Definición: ${cutAtSentence(m.definicion || e.snippet, 400)}\n` +
+    `Características: ${cutAtSentence(m.caracteristicas.join(' '), 250)}\n` +
+    `Posibles ventajas: ${m.ventajas.map(v => v.slice(0, 100)).join(' | ').slice(0, 260) || '(no detectadas)'}\n` +
+    `Posibles desventajas: ${m.desventajas.map(v => v.slice(0, 100)).join(' | ').slice(0, 260) || '(no detectadas)'}`;
+}
+async function aiElementJSON(cfg, elName, material){
+  const prompt =
+    `Elemento: "${elName}", de la categoría "${cfg.topic}". Material extraído de Wikipedia:\n${material}\n\n` +
+    `Devuelve SOLO JSON, muy breve:\n{"nombre":"${elName}","definicion":"4-6 oraciones","caracteristicas":["3 frases cortas"],` +
+    `"ventajas":[2-3 objetos {"t":"etiqueta corta","d":"1 oración"}],"desventajas":[2-3 objetos {"t":"etiqueta corta","d":"1 oración"}],` +
+    `"ejemplo":{"lenguaje":"SQL o el lenguaje del elemento","codigo":"3-6 líneas en UNA SOLA cadena usando los caracteres \\\\n como saltos de línea"}}\n` +
+    `Sin cifras inventadas. Sin texto fuera del JSON.`;
+  return aiJSON(prompt, 45000);
+}
+async function aiDocJSON(cfg, names){
+  const prompt =
+    `Tema: "${cfg.topic}". Elementos comparados (orden fijo): ${names.join(' | ')}.\n\n` +
+    `Devuelve SOLO JSON, muy breve:\n` +
+    `{"intro":["párrafo de 3-4 oraciones que presenta el tema","párrafo de 3-4 oraciones que anuncia la comparación de los elementos"],` +
+    `"tabla":[{"aspecto":"Qué es","vals":["valor breve por cada elemento"]},{"aspecto":"Rendimiento","vals":["valor breve por cada elemento"]},` +
+    `{"aspecto":"Facilidad de uso","vals":["valor breve por cada elemento"]},{"aspecto":"Ideal para","vals":["valor breve por cada elemento"]}],` +
+    `"conclusiones":["3 conclusiones, cada una de 2 oraciones"]}\n` +
+    `Cada "vals" debe tener EXACTAMENTE ${names.length} valores en el mismo orden fijo (${names.join(', ')}). Sin cifras inventadas. Sin texto fuera del JSON.`;
+  return aiJSON(prompt, 45000);
+}
+async function tryAISynthesis(cfg, els){
+  const jobs = els.map(e => () => aiElementJSON(cfg, e.el.name, condensedMaterial(e)));
+  jobs.push(async () => ({ __doc: true, val: await aiDocJSON(cfg, els.map(e => e.el.name)) }));
+  const res = await mapLimit(jobs, 2, fn => fn().catch(() => null));
+  const perEls = res.slice(0, els.length).filter(Boolean);
+  const docRaw = res[els.length];
+  const docJ = (docRaw && docRaw.__doc) ? docRaw.val : null;
+  if (!perEls.length && !docJ) return null;
+  const out = {};
+  if (perEls.length) out.elementos = perEls;
+  if (docJ) Object.assign(out, docJ);
+  return out;
+}
+
+/* --- Ensamblado del documento final --- */
+function buildDoc(cfg, els, ai, catPage, catText, freq){
+  const aiEls = (ai && Array.isArray(ai.elementos)) ? ai.elementos : [];
+  const chapters = els.map((e, i) => {
+    const num = `2.${i+1}`;
+    const a = aiEls.find(x => x && normName(x.nombre || '') === normName(e.el.name)) || null;
+    const m = e.material;
+    if (!m.definicion && !e.snippet){
+      return { num, title: e.el.name, limit: true, paras: [], ventajas: [], desventajas: [], ejemplo: null, url: e.url, page: e.page };
+    }
+    const paras = [];
+    paras.push((a && a.definicion) ? stripTags(String(a.definicion)).trim() : (m.definicion || e.snippet));
+    const car = (a && Array.isArray(a.caracteristicas) && a.caracteristicas.length)
+      ? a.caracteristicas.map(x => stripTags(String(x))).filter(Boolean).join(' ')
+      : m.caracteristicas.join(' ');
+    if (car) paras.push(car);
+    if (m.extra) paras.push(m.extra);
+    if (m.origen) paras.push(m.origen);
+    if (!a && m.ideal) paras.push(m.ideal);
+    let ventajas, desventajas;
+    if (a && Array.isArray(a.ventajas) && a.ventajas.length){
+      ventajas = a.ventajas.filter(v => v && (v.d || v.t))
+        .map(v => ({ t: stripTags(String(v.t || 'Ventaja')).slice(0,60), d: stripTags(String(v.d || v.t)) }));
+    } else ventajas = m.ventajas.map(toBullet);
+    if (a && Array.isArray(a.desventajas) && a.desventajas.length){
+      desventajas = a.desventajas.filter(v => v && (v.d || v.t))
+        .map(v => ({ t: stripTags(String(v.t || 'Desventaja')).slice(0,60), d: stripTags(String(v.d || v.t)) }));
+    } else desventajas = m.desventajas.map(toBullet);
+    const ejemplo = (a && a.ejemplo && a.ejemplo.codigo)
+      ? { lenguaje: stripTags(String(a.ejemplo.lenguaje || 'código')).slice(0,40), codigo: String(a.ejemplo.codigo).slice(0,700) }
+      : null;
+    return { num, title: e.el.name, paras, ventajas, desventajas, ejemplo, url: e.url, page: e.page, limit: false };
+  });
+
+  const tablaOk = ai && Array.isArray(ai.tabla) && ai.tabla.length >= 3 &&
+    ai.tabla.every(r => r && typeof r.aspecto === 'string' && Array.isArray(r.vals) && r.vals.length === els.length);
+  const tabla = tablaOk
+    ? ai.tabla.map(r => ({ aspecto: stripTags(r.aspecto).slice(0,60), vals: r.vals.map(v => cutAtSentence(stripTags(String(v)), 210) || '—') }))
+    : localTable(els);
+
+  const aiIntro = ai && Array.isArray(ai.intro) ? ai.intro.filter(x => typeof x === 'string' && x.length > 60) : [];
+  const intro = aiIntro.length >= 1 ? aiIntro.slice(0,3).map(x => stripTags(x)) : localIntro(cfg, els, catText, freq);
+  const aiConcl = ai && Array.isArray(ai.conclusiones) ? ai.conclusiones.filter(x => typeof x === 'string' && x.length > 40) : [];
+  const concl = aiConcl.length >= 3 ? aiConcl.slice(0,5).map(x => stripTags(x)) : localConcl(cfg, els, catText, freq);
+
+  const refs = [];
+  if (catPage) refs.push({ t: catPage, u: wikiURL(catPage) });
+  chapters.forEach(ch => { if (ch.url) refs.push({ t: ch.page, u: ch.url }); });
+  const biblio = uniqBy(refs, r => r.u).slice(0, 10);
+
+  const anexos = [];
+  chapters.forEach(ch => {
+    if (ch.url) anexos.push({ t: `${ch.title} · artículo consultado`, u: ch.url, d: 'Fuente enciclopédica principal (Wikipedia, CC BY-SA).' });
+    anexos.push({ t: `${ch.title} · documentación y descargas`,
+      u: `https://duckduckgo.com/?q=${encodeURIComponent(ch.title + ' documentación oficial descargar')}`,
+      d: 'Búsqueda del sitio oficial, repositorio y descargas.' });
+  });
+
+  const allText = [...intro, ...chapters.flatMap(c => c.paras), ...concl].join(' ');
+  const words = (allText.match(/[\wÁÉÍÓÚÑáéíóúñ]+/g) || []).length;
+  return {
+    cfg, title: cfg.topic, materia: cfg.materia, autores: cfg.autores, grupo: cfg.grupo,
+    profesor: cfg.profesor, fecha: cfg.fecha,
+    chapters, tabla, intro, concl, biblio, anexos, ai: !!ai, catPage,
+    stats: { words, elementos: chapters.length, fuentes: biblio.length, lectura: Math.max(1, Math.round(words/200)) }
+  };
+}
+
+/* ---------------- Renderizado del documento ---------------- */
+function chapterLen(ch){
+  return ch.paras.join(' ').length +
+    ch.ventajas.reduce((a,v) => a + v.d.length + 20, 0) +
+    ch.desventajas.reduce((a,v) => a + v.d.length + 20, 0) +
+    (ch.ejemplo ? 300 : 0) + 200;
+}
+
+function portadaHTML(doc){
+  return `<div class="portada">
+    <div class="doc-type">Trabajo</div>
+    ${doc.materia ? `<div class="materia">${esc(doc.materia)}</div>` : ''}
+    <h1 class="doc-title">${esc(doc.title)}</h1>
+    <div class="rule"></div>
+    <div class="cover-meta">
+      <div class="autores"><div class="lbl">Autores</div><div class="val">${esc(doc.autores.join('\n'))}</div></div>
+      <div><div class="lbl">Profesor(es)</div><div class="val">${esc(doc.profesor || '—')}</div></div>
+      <div><div class="lbl">Grupo</div><div class="val">${esc(doc.grupo || '—')}</div></div>
+      <div class="autores"><div class="lbl">Fecha</div><div class="val">${esc(doc.fecha)}</div></div>
+    </div>
+    <div class="gen-note">Documento elaborado con DocuMind · Fuentes abiertas (Wikipedia, CC BY-SA)${doc.ai ? ' · Síntesis asistida por IA' : ''}</div>
+  </div>`;
+}
+
+function chapterHTML(ch){
+  let body = '';
+  if (ch.limit){
+    body = `<p class="limit-note">No se encontró material suficiente y verificable para este elemento en las fuentes abiertas consultadas; se recomienda ampliar la búsqueda manualmente.</p>`;
+  } else {
+    body = ch.paras.map(p => `<p>${esc(p)}</p>`).join('') +
+      (ch.ventajas.length ? `<h4 class="h-pos">Ventajas</h4><ul class="ve pos">${ch.ventajas.map(v => `<li><b>${esc(v.t)}:</b> ${esc(v.d)}</li>`).join('')}</ul>` : '') +
+      (ch.desventajas.length ? `<h4 class="h-neg">Desventajas</h4><ul class="ve neg">${ch.desventajas.map(v => `<li><b>${esc(v.t)}:</b> ${esc(v.d)}</li>`).join('')}</ul>` : '') +
+      (ch.ejemplo ? `<h4 class="h-code">Ejemplo de consulta (${esc(ch.ejemplo.lenguaje || 'código')})</h4><div class="codeblock"><span class="lang">${esc(ch.ejemplo.lenguaje || 'código')}</span><pre>${esc(ch.ejemplo.codigo)}</pre></div>` : '');
+  }
+  return `<h3 id="s-${esc(ch.num)}"><span class="secnum">${esc(ch.num)}.</span>${esc(ch.title)}</h3>` + body;
+}
+
+function renderDoc(doc, catResults){
+  state.doc = doc;
+
+  /* Entradas del índice con estimación de páginas */
+  const entries = [];
+  let used = 0;
+  const pageOf = () => 3 + Math.floor(used / 1700);
+  entries.push({ n: '1', t: 'Introducción', lvl: 1, pg: pageOf(), href: '#sec-1' });
+  used += doc.intro.join(' ').length;
+  entries.push({ n: '2', t: 'Desarrollo', lvl: 1, pg: pageOf(), href: '#sec-2' });
+  doc.chapters.forEach(ch => {
+    entries.push({ n: ch.num, t: ch.title, lvl: 2, pg: pageOf(), href: '#s-' + ch.num });
+    used += chapterLen(ch);
+  });
+  const cuadroN = `2.${doc.chapters.length + 1}`;
+  entries.push({ n: cuadroN, t: 'Cuadro comparativo', lvl: 2, pg: pageOf(), href: '#s-cuadro' });
+  used += 1200;
+  entries.push({ n: '3', t: 'Conclusiones', lvl: 1, pg: pageOf(), href: '#sec-3' });
+  used += doc.concl.join(' ').length;
+  entries.push({ n: '4', t: 'Bibliografía', lvl: 1, pg: pageOf(), href: '#sec-4' });
+  entries.push({ n: '5', t: 'Anexos', lvl: 1, pg: pageOf(), href: '#sec-5' });
+
+  const thead = `<tr><th>Aspecto</th>${doc.chapters.map(c => `<th>${esc(c.title)}</th>`).join('')}</tr>`;
+  const tbody = doc.tabla.map(r => `<tr><td class="asp">${esc(r.aspecto)}</td>${r.vals.map(v => `<td>${esc(v)}</td>`).join('')}</tr>`).join('');
+  const hastaNum = doc.chapters.length ? `2.${doc.chapters.length}` : '2.1';
+
+  $('#paper').innerHTML =
+    portadaHTML(doc) +
+    `<div class="indice"><h2>Índice</h2>
+      <ul class="idx">${entries.map(e =>
+        `<li class="${e.lvl === 2 ? 'lvl2' : ''}"><a href="${esc(e.href)}"><span class="n">${esc(e.n)}</span><span>${esc(e.t)}</span><span class="dots"></span><span class="pg">${e.pg}</span></a></li>`
+      ).join('')}</ul>
+    </div>` +
+    `<section class="p-sec" id="sec-1"><h2><span class="secnum">1.</span>Introducción</h2>${doc.intro.map(p => `<p>${esc(p)}</p>`).join('')}</section>` +
+    `<section class="p-sec" id="sec-2"><h2><span class="secnum">2.</span>Desarrollo</h2>
+      ${doc.chapters.map(chapterHTML).join('')}
+      <h3 id="s-cuadro"><span class="secnum">${esc(cuadroN)}.</span>Cuadro comparativo</h3>
+      <div class="tbl-wrap"><table class="cmp"><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>
+      <p class="tbl-note">Cuadro sintetizado ${doc.ai ? 'con asistencia de IA' : 'a partir del análisis de las fuentes'}; los valores resumen los hallazgos de las secciones 2.1–${esc(hastaNum)}.</p>
+    </section>` +
+    `<section class="p-sec" id="sec-3"><h2><span class="secnum">3.</span>Conclusiones</h2><ol class="concl">${doc.concl.map(c => `<li>${esc(c)}</li>`).join('')}</ol></section>` +
+    `<section class="p-sec" id="sec-4"><h2><span class="secnum">4.</span>Bibliografía</h2><ol class="biblio">${doc.biblio.map(r =>
+      `<li>«${esc(r.t)}». Wikipedia: La enciclopedia libre. Wikimedia Foundation, Inc. Disponible en: <a href="${esc(r.u)}" target="_blank" rel="noopener">${esc(r.u)}</a> [consultado el ${fechaCorta()}].</li>`
+    ).join('')}</ol></section>` +
+    `<section class="p-sec" id="sec-5"><h2><span class="secnum">5.</span>Anexos (enlaces de consulta y descarga)</h2>
+      <p>Los siguientes enlaces corresponden a las fuentes consultadas durante la investigación y a la documentación oficial de cada elemento analizado. Se recomienda revisarlos para profundizar, descargar herramientas o verificar la información aquí presentada:</p>
+      <div class="anexos">${doc.anexos.map(a =>
+        `<a class="anx" href="${esc(a.u)}" target="_blank" rel="noopener"><div class="t">${esc(a.t)}</div><div class="u">${esc(shortURL(a.u))}</div><div class="d">${esc(a.d)}</div></a>`
+      ).join('')}</div>
+    </section>`;
+
+  const s = doc.stats;
+  $('#doc-stats').innerHTML =
+    `<span class="stat"><b>${s.words.toLocaleString('es')}</b> palabras</span>
+     <span class="stat"><b>${s.elementos}</b> elementos comparados</span>
+     <span class="stat"><b>${s.fuentes}</b> fuentes citadas</span>
+     <span class="stat">lectura ≈ <b>${s.lectura} min</b></span>
+     <span class="stat">${doc.ai ? 'IA: enriquecido' : 'IA: síntesis local'}</span>`;
+
+  const usedTitles = new Set(doc.chapters.map(c => c.page).filter(Boolean));
+  const rel = (catResults || []).filter(r => !usedTitles.has(r.title)).slice(0, 6);
+  const rw = $('#related-wrap');
+  if (rel.length){
+    rw.classList.remove('hidden');
+    $('#related').innerHTML = rel.map(r => `<button class="chip" data-topic="${esc(r.title)}">${esc(r.title)}</button>`).join('');
+  } else {
+    rw.classList.add('hidden');
+  }
+  addHistory(doc.cfg.topic);
+}
+
+/* ---------------- Exportación ---------------- */
+function buildText(doc){
+  const L = [];
+  const cuadroN = '2.' + (doc.chapters.length + 1);
+  L.push('TRABAJO');
+  if (doc.materia) L.push(doc.materia.toUpperCase());
+  L.push(doc.title.toUpperCase());
+  L.push('');
+  L.push('Autores: ' + doc.autores.join(', '));
+  if (doc.profesor) L.push('Profesor(es): ' + doc.profesor);
+  if (doc.grupo) L.push('Grupo: ' + doc.grupo);
+  L.push('Fecha: ' + doc.fecha);
+  L.push('');
+  L.push('ÍNDICE');
+  L.push('1. Introducción');
+  L.push('2. Desarrollo');
+  doc.chapters.forEach(c => L.push('   ' + c.num + '. ' + c.title));
+  L.push('   ' + cuadroN + '. Cuadro comparativo');
+  L.push('3. Conclusiones');
+  L.push('4. Bibliografía');
+  L.push('5. Anexos');
+  L.push('');
+  L.push('1. INTRODUCCIÓN');
+  doc.intro.forEach(p => { L.push(p); L.push(''); });
+  L.push('2. DESARROLLO');
+  doc.chapters.forEach(ch => {
+    L.push(ch.num + '. ' + ch.title);
+    if (ch.limit){ L.push('(No se encontró material suficiente para este elemento.)'); L.push(''); return; }
+    ch.paras.forEach(p => { L.push(p); L.push(''); });
+    if (ch.ventajas.length){ L.push('Ventajas:'); ch.ventajas.forEach(v => L.push(' - ' + v.t + ': ' + v.d)); L.push(''); }
+    if (ch.desventajas.length){ L.push('Desventajas:'); ch.desventajas.forEach(v => L.push(' - ' + v.t + ': ' + v.d)); L.push(''); }
+    if (ch.ejemplo){ L.push('Ejemplo de consulta (' + ch.ejemplo.lenguaje + '):'); L.push(ch.ejemplo.codigo); L.push(''); }
+  });
+  L.push(cuadroN + '. CUADRO COMPARATIVO');
+  L.push(['Aspecto', ...doc.chapters.map(c => c.title)].join(' | '));
+  doc.tabla.forEach(r => L.push([r.aspecto, ...r.vals].map(x => String(x).replace(/\s+/g,' ').slice(0,70)).join(' | ')));
+  L.push('');
+  L.push('3. CONCLUSIONES');
+  doc.concl.forEach((c, i) => { L.push((i+1) + '. ' + c); L.push(''); });
+  L.push('4. BIBLIOGRAFÍA');
+  doc.biblio.forEach((r, i) => L.push('[' + (i+1) + '] «' + r.t + '». Wikipedia: La enciclopedia libre. ' + r.u));
+  L.push('');
+  L.push('5. ANEXOS');
+  doc.anexos.forEach(a => L.push(' - ' + a.t + ': ' + a.u));
+  return L.join('\n');
+}
+
+function buildWordHTML(doc){
+  const inner = $('#paper').innerHTML
+    .replace(/<table/g, '<table border="1" cellspacing="0" cellpadding="6"')
+    .replace(/<a href/g, '<a style="color:#0000CC" href');
+  const css = `body{font-family:'Times New Roman',serif;font-size:12pt;line-height:1.6;color:#000;margin:2.4cm}
+h1{font-size:20pt;text-align:center;text-transform:uppercase}h2{font-size:15pt;border-bottom:1px solid #333}
+h3{font-size:13pt}h4{font-size:12pt}
+.lbl{font-weight:bold;text-transform:uppercase;font-size:10pt;color:#444}
+table{font-size:10pt}pre{font-family:'Courier New',monospace;font-size:10pt;background:#F3F3F3;padding:8px;white-space:pre-wrap}
+.portada{text-align:center;padding:60px 0}.doc-title{font-size:20pt}
+.cover-meta{display:table;margin:0 auto;text-align:left;font-size:11pt}.cover-meta>div{margin:6px 0}
+.rule{border-top:3px solid #6D5EFC;width:120px;margin:20px auto}
+.gen-note,.tbl-note,.cover-cap{font-size:9pt;color:#777;font-style:italic}
+.anx{margin-bottom:10px}.anx .u{font-size:9pt;color:#0000CC}.anx .d{font-size:9pt;color:#666}
+.limit-note{font-size:10pt;color:#8A6D1F}.idx{list-style:none;margin-left:0}.idx li{margin:4px 0}
+.codeblock{background:#F3F3F3;padding:8px}.lang{font-size:9pt;color:#777;text-transform:uppercase}`;
+  return `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">` +
+    `<head><meta charset="utf-8"><title>${esc(doc.title)}</title><style>${css}</style></head>` +
+    `<body>${inner}</body></html>`;
+}
+
+function buildStandaloneHTML(doc){
+  const inner = $('#paper').innerHTML;
+  const css = `*{box-sizing:border-box;margin:0;padding:0}
+body{background:#fff;color:#1c2340;font-family:Georgia,'Times New Roman',serif;line-height:1.8;max-width:900px;margin:0 auto;padding:48px 24px;font-size:16px}
+h1,h2,h3,h4{font-family:Arial,Helvetica,sans-serif;line-height:1.3}
+h2{font-size:21px;border-bottom:2px solid #eceef7;padding-bottom:8px;margin:34px 0 16px}
+h3{font-size:18px;color:#241d63;margin:24px 0 10px}h4{margin:16px 0 8px}
+.h-pos{color:#047857}.h-neg{color:#b91c1c}.h-code{color:#33334d}
+.secnum{color:#5b4fe8;font-weight:700;margin-right:6px}
+p{text-align:justify;margin:0 0 14px}
+.doc-type{font-weight:700;letter-spacing:.4em;text-transform:uppercase;color:#5b4fe8;text-align:center}
+.materia{text-align:center;letter-spacing:.3em;text-transform:uppercase;color:#8a90ad;margin-top:10px}
+h1.doc-title{font-size:30px;text-align:center;text-transform:uppercase;color:#10142e;margin:20px auto 6px;max-width:640px}
+.rule{width:120px;height:4px;background:linear-gradient(135deg,#6d5efc,#a855f7,#22d3ee);margin:20px auto;border-radius:9px}
+.cover-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px 26px;max-width:560px;margin:0 auto;font-family:Arial;font-size:14px}
+.cover-meta .lbl{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#8a90ad}
+.cover-meta .autores{grid-column:1/-1}.cover-meta .val{white-space:pre-line}
+.gen-note{text-align:center;font-size:12px;color:#9aa0b8;margin-top:28px;font-family:Arial}
+.portada{text-align:center;padding:26px 0 40px;border-bottom:1px solid #e3e7f2;margin-bottom:34px}
+.indice h2{font-size:20px;text-align:center;letter-spacing:.14em;text-transform:uppercase;margin-bottom:18px;color:#10142e}
+.idx{list-style:none;font-family:Arial;font-size:14px}
+.idx a{display:flex;align-items:baseline;gap:10px;text-decoration:none;color:#2a3153;padding:5px 0}
+.idx .n{color:#5b4fe8;font-weight:600;min-width:2.1em}
+.idx .dots{flex:1;border-bottom:2px dotted #c4cbdf;transform:translateY(-4px);min-width:24px}
+.idx .pg{color:#8a90ad}.idx .lvl2 a{padding-left:2.4em}
+ul.ve{margin:0 0 16px 4px;list-style:none}
+ul.ve li{position:relative;padding-left:24px;margin-bottom:9px;text-align:justify}
+ul.ve li::before{content:"";position:absolute;left:4px;top:.62em;width:8px;height:8px;border-radius:2px;transform:rotate(45deg)}
+ul.ve.pos li::before{background:#10b981}ul.ve.neg li::before{background:#f87171}
+ul.ve b{color:#10142e}
+ol.concl{padding-left:24px}ol.concl li{margin-bottom:12px;text-align:justify}
+.tbl-wrap{overflow-x:auto;margin:6px 0 14px;border:1px solid #dfe3f0;border-radius:12px}
+table.cmp{border-collapse:collapse;width:100%;min-width:640px;font-family:Arial;font-size:13px;line-height:1.5}
+table.cmp th{background:#141838;color:#fff;text-align:left;padding:10px 12px}
+table.cmp th:first-child{background:#5b4fe8}
+table.cmp td{border-top:1px solid #e7eaf5;padding:10px 12px;vertical-align:top;color:#2a3153}
+table.cmp tbody tr:nth-child(odd){background:#f7f8fc}
+table.cmp td.asp{font-weight:600;color:#10142e;white-space:nowrap;background:#eef0fa}
+.tbl-note{font-size:12px;color:#8a90ad;font-family:Arial}
+.codeblock{background:#0d1026;color:#e6e9ff;border-radius:12px;padding:14px 16px;margin:10px 0 16px;overflow-x:auto;font-family:Consolas,'Courier New',monospace;font-size:13px}
+.codeblock .lang{display:block;font-family:Arial;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8f95c4;margin-bottom:8px}
+pre{margin:0;white-space:pre;font-family:inherit}
+ol.biblio{padding-left:22px;font-size:14px}ol.biblio li{margin-bottom:11px}
+ol.biblio a{color:#4338ca;word-break:break-all}
+.anexos{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:14px}
+.anx{border:1px solid #e3e7f2;border-radius:14px;padding:14px 16px;background:#f8f9fe;display:block;text-decoration:none}
+.anx .t{font-family:Arial;font-weight:600;font-size:14px;color:#10142e;margin-bottom:5px}
+.anx .u{font-family:Arial;font-size:12px;color:#5b4fe8;word-break:break-all}
+.anx .d{font-family:Arial;font-size:12px;color:#6a7090;margin-top:6px}
+.limit-note{font-size:14px;color:#8a6d1f;background:#fdf6e3;border:1px solid #f1e3b3;border-radius:10px;padding:9px 13px;font-family:Arial}`;
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">` +
+    `<title>${esc(doc.title)} — Documento</title><style>${css}</style></head><body>${inner}` +
+    `<p style="text-align:center;color:#9aa0b8;font-size:12px;font-family:Arial;margin-top:36px">Generado con DocuMind — verificar la información antes de uso académico.</p></body></html>`;
+}
+
+/* ---------------- Pantalla de carga ---------------- */
+const STEP_LABELS = [
+  'Buscando fuentes confiables',
+  'Identificando los elementos a comparar',
+  'Extrayendo contenido de las fuentes',
+  'Redactando y sintetizando (IA + análisis local)',
+  'Componiendo documento e índice'
+];
+function resetLoading(topic){
+  $('#load-topic').textContent = topic;
+  $('#src-cloud').innerHTML = '';
+  $('#steps').innerHTML = STEP_LABELS.map(s => `<li class="step"><span class="ic"></span><span>${esc(s)}</span></li>`).join('');
+  $('#pfill').style.width = '4%';
+  setStatus('Iniciando motor de investigación…');
+}
+function setStep(i, status){
+  $$('#steps .step').forEach((s, idx) => {
+    s.classList.toggle('done', idx < i - 1);
+    s.classList.toggle('active', idx === i - 1);
+  });
+  $('#pfill').style.width = Math.round(i / 5 * 100) + '%';
+  if (status) setStatus(status);
+}
+function setStatus(t){ $('#load-status').textContent = t; }
+function addSourcePill(t){
+  const c = $('#src-cloud');
+  if (c.children.length > 11) return;
+  const el = document.createElement('span');
+  el.className = 'src-pill';
+  el.textContent = t;
+  c.appendChild(el);
+}
+
+/* ---------------- Pipeline principal ---------------- */
+async function research(cfg){
+  state.busy = true;
+  $('#btn-go').disabled = true;
+  showScreen('#scr-load');
+  resetLoading(cfg.topic);
+  try {
+    /* 1 · Fuentes de la categoría */
+    setStep(1, 'Buscando fuentes confiables en la web abierta…');
+    const catResults = await wikiSearch(cfg.topic, 8).catch(() => []);
+    if (!catResults.length) throw new Error('No se encontraron fuentes para ese tema. Prueba con otro término o revisa tu conexión.');
+    addSourcePill('Categoría: ' + cfg.topic);
+    await sleep(350);
+
+    /* 2 · Elementos a comparar (IA → fallback local) */
+    setStep(2);
+    const els = await pickElements(cfg, catResults);
+    setStatus('Elementos seleccionados: ' + els.map(e => e.name).join(' · '));
+    await sleep(400);
+
+    /* 3 · Extracción por elemento (en paralelo, máx 3) */
+    setStep(3, 'Extrayendo y analizando el contenido de cada fuente…');
+    const catPromise = (async () => {
+      await sleep(500);
+      for (const r of catResults.slice(0, 3)){
+        const ex = await wikiExtract(r.title).catch(() => null);
+        if (ex && !isDisambig(ex.text) && ex.text.length > 600) return ex;
+      }
+      return null;
+    })();
+    const researched = await mapLimit(els, 2, async (el, k) => {
+      await sleep(k * 400);
+      return researchElement(el, cfg, addSourcePill);
+    });
+    const catEx = await catPromise;
+    const freq = kwFreq([catEx ? catEx.text.slice(0, 5000) : '', ...researched.map(r => r.text.slice(0, 5000))]);
+    const withMat = researched.map(r => ({ ...r, material: elementMaterial(r, freq) }));
+    await sleep(350);
+
+    /* 4 · Redacción (IA opcional + síntesis local) */
+    setStep(4, 'Consultando IA gratuita para la redacción…');
+    let ai = null;
+    try { ai = await tryAISynthesis(cfg, withMat); } catch(e){ ai = null; }
+    if (ai) setStatus('IA conectada: enriqueciendo definiciones, ventajas, tabla y conclusiones.');
+    else { setStatus('IA no disponible ahora: aplicando síntesis extractiva local sobre las fuentes.'); await sleep(500); }
+
+    /* 5 · Componer documento */
+    setStep(5, 'Generando portada, índice, cuadro comparativo y anexos…');
+    const doc = buildDoc(cfg, withMat, ai, catEx ? catEx.title : '', catEx ? catEx.text : '', freq);
+    await sleep(450);
+    setStep(6);
+    renderDoc(doc, catResults);
+    showScreen('#scr-doc');
+  } catch(err){
+    console.error(err);
+    showScreen('#scr-home');
+    showHomeError(err.message || 'Ocurrió un error inesperado. Inténtalo de nuevo.');
+    toast('Error: ' + (err.message || 'inesperado'), 3600);
+  } finally {
+    state.busy = false;
+    $('#btn-go').disabled = false;
+  }
+}
+
+/* ---------------- Prefs, historial e interfaz ---------------- */
+const EXAMPLES = ['Sistemas ORM', 'Bases de datos NoSQL', 'Energías renovables', 'Frameworks de JavaScript', 'Redes neuronales'];
+const DEFAULT_AUTORES = 'Leily Sánchez López\nKirenia Finalé Piña\nKatherine Serrano Ronda\nCarlos A. Lorenzo Marro';
+
+function loadPrefs(){
+  let p = {};
+  try { p = JSON.parse(localStorage.getItem('documind_prefs') || '{}'); } catch(e){}
+  $('#f-autores').value = p.autores || DEFAULT_AUTORES;
+  $('#f-grupo').value = p.grupo || '4to Año Ingeniería Informática CPE';
+  $('#f-materia').value = p.materia || 'Base de Datos';
+  if (p.profesor) $('#f-profesor').value = p.profesor;
+  $('#f-fecha').value = fechaLarga();
+}
+function savePrefs(cfg){
+  try {
+    localStorage.setItem('documind_prefs', JSON.stringify({
+      autores: cfg.autoresText, grupo: cfg.grupo, materia: cfg.materia, profesor: cfg.profesor
+    }));
+  } catch(e){}
+}
+function addHistory(topic){
+  let h = [];
+  try { h = JSON.parse(localStorage.getItem('documind_recent') || '[]'); } catch(e){}
+  h = uniq([topic, ...h]).slice(0, 6);
+  try { localStorage.setItem('documind_recent', JSON.stringify(h)); } catch(e){}
+  renderRecent();
+}
+function renderRecent(){
+  let h = [];
+  try { h = JSON.parse(localStorage.getItem('documind_recent') || '[]'); } catch(e){}
+  const w = $('#recent-wrap');
+  if (!h.length){ w.classList.add('hidden'); return; }
+  w.classList.remove('hidden');
+  $('#chips-recent').innerHTML = h.map(t => `<button class="chip" data-topic="${esc(t)}">${esc(t)}</button>`).join('');
+}
+function showHomeError(msg){
+  const e = $('#home-error');
+  e.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg><span>' + esc(msg) + '</span>';
+  e.classList.remove('hidden');
+}
+function hideHomeError(){ $('#home-error').classList.add('hidden'); }
+
+/* ---------------- Eventos ---------------- */
+$('#form').addEventListener('submit', e => {
+  e.preventDefault();
+  if (state.busy) return;
+  const topic = $('#f-topic').value.trim();
+  if (topic.length < 3){
+    toast('Escribe un tema con al menos 3 caracteres.');
+    $('#f-topic').focus();
+    return;
+  }
+  const custom = $('#f-elements').value.split('\n').map(x => x.trim()).filter(Boolean);
+  const cfg = {
+    topic,
+    n: parseInt($('#f-n').value, 10) || 5,
+    materia: $('#f-materia').value.trim() || 'Base de Datos',
+    grupo: $('#f-grupo').value.trim(),
+    profesor: $('#f-profesor').value.trim(),
+    fecha: fechaLarga(),
+    autoresText: $('#f-autores').value,
+    autores: $('#f-autores').value.split('\n').map(x => x.trim()).filter(Boolean),
+    elements: custom.length >= 2 ? custom : null
+  };
+  if (!cfg.autores.length) cfg.autores = ['—'];
+  savePrefs(cfg);
+  hideHomeError();
+  research(cfg);
+});
+
+document.addEventListener('click', e => {
+  const chip = e.target.closest('.chip[data-topic]');
+  if (chip && !state.busy){
+    $('#f-topic').value = chip.getAttribute('data-topic');
+    $('#btn-go').click();
+  }
+});
+
+$('#btn-back').addEventListener('click', () => {
+  showScreen('#scr-home');
+  setTimeout(() => $('#f-topic').focus(), 60);
+});
+$('#btn-print').addEventListener('click', () => { if (state.doc) window.print(); });
+$('#btn-copy').addEventListener('click', async () => {
+  if (!state.doc) return;
+  try {
+    await copyText(buildText(state.doc));
+    toast('Documento copiado al portapapeles.');
+  } catch(e){ toast('No se pudo copiar automáticamente.'); }
+});
+$('#btn-word').addEventListener('click', () => {
+  if (!state.doc) return;
+  download(slugify(state.doc.title) + '.doc', '\ufeff' + buildWordHTML(state.doc), 'application/msword');
+  toast('Descargando documento Word…');
+});
+$('#btn-html').addEventListener('click', () => {
+  if (!state.doc) return;
+  download(slugify(state.doc.title) + '.html', buildStandaloneHTML(state.doc), 'text/html;charset=utf-8');
+  toast('Descargando HTML autónomo…');
+});
+
+/* ---------------- Init ---------------- */
+$('#chips-examples').innerHTML = EXAMPLES.map(t => `<button class="chip" data-topic="${esc(t)}">${esc(t)}</button>`).join('');
+loadPrefs();
+renderRecent();
+</script>
+</body>
+</html>
