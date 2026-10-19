@@ -1,12 +1,80 @@
 /* ============================================================
-   ANIA · Mini-OS · v10.0
+   ANIA · Mini-OS · v10.1
    - Escritorio virtual con ventanas, apps, FS virtual
-   - Botones flotantes: "Mini-OS" en el dock + "Volver" dentro del OS
-   - Sync con el moodBubble para el estado de ánimo
+   - Detección de dispositivo (Android/iOS/tablet/desktop)
+   - Chat minimizable en modo OS con FAB para restaurar
+   - Ajustes responsive para móvil
    - Expone window.OS_* para integración con ANIA
    ============================================================ */
 (function () {
   'use strict';
+
+  /* ═══════════════════════════════════════════════════════════
+     DETECCIÓN DE DISPOSITIVO
+  ═══════════════════════════════════════════════════════════ */
+  var DEVICE = (function () {
+    var nav = navigator || {};
+    var ua = (nav.userAgent || '') + ' ' + (nav.platform || '');
+    var w = window.innerWidth || 0;
+    var h = window.innerHeight || 0;
+    var min = Math.min(w, h);
+    var max = Math.max(w, h);
+    var isAndroid = /Android/i.test(ua);
+    var isIOS = /iPhone|iPad|iPod/i.test(ua) || (nav.platform === 'MacIntel' && (nav.maxTouchPoints || 0) > 1);
+    var isTouch = ('ontouchstart' in window) || (nav.maxTouchPoints || 0) > 0;
+    var isMobileUA = /Mobile|Android|iPhone|iPad|iPod|Opera Mini|IEMobile|Windows Phone/i.test(ua);
+    var isPhone = isMobileUA && min < 600;
+    var isTablet = isMobileUA && min >= 600;
+    var type = isPhone ? 'mobile' : (isTablet ? 'tablet' : 'desktop');
+    var os = isAndroid ? 'android'
+      : isIOS ? 'ios'
+      : /Windows/i.test(ua) ? 'windows'
+      : /Mac OS|Macintosh/i.test(ua) ? 'mac'
+      : /Linux/i.test(ua) ? 'linux'
+      : 'unknown';
+    return {
+      isAndroid: isAndroid, isIOS: isIOS, isTouch: isTouch,
+      isPhone: isPhone, isTablet: isTablet, isMobile: isMobileUA,
+      type: type, os: os,
+      w: w, h: h, min: min, max: max,
+      portrait: h >= w,
+      dpr: window.devicePixelRatio || 1
+    };
+  })();
+
+  function applyDeviceClasses() {
+    var b = document.body;
+    if (!b) return;
+    b.classList.remove(
+      'os-device-mobile', 'os-device-tablet', 'os-device-desktop',
+      'os-android', 'os-ios', 'os-windows', 'os-mac', 'os-linux', 'os-unknown',
+      'os-touch', 'os-no-touch', 'os-portrait', 'os-landscape'
+    );
+    b.classList.add('os-device-' + DEVICE.type);
+    b.classList.add('os-' + DEVICE.os);
+    b.classList.add(DEVICE.isTouch ? 'os-touch' : 'os-no-touch');
+    b.classList.add(DEVICE.portrait ? 'os-portrait' : 'os-landscape');
+  }
+
+  function refreshDevice() {
+    DEVICE.w = window.innerWidth || 0;
+    DEVICE.h = window.innerHeight || 0;
+    DEVICE.min = Math.min(DEVICE.w, DEVICE.h);
+    DEVICE.max = Math.max(DEVICE.w, DEVICE.h);
+    DEVICE.portrait = DEVICE.h >= DEVICE.w;
+    applyDeviceClasses();
+  }
+
+  function debounce(fn, ms) {
+    var t;
+    return function () {
+      var a = arguments;
+      clearTimeout(t);
+      t = setTimeout(function () { fn.apply(null, a); }, ms);
+    };
+  }
+
+  try { applyDeviceClasses(); } catch (e) {}
 
   /* ═══════════════════════════════════════════════════════════
      ICONOS SVG
@@ -30,9 +98,7 @@
      FILE SYSTEM VIRTUAL
   ═══════════════════════════════════════════════════════════ */
   var OS = {
-    zTop: 100,
-    winSeq: 0,
-    activeWin: null,
+    zTop: 100, winSeq: 0, activeWin: null,
     wins: new Map(),
     FS: null,
     loadFS: function () {
@@ -124,11 +190,22 @@
   ═══════════════════════════════════════════════════════════ */
   function createOSWindow(opts) {
     var id = 'osw' + (++OS.winSeq);
-    var w = Math.min(opts.w || 760, innerWidth - 30);
-    var h = Math.min(opts.h || 500, innerHeight - 70);
-    var cnt = OS.wins.size;
-    var x = Math.max(8, (innerWidth - w) / 2 + ((cnt % 7) - 3) * 30);
-    var y = Math.max(4, (innerHeight - 44 - h) / 2 + ((cnt % 7) - 3) * 22);
+    var isMobile = DEVICE.isPhone || DEVICE.isTablet;
+
+    // En móvil: ventanas casi fullscreen por defecto
+    var w, h, x, y;
+    if (isMobile) {
+      w = innerWidth - 8;
+      h = innerHeight - 56;
+      x = 4;
+      y = 4;
+    } else {
+      w = Math.min(opts.w || 760, innerWidth - 30);
+      h = Math.min(opts.h || 500, innerHeight - 70);
+      var cnt = OS.wins.size;
+      x = Math.max(8, (innerWidth - w) / 2 + ((cnt % 7) - 3) * 30);
+      y = Math.max(4, (innerHeight - 44 - h) / 2 + ((cnt % 7) - 3) * 22);
+    }
 
     var win = el('div', 'os-window active');
     win.style.cssText = 'width:' + w + 'px;height:' + h + 'px;left:' + x + 'px;top:' + y + 'px;z-index:' + (++OS.zTop);
@@ -167,7 +244,6 @@
     win.querySelector('.close').onclick = function (e) { e.stopPropagation(); closeOSWin(id); };
     win.addEventListener('pointerdown', function () { focusOSWin(id); });
 
-    /* Arrastrar por la barra de título */
     var tbar = win.querySelector('.os-titlebar');
     tbar.addEventListener('dblclick', function (e) { if (!e.target.closest('.os-tb-btn')) toggleOSMax(id); });
     tbar.addEventListener('pointerdown', function (e) {
@@ -195,7 +271,6 @@
       document.addEventListener('pointerup', mu, { once: true });
     });
 
-    /* Resize */
     var rz = win.querySelector('.os-rz');
     rz.addEventListener('pointerdown', function (e) {
       e.stopPropagation();
@@ -211,9 +286,7 @@
 
     focusOSWin(id);
     return {
-      win: win,
-      body: rec.body,
-      id: id,
+      win: win, body: rec.body, id: id,
       setTitle: function (t) {
         rec.title = t;
         win.querySelector('.os-tb-title').textContent = t;
@@ -233,8 +306,7 @@
     OS.activeWin = id;
   }
   function minimizeOSWin(id) {
-    var w = OS.wins.get(id);
-    if (!w) return;
+    var w = OS.wins.get(id); if (!w) return;
     w.el.classList.add('minimized');
     w.el.classList.remove('active');
     var tb = document.querySelector('#osTasks .os-task[data-win="' + id + '"]');
@@ -246,8 +318,7 @@
     if (w) w.el.classList.toggle('maximized');
   }
   function closeOSWin(id) {
-    var w = OS.wins.get(id);
-    if (!w) return;
+    var w = OS.wins.get(id); if (!w) return;
     w.el.classList.add('closing');
     setTimeout(function () { if (w.el.parentNode) w.el.parentNode.removeChild(w.el); }, 160);
     OS.wins.delete(id);
@@ -449,8 +520,7 @@
       '<div class="os-paint-wrap"><canvas width="1000" height="560" style="background:#fff"></canvas></div>';
     var cv = ctx.body.querySelector('canvas');
     var x = cv.getContext('2d');
-    x.fillStyle = '#fff';
-    x.fillRect(0, 0, cv.width, cv.height);
+    x.fillStyle = '#fff'; x.fillRect(0, 0, cv.width, cv.height);
     x.lineCap = x.lineJoin = 'round';
     var draw = false;
     function pos(e) { var r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; }
@@ -750,13 +820,10 @@
       })(OS.FS);
       var hm = performance.memory;
       return {
-        ok: true,
-        ventanas: OS.wins.size,
-        apps: Object.keys(APPS).length,
-        archivos: n,
+        ok: true, ventanas: OS.wins.size, apps: Object.keys(APPS).length, archivos: n,
         memoriaJS: hm ? Math.round(hm.usedJSHeapSize / 1048576) + ' MB' : '—',
-        nucleos: navigator.hardwareConcurrency || '—',
-        online: navigator.onLine
+        nucleos: navigator.hardwareConcurrency || '—', online: navigator.onLine,
+        device: DEVICE.type, os: DEVICE.os
       };
     },
     apagar: function () { osShutdown(); return { ok: true }; },
@@ -898,6 +965,80 @@
   }
 
   /* ═══════════════════════════════════════════════════════════
+     CHAT MINIMIZABLE · añade botón a header + FAB para restaurar
+  ═══════════════════════════════════════════════════════════ */
+  function setupChatMinimize() {
+    var app = document.getElementById('app');
+    if (!app || app.__chatMinWired) return;
+    app.__chatMinWired = true;
+
+    // Botón minimizar dentro del header de ANIA
+    var header = app.querySelector('header');
+    if (header && !document.getElementById('chatMinBtn')) {
+      var minBtn = document.createElement('button');
+      minBtn.id = 'chatMinBtn';
+      minBtn.type = 'button';
+      minBtn.title = 'Minimizar chat';
+      minBtn.setAttribute('aria-label', 'Minimizar chat');
+      minBtn.innerHTML = '─';
+      minBtn.onclick = function (e) { e.stopPropagation(); toggleChatMin(true); };
+      header.appendChild(minBtn);
+    }
+
+    // FAB flotante para restaurar (oculto por defecto, aparece cuando minimized)
+    if (!document.getElementById('chatFab')) {
+      var fab = document.createElement('button');
+      fab.id = 'chatFab';
+      fab.type = 'button';
+      fab.title = 'Abrir chat de Ania';
+      fab.setAttribute('aria-label', 'Abrir chat de Ania');
+      fab.innerHTML =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:26px;height:26px">' +
+          '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' +
+        '</svg>' +
+        '<span class="chat-fab-label">ANIA</span>';
+      fab.onclick = function () { toggleChatMin(false); };
+      document.body.appendChild(fab);
+    }
+
+    // Restaurar estado (default = minimizado en móvil, expandido en desktop)
+    var saved = null;
+    try { saved = localStorage.getItem('os_chat_min'); } catch (e) {}
+    var minimized;
+    if (saved === null) {
+      minimized = DEVICE.isPhone; // primera vez: minimizado en móvil
+    } else {
+      minimized = saved === '1';
+    }
+    applyChatMin(minimized);
+  }
+
+  function applyChatMin(min) {
+    var b = document.body;
+    b.classList.toggle('os-chat-min', !!min);
+    try { localStorage.setItem('os_chat_min', min ? '1' : '0'); } catch (e) {}
+    // Ajustar FAB según estado y modo OS
+    var fab = document.getElementById('chatFab');
+    if (fab) {
+      var visible = !!min && b.classList.contains('os-on');
+      fab.classList.toggle('on', visible);
+    }
+  }
+
+  function toggleChatMin(force) {
+    var next = (typeof force === 'boolean') ? force : !document.body.classList.contains('os-chat-min');
+    applyChatMin(next);
+  }
+
+  // Exponer para debug
+  window.OSChatMin = {
+    toggle: toggleChatMin,
+    minimize: function () { applyChatMin(true); },
+    restore: function () { applyChatMin(false); },
+    isMinimized: function () { return document.body.classList.contains('os-chat-min'); }
+  };
+
+  /* ═══════════════════════════════════════════════════════════
      ENTRAR / SALIR DEL OS
   ═══════════════════════════════════════════════════════════ */
   function enterOS() {
@@ -906,6 +1047,13 @@
 
     var returnFab = document.getElementById('returnFab');
     if (returnFab) returnFab.classList.add('on');
+
+    // Refrescar FAB del chat según estado de minimización
+    var fab = document.getElementById('chatFab');
+    if (fab) {
+      var min = document.body.classList.contains('os-chat-min');
+      fab.classList.toggle('on', min);
+    }
 
     tickOSClock();
     try { renderOSDesktop(); } catch (e) { console.warn('[OS] renderDesktop:', e); }
@@ -940,6 +1088,10 @@
     var returnFab = document.getElementById('returnFab');
     if (returnFab) returnFab.classList.remove('on');
 
+    // Ocultar FAB del chat al salir del OS (el estado se conserva)
+    var fab = document.getElementById('chatFab');
+    if (fab) fab.classList.remove('on');
+
     closeOSStart();
   }
 
@@ -965,6 +1117,8 @@
     if (app) app.style.display = '';
     var returnFab = document.getElementById('returnFab');
     if (returnFab) returnFab.classList.remove('on');
+    var fab = document.getElementById('chatFab');
+    if (fab) fab.classList.remove('on');
     console.log('[OS] Shutdown → login');
   }
   window.OSShutdown = osShutdown;
@@ -992,7 +1146,6 @@
     var ex = $('#osExit');
     if (ex) ex.onclick = function () { osShutdown(); };
 
-    /* Botón flotante volver */
     var returnFab = document.getElementById('returnFab');
     if (returnFab && !returnFab.__wired) {
       returnFab.__wired = true;
@@ -1003,14 +1156,12 @@
       });
     }
 
-    /* Item del dock · Mini-OS */
     var btnMiniOS = document.getElementById('btnMiniOS');
     if (btnMiniOS && !btnMiniOS.__wired) {
       btnMiniOS.__wired = true;
       btnMiniOS.addEventListener('click', function (e) {
         e.preventDefault();
         e.stopPropagation();
-        /* Cerrar el dock */
         if (typeof window.closeDock === 'function') { try { window.closeDock(); } catch (err) {} }
         var dockDrawer = document.getElementById('dockDrawer');
         var dockBackdrop = document.getElementById('dockBackdrop');
@@ -1022,7 +1173,6 @@
       });
     }
 
-    /* Item del dock · Ánimo · se sincroniza con el moodBubble */
     var btnMood = document.getElementById('btnMood');
     var dockMoodIcon = document.getElementById('dockMoodIcon');
     var moodBubble = document.getElementById('moodBubble');
@@ -1031,14 +1181,10 @@
       btnMood.addEventListener('click', function (e) {
         e.preventDefault();
         e.stopPropagation();
-        /* Delegar en el click del moodBubble original si existe */
-        if (moodBubble) {
-          try { moodBubble.click(); } catch (err) {}
-        }
+        if (moodBubble) { try { moodBubble.click(); } catch (err) {} }
       });
     }
 
-    /* Sincronizar el emoji del dock con el del moodBubble */
     if (moodBubble && dockMoodIcon) {
       var syncMood = function () {
         var txt = (moodBubble.textContent || '').trim();
@@ -1061,9 +1207,17 @@
     if (_osReady) return;
     _osReady = true;
     try { OS.loadFS(); } catch (e) { console.warn('[OS] loadFS:', e); }
+    applyDeviceClasses();
     wireButtons();
+    setupChatMinimize();
     tickOSClock();
-    console.log('[OS] Mini-OS listo ·', Object.keys(APPS).length, 'apps ·', Object.keys(OS.FS).length, 'carpetas');
+
+    // Actualizar clases al rotar / redimensionar
+    window.addEventListener('resize', debounce(refreshDevice, 200));
+    window.addEventListener('orientationchange', function () { setTimeout(refreshDevice, 150); });
+
+    console.log('[OS] Mini-OS listo ·', Object.keys(APPS).length, 'apps ·', Object.keys(OS.FS).length,
+      'carpetas · device:', DEVICE.type, '/', DEVICE.os);
   }
 
   if (document.readyState === 'loading') {
@@ -1073,7 +1227,6 @@
   }
   setTimeout(initOS, 3000);
 
-  /* Hook de send (independiente) */
   var _hookTries = 0;
   (function tickHook() {
     _hookTries++;
@@ -1082,10 +1235,8 @@
     else console.warn('[OS] send() nunca apareció tras 40s');
   })();
 
-  /* Al cargar la página, asegurar wireButtons si los nuevos items
-     se agregaron DESPUÉS del init (por si el módulo remoto los añade). */
   window.addEventListener('load', function () {
-    setTimeout(wireButtons, 500);
+    setTimeout(function () { wireButtons(); setupChatMinimize(); }, 500);
   });
 
   /* ═══════════════════════════════════════════════════════════
@@ -1094,6 +1245,7 @@
   window.OS = OS;
   window.OS_APPS = APPS;
   window.IC = IC;
+  window.OS_DEVICE = DEVICE;
   window.OS_createWindow = createOSWindow;
   window.OS_closeWindow = closeOSWin;
   window.OS_focusWindow = focusOSWin;
