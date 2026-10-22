@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Agregar middleware express.json() para parsear cuerpos JSON",
+        "categoria": "bug",
+        "prioridad": "alta",
+        "descripcion": "El servidor no puede leer cuerpos JSON en las peticiones POST, lo que impide el registro y login.",
+        "como": "Colocar app.use(express.json()); antes de las rutas para que el cuerpo se parsee correctamente."
+      },
+      {
+        "titulo": "Implementar política de seguridad de contenido (CSP) con Helmet",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Sin CSP, el sitio es vulnerable a XSS mediante recursos externos.",
+        "como": "Configurar helmet({contentSecurityPolicy:{ ... }}) para permitir solo recursos propios y de confianza."
+      },
+      {
+        "titulo": "Aplicar rate limiting a las rutas críticas (login, registro, cambio de contraseña)",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "La falta de límites permite ataques de fuerza bruta en las credenciales.",
+        "como": "Asignar los middlewares limiterLogin, limiterRegister y limiterPassword a sus respectivas rutas."
+      },
+      {
+        "titulo": "Añadir protección CSRF para formularios y llamadas al backend",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "Sin protección CSRF, usuarios malintencionados pueden ejecutar acciones en nombre del usuario.",
+        "como": "Incorporar el middleware csurf y enviar el token en un encabezado personalizado en cada petición."
+      },
+      {
+        "titulo": "Implementar caché de usuarios en memoria para reducir llamadas a GitHub",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "Cada carga de usuarios dispara una llamada a GitHub, aumentando latencia y consumo de recursos.",
+        "como": "Almacenar la lista de usuarios en un Map con TTL y verificar el cache antes de realizar ghRead."
+      }
+    ],
+    "fecha": "2026-10-22T08:20:16.968Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 17533,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Restringir origenes CORS a dominios permitidos",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -186,52 +233,5 @@
     ],
     "duracionMs": 31621,
     "fuente": "fallback"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Validación estricta de variables de entorno",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "El servidor arranca sin credenciales críticas, lo que causa errores inesperados. Validar todas las variables antes de iniciar.",
-        "como": "Añadir un módulo que compruebe la presencia de ANIA_SECRET, TOKEN_SECRET y GITHUB_TOKEN al inicio. Salir con mensaje claro si falta alguna."
-      },
-      {
-        "titulo": "Optimizar accesos a GitHub con caché compartida",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "Cada petición a GitHub provoca una llamada HTTP, aumentando latencia y costes. Usar un caché global reduce tráfico.",
-        "como": "Implementar un Map con TTL configurable y usarlo en ghRead y ghWrite. Invalidate cuando se escribe."
-      },
-      {
-        "titulo": "Reemplazar scrypt por Argon2 para hashing de contraseñas",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "scrypt puede ser vulnerable a ataques de GPU y es lento en Node. Argon2 ofrece mayor seguridad y rendimiento.",
-        "como": "Instalar argon2, cambiar hashPass y checkPass para usar argon2.hash y argon2.verify. Mantener formato de almacenamiento."
-      },
-      {
-        "titulo": "Implementar CORS restringido y protección CSRF",
-        "categoria": "seguridad",
-        "prioridad": "media",
-        "descripcion": "El middleware cors permite cualquier origen, lo que abre vector de ataque. CSRF puede comprometer sesiones.",
-        "como": "Configurar cors con whitelist de dominios permitidos. Añadir csurf middleware para generar tokens CSRF en formularios."
-      },
-      {
-        "titulo": "Expose métricas Prometheus y centralizar logs",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "Sin métricas ni logs centralizados, es difícil diagnosticar cuellos de botella. Exponer métricas ayuda a monitoreo.",
-        "como": "Integrar prom-client y crear endpoint /metrics. Usar Winston con transporte a Loki/ELK para logs estructurados."
-      }
-    ],
-    "fecha": "2026-10-17T07:32:58.499Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 19638,
-    "fuente": "ia"
   }
 ]
