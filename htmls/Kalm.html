@@ -1,0 +1,2045 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kalm — Navegador dentro del navegador</title>
+<meta name="description" content="Kalm: proxy web en un solo archivo HTML. Túnel WISP sobre WebSocket, sin Service Workers, listo para GitHub Pages.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c5cff'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='4' y='4' width='56' height='56' rx='16' fill='url(%23g)'/%3E%3Cpath d='M20 18v28M20 32l16-14M22 34l18 12' stroke='%23fff' stroke-width='6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#070a12; --bg2:#0c111d; --card:rgba(255,255,255,.045); --card2:rgba(255,255,255,.08);
+  --line:rgba(255,255,255,.09); --tx:#e8ecf4; --tx2:#98a2b8;
+  --ac:#7c5cff; --ac2:#22d3ee; --ok:#34d399; --warn:#fbbf24; --err:#fb7185;
+  --r:16px; --shadow:0 18px 50px rgba(0,0,0,.45);
+}
+[data-theme="light"]{
+  --bg:#eef1f8; --bg2:#f7f9fd; --card:rgba(255,255,255,.75); --card2:#ffffff;
+  --line:rgba(20,30,60,.12); --tx:#141c2b; --tx2:#5b6779;
+  --shadow:0 14px 40px rgba(30,40,80,.14);
+}
+*{box-sizing:border-box; margin:0; padding:0}
+html,body{height:100%}
+body{
+  font-family:Inter,"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:var(--bg); color:var(--tx); font-size:14px; line-height:1.5;
+  display:flex; flex-direction:column; min-height:100vh; overflow:hidden;
+}
+.hidden{display:none !important}
+::selection{background:rgba(124,92,255,.4)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:rgba(127,140,170,.28); border-radius:8px; border:2px solid transparent; background-clip:content-box}
+::-webkit-scrollbar-track{background:transparent}
+a{color:var(--ac2)}
+button{font:inherit; color:inherit; background:none; border:0; cursor:pointer}
+input,select,textarea{font:inherit}
+
+/* fondo animado */
+#orbs{position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none}
+.orb{position:absolute; width:52vw; height:52vw; min-width:420px; min-height:420px; border-radius:50%; filter:blur(90px); opacity:.30}
+.o1{background:radial-gradient(circle at 30% 30%, #7c5cff, transparent 62%); top:-18vw; left:-10vw; animation:drift1 22s ease-in-out infinite alternate}
+.o2{background:radial-gradient(circle at 60% 60%, #22d3ee, transparent 62%); bottom:-20vw; right:-12vw; animation:drift2 26s ease-in-out infinite alternate}
+@keyframes drift1{from{transform:translate(0,0) scale(1)} to{transform:translate(6vw,4vw) scale(1.15)}}
+@keyframes drift2{from{transform:translate(0,0) scale(1.1)} to{transform:translate(-5vw,-6vw) scale(.95)}}
+
+.glass{background:var(--card); border:1px solid var(--line); border-radius:var(--r); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px)}
+
+/* boot */
+#boot{position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; background:radial-gradient(80% 80% at 50% 20%, #0d1322 0%, #070a12 70%); transition:opacity .45s ease, visibility .45s}
+#boot.gone{opacity:0; visibility:hidden; pointer-events:none}
+.boot-inner{text-align:center}
+.boot-inner svg{width:84px; height:84px; filter:drop-shadow(0 10px 30px rgba(124,92,255,.45)); animation:pop .6s ease}
+.boot-name{font-size:30px; font-weight:800; letter-spacing:.5px; margin-top:14px; background:linear-gradient(135deg,#a78bfa,#22d3ee); -webkit-background-clip:text; background-clip:text; color:transparent}
+.boot-sub{color:var(--tx2); font-size:13px; margin-top:4px}
+.boot-bar{width:150px; height:3px; border-radius:3px; background:rgba(255,255,255,.08); margin:16px auto 0; overflow:hidden}
+.boot-bar i{display:block; width:40%; height:100%; border-radius:3px; background:linear-gradient(90deg,#7c5cff,#22d3ee); animation:slide 1.1s ease-in-out infinite}
+@keyframes slide{0%{transform:translateX(-110%)} 100%{transform:translateX(280%)}}
+@keyframes pop{from{transform:scale(.7); opacity:0} to{transform:scale(1); opacity:1}}
+
+/* barra superior */
+#chrome{position:relative; z-index:20; display:flex; align-items:center; gap:6px; padding:8px 10px; background:var(--card); border-bottom:1px solid var(--line); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px)}
+.icon-btn{position:relative; width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; border-radius:10px; color:var(--tx2); transition:.15s}
+.icon-btn:hover{background:var(--card2); color:var(--tx)}
+.icon-btn:disabled{opacity:.35; cursor:default}
+.icon-btn svg{width:17px; height:17px}
+.icon-btn.active{color:#fff; background:linear-gradient(135deg,rgba(124,92,255,.85),rgba(34,211,238,.75))}
+.badge{position:absolute; top:2px; right:2px; min-width:15px; height:15px; padding:0 3px; border-radius:8px; background:linear-gradient(135deg,#7c5cff,#22d3ee); color:#0b0f17; font-size:9.5px; font-weight:800; line-height:15px; text-align:center}
+.badge.pulse{animation:pulse .5s ease}
+@keyframes pulse{50%{transform:scale(1.45)}}
+.addr{flex:1; display:flex; align-items:center; gap:8px; height:38px; padding:0 5px 0 13px; border-radius:999px; background:rgba(0,0,0,.24); border:1px solid var(--line); transition:.15s}
+[data-theme="light"] .addr{background:rgba(255,255,255,.6)}
+.addr:focus-within{border-color:rgba(124,92,255,.65); box-shadow:0 0 0 3px rgba(124,92,255,.18)}
+.addr input{flex:1; min-width:60px; background:transparent; border:0; outline:0; color:var(--tx); font-size:13.5px}
+.addr input::placeholder{color:var(--tx2); opacity:.75}
+.chip{flex-shrink:0; font-size:10.5px; font-weight:700; letter-spacing:.4px; padding:2.5px 9px; border-radius:999px; background:rgba(124,92,255,.16); color:#b9a8ff}
+.chip.direct{background:rgba(251,191,36,.14); color:#fbbf24}
+.chip.ok{background:rgba(52,211,153,.14); color:#34d399}
+.go{flex-shrink:0; width:28px; height:28px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#7c5cff,#22d3ee); color:#0b0f17}
+.go svg{width:14px; height:14px}
+.go:hover{filter:brightness(1.1)}
+#progress{position:absolute; left:0; right:0; bottom:-1px; height:2.5px; overflow:hidden}
+#progress i{display:block; height:100%; width:38%; background:linear-gradient(90deg,#7c5cff,#22d3ee); border-radius:3px; animation:slide 1s ease-in-out infinite}
+
+/* principal */
+#main{position:relative; z-index:5; flex:1; display:flex; flex-direction:column; min-height:0}
+#home{flex:1; overflow:auto}
+.hero{max-width:780px; margin:0 auto; padding:7vh 20px 48px; text-align:center; animation:rise .5s ease}
+@keyframes rise{from{opacity:0; transform:translateY(14px)} to{opacity:1; transform:none}}
+.logo svg{width:92px; height:92px; filter:drop-shadow(0 14px 34px rgba(124,92,255,.5))}
+.hero h1{font-size:46px; font-weight:800; letter-spacing:1px; margin-top:12px; background:linear-gradient(135deg,#c4b5fd 0%,#7c5cff 45%,#22d3ee 100%); -webkit-background-clip:text; background-clip:text; color:transparent}
+.tag{color:var(--tx2); font-size:14.5px; margin-top:6px}
+.hero-form{display:flex; gap:8px; margin:26px auto 0; max-width:620px; padding:6px; border-radius:999px}
+.hero-form input{flex:1; min-width:60px; background:transparent; border:0; outline:0; color:var(--tx); font-size:14.5px; padding:0 8px 0 14px}
+.hero-form input::placeholder{color:var(--tx2); opacity:.7}
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:9px 16px; border-radius:11px; border:1px solid var(--line); background:var(--card2); font-weight:600; font-size:13px; transition:.15s}
+.btn:hover{filter:brightness(1.12); transform:translateY(-1px)}
+.btn.accent{border:0; color:#0b0f17; background:linear-gradient(135deg,#7c5cff,#22d3ee); box-shadow:0 6px 20px rgba(124,92,255,.35)}
+.btn.sm{padding:6px 11px; font-size:12px; border-radius:9px}
+.btn.ghost{background:transparent}
+.chips{display:flex; flex-wrap:wrap; gap:9px; justify-content:center; margin-top:22px}
+.qchip{display:inline-flex; align-items:center; gap:8px; padding:6px 13px 6px 6px; border-radius:999px; border:1px solid var(--line); background:var(--card); font-size:12.5px; font-weight:600; transition:.15s}
+.qchip:hover{border-color:rgba(124,92,255,.55); transform:translateY(-1px)}
+.qdot{width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; color:#fff; background:linear-gradient(135deg,#7c5cff,#22d3ee)}
+.qchip.ghost .qdot{background:transparent; border:1px dashed var(--tx2); color:var(--tx2)}
+.qchip.ghost{color:var(--tx2)}
+.feats{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:26px}
+.feat{font-size:11.5px; color:var(--tx2); border:1px dashed var(--line); border-radius:999px; padding:4.5px 12px}
+.setup{max-width:620px; margin:26px auto 0; padding:18px 20px; text-align:left; border-color:rgba(124,92,255,.45); box-shadow:0 0 0 1px rgba(124,92,255,.15), var(--shadow)}
+.setup h3{font-size:15px; display:flex; align-items:center; gap:8px}
+.setup h3 .dotv{width:9px; height:9px; border-radius:50%; background:var(--warn); box-shadow:0 0 10px var(--warn)}
+.setup ol{margin:10px 0 14px 18px; color:var(--tx2); font-size:12.5px; display:grid; gap:4px}
+.setup-row{display:flex; gap:8px}
+.setup-row input{flex:1; padding:9px 13px; border-radius:10px; border:1px solid var(--line); background:rgba(0,0,0,.25); color:var(--tx); outline:0}
+[data-theme="light"] .setup-row input{background:#fff}
+.setup-row input:focus{border-color:rgba(124,92,255,.6)}
+.hint{font-size:11.5px; color:var(--tx2); margin-top:8px}
+
+/* visor */
+#view{flex:1; display:flex; min-height:0; position:relative}
+#frameWrap{flex:1; display:flex; min-height:0; background:#fff}
+#frame{flex:1; width:100%; height:100%; border:0; background:#fff}
+#viewer{flex:1; display:flex; flex-direction:column; min-height:0; background:var(--bg2)}
+#viewerBar{display:flex; align-items:center; gap:12px; padding:9px 14px; border-bottom:1px solid var(--line); background:var(--card); font-size:12.5px}
+#viewerName{font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:44%}
+#viewerSize{color:var(--tx2); flex:1}
+#viewerBody{flex:1; overflow:auto; display:flex; align-items:center; justify-content:center; padding:20px}
+#viewerBody img{max-width:100%; max-height:100%; border-radius:10px; box-shadow:var(--shadow)}
+#viewerBody video{max-width:100%; max-height:100%; border-radius:10px; background:#000}
+#viewerBody pre{align-self:stretch; width:100%; white-space:pre-wrap; word-break:break-word; font:12.5px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; color:var(--tx); background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px}
+#errBox{flex:1; display:flex; align-items:center; justify-content:center; padding:24px; overflow:auto}
+.err-card{max-width:560px; width:100%; padding:26px; text-align:center}
+.err-card .eicon{width:52px; height:52px; margin:0 auto 12px; border-radius:16px; display:flex; align-items:center; justify-content:center; background:rgba(251,113,133,.12); color:var(--err)}
+.err-card .eicon svg{width:24px; height:24px}
+.err-card h2{font-size:19px; margin-bottom:6px}
+.err-card p{color:var(--tx2); font-size:13px; margin-bottom:6px; word-break:break-word}
+.err-card .eurl{font:12px ui-monospace,monospace; background:rgba(0,0,0,.25); border:1px solid var(--line); border-radius:8px; padding:7px 10px; margin:10px 0 16px; word-break:break-all; color:var(--tx2)}
+.err-actions{display:flex; gap:8px; justify-content:center; flex-wrap:wrap}
+
+/* barra de estado */
+#statusbar{position:relative; z-index:20; display:flex; align-items:center; gap:9px; padding:5px 14px; font-size:11.5px; color:var(--tx2); background:var(--card); border-top:1px solid var(--line)}
+.dot{width:8px; height:8px; border-radius:50%; background:#6b7280; flex-shrink:0}
+.dot.on{background:var(--ok); box-shadow:0 0 8px var(--ok)}
+.dot.off{background:#6b7280}
+.dot.err{background:var(--err); box-shadow:0 0 8px var(--err)}
+.dot.wait{background:var(--warn); animation:pulse 1s infinite}
+#statusMsg{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.spacer{flex:1}
+#statusRes{font-variant-numeric:tabular-nums}
+.v{opacity:.65}
+
+/* paneles */
+.panel{position:fixed; z-index:60; top:0; right:0; bottom:0; width:370px; max-width:94vw; background:var(--bg2); border-left:1px solid var(--line); box-shadow:var(--shadow); transform:translateX(105%); transition:transform .25s ease; display:flex; flex-direction:column}
+.panel.open{transform:none}
+.p-head{display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--line)}
+.p-head h3{font-size:14.5px}
+.p-actions{display:flex; gap:8px; padding:12px 16px 4px; flex-wrap:wrap}
+.p-list{flex:1; overflow:auto; padding:10px 12px 16px; display:grid; gap:6px; align-content:start}
+.item{display:flex; align-items:center; gap:10px; padding:10px 11px; border-radius:11px; border:1px solid transparent; transition:.12s; text-align:left; width:100%}
+.item:hover{background:var(--card2); border-color:var(--line)}
+.item .ico{flex-shrink:0; width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; background:rgba(124,92,255,.14); color:#b9a8ff; font-weight:800}
+.item .ico svg{width:15px; height:15px}
+.item .tx{min-width:0; flex:1}
+.item .t1{font-size:12.8px; font-weight:650; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.item .t2{font-size:11px; color:var(--tx2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.item .act{flex-shrink:0; color:var(--tx2); width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center}
+.item .act:hover{color:var(--err); background:rgba(251,113,133,.12)}
+.empty{color:var(--tx2); text-align:center; padding:34px 16px; font-size:12.5px}
+
+/* dialogo ajustes */
+dialog{border:0; padding:0; background:transparent; max-width:92vw}
+dialog::backdrop{background:rgba(4,6,12,.62); backdrop-filter:blur(5px)}
+.dcard{width:520px; max-width:92vw; max-height:86vh; overflow:auto; padding:22px; background:var(--bg2); border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow)}
+.dcard h3{font-size:17px; margin-bottom:14px}
+.dcard label{display:block; font-size:11.5px; font-weight:700; letter-spacing:.3px; color:var(--tx2); margin:13px 0 6px; text-transform:uppercase}
+.dcard input[type=text], .dcard textarea, .dcard select{width:100%; padding:9.5px 12px; border-radius:10px; border:1px solid var(--line); background:rgba(0,0,0,.25); color:var(--tx); outline:0; resize:vertical}
+[data-theme="light"] .dcard input[type=text], [data-theme="light"] .dcard textarea, [data-theme="light"] .dcard select{background:#fff}
+.dcard input:focus, .dcard textarea:focus{border-color:rgba(124,92,255,.6)}
+.dcard menu{display:flex; gap:8px; justify-content:flex-end; margin-top:18px}
+.row{display:flex; align-items:center; gap:10px; margin-top:9px}
+#setTestOut{font-size:12px; color:var(--tx2)}
+details{margin-top:16px; border:1px solid var(--line); border-radius:12px; padding:10px 13px}
+details summary{cursor:pointer; font-size:12.5px; font-weight:700; color:var(--tx2)}
+.about{font-size:12px; color:var(--tx2); margin-top:9px; display:grid; gap:8px}
+.about b{color:var(--tx)}
+.about code{font:11.5px ui-monospace,monospace; background:rgba(0,0,0,.3); padding:1px 5px; border-radius:5px}
+
+/* toasts */
+#toasts{position:fixed; z-index:90; bottom:46px; left:50%; transform:translateX(-50%); display:grid; gap:8px; width:min(480px,92vw)}
+.toast{display:flex; gap:10px; align-items:flex-start; padding:11px 14px; border-radius:13px; background:rgba(13,18,32,.92); border:1px solid var(--line); box-shadow:var(--shadow); font-size:12.5px; color:#e8ecf4; animation:rise .25s ease; backdrop-filter:blur(10px)}
+.toast.ok{border-left:3px solid var(--ok)}
+.toast.warn{border-left:3px solid var(--warn)}
+.toast.err{border-left:3px solid var(--err)}
+
+@media (max-width:680px){
+  .hero h1{font-size:36px}
+  .logo svg{width:74px; height:74px}
+  #btnStar{display:none}
+  #viewerName{max-width:34%}
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.01ms !important; transition-duration:.01ms !important}
+}
+</style>
+</head>
+<body>
+<noscript><p style="padding:20px">Kalm necesita JavaScript para funcionar.</p></noscript>
+<div id="orbs"><div class="orb o1"></div><div class="orb o2"></div></div>
+
+<div id="boot">
+  <div class="boot-inner">
+    <svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lgBoot" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs><rect x="4" y="4" width="56" height="56" rx="16" fill="url(#lgBoot)"/><path d="M20 18v28M20 32l16-14M22 34l18 12" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none"/><circle cx="47" cy="19" r="4.5" fill="#fff" opacity=".92"/></svg>
+    <div class="boot-name">Kalm</div>
+    <div class="boot-sub">tu navegador dentro del navegador</div>
+    <div class="boot-bar"><i></i></div>
+  </div>
+</div>
+
+<header id="chrome">
+  <button id="btnBack" class="icon-btn" title="Atrás (Alt + ←)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+  <button id="btnFwd" class="icon-btn" title="Adelante (Alt + →)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+  <button id="btnReload" class="icon-btn" title="Recargar (F5)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg></button>
+  <button id="btnHome" class="icon-btn" title="Inicio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg></button>
+  <div id="addrWrap" class="addr">
+    <span id="schemeChip" class="chip">HTTP</span>
+    <input id="addr" type="text" placeholder="Escribe una dirección… p. ej. visuales.uclv.edu.cu" autocomplete="off" spellcheck="false">
+    <button id="btnGo" class="go" title="Ir (Enter)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button>
+  </div>
+  <button id="btnStar" class="icon-btn" title="Marcadores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.3 1.1 6.1L12 17l-5.4 2.8 1.1-6.1L3.2 9.4l6.1-.8z"/></svg></button>
+  <button id="btnDl" class="icon-btn" title="Descargas (Ctrl + J)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 11l5 5 5-5"/><path d="M4 20h16"/></svg><span id="dlBadge" class="badge hidden">0</span></button>
+  <button id="btnSet" class="icon-btn" title="Ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg></button>
+  <div id="progress" class="hidden"><i></i></div>
+</header>
+
+<main id="main">
+  <section id="home">
+    <div class="hero">
+      <div class="logo"><svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="lgHero" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs><rect x="4" y="4" width="56" height="56" rx="16" fill="url(#lgHero)"/><path d="M20 18v28M20 32l16-14M22 34l18 12" stroke="#fff" stroke-width="6" stroke-linecap="round" fill="none"/><circle cx="47" cy="19" r="4.5" fill="#fff" opacity=".92"/></svg></div>
+      <h1>Kalm</h1>
+      <p class="tag">Navegador dentro del navegador · un solo archivo HTML · sin Service Workers</p>
+      <form id="heroForm" class="hero-form glass" autocomplete="off">
+        <input id="heroAddr" type="text" placeholder="http://visuales.uclv.edu.cu" spellcheck="false">
+        <button class="btn accent" type="submit">Navegar</button>
+      </form>
+      <div id="quick" class="chips"></div>
+      <div id="setupCard" class="setup glass hidden">
+        <h3><span class="dotv"></span>Configura tu túnel WISP</h3>
+        <ol>
+          <li>Consigue o despliega un servidor WISP (por ejemplo <b>Epsilon</b> o <b>wisp-js</b>).</li>
+          <li>Pega su dirección WebSocket aquí (usa <b>wss://</b> si alojas Kalm en GitHub Pages).</li>
+          <li>Guarda y navega: el tráfico viaja dentro del túnel, como un archivo estático más.</li>
+        </ol>
+        <div class="setup-row">
+          <input id="setupWisp" type="text" placeholder="wss://tu-servidor-wisp/" spellcheck="false">
+          <button id="setupBtn" class="btn accent" type="button">Conectar</button>
+        </div>
+        <p class="hint">Kalm funciona como página estática: para el firewall solo cargas un HTML; las peticiones salen por el túnel WebSocket.</p>
+      </div>
+      <div class="feats">
+        <span class="feat">Túnel WISP sobre WebSocket</span>
+        <span class="feat">Descargas comprimidas 00001.zip, 00002.zip…</span>
+        <span class="feat">Sin Service Worker</span>
+        <span class="feat">Sin dependencias externas</span>
+        <span class="feat">Listo para GitHub Pages</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="view" class="hidden">
+    <div id="frameWrap"><iframe id="frame" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-downloads" title="Kalm"></iframe></div>
+    <div id="viewer" class="hidden">
+      <div id="viewerBar">
+        <span id="viewerName"></span>
+        <span id="viewerSize"></span>
+        <button id="viewerDl" class="btn accent sm" type="button">Descargar ZIP</button>
+      </div>
+      <div id="viewerBody"></div>
+    </div>
+    <div id="errBox" class="hidden"></div>
+  </section>
+</main>
+
+<footer id="statusbar">
+  <span id="statusDot" class="dot off"></span>
+  <span id="statusMsg">Sin túnel configurado</span>
+  <span class="spacer"></span>
+  <span id="statusRes"></span>
+  <span class="v">Kalm v1.0</span>
+</footer>
+
+<aside id="panelDl" class="panel" aria-label="Descargas">
+  <div class="p-head"><h3>Descargas</h3><button class="icon-btn p-close" title="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="p-actions">
+    <button id="btnSaveCurrent" class="btn ghost sm" type="button">Descargar URL actual</button>
+    <button id="btnClearDl" class="btn ghost sm" type="button">Limpiar lista</button>
+  </div>
+  <div id="dlList" class="p-list"></div>
+</aside>
+
+<aside id="panelBm" class="panel" aria-label="Marcadores">
+  <div class="p-head"><h3>Marcadores</h3><button class="icon-btn p-close" title="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div id="bmList" class="p-list"></div>
+</aside>
+
+<aside id="panelHist" class="panel" aria-label="Historial">
+  <div class="p-head"><h3>Historial</h3><button class="icon-btn p-close" title="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+  <div class="p-actions"><button id="btnClearHist" class="btn ghost sm" type="button">Borrar historial</button></div>
+  <div id="histList" class="p-list"></div>
+</aside>
+
+<dialog id="dlgSet">
+  <form id="setForm" class="dcard" onsubmit="return false">
+    <h3>Ajustes</h3>
+    <label for="setWisp">Servidor WISP (túnel)</label>
+    <input id="setWisp" type="text" placeholder="wss://tu-servidor-wisp/" spellcheck="false">
+    <p class="hint">Debe hablar el protocolo WISP (Epsilon, wisp-js, RubyVISP…). Si alojas Kalm en HTTPS (GitHub Pages) usa wss://; con ws:// el navegador lo bloqueará por contenido mixto.</p>
+    <div class="row"><button id="setTest" class="btn ghost sm" type="button">Probar conexión</button><span id="setTestOut"></span></div>
+    <label for="setQuick">Enlaces rápidos — uno por línea: Nombre | http://url</label>
+    <textarea id="setQuick" rows="4" spellcheck="false"></textarea>
+    <label for="setTheme">Tema</label>
+    <select id="setTheme"><option value="dark">Oscuro</option><option value="light">Claro</option></select>
+    <details>
+      <summary>Cómo funciona Kalm · despliegue · limitaciones</summary>
+      <div class="about">
+        <div><b>Cómo funciona:</b> Kalm es un único archivo estático. Al navegar, abre un túnel WebSocket a tu servidor WISP y habla HTTP/1.1 dentro de ese túnel. El HTML/CSS que recibe se reescribe (imágenes, CSS, scripts → blob URLs) y se pinta en un iframe sandbox. Para la red, solo cargas una página de GitHub Pages: no hay Service Worker ni rutas de proxy.</div>
+        <div><b>Despliegue:</b> sube <code>Kalm.html</code> a un repositorio público y activa <code>Settings → Pages → main /root</code>. Tu proxy quedará en <code>https://tuusuario.github.io/tu-repo/</code>.</div>
+        <div><b>Servidores WISP compatibles:</b> <code>Epsilon</code> (Rust), <code>@mercuryworkshop/wisp-js</code> (npm, incluye CLI: <code>npx wisp-js-server</code>), <code>RubyVISP</code>, o cualquiera compatible con WISP v1.</div>
+        <div><b>Descargas:</b> todo lo que descargues se empaqueta automáticamente como ZIP secuencial (00001.zip, 00002.zip…). El nombre original queda dentro del ZIP y en el panel de descargas.</div>
+        <div><b>Limitaciones honestas:</b> el túnel solo puede hablar HTTP en claro: los sitios <b>https://</b> no se pueden renderizar dentro del túnel (se ofrece modo directo/pestaña nueva). Los formularios con subida de archivos no están soportados; sitios con mucho JavaScript dinámico pueden fallar; los archivos enormes se procesan en memoria.</div>
+        <div><b>Uso responsable:</b> el volumen de datos sigue pasando por tu red y queda registrado en sus logs. Respeta las políticas de tu institución: el uso de esta herramienta es responsabilidad tuya.</div>
+      </div>
+    </details>
+    <menu>
+      <button id="setClose" class="btn ghost" type="button">Cerrar</button>
+      <button id="setSave" class="btn accent" type="button">Guardar</button>
+    </menu>
+  </form>
+</dialog>
+
+<div id="toasts"></div>
+<script>
+"use strict";
+/* ============================================================
+   Kalm v1.0 — Navegador dentro del navegador en un solo archivo
+   Túnel: protocolo WISP v1 sobre WebSocket (sin Service Worker)
+   ============================================================ */
+
+/* ---------- utilidades básicas ---------- */
+const $  = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+const enc = new TextEncoder();
+const dec = new TextDecoder();
+const DECOMP_OK = (typeof DecompressionStream !== "undefined");
+const PLACEHOLDER_GIF = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+
+function denc(bytes, label){
+  if (!bytes || !bytes.length) return "";
+  if (label){
+    try { return new TextDecoder(label, { fatal: false }).decode(bytes); } catch(e){}
+  }
+  return dec.decode(bytes);
+}
+function catBytes(list, total){
+  if (list.length === 1) return list[0];
+  let n = total;
+  if (!n){ n = 0; for (const c of list) n += c.length; }
+  const out = new Uint8Array(n);
+  let off = 0;
+  for (const c of list){ out.set(c, off); off += c.length; }
+  return out;
+}
+function findCRLF(u8, from){
+  for (let i = from || 0; i < u8.length - 1; i++){
+    if (u8[i] === 13 && u8[i+1] === 10) return i;
+  }
+  return -1;
+}
+function findCRLFCRLF(u8){
+  for (let i = 0; i < u8.length - 3; i++){
+    if (u8[i] === 13 && u8[i+1] === 10 && u8[i+2] === 13 && u8[i+3] === 10) return i;
+  }
+  return -1;
+}
+function withTimeout(promise, ms, msg){
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error(msg || "Tiempo de espera agotado")), ms);
+    Promise.resolve(promise).then(
+      (v) => { clearTimeout(t); resolve(v); },
+      (e) => { clearTimeout(t); reject(e); }
+    );
+  });
+}
+class Sem {
+  constructor(n){ this.free = n; this.q = []; }
+  run(fn){
+    if (this.free > 0){ this.free--; return Promise.resolve().then(fn).finally(() => this._rel()); }
+    return new Promise((res) => this.q.push(res)).then(fn).finally(() => this._rel());
+  }
+  _rel(){
+    this.free++;
+    const next = this.q.shift();
+    if (next) next();
+  }
+}
+function esc(s){
+  return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+}
+function fmtBytes(n){
+  if (!isFinite(n)) return "?";
+  if (n < 1024) return n + " B";
+  if (n < 1048576) return (n / 1024).toFixed(1) + " KB";
+  if (n < 1073741824) return (n / 1048576).toFixed(1) + " MB";
+  return (n / 1073741824).toFixed(2) + " GB";
+}
+function basename(url){
+  try {
+    const p = new URL(url).pathname;
+    const last = p.split("/").filter(Boolean).pop() || "";
+    return decodeURIComponent(last);
+  } catch(e){ return ""; }
+}
+function extOf(url){
+  const b = basename(url);
+  const m = b.match(/\.([a-z0-9]+)$/i);
+  return m ? m[1].toLowerCase() : "";
+}
+function b64url(s){ return btoa(unescape(encodeURIComponent(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+function unb64url(h){
+  h = h.replace(/-/g, "+").replace(/_/g, "/");
+  while (h.length % 4) h += "=";
+  try { return decodeURIComponent(escape(atob(h))); } catch(e){ return ""; }
+}
+function looksLikeUrl(s){
+  return /^([a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}(:\d+)?([\/?#].*)?$/i.test(s)
+      || /^localhost(:\d+)?([\/?#].*)?$/i.test(s)
+      || /^\d{1,3}(\.\d{1,3}){3}(:\d+)?([\/?#].*)?$/.test(s);
+}
+
+/* ---------- almacenamiento ---------- */
+const Store = {
+  get(k, d){
+    try { const v = localStorage.getItem("kalm." + k); return v === null ? d : JSON.parse(v); }
+    catch(e){ return d; }
+  },
+  set(k, v){ try { localStorage.setItem("kalm." + k, JSON.stringify(v)); } catch(e){} },
+  del(k){ try { localStorage.removeItem("kalm." + k); } catch(e){} }
+};
+
+/* ---------- toasts ---------- */
+function toast(msg, kind){
+  const box = $("#toasts");
+  if (!box) return;
+  const el = document.createElement("div");
+  el.className = "toast " + (kind || "");
+  el.textContent = msg;
+  box.appendChild(el);
+  setTimeout(() => { el.style.opacity = "0"; el.style.transition = "opacity .3s"; }, 4200);
+  setTimeout(() => el.remove(), 4600);
+  while (box.children.length > 4) box.firstChild.remove();
+}
+
+/* ---------- ZIP propio (método store, sin dependencias) ---------- */
+let CRC_TABLE = null;
+function crc32(u8){
+  if (!CRC_TABLE){
+    CRC_TABLE = new Uint32Array(256);
+    for (let n = 0; n < 256; n++){
+      let c = n;
+      for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      CRC_TABLE[n] = c >>> 0;
+    }
+  }
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < u8.length; i++) c = CRC_TABLE[(c ^ u8[i]) & 0xFF] ^ (c >>> 8);
+  return (~c) >>> 0;
+}
+function makeZip(files){
+  const chunks = [];
+  const central = [];
+  let offset = 0;
+  const now = new Date();
+  const dosTime = ((now.getHours() & 31) << 11) | ((now.getMinutes() & 63) << 5) | ((now.getSeconds() >> 1) & 31);
+  const dosDate = (((now.getFullYear() - 1980) & 127) << 9) | (((now.getMonth() + 1) & 15) << 5) | (now.getDate() & 31);
+  for (const f of files){
+    const nameB = enc.encode(f.name);
+    const data = f.data;
+    const crc = crc32(data);
+    const sz = data.length;
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true);
+    lh.setUint16(4, 20, true);        // versión necesaria
+    lh.setUint16(6, 0x0800, true);    // flag UTF-8
+    lh.setUint16(8, 0, true);         // método: store
+    lh.setUint16(10, dosTime, true);
+    lh.setUint16(12, dosDate, true);
+    lh.setUint32(14, crc, true);
+    lh.setUint32(18, sz, true);
+    lh.setUint32(22, sz, true);
+    lh.setUint16(26, nameB.length, true);
+    lh.setUint16(28, 0, true);
+    chunks.push(new Uint8Array(lh.buffer), nameB, data);
+    central.push({ nameB, crc, sz, offset });
+    offset += 30 + nameB.length + sz;
+  }
+  const cdStart = offset;
+  for (const c of central){
+    const cd = new DataView(new ArrayBuffer(46));
+    cd.setUint32(0, 0x02014b50, true);
+    cd.setUint16(4, 20, true);
+    cd.setUint16(6, 20, true);
+    cd.setUint16(8, 0x0800, true);
+    cd.setUint16(10, 0, true);
+    cd.setUint16(12, dosTime, true);
+    cd.setUint16(14, dosDate, true);
+    cd.setUint32(16, c.crc, true);
+    cd.setUint32(20, c.sz, true);
+    cd.setUint32(24, c.sz, true);
+    cd.setUint16(28, c.nameB.length, true);
+    cd.setUint32(42, c.offset, true);
+    chunks.push(new Uint8Array(cd.buffer), c.nameB);
+    offset += 46 + c.nameB.length;
+  }
+  const eocd = new DataView(new ArrayBuffer(22));
+  eocd.setUint32(0, 0x06054b50, true);
+  eocd.setUint16(8, central.length, true);
+  eocd.setUint16(10, central.length, true);
+  eocd.setUint32(12, offset - cdStart, true);
+  eocd.setUint32(16, cdStart, true);
+  chunks.push(new Uint8Array(eocd.buffer));
+  return catBytes(chunks);
+}
+function saveBlob(blob, name){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 5000);
+}
+
+/* ---------- buffer incremental para respuestas HTTP ---------- */
+class Buf {
+  constructor(){ this.cs = []; this.n = 0; }
+  get length(){ return this.n; }
+  push(u8){ this.cs.push(u8); this.n += u8.length; }
+  peekAll(){ return this.cs.length === 1 ? this.cs[0] : catBytes(this.cs, this.n); }
+  take(n){
+    if (n == null || n >= this.n){
+      const all = this.peekAll();
+      this.cs = []; this.n = 0;
+      return all;
+    }
+    const out = new Uint8Array(n);
+    let off = 0;
+    while (off < n){
+      const c = this.cs[0];
+      const need = n - off;
+      if (c.length <= need){ out.set(c, off); off += c.length; this.cs.shift(); }
+      else { out.set(c.subarray(0, need), off); this.cs[0] = c.subarray(need); off = n; }
+    }
+    this.n -= n;
+    return out;
+  }
+}
+
+/* ============================================================
+   CLIENTE WISP v1 sobre WebSocket
+   Formato de paquete: [tipo u8][stream_id u32 LE][payload]
+   CONNECT: [tipo_socket u8=1 TCP][puerto u16 LE][hostname UTF-8]
+   DATA: payload crudo · CONTINUE: u32 LE · CLOSE: u8 razón
+   Handshake: el servidor envía CONTINUE en stream 0 con la
+   ventana inicial; el cliente otorga CONTINUE periódicos.
+   ============================================================ */
+const WPT = { CONNECT: 0x01, DATA: 0x02, CONTINUE: 0x03, CLOSE: 0x04 };
+const CLOSE_REASONS = {
+  0x01: "Cierre desconocido",
+  0x02: "Cierre voluntario",
+  0x03: "Error de red",
+  0x04: "Extensiones incompatibles",
+  0x41: "Petición inválida",
+  0x42: "Host no alcanzable",
+  0x43: "El destino no respondió",
+  0x44: "Conexión rechazada por el destino",
+  0x47: "Tiempo de espera de transferencia",
+  0x48: "Destino bloqueado por el servidor",
+  0x49: "Conexión limitada por el servidor",
+  0x81: "Error del cliente"
+};
+function u32bytes(n){
+  const b = new Uint8Array(4);
+  new DataView(b.buffer).setUint32(0, n >>> 0, true);
+  return b;
+}
+
+class WStream {
+  constructor(t, sid, host, port){
+    this.t = t; this.sid = sid; this.host = host; this.port = port;
+    this.open = true;
+    this.err = null;
+    this.win = t.maxBuf || 64;   // paquetes que podemos enviar
+    this.winWait = [];           // escrituras en cola
+    this.readers = [];           // read() pendientes
+    this.buf = new Buf();
+    this.recvCount = 0;
+    this.onclose = null;
+  }
+  write(u8){
+    return new Promise((res, rej) => { this.winWait.push({ u8, res, rej }); this._flush(); });
+  }
+  _flush(){
+    while (this.open && this.winWait.length && this.win > 0){
+      const item = this.winWait[0];
+      if (item.u8.length <= 65536){
+        this.t._raw(this.t._frame(WPT.DATA, this.sid, item.u8));
+        this.winWait.shift();
+        item.res();
+      } else {
+        this.t._raw(this.t._frame(WPT.DATA, this.sid, item.u8.subarray(0, 65536)));
+        item.u8 = item.u8.subarray(65536);
+      }
+      this.win--;
+    }
+  }
+  _grant(n){ this.win = Math.max(1, n | 0); this._flush(); }
+  read(){
+    if (this.buf.length > 0) return Promise.resolve(this.buf.take());
+    if (!this.open) return Promise.resolve(null);
+    return new Promise((res) => this.readers.push(res));
+  }
+  _feed(u8){
+    this.buf.push(u8);
+    this.recvCount++;
+    if (this.recvCount % 64 === 0) this._refill();
+    if (this.readers.length) this.readers.shift()(this.buf.take());
+  }
+  _refill(){
+    if (this.open) this.t._raw(this.t._frame(WPT.CONTINUE, this.sid, u32bytes(0xFFFFFFFF)));
+  }
+  _closedByServer(reason){
+    this.err = CLOSE_REASONS[reason] || ("Cerrado por el servidor (código " + reason + ")");
+    this._finish();
+  }
+  _netDead(){
+    this.err = this.err || "Conexión con el servidor WISP perdida";
+    this._finish();
+  }
+  close(){
+    if (!this.open) return;
+    try { this.t._raw(this.t._frame(WPT.CLOSE, this.sid, new Uint8Array([0x02]))); } catch(e){}
+    this._finish();
+  }
+  _finish(){
+    if (!this.open) return;
+    this.open = false;
+    this.t.streams.delete(this.sid);
+    for (const r of this.readers) r(null);
+    this.readers = [];
+    for (const w of this.winWait) w.rej(new Error(this.err || "Stream cerrado"));
+    this.winWait = [];
+    if (this.onclose) this.onclose();
+  }
+}
+
+class WispTransport {
+  constructor(url){
+    this.url = url;
+    this.ws = null;
+    this.streams = new Map();
+    this.nextId = 1;
+    this.maxBuf = 64;
+    this.opening = null;
+    this.onstate = null;
+  }
+  _state(s){ if (this.onstate) try { this.onstate(s); } catch(e){} }
+  async ensure(){
+    if (this.ws && this.ws.readyState === 1) return;
+    if (this.opening) return this.opening;
+    this.opening = new Promise((resolve, reject) => {
+      let settled = false;
+      let ws;
+      try { ws = new WebSocket(this.url); }
+      catch(e){ this.opening = null; reject(new Error("URL del servidor WISP no válida")); return; }
+      ws.binaryType = "arraybuffer";
+      const to = setTimeout(() => {
+        if (!settled){
+          settled = true; this.opening = null;
+          try { ws.close(); } catch(e){}
+          reject(new Error("Tiempo de espera al conectar con el servidor WISP"));
+        }
+      }, 15000);
+      ws.onopen = () => {
+        this.ws = ws; clearTimeout(to);
+        if (!settled){ settled = true; this.opening = null; this._state("on"); resolve(); }
+      };
+      ws.onerror = () => {
+        clearTimeout(to);
+        if (!settled){
+          settled = true; this.opening = null; this._state("err");
+          reject(new Error("No se pudo conectar al servidor WISP. Revisa la URL; si esta página está en HTTPS el servidor debe usar wss://"));
+        }
+      };
+      ws.onclose = () => {
+        clearTimeout(to);
+        if (!settled){ settled = true; this.opening = null; reject(new Error("Conexión WISP cerrada por el servidor")); }
+        this._dead();
+      };
+      ws.onmessage = (ev) => { try { this._recv(ev.data); } catch(e){ console.warn("Kalm: paquete WISP inválido", e); } };
+    });
+    return this.opening;
+  }
+  _dead(){
+    this.ws = null;
+    const dead = Array.from(this.streams.values());
+    this.streams.clear();
+    for (const s of dead) s._netDead();
+    this._state("off");
+  }
+  _raw(u8){ if (this.ws && this.ws.readyState === 1) try { this.ws.send(u8); } catch(e){} }
+  _frame(type, sid, payload){
+    const out = new Uint8Array(5 + payload.length);
+    const dv = new DataView(out.buffer);
+    dv.setUint8(0, type);
+    dv.setUint32(1, sid, true);
+    out.set(payload, 5);
+    return out;
+  }
+  async newStream(host, port){
+    await this.ensure();
+    const sid = this.nextId++ & 0x7fffffff;
+    const st = new WStream(this, sid, host, port);
+    this.streams.set(sid, st);
+    const hb = enc.encode(host);
+    const pay = new Uint8Array(3 + hb.length);
+    const dv = new DataView(pay.buffer);
+    pay[0] = 1;                    // TCP
+    dv.setUint16(1, port, true);   // puerto LE
+    pay.set(hb, 3);                // hostname
+    this._raw(this._frame(WPT.CONNECT, sid, pay));
+    return st;
+  }
+  _recv(data){
+    if (!(data instanceof ArrayBuffer)) return;
+    if (data.byteLength < 5) return;
+    const dv = new DataView(data);
+    const type = dv.getUint8(0);
+    const sid = dv.getUint32(1, true);
+    const payload = new Uint8Array(data, 5);
+    if (sid === 0){
+      if (type === WPT.CONTINUE && payload.length >= 4){
+        this.maxBuf = new DataView(payload.buffer, payload.byteOffset, payload.byteLength).getUint32(0, true) || 64;
+      }
+      return;
+    }
+    const st = this.streams.get(sid);
+    if (!st) return;
+    if (type === WPT.DATA){
+      st._feed(payload);
+    } else if (type === WPT.CONTINUE){
+      if (payload.length >= 4) st._grant(new DataView(payload.buffer, payload.byteOffset, payload.byteLength).getUint32(0, true));
+    } else if (type === WPT.CLOSE){
+      st._closedByServer(payload.length ? payload[0] : 0x01);
+    }
+  }
+}
+</script>
+<script>
+/* ============================================================
+   MOTOR HTTP/1.1 sobre el túnel WISP
+   ============================================================ */
+const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Kalm/1.0";
+const ACCEPT_HTML = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8";
+const ACCEPT_ANY = "*/*";
+const httpSem = new Sem(10);
+const engineStats = { active: 0, queued: 0 };
+let currentReferer = null;
+let jar = Store.get("jar", {});
+
+function cookiesFor(host){
+  const c = jar[host];
+  if (!c) return null;
+  const parts = Object.entries(c).map(([k, v]) => k + "=" + v);
+  return parts.length ? parts.join("; ") : null;
+}
+function saveCookies(u, res){
+  if (!res.setCookies || !res.setCookies.length) return;
+  const host = u.host;
+  const c = jar[host] || (jar[host] = {});
+  for (const sc of res.setCookies){
+    const pair = sc.split(";")[0];
+    const i = pair.indexOf("=");
+    if (i > 0){
+      c[pair.slice(0, i).trim()] = pair.slice(i + 1).trim();
+    }
+  }
+  const keys = Object.keys(jar);
+  if (keys.length > 200) delete jar[keys[0]];
+  Store.set("jar", jar);
+}
+
+function parseMime(ct){
+  const out = { mime: "", charset: "" };
+  if (!ct) return out;
+  const parts = ct.split(";");
+  out.mime = (parts[0] || "").trim().toLowerCase();
+  for (let i = 1; i < parts.length; i++){
+    const p = parts[i].trim().toLowerCase();
+    if (p.indexOf("charset=") === 0) out.charset = p.slice(8).replace(/["']/g, "");
+  }
+  return out;
+}
+const MIME_EXT = {
+  html: "text/html", htm: "text/html", css: "text/css", js: "application/javascript",
+  mjs: "application/javascript", json: "application/json", png: "image/png",
+  jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp",
+  svg: "image/svg+xml", ico: "image/x-icon", bmp: "image/bmp", avif: "image/avif",
+  mp4: "video/mp4", webm: "video/webm", mkv: "video/x-matroska", avi: "video/x-msvideo",
+  mov: "video/quicktime", m4v: "video/mp4", mp3: "audio/mpeg", ogg: "audio/ogg",
+  oga: "audio/ogg", wav: "audio/wav", flac: "audio/flac", m4a: "audio/mp4",
+  pdf: "application/pdf", txt: "text/plain", xml: "application/xml",
+  woff: "font/woff", woff2: "font/woff2", ttf: "font/ttf", otf: "font/otf",
+  zip: "application/zip", rar: "application/vnd.rar", "7z": "application/x-7z-compressed"
+};
+function guessMime(url){
+  const e = extOf(url);
+  return e ? (MIME_EXT[e] || "") : "";
+}
+const DL_EXTS = new Set([
+  "zip","rar","7z","gz","tgz","bz2","xz","exe","msi","apk","dmg","pkg","deb","rpm",
+  "iso","img","bin","cab","torrent","pdf_doc","doc","docx","xls","xlsx","ppt","pptx",
+  "odt","ods","psd","jar","tar","lz","zst","flp","nk","cso","vpk"
+]);
+function sniffCharset(bytes){
+  try {
+    const head = denc(bytes.subarray(0, Math.min(2048, bytes.length)), "latin1");
+    const m = head.match(/<meta[^>]+charset\s*=\s*["']?\s*([a-z0-9_\-]+)/i);
+    return m ? m[1] : "";
+  } catch(e){ return ""; }
+}
+async function maybeDecompress(res, bytes){
+  const ce = (res.headers["content-encoding"] || "").trim().toLowerCase();
+  if (!ce || ce === "identity" || !bytes || !bytes.length) return bytes;
+  if (DECOMP_OK && (ce === "gzip" || ce === "deflate" || ce === "br")){
+    try {
+      const ds = new DecompressionStream(ce);
+      const stream = new Blob([bytes]).stream().pipeThrough(ds);
+      return new Uint8Array(await new Response(stream).arrayBuffer());
+    } catch(e){ return bytes; }
+  }
+  return bytes;
+}
+function parseHead(headBytes){
+  const text = denc(headBytes, "latin1");
+  const lines = text.split("\r\n");
+  let m = (lines[0] || "").match(/^HTTP\/\d\.\d\s+(\d{3})(?:\s+(.*))?$/);
+  if (!m) throw new Error("Respuesta HTTP no válida del servidor");
+  const headers = {};
+  const setCookies = [];
+  for (let i = 1; i < lines.length; i++){
+    const line = lines[i];
+    if (!line) continue;
+    const idx = line.indexOf(":");
+    if (idx < 1) continue;
+    const k = line.slice(0, idx).trim().toLowerCase();
+    const v = line.slice(idx + 1).trim();
+    if (k === "set-cookie") setCookies.push(v);
+    else if (!(k in headers)) headers[k] = v;
+  }
+  return { status: parseInt(m[1], 10), statusText: m[2] || "", headers, setCookies };
+}
+
+async function httpViaWisp(t, u, opts){
+  const port = u.port ? parseInt(u.port, 10) : 80;
+  const stream = await t.newStream(u.hostname, port);
+  try {
+    /* construir petición */
+    const path = (u.pathname || "/") + (u.search || "");
+    const lines = [];
+    lines.push(opts.method + " " + path + " HTTP/1.1");
+    lines.push("Host: " + u.host);
+    lines.push("User-Agent: " + UA);
+    lines.push("Accept: " + (opts.accept || ACCEPT_HTML));
+    lines.push("Accept-Language: es-ES,es;q=0.9,en;q=0.6");
+    if (DECOMP_OK) lines.push("Accept-Encoding: gzip, deflate");
+    lines.push("Connection: close");
+    lines.push("Upgrade-Insecure-Requests: 1");
+    if (opts.referer){
+      try { if (new URL(opts.referer).host === u.host) lines.push("Referer: " + opts.referer); } catch(e){}
+    }
+    const cks = cookiesFor(u.host);
+    if (cks) lines.push("Cookie: " + cks);
+    if (opts.ctype) lines.push("Content-Type: " + opts.ctype);
+    let bodyB = null;
+    if (opts.body != null){
+      bodyB = enc.encode(String(opts.body));
+      lines.push("Content-Length: " + bodyB.length);
+    }
+    const headB = enc.encode(lines.join("\r\n") + "\r\n\r\n");
+    const reqBytes = bodyB ? catBytes([headB, bodyB]) : headB;
+    await stream.write(reqBytes);
+
+    /* leer y parsear respuesta */
+    const bl = new Buf();
+    let res = null;
+    let mode = "head";
+    let need = 0, chunkN = 0;
+    const parts = [];
+    let partLen = 0;
+    const processBuf = () => {
+      for (;;){
+        if (mode === "head"){
+          const all = bl.peekAll();
+          const i = findCRLFCRLF(all);
+          if (i < 0) return false;
+          res = parseHead(bl.take(i + 4));
+          const te = (res.headers["transfer-encoding"] || "").toLowerCase();
+          const clH = res.headers["content-length"];
+          const cl = clH != null ? parseInt(clH, 10) : NaN;
+          if (opts.method === "HEAD" || res.status === 204 || res.status === 304){
+            mode = "done"; return true;
+          }
+          if (te.indexOf("chunked") >= 0){ mode = "chunksize"; }
+          else if (!isNaN(cl)){
+            need = cl;
+            if (cl === 0){ mode = "done"; return true; }
+            mode = "cl";
+          } else {
+            mode = "eof";
+          }
+        } else if (mode === "cl"){
+          if (bl.length < need) return false;
+          parts.push(bl.take(need)); partLen += need;
+          mode = "done"; return true;
+        } else if (mode === "chunksize"){
+          const all = bl.peekAll();
+          const i = findCRLF(all);
+          if (i < 0) return false;
+          const line = denc(bl.take(i + 2), "latin1").trim();
+          const semi = line.indexOf(";");
+          chunkN = parseInt(semi >= 0 ? line.slice(0, semi) : line, 16);
+          if (isNaN(chunkN)) throw new Error("Respuesta chunked inválida");
+          mode = chunkN === 0 ? "trail" : "chunkdata";
+        } else if (mode === "chunkdata"){
+          if (bl.length < chunkN + 2) return false;
+          parts.push(bl.take(chunkN)); partLen += chunkN;
+          bl.take(2);
+          mode = "chunksize";
+        } else if (mode === "trail"){
+          const all = bl.peekAll();
+          const i = findCRLF(all);
+          if (i < 0) return false;
+          const line = denc(bl.take(i + 2), "latin1").trim();
+          if (line === ""){ mode = "done"; return true; }
+        } else {
+          return true;
+        }
+      }
+    };
+    let complete = processBuf();
+    while (!complete){
+      let chunk;
+      chunk = await withTimeout(stream.read(), 45000, "Tiempo de espera agotado esperando datos del sitio");
+      if (chunk === null){
+        if (mode === "head") throw new Error("El servidor cerró la conexión sin responder");
+        complete = true;  /* cierre: aceptamos lo recibido */
+        break;
+      }
+      bl.push(chunk);
+      complete = processBuf();
+    }
+    let bytes = catBytes(parts, partLen);
+    bytes = await maybeDecompress(res, bytes);
+    const ct = parseMime(res.headers["content-type"] || "");
+    return {
+      status: res.status,
+      statusText: res.statusText,
+      headers: res.headers,
+      setCookies: res.setCookies,
+      bytes,
+      url: u.href,
+      mime: ct.mime || guessMime(u.href),
+      charset: ct.charset
+    };
+  } finally {
+    try { stream.close(); } catch(e){}
+  }
+}
+
+const engine = {
+  async request(url, opts = {}){
+    const t = getTransport();
+    if (!t) throw new Error("No hay servidor WISP configurado. Ábrelo en Ajustes.");
+    let cur;
+    try { cur = new URL(url); } catch(e){ throw new Error("Dirección no válida: " + url); }
+    if (cur.protocol === "https:"){
+      throw new Error("El túnel WISP solo transporta HTTP en claro. Para HTTPS usa el modo directo (abre la dirección y elige una opción).");
+    }
+    let method = (opts.method || "GET").toUpperCase();
+    let body = opts.body != null ? opts.body : null;
+    let ctype = opts.contentType || null;
+    let hops = 0;
+    for (;;){
+      engineStats.active++;
+      let res;
+      try {
+        res = await httpSem.run(() => httpViaWisp(t, cur, {
+          method, body, ctype,
+          accept: opts.accept || ACCEPT_HTML,
+          referer: opts.referer !== undefined ? opts.referer : currentReferer
+        }));
+      } finally {
+        engineStats.active--;
+      }
+      saveCookies(cur, res);
+      const loc = res.headers["location"];
+      if (res.status >= 300 && res.status < 400 && loc && hops < 6){
+        let nxt = null;
+        try { nxt = new URL(loc, cur); } catch(e){}
+        if (nxt && (nxt.protocol === "http:" || nxt.protocol === "https:")){
+          if (nxt.protocol === "https:"){
+            throw new Error("El sitio redirige a HTTPS, que no puede renderizarse dentro del túnel. Prueba el modo directo.");
+          }
+          if (res.status === 303 || ((res.status === 301 || res.status === 302) && method !== "GET")){
+            method = "GET"; body = null; ctype = null;
+          }
+          cur = nxt; hops++;
+          continue;
+        }
+      }
+      return res;
+    }
+  }
+};
+
+function getTransport(){
+  const url = Store.get("wisp", "");
+  if (!url) return null;
+  if (!_transport || _transport.url !== url){
+    _transport = new WispTransport(url);
+    _transport.onstate = onTunnelState;
+  }
+  return _transport;
+}
+let _transport = null;
+
+function normalizeWispUrl(v){
+  v = (v || "").trim();
+  if (!v) return "";
+  if (/^wss:\/\//i.test(v) || /^ws:\/\//i.test(v)){ /* ok */ }
+  else if (/^https:\/\//i.test(v)) v = "wss://" + v.slice(8);
+  else if (/^http:\/\//i.test(v)) v = "ws://" + v.slice(7);
+  else v = "wss://" + v;
+  v = v.replace(/\/+$/, "") + "/";
+  return v;
+}
+</script>
+<script>
+/* ============================================================
+   REESCRITURA DE HTML/CSS + RECURSOS + DESCARGAS
+   ============================================================ */
+const resCache = new Map();
+const blobList = [];
+function trackBlob(u){ blobList.push(u); return u; }
+function sweepBlobs(){
+  const old = blobList.splice(0, blobList.length);
+  setTimeout(() => { for (const u of old){ try { URL.revokeObjectURL(u); } catch(e){} } }, 3000);
+}
+
+/* --- script auxiliar inyectado en cada página renderizada --- */
+const HELPER_JS = `
+(function(){
+  if (window.__KALM_INJECTED__) return;
+  window.__KALM_INJECTED__ = true;
+  var send = function(m){ try { parent.postMessage(m, '*'); } catch(e){} };
+  try { window.open = function(u){ send({ __kalm: 'nav', url: String(u) }); return null; }; } catch(e){}
+  try { history.pushState = function(){}; history.replaceState = function(){}; } catch(e){}
+  try { if (navigator.serviceWorker) navigator.serviceWorker.register = function(){ return Promise.reject(new Error('disabled by kalm')); }; } catch(e){}
+  document.addEventListener('click', function(e){
+    var a = e.target && e.target.closest ? e.target.closest('a') : null;
+    if (!a) return;
+    var target = a.getAttribute('data-kalm-href');
+    var href = a.getAttribute('href') || '';
+    if (!target){ if (!href || href.charAt(0) === '#') return; target = href; }
+    e.preventDefault(); e.stopPropagation();
+    if (a.hasAttribute('data-kalm-dl') || a.hasAttribute('download')) send({ __kalm: 'download', url: target });
+    else send({ __kalm: 'nav', url: target });
+  }, true);
+  document.addEventListener('submit', function(e){
+    var f = e.target;
+    if (!f || f.nodeType !== 1) return;
+    e.preventDefault();
+    var method = (f.getAttribute('method') || 'GET').toUpperCase();
+    var action = f.getAttribute('data-kalm-action') || f.getAttribute('action') || '';
+    var fd;
+    try { fd = new FormData(f); } catch(err){ return; }
+    var qs = new URLSearchParams();
+    var hasFile = false;
+    fd.forEach(function(v, k){ if (typeof v === 'string') qs.append(k, v); else hasFile = true; });
+    if (hasFile){ send({ __kalm: 'toast', msg: 'Este formulario envia archivos y aun no esta soportado.' }); return; }
+    var body = qs.toString();
+    var url = action;
+    if (method === 'GET' || method === 'HEAD'){
+      url = url + (url.indexOf('?') >= 0 ? '&' : '?') + body;
+      send({ __kalm: 'nav', url: url });
+    } else {
+      send({ __kalm: 'nav', url: url, method: method, body: body, contentType: f.enctype || 'application/x-www-form-urlencoded' });
+    }
+  }, true);
+  document.addEventListener('mouseover', function(e){
+    var a = e.target && e.target.closest ? e.target.closest('a') : null;
+    if (a && a.getAttribute('data-kalm-href')) send({ __kalm: 'hover', url: a.getAttribute('data-kalm-href') });
+  }, true);
+  window.addEventListener('load', function(){
+    var m = document.querySelector('meta[data-kalm-refresh]');
+    if (m){
+      var d = parseInt(m.getAttribute('data-kalm-delay') || '0', 10) || 0;
+      setTimeout(function(){ send({ __kalm: 'nav', url: m.getAttribute('data-kalm-refresh') }); }, d * 1000);
+    }
+  });
+})();
+`;
+
+function parseSrcset(v){
+  return (v || "").split(",").map((s) => s.trim()).filter(Boolean).map((s) => {
+    const sp = s.lastIndexOf(" ");
+    return sp > 0 ? { u: s.slice(0, sp), d: s.slice(sp + 1) } : { u: s, d: "" };
+  });
+}
+
+async function rewriteCss(text, baseUrl){
+  const toks = [];
+  const addTok = (raw) => {
+    raw = raw.trim();
+    if ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"))){
+      raw = raw.slice(1, -1).trim();
+    }
+    if (!raw || /^(data:|blob:|about:|#|%23)/i.test(raw)) return null;
+    let abs;
+    try { abs = new URL(raw, baseUrl).href; } catch(e){ return null; }
+    if (!/^https?:/i.test(abs)) return null;
+    const tok = "\u0001K" + toks.length + "\u0001";
+    toks.push({ url: abs });
+    return tok;
+  };
+  text = text.replace(/url\(\s*([^)]*?)\s*\)/gi, (m, inner) => {
+    const t = addTok(inner);
+    return t ? 'url("' + t + '")' : m;
+  });
+  text = text.replace(/@import\s+(?!url\()(['"])([^'"]+?)\1/gi, (m, q, u) => {
+    const t = addTok(u);
+    return t ? '@import "' + t + '"' : m;
+  });
+  if (!toks.length) return text;
+  await Promise.all(toks.map(async (t) => {
+    const r = await getResource(t.url);
+    t.repl = (r && r.blobUrl) ? r.blobUrl : "about:blank";
+  }));
+  return text.replace(/\u0001K(\d+)\u0001/g, (m, i) => (toks[+i] && toks[+i].repl) || m);
+}
+
+function getResource(absUrl){
+  let p = resCache.get(absUrl);
+  if (p) return p;
+  p = (async () => {
+    try {
+      const r = await engine.request(absUrl, { accept: ACCEPT_ANY, referer: currentReferer });
+      const mime = r.mime || "application/octet-stream";
+      if (mime === "text/css" || extOf(absUrl) === "css"){
+        const cssText = denc(r.bytes, r.charset || sniffCharset(r.bytes) || "utf-8");
+        const css2 = await rewriteCss(cssText, r.url);
+        const blob = trackBlob(URL.createObjectURL(new Blob([css2], { type: "text/css" })));
+        return { blobUrl: blob, mime: "text/css" };
+      }
+      const blob = trackBlob(URL.createObjectURL(new Blob([r.bytes], { type: mime })));
+      return { blobUrl: blob, mime, size: r.bytes.length };
+    } catch(e){
+      return { error: String((e && e.message) || e) };
+    }
+  })();
+  resCache.set(absUrl, p);
+  return p;
+}
+
+async function loadIframeDoc(absUrl, depth){
+  try {
+    const r = await engine.request(absUrl, { referer: currentReferer });
+    if (isHtmlRes(r)){
+      const page = await processPageRes(r, depth);
+      return { html: page.html };
+    }
+    const mime = r.mime || "application/octet-stream";
+    const blob = trackBlob(URL.createObjectURL(new Blob([r.bytes], { type: mime })));
+    return { html: "", src: blob };
+  } catch(e){
+    return { error: String((e && e.message) || e) };
+  }
+}
+
+function isHtmlRes(r){
+  const m = r.mime || "";
+  if (m.indexOf("html") >= 0) return true;
+  const e = extOf(r.url);
+  return !m && (e === "" || e === "html" || e === "htm" || e === "php" || e === "asp" || e === "aspx" || e === "jsp" || e === "cgi");
+}
+function isViewable(r){
+  const m = r.mime || "";
+  return m.indexOf("image/") === 0 || m.indexOf("video/") === 0 || m.indexOf("audio/") === 0
+      || m === "application/pdf" || m.indexOf("text/") === 0
+      || m === "application/json" || m === "application/xml";
+}
+function isAttachment(r){
+  if (/attachment/i.test(r.headers["content-disposition"] || "")) return true;
+  if (r.mime === "application/octet-stream" || r.mime === "application/x-msdownload" || r.mime === "application/zip") return true;
+  if (!r.mime && DL_EXTS.has(extOf(r.url))) return true;
+  return false;
+}
+function filenameFromCD(cd){
+  if (!cd) return "";
+  let m = cd.match(/filename\*\s*=\s*(?:UTF-8|utf-8)''([^;]+)/);
+  if (m){ try { return decodeURIComponent(m[1].trim().replace(/^["']|["']$/g, "")); } catch(e){ return m[1]; } }
+  m = cd.match(/filename\s*=\s*"([^"]+)"/) || cd.match(/filename\s*=\s*([^;]+)/);
+  return m ? m[1].trim().replace(/^["']|["']$/g, "") : "";
+}
+
+/* --- descargas: empaquetado ZIP secuencial 00001.zip, 00002.zip… --- */
+async function zipAndSave(bytes, name, url){
+  if (bytes.length > 188743680 && !confirm("El archivo pesa " + fmtBytes(bytes.length) + " y se procesará en memoria. ¿Continuar?")){
+    toast("Descarga cancelada", "warn");
+    return false;
+  }
+  const n = Store.get("dln", 1);
+  Store.set("dln", n + 1);
+  const zname = String(n).padStart(5, "0") + ".zip";
+  const zip = makeZip([{ name: name, data: bytes }]);
+  saveBlob(new Blob([zip], { type: "application/zip" }), zname);
+  const list = Store.get("dls", []);
+  list.unshift({ zip: zname, name: name, size: bytes.length, url: url || "", time: Date.now() });
+  if (list.length > 100) list.pop();
+  Store.set("dls", list);
+  renderDownloads();
+  pulseBadge();
+  toast("Descarga " + zname + " lista · " + name + " (" + fmtBytes(bytes.length) + ")", "ok");
+  return true;
+}
+async function deliverDownload(res){
+  let name = filenameFromCD(res.headers["content-disposition"]) || basename(res.url) || "archivo";
+  name = name.replace(/[\\/:*?"<>|]/g, "_").slice(0, 120) || "archivo";
+  return zipAndSave(res.bytes, name, res.url);
+}
+async function downloadUrl(url){
+  if (!getTransport()){ toast("Configura tu servidor WISP primero", "warn"); openSettings(); return; }
+  toast("Preparando descarga…");
+  try {
+    const res = await engine.request(url, { accept: ACCEPT_ANY });
+    await deliverDownload(res);
+  } catch(e){
+    toast("No se pudo descargar: " + ((e && e.message) || e), "err");
+  }
+}
+
+/* --- procesamiento principal de páginas HTML --- */
+let frameLoaded = false;
+let pendingLazy = [];
+
+function applyLazyEntry(el, ent, r){
+  el.removeAttribute("data-kalm-rid");
+  if (!r || r.error) return;
+  if (ent.apply === "style") el.setAttribute("style", r.css || "");
+  else if (ent.apply === "srcset") el.setAttribute("srcset", r.blobUrl + (ent.desc ? " " + ent.desc : ""));
+  else el.setAttribute(ent.apply, r.blobUrl);
+}
+function runLazyPatches(){
+  if (!frameLoaded || !pendingLazy.length) return;
+  let cd = null;
+  try { cd = $("#frame").contentDocument; } catch(e){}
+  if (!cd) return;
+  const todo = pendingLazy.splice(0, pendingLazy.length);
+  for (const ent of todo){
+    ent.promise.then((r) => {
+      let els = null;
+      try { els = cd.querySelectorAll('[data-kalm-rid="' + ent.rid + '"]'); } catch(e){ return; }
+      if (!els || !els.length) return;
+      els.forEach((el) => applyLazyEntry(el, ent, r));
+    });
+  }
+}
+
+async function processPageRes(res, depth){
+  const baseUrl0 = res.url;
+  const text = denc(res.bytes, res.charset || sniffCharset(res.bytes) || "utf-8");
+  const doc = new DOMParser().parseFromString(text, "text/html");
+
+  let baseUrl = baseUrl0;
+  const baseEl = doc.querySelector("base[href]");
+  if (baseEl){
+    try { baseUrl = new URL(baseEl.getAttribute("href"), baseUrl0).href; } catch(e){}
+    baseEl.remove();
+  }
+
+  doc.querySelectorAll('meta[http-equiv="Content-Security-Policy" i], meta[http-equiv="Content-Security-Policy-Report-Only" i]').forEach((e) => e.remove());
+  doc.querySelectorAll("[integrity]").forEach((e) => e.removeAttribute("integrity"));
+  doc.querySelectorAll("[crossorigin]").forEach((e) => e.removeAttribute("crossorigin"));
+  doc.querySelectorAll("[nonce]").forEach((e) => e.removeAttribute("nonce"));
+
+  let ridSeq = 1;
+  const eager = [];
+  const lazy = [];
+
+  /* enlaces <a> */
+  for (const a of Array.from(doc.querySelectorAll("a[href]"))){
+    const raw = a.getAttribute("href") || "";
+    if (/^\s*#/.test(raw) || /^(javascript|mailto|tel|data|blob):/i.test(raw)) continue;
+    let abs;
+    try { abs = new URL(raw, baseUrl).href; } catch(e){ continue; }
+    if (!/^https?:/i.test(abs)) continue;
+    a.setAttribute("data-kalm-href", abs);
+    a.setAttribute("href", "#");
+    if (a.hasAttribute("download")) a.setAttribute("data-kalm-dl", "1");
+    a.removeAttribute("target");
+  }
+
+  /* formularios */
+  for (const f of Array.from(doc.querySelectorAll("form"))){
+    let abs;
+    try { abs = new URL(f.getAttribute("action") || baseUrl, baseUrl).href; } catch(e){ continue; }
+    f.setAttribute("data-kalm-action", abs);
+    f.setAttribute("action", "#");
+    f.removeAttribute("target");
+  }
+
+  /* meta refresh */
+  for (const m of Array.from(doc.querySelectorAll('meta[http-equiv="refresh" i]'))){
+    const c = m.getAttribute("content") || "";
+    const mm = c.match(/^\s*(\d+)\s*;\s*url\s*=\s*(['"]?)([^'";]+)\2/i);
+    if (mm){
+      let abs;
+      try { abs = new URL(mm[3], baseUrl).href; } catch(e){ m.remove(); continue; }
+      m.setAttribute("data-kalm-refresh", abs);
+      m.setAttribute("data-kalm-delay", mm[1] || "0");
+      m.removeAttribute("content");
+    } else { m.remove(); }
+  }
+
+  /* <link> */
+  for (const l of Array.from(doc.querySelectorAll("link[href]"))){
+    const rel = (l.getAttribute("rel") || "").toLowerCase();
+    if (/\b(preconnect|dns-prefetch|prefetch|preload|manifest|modulepreload|alternate)\b/.test(rel)){ l.remove(); continue; }
+    const href = l.getAttribute("href") || "";
+    let abs;
+    try { abs = new URL(href, baseUrl).href; } catch(e){ l.remove(); continue; }
+    if (!/^https?:/i.test(abs)){ l.remove(); continue; }
+    if (rel.indexOf("stylesheet") >= 0){
+      l.removeAttribute("href");
+      eager.push({ els: [l], apply: "href", onErr: "remove", promise: getResource(abs) });
+    } else if (rel.indexOf("icon") >= 0){
+      l.removeAttribute("href");
+      const rid = "r" + (ridSeq++);
+      l.setAttribute("data-kalm-rid", rid);
+      lazy.push({ rid, apply: "href", promise: getResource(abs) });
+    } else {
+      l.remove();
+    }
+  }
+
+  /* scripts externos */
+  for (const s of Array.from(doc.querySelectorAll("script[src]"))){
+    const href = s.getAttribute("src") || "";
+    s.removeAttribute("src");
+    let abs;
+    try { abs = new URL(href, baseUrl).href; } catch(e){ s.remove(); continue; }
+    if (!/^https?:/i.test(abs)){ s.remove(); continue; }
+    eager.push({ els: [s], apply: "src", onErr: "remove", promise: getResource(abs) });
+  }
+
+  /* iframes anidados */
+  for (const f of Array.from(doc.querySelectorAll("iframe[src], frame[src]"))){
+    const href = f.getAttribute("src") || "";
+    f.removeAttribute("src");
+    f.removeAttribute("sandbox");
+    let abs;
+    try { abs = new URL(href, baseUrl).href; } catch(e){ f.remove(); continue; }
+    if (!/^https?:/i.test(abs) || depth >= 2){ f.remove(); continue; }
+    eager.push({ els: [f], apply: "srcdoc", onErr: "remove", promise: loadIframeDoc(abs, depth + 1) });
+  }
+
+  /* medios: img/video/audio/track/embed/object/poster */
+  for (const el of Array.from(doc.querySelectorAll("img, source, video, audio, track, embed, object, input[type='image' i]"))){
+    for (const attr of ["src", "data", "poster"]){
+      if (!el.hasAttribute(attr)) continue;
+      const raw = el.getAttribute(attr) || "";
+      el.removeAttribute(attr);
+      let abs;
+      try { abs = new URL(raw, baseUrl).href; } catch(e){ continue; }
+      if (!/^https?:/i.test(abs)) continue;
+      if (depth > 0){
+        eager.push({ els: [el], apply: attr, onErr: "skip", promise: getResource(abs) });
+      } else {
+        const rid = "r" + (ridSeq++);
+        el.setAttribute("data-kalm-rid", rid);
+        if (attr !== "poster") el.setAttribute(attr, PLACEHOLDER_GIF);
+        lazy.push({ rid, apply: attr, promise: getResource(abs) });
+      }
+    }
+  }
+
+  /* srcset */
+  for (const el of Array.from(doc.querySelectorAll("[srcset]"))){
+    const v = el.getAttribute("srcset") || "";
+    el.removeAttribute("srcset");
+    const cands = parseSrcset(v);
+    if (!cands.length) continue;
+    const best = cands[cands.length - 1];
+    let abs;
+    try { abs = new URL(best.u, baseUrl).href; } catch(e){ continue; }
+    if (!/^https?:/i.test(abs)) continue;
+    if (depth > 0){
+      eager.push({ els: [el], apply: el.tagName === "SOURCE" ? "srcset" : "src", onErr: "skip", desc: best.d, promise: getResource(abs) });
+    } else {
+      const rid = "r" + (ridSeq++);
+      el.setAttribute("data-kalm-rid", rid);
+      lazy.push({ rid, apply: el.tagName === "SOURCE" ? "srcset" : "src", desc: best.d, promise: getResource(abs) });
+    }
+  }
+
+  /* <style> inline */
+  for (const st of Array.from(doc.querySelectorAll("style"))){
+    if (!st.textContent || !/url\(|@import/i.test(st.textContent)) continue;
+    const css0 = st.textContent;
+    eager.push({ els: [st], apply: "text", onErr: "skip", promise: rewriteCss(css0, baseUrl).then((css) => ({ css })) });
+  }
+
+  /* atributos style con url() */
+  for (const el of Array.from(doc.querySelectorAll("[style]"))){
+    const css0 = el.getAttribute("style") || "";
+    if (!/url\(/i.test(css0)) continue;
+    el.removeAttribute("style");
+    if (depth > 0){
+      eager.push({ els: [el], apply: "style", onErr: "skip", promise: rewriteCss(css0, baseUrl).then((c) => ({ css: c })) });
+    } else {
+      const rid = "r" + (ridSeq++);
+      el.setAttribute("data-kalm-rid", rid);
+      lazy.push({ rid, apply: "style", promise: rewriteCss(css0, baseUrl).then((c) => ({ css: c })) });
+    }
+  }
+
+  /* resolver recursos críticos antes de renderizar */
+  const results = await Promise.all(eager.map((e) => e.promise));
+  eager.forEach((e, i) => {
+    const r = results[i];
+    for (const el of e.els){
+      if (!r || r.error){
+        if (e.onErr === "remove") el.remove();
+        else if (e.onErr === "skip") el.setAttribute("data-kalm-skip", "1");
+        continue;
+      }
+      if (e.apply === "src") el.setAttribute("src", r.blobUrl);
+      else if (e.apply === "href") el.setAttribute("href", r.blobUrl);
+      else if (e.apply === "srcdoc"){ if (r.html) el.setAttribute("srcdoc", r.html); else if (r.src) el.setAttribute("src", r.src); else el.remove(); }
+      else if (e.apply === "text") el.textContent = r.css;
+      else if (e.apply === "style") el.setAttribute("style", r.css);
+      else el.setAttribute(e.apply, r.blobUrl);
+    }
+  });
+
+  /* inyectar helper como primer script */
+  const h = doc.createElement("script");
+  h.textContent = HELPER_JS;
+  const head = doc.head || doc.documentElement;
+  head.insertBefore(h, head.firstChild);
+
+  let html = "";
+  if (doc.doctype) html += "<!DOCTYPE " + doc.doctype.name + ">\n";
+  html += doc.documentElement.outerHTML;
+
+  return {
+    html,
+    title: (doc.title || "").trim() || basename(baseUrl0) || baseUrl0,
+    lazy
+  };
+}
+</script>
+<script>
+/* ============================================================
+   INTERFAZ: NAVEGACIÓN · PANELES · AJUSTES · ARRANQUE
+   ============================================================ */
+const DEFAULT_QUICK = [["Visuales UCLV", "http://visuales.uclv.edu.cu/"], ["Ejemplo", "http://example.com/"]];
+
+let currentUrl = null;
+let currentTitle = "";
+let hist = [];
+let histIdx = -1;
+let navToken = 0;
+let viewerData = null;
+let directMode = false;
+
+function setView(name){
+  $("#home").classList.toggle("hidden", name !== "home");
+  $("#view").classList.toggle("hidden", name !== "view");
+}
+function showOnly(id){
+  ["frameWrap", "viewer", "errBox"].forEach((x) => $("#" + x).classList.toggle("hidden", x !== id));
+}
+function setProgress(on){ $("#progress").classList.toggle("hidden", !on); }
+function idleStatus(){
+  const u = Store.get("wisp", "");
+  return u ? { msg: "Túnel listo: " + u, cls: "off" } : { msg: "Sin túnel configurado", cls: "off" };
+}
+function setStatus(msg, cls){
+  $("#statusMsg").textContent = msg || idleStatus().msg;
+  if (cls) $("#statusDot").className = "dot " + cls;
+}
+function onTunnelState(s){
+  if (s === "on") setStatus("Túnel WISP conectado", "on");
+  else if (s === "off") setStatus("Túnel WISP desconectado", "err");
+  else if (s === "err") setStatus("Error de túnel WISP", "err");
+}
+function shortUrl(u){
+  try { const x = new URL(u); return x.host + (x.pathname && x.pathname !== "/" ? x.pathname : ""); }
+  catch(e){ return u || ""; }
+}
+
+/* ---------- navegación ---------- */
+function normalizeInput(s){
+  s = (s || "").trim();
+  if (!s) return null;
+  if (/^https?:\/\//i.test(s)) return s;
+  if (/^[a-z][a-z0-9+.\-]*:/i.test(s)){ toast("Esquema no soportado. Usa http:// o https://", "warn"); return null; }
+  if (looksLikeUrl(s)) return "http://" + s;
+  toast("Escribe una dirección válida, p. ej. visuales.uclv.edu.cu", "warn");
+  return null;
+}
+function normalizeNavUrl(u){
+  u = String(u || "").trim();
+  if (!u || u === "#" || u.charAt(0) === "#") return null;
+  if (/^(javascript|mailto|tel|data|blob):/i.test(u)) return null;
+  if (/^https?:\/\//i.test(u)) return u;
+  try { return new URL(u, currentUrl || location.href).href; } catch(e){ return null; }
+}
+
+async function navigate(url, opts = {}){
+  url = String(url || "").trim();
+  if (!url) return;
+  if (/^https:/i.test(url)){ showHttpsCard(url); return; }
+  if (!/^https?:/i.test(url)){
+    toast("Esquema no soportado. Usa http://", "warn");
+    return;
+  }
+  if (!getTransport()){ toast("Configura primero tu servidor WISP", "warn"); openSettings(); return; }
+
+  const token = ++navToken;
+  setProgress(true);
+  $("#addr").value = url;
+  setStatus("Conectando por el túnel…", "wait");
+  try {
+    const res = await engine.request(url, {
+      method: opts.method,
+      body: opts.body,
+      contentType: opts.contentType,
+      referer: opts.referer !== undefined ? opts.referer : currentReferer
+    });
+    if (token !== navToken) return;
+    currentReferer = res.url;
+
+    if (isHtmlRes(res)){
+      sweepBlobs();
+      resCache.clear();
+      pendingLazy = [];
+      frameLoaded = false;
+      directMode = false;
+      setView("view");
+      showOnly("frameWrap");
+      setStatus("Página recibida (HTTP " + res.status + ") · cargando recursos…", "wait");
+      const page = await processPageRes(res, 0);
+      if (token !== navToken) return;
+      applyPage(page, res.url);
+      if (!opts.noPush) pushHistory(res.url, page.title);
+      setStatus("Listo", "on");
+    } else if (isAttachment(res) || !isViewable(res)){
+      /* descarga: se empaqueta como ZIP sin salir de la vista actual */
+      setStatus("Descargando y comprimiendo…", "wait");
+      await deliverDownload(res);
+      if (token !== navToken) return;
+      setStatus("Descarga empaquetada como ZIP", "on");
+    } else {
+      sweepBlobs();
+      resCache.clear();
+      pendingLazy = [];
+      frameLoaded = false;
+      directMode = false;
+      showViewer(res);
+      if (!opts.noPush) pushHistory(res.url, basename(res.url) || res.url);
+      setStatus("Listo", "on");
+    }
+  } catch(err){
+    if (token === navToken) showError(err, url);
+  } finally {
+    if (token === navToken) setProgress(false);
+  }
+}
+
+function applyPage(page, url){
+  currentUrl = url;
+  currentTitle = page.title;
+  pendingLazy = page.lazy || [];
+  frameLoaded = false;
+  const fr = $("#frame");
+  fr.srcdoc = page.html;
+  $("#addr").value = url;
+  $("#schemeChip").textContent = "HTTP";
+  $("#schemeChip").className = "chip";
+  document.title = (page.title ? page.title + " · " : "") + "Kalm";
+  updateStar();
+  closePanels();
+}
+
+function showViewer(res){
+  currentUrl = res.url;
+  currentTitle = basename(res.url) || res.url;
+  setView("view");
+  const body = $("#viewerBody");
+  body.innerHTML = "";
+  const name = filenameFromCD(res.headers["content-disposition"]) || basename(res.url) || res.url;
+  $("#viewerName").textContent = name;
+  $("#viewerName").title = res.url;
+  $("#viewerSize").textContent = fmtBytes(res.bytes.length) + (res.mime ? " · " + res.mime : "") + " · HTTP " + res.status;
+  const url = trackBlob(URL.createObjectURL(new Blob([res.bytes], { type: res.mime || "application/octet-stream" })));
+  viewerData = { bytes: res.bytes, name: name.replace(/[\\/:*?"<>|]/g, "_") || "archivo", url: res.url };
+  const m = res.mime || "";
+  if (m.indexOf("image/") === 0){
+    const img = document.createElement("img");
+    img.src = url; img.alt = name;
+    body.appendChild(img);
+  } else if (m.indexOf("video/") === 0){
+    const v = document.createElement("video");
+    v.src = url; v.controls = true;
+    body.appendChild(v);
+  } else if (m.indexOf("audio/") === 0){
+    const a = document.createElement("audio");
+    a.src = url; a.controls = true;
+    body.appendChild(a);
+  } else if (m === "application/pdf"){
+    const e = document.createElement("embed");
+    e.src = url; e.type = "application/pdf";
+    e.style.cssText = "width:100%;height:100%;border:0";
+    body.appendChild(e);
+  } else {
+    const pre = document.createElement("pre");
+    pre.textContent = denc(res.bytes, res.charset || sniffCharset(res.bytes));
+    body.appendChild(pre);
+  }
+  $("#addr").value = res.url;
+  $("#schemeChip").textContent = "HTTP";
+  $("#schemeChip").className = "chip";
+  document.title = (name ? name + " · " : "") + "Kalm";
+  updateStar();
+  showOnly("viewer");
+  closePanels();
+}
+
+function showError(err, url){
+  const msg = (err && err.message) || String(err);
+  const cfgFail = /WISP|túnel/i.test(msg);
+  const box = $("#errBox");
+  box.innerHTML = '<div class="err-card glass">'
+    + '<div class="eicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></div>'
+    + '<h2>No se pudo cargar</h2>'
+    + '<p>' + esc(msg) + '</p>'
+    + '<div class="eurl">' + esc(url || "") + '</div>'
+    + '<div class="err-actions">'
+    + '<button class="btn accent" data-act="retry">Reintentar</button>'
+    + (cfgFail ? '<button class="btn" data-act="settings">Abrir ajustes</button>' : '')
+    + '<button class="btn ghost" data-act="home">Inicio</button>'
+    + '</div></div>';
+  setView("view");
+  showOnly("errBox");
+  setStatus("Error de carga", "err");
+  box.querySelectorAll("[data-act]").forEach((b) => {
+    b.addEventListener("click", () => {
+      const act = b.getAttribute("data-act");
+      if (act === "retry") navigate(url);
+      else if (act === "settings") openSettings();
+      else goHome();
+    });
+  });
+}
+
+function showHttpsCard(url){
+  const box = $("#errBox");
+  box.innerHTML = '<div class="err-card glass">'
+    + '<div class="eicon" style="background:rgba(251,191,36,.12); color:var(--warn)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>'
+    + '<h2>Sitio HTTPS</h2>'
+    + '<p>El túnel WISP transporta HTTP en claro y no puede descifrar HTTPS. Puedes intentar mostrarlo dentro de Kalm de forma directa (sin túnel) o abrirlo en una pestaña nueva.</p>'
+    + '<div class="eurl">' + esc(url) + '</div>'
+    + '<div class="err-actions">'
+    + '<button class="btn" data-act="direct">Intentar dentro de Kalm</button>'
+    + '<button class="btn accent" data-act="newtab">Abrir en pestaña nueva</button>'
+    + '<button class="btn ghost" data-act="home">Inicio</button>'
+    + '</div>'
+    + '<p class="hint" style="margin-top:12px">Si la pantalla queda en blanco, el sitio bloquea ser embebido (X-Frame-Options).</p>'
+    + '</div>';
+  setView("view");
+  showOnly("errBox");
+  $("#addr").value = url;
+  $("#schemeChip").textContent = "HTTPS";
+  $("#schemeChip").className = "chip direct";
+  setStatus("HTTPS requiere modo directo", "wait");
+  box.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", () => {
+    const act = b.getAttribute("data-act");
+    if (act === "newtab"){ try { window.open(url, "_blank", "noopener"); } catch(e){} }
+    else if (act === "direct") showDirectFrame(url);
+    else goHome();
+  }));
+}
+
+function showDirectFrame(url){
+  const token = ++navToken;
+  setProgress(true);
+  directMode = true;
+  currentUrl = url;
+  currentTitle = url;
+  setView("view");
+  showOnly("frameWrap");
+  const fr = $("#frame");
+  fr.removeAttribute("srcdoc");
+  fr.src = url;
+  $("#addr").value = url;
+  $("#schemeChip").textContent = "DIRECTO";
+  $("#schemeChip").className = "chip direct";
+  pushHistory(url, url);
+  setStatus("Modo directo (sin túnel)", "wait");
+  updateStar();
+  setTimeout(() => {
+    if (token === navToken){ setProgress(false); setStatus("Modo directo activo", "on"); }
+  }, 2500);
+}
+
+function goHome(){
+  navToken++;
+  setProgress(false);
+  currentUrl = null;
+  currentTitle = "";
+  viewerData = null;
+  directMode = false;
+  setView("home");
+  $("#addr").value = "";
+  document.title = "Kalm — Navegador dentro del navegador";
+  const st = idleStatus();
+  setStatus(st.msg, st.cls);
+  try { history.replaceState(null, "", location.pathname); } catch(e){}
+  updateStar();
+}
+function reloadPage(){
+  if (directMode && currentUrl){ $("#frame").src = currentUrl; return; }
+  if (currentUrl) navigate(currentUrl);
+}
+
+/* ---------- historial ---------- */
+function pushHistory(url, title){
+  hist.splice(histIdx + 1);
+  const last = hist[histIdx];
+  if (last && last.u === url){ last.t = title || last.t; }
+  else {
+    hist.push({ u: url, t: title || url });
+    if (hist.length > 80) hist.shift();
+    histIdx = hist.length - 1;
+  }
+  updateNavBtns();
+  const l = Store.get("hist", []);
+  l.unshift({ u: url, t: title || url, time: Date.now() });
+  if (l.length > 120) l.pop();
+  Store.set("hist", l);
+  try { history.replaceState(null, "", "#k=" + b64url(url)); } catch(e){}
+}
+function goBack(){
+  if (histIdx > 0){ histIdx--; updateNavBtns(); navigate(hist[histIdx].u, { noPush: true }); }
+}
+function goFwd(){
+  if (histIdx < hist.length - 1){ histIdx++; updateNavBtns(); navigate(hist[histIdx].u, { noPush: true }); }
+}
+function updateNavBtns(){
+  $("#btnBack").disabled = histIdx <= 0;
+  $("#btnFwd").disabled = histIdx >= hist.length - 1;
+}
+
+/* ---------- paneles ---------- */
+function closePanels(){ $$(".panel").forEach((p) => p.classList.remove("open")); }
+function togglePanel(id){
+  const p = $("#" + id);
+  const was = p.classList.contains("open");
+  closePanels();
+  if (!was){
+    p.classList.add("open");
+    if (id === "panelDl") renderDownloads();
+    else if (id === "panelBm") renderBookmarks();
+    else if (id === "panelHist") renderHistory();
+  }
+}
+function renderDownloads(){
+  const list = Store.get("dls", []);
+  const box = $("#dlList");
+  if (!list.length){
+    box.innerHTML = '<div class="empty">Aún no hay descargas.<br>Cada archivo se guardará comprimido como ZIP: 00001.zip, 00002.zip…</div>';
+  } else {
+    box.innerHTML = "";
+    for (const d of list){
+      const el = document.createElement("button");
+      el.className = "item";
+      el.type = "button";
+      el.innerHTML = '<span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 11l5 5 5-5"/><path d="M4 20h16"/></svg></span>'
+        + '<span class="tx"><span class="t1">' + esc(d.zip) + ' · ' + esc(d.name) + '</span>'
+        + '<span class="t2">' + esc(fmtBytes(d.size)) + ' · ' + esc(shortUrl(d.url)) + '</span></span>';
+      el.title = d.url || "";
+      el.addEventListener("click", () => { if (d.url){ closePanels(); downloadUrl(d.url); } });
+      box.appendChild(el);
+    }
+  }
+  const badge = $("#dlBadge");
+  if (list.length){ badge.textContent = list.length; badge.classList.remove("hidden"); }
+  else badge.classList.add("hidden");
+}
+function pulseBadge(){
+  renderDownloads();
+  const b = $("#dlBadge");
+  b.classList.remove("pulse");
+  void b.offsetWidth;
+  b.classList.add("pulse");
+}
+function renderBookmarks(){
+  const list = Store.get("bms", []);
+  const box = $("#bmList");
+  if (!list.length){
+    box.innerHTML = '<div class="empty">Sin marcadores todavía.<br>Guarda la página actual con la estrella de la barra superior.</div>';
+    return;
+  }
+  box.innerHTML = "";
+  for (const b of list){
+    const row = document.createElement("div");
+    row.className = "item";
+    row.innerHTML = '<span class="ico"><svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.3 1.1 6.1L12 17l-5.4 2.8 1.1-6.1L3.2 9.4l6.1-.8z"/></svg></span>'
+      + '<span class="tx"><span class="t1">' + esc(b.t || b.u) + '</span><span class="t2">' + esc(shortUrl(b.u)) + '</span></span>'
+      + '<button class="act" title="Eliminar" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
+    row.addEventListener("click", (e) => {
+      if (e.target.closest(".act")){
+        Store.set("bms", list.filter((x) => x.u !== b.u));
+        renderBookmarks();
+        updateStar();
+        return;
+      }
+      closePanels();
+      navigate(b.u);
+    });
+    box.appendChild(row);
+  }
+}
+function renderHistory(){
+  const list = Store.get("hist", []);
+  const box = $("#histList");
+  if (!list.length){ box.innerHTML = '<div class="empty">Sin historial todavía.</div>'; return; }
+  box.innerHTML = "";
+  for (const it of list){
+    const el = document.createElement("button");
+    el.className = "item";
+    el.type = "button";
+    el.innerHTML = '<span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>'
+      + '<span class="tx"><span class="t1">' + esc(it.t || it.u) + '</span><span class="t2">' + esc(shortUrl(it.u)) + '</span></span>';
+    el.addEventListener("click", () => { closePanels(); navigate(it.u); });
+    box.appendChild(el);
+  }
+}
+
+/* ---------- marcadores ---------- */
+function updateStar(){
+  const list = Store.get("bms", []);
+  $("#btnStar").classList.toggle("active", !!(currentUrl && list.some((b) => b.u === currentUrl)));
+}
+function toggleBookmark(){
+  if (!currentUrl){ toast("Navega a una página primero", "warn"); return; }
+  const list = Store.get("bms", []);
+  const i = list.findIndex((b) => b.u === currentUrl);
+  if (i >= 0){ list.splice(i, 1); toast("Marcador eliminado"); }
+  else { list.unshift({ u: currentUrl, t: currentTitle || currentUrl }); toast("Añadido a marcadores", "ok"); }
+  Store.set("bms", list);
+  updateStar();
+}
+
+/* ---------- ajustes ---------- */
+function applyTheme(){
+  document.documentElement.setAttribute("data-theme", Store.get("theme", "dark"));
+}
+function openSettings(){
+  $("#setWisp").value = Store.get("wispRaw", Store.get("wisp", ""));
+  $("#setQuick").value = Store.get("quick", DEFAULT_QUICK).map((q) => q[0] + " | " + q[1]).join("\n");
+  $("#setTheme").value = Store.get("theme", "dark");
+  const out = $("#setTestOut");
+  out.textContent = "";
+  out.style.color = "";
+  $("#dlgSet").showModal();
+}
+function saveSettings(){
+  const raw = $("#setWisp").value.trim();
+  const url = normalizeWispUrl(raw);
+  Store.set("wispRaw", raw);
+  Store.set("wisp", url);
+  _transport = null;
+  const quick = $("#setQuick").value.split("\n")
+    .map((l) => { const i = l.indexOf("|"); return i > 0 ? [l.slice(0, i).trim(), l.slice(i + 1).trim()] : null; })
+    .filter((p) => p && p[0] && p[1]);
+  Store.set("quick", quick);
+  Store.set("theme", $("#setTheme").value);
+  applyTheme();
+  renderQuick();
+  $("#dlgSet").close();
+  const st = idleStatus();
+  setStatus(st.msg, st.cls);
+  $("#setupCard").classList.toggle("hidden", !!url);
+  toast("Ajustes guardados", "ok");
+}
+async function testConnection(){
+  const out = $("#setTestOut");
+  const url = normalizeWispUrl($("#setWisp").value);
+  if (!url){ out.textContent = "Escribe una dirección primero."; return; }
+  out.textContent = "Conectando…";
+  out.style.color = "";
+  const tmp = new WispTransport(url);
+  try {
+    await withTimeout(tmp.ensure(), 16000, "Tiempo de espera agotado");
+    out.textContent = "Conectado correctamente";
+    out.style.color = "var(--ok)";
+  } catch(e){
+    out.textContent = "Falló: " + ((e && e.message) || e);
+    out.style.color = "var(--err)";
+  }
+}
+function renderQuick(){
+  const list = Store.get("quick", DEFAULT_QUICK);
+  const box = $("#quick");
+  box.innerHTML = "";
+  for (const q of list){
+    const b = document.createElement("button");
+    b.className = "qchip";
+    b.type = "button";
+    b.title = q[1];
+    b.innerHTML = '<span class="qdot">' + esc((q[0] || "?").charAt(0).toUpperCase()) + '</span><span class="qname">' + esc(q[0]) + '</span>';
+    b.addEventListener("click", () => { $("#addr").value = q[1]; navigate(q[1]); });
+    box.appendChild(b);
+  }
+  const edit = document.createElement("button");
+  edit.className = "qchip ghost";
+  edit.type = "button";
+  edit.innerHTML = '<span class="qdot">+</span><span class="qname">Editar</span>';
+  edit.addEventListener("click", openSettings);
+  box.appendChild(edit);
+}
+
+/* ---------- mensajes del iframe interno ---------- */
+window.addEventListener("message", (ev) => {
+  const d = ev.data;
+  if (!d || typeof d !== "object" || !d.__kalm) return;
+  if (d.__kalm === "nav"){
+    const u = normalizeNavUrl(d.url);
+    if (u) navigate(u, { method: d.method, body: d.body, contentType: d.contentType });
+  } else if (d.__kalm === "download"){
+    const u = normalizeNavUrl(d.url);
+    if (u) downloadUrl(u);
+  } else if (d.__kalm === "hover"){
+    setStatus(d.url, null);
+  } else if (d.__kalm === "toast"){
+    toast(d.msg || "", "warn");
+  }
+});
+
+/* ---------- arranque ---------- */
+function boot(){
+  applyTheme();
+  renderQuick();
+  renderDownloads();
+  updateStar();
+  updateNavBtns();
+  const st = idleStatus();
+  setStatus(st.msg, st.cls);
+  $("#setupCard").classList.toggle("hidden", !!Store.get("wisp", ""));
+
+  $("#btnBack").addEventListener("click", goBack);
+  $("#btnFwd").addEventListener("click", goFwd);
+  $("#btnReload").addEventListener("click", reloadPage);
+  $("#btnHome").addEventListener("click", goHome);
+  $("#btnGo").addEventListener("click", () => { const u = normalizeInput($("#addr").value); if (u) navigate(u); });
+  $("#addr").addEventListener("keydown", (e) => {
+    if (e.key === "Enter"){ const u = normalizeInput($("#addr").value); if (u) navigate(u); }
+  });
+  $("#heroForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const u = normalizeInput($("#heroAddr").value);
+    if (u){ $("#addr").value = u; navigate(u); }
+  });
+  $("#btnStar").addEventListener("click", toggleBookmark);
+  $("#btnDl").addEventListener("click", () => togglePanel("panelDl"));
+  $("#btnSet").addEventListener("click", openSettings);
+  $("#setupBtn").addEventListener("click", () => {
+    const url = normalizeWispUrl($("#setupWisp").value);
+    if (!url){ toast("Escribe la dirección de tu servidor WISP", "warn"); return; }
+    Store.set("wispRaw", $("#setupWisp").value.trim());
+    Store.set("wisp", url);
+    _transport = null;
+    $("#setupCard").classList.add("hidden");
+    const s2 = idleStatus();
+    setStatus(s2.msg, s2.cls);
+    toast("Servidor guardado. ¡Listo para navegar!", "ok");
+  });
+  $("#setSave").addEventListener("click", saveSettings);
+  $("#setClose").addEventListener("click", () => $("#dlgSet").close());
+  $("#setTest").addEventListener("click", testConnection);
+  $("#viewerDl").addEventListener("click", () => { if (viewerData) zipAndSave(viewerData.bytes, viewerData.name, viewerData.url); });
+  $("#btnSaveCurrent").addEventListener("click", () => {
+    if (currentUrl) downloadUrl(currentUrl);
+    else toast("Navega a una página primero", "warn");
+  });
+  $("#btnClearDl").addEventListener("click", () => { Store.set("dls", []); Store.set("dln", 1); renderDownloads(); });
+  $("#btnClearHist").addEventListener("click", () => { Store.set("hist", []); renderHistory(); });
+  $$(".p-close").forEach((b) => b.addEventListener("click", closePanels));
+  $("#frame").addEventListener("load", () => { frameLoaded = true; runLazyPatches(); });
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "F5"){ e.preventDefault(); reloadPage(); }
+    else if (e.altKey && e.key === "ArrowLeft"){ e.preventDefault(); goBack(); }
+    else if (e.altKey && e.key === "ArrowRight"){ e.preventDefault(); goFwd(); }
+    else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "l"){ e.preventDefault(); $("#addr").focus(); $("#addr").select(); }
+    else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "j"){ e.preventDefault(); togglePanel("panelDl"); }
+    else if (e.key === "Escape"){ closePanels(); }
+  });
+
+  setInterval(() => {
+    const n = engineStats.active;
+    $("#statusRes").textContent = n > 0 ? "peticiones activas: " + n : "";
+  }, 400);
+
+  const h = location.hash || "";
+  if (h.indexOf("#k=") === 0){
+    const u = unb64url(h.slice(3));
+    if (u && /^https?:/i.test(u)) setTimeout(() => navigate(u), 650);
+  }
+
+  setTimeout(() => $("#boot").classList.add("gone"), 550);
+}
+boot();
+</script>
+</body>
+</html>
