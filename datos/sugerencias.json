@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Validar variables de entorno con dotenv y joi",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Falta validación de variables críticas, lo que puede provocar fallos silenciosos.",
+        "como": "Usar dotenv para cargar .env y joi para validar que todas las variables requeridas existen y tienen formato correcto antes de iniciar el servidor."
+      },
+      {
+        "titulo": "Reemplazar algoritmo de hashing de contraseñas por Argon2",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "scrypt es vulnerable a ataques de GPU y no está tan optimizado.",
+        "como": "Integrar argon2id, que ofrece resistencia a ataques de fuerza bruta y permite ajustar memoria y tiempo de ejecución."
+      },
+      {
+        "titulo": "Implementar Content Security Policy con Helmet",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "Helmet se inicializa sin CSP, dejando vulnerabilidad XSS.",
+        "como": "Configurar helmet.contentSecurityPolicy con directivas adecuadas y permitir solo scripts de dominios de confianza."
+      },
+      {
+        "titulo": "Cachear respuestas de GitHub con TTL dinámico y invalidación inteligente",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "La caché actual siempre invalida después de 30s, generando llamadas innecesarias.",
+        "como": "Usar un TTL basado en la etiqueta ETag de GitHub y invalidar solo cuando el contenido cambia."
+      },
+      {
+        "titulo": "Añadir middleware de parseo JSON y manejo de errores globales",
+        "categoria": "bug",
+        "prioridad": "baja",
+        "descripcion": "El servidor no analiza cuerpos JSON y no captura errores de rutas no definidas.",
+        "como": "Agregar app.use(express.json()) y un middleware catch-all que devuelva 404 con mensaje amigable."
+      }
+    ],
+    "fecha": "2026-10-24T07:54:26.780Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 21464,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Rate limiting en login",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -185,53 +232,6 @@
       "package.json"
     ],
     "duracionMs": 39753,
-    "fuente": "ia"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Clave de cifrado derivada de entorno",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "La clave AES se genera a partir de ANIA_SECRET, pero sin un fallback se expone a ataques de fuerza bruta. Generar la clave directamente desde una variable de entorno garantiza que no haya valores por defecto vulnerables.",
-        "como": "Reemplazar crypto.createHash('sha256').update(ANIA_SECRET || 'fallback') por crypto.createHash('sha256').update(ANIA_SECRET).digest() y lanzar error si ANIA_SECRET no existe."
-      },
-      {
-        "titulo": "Rate limiting por IP y usuario",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Los limitadores actuales aplican solo por IP, lo que permite ataques dirigidos a cuentas sin afectar a otros usuarios. Combinar el IP con el identificador del usuario evita abusos y protege la disponibilidad del servicio.",
-        "como": "Añadir un keyGenerator que concatene req.ip y req.user?.id a los limitadores de login y registro."
-      },
-      {
-        "titulo": "Validación de rutas de persistencia",
-        "categoria": "bug",
-        "prioridad": "media",
-        "descripcion": "El módulo persistencia-local permite escribir en cualquier ruta relativa, lo que puede sobreescribir archivos críticos. Validar y normalizar las rutas evita ataques de path traversal y protege la integridad de los datos.",
-        "como": "Utilizar path.resolve y comparar con el directorio base antes de leer o escribir."
-      },
-      {
-        "titulo": "Uso de scrypt asíncrono",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "El hash de contraseña se calcula con scryptSync, bloqueando el event loop y reduciendo la capacidad de concurrencia. La versión asíncrona libera el hilo y mejora la escalabilidad bajo carga.",
-        "como": "Reemplazar hashPass y checkPass con crypto.scrypt (async) y ajustar los flujos de autenticación."
-      },
-      {
-        "titulo": "Manejo robusto de errores de GitHub API",
-        "categoria": "bug",
-        "prioridad": "media",
-        "descripcion": "Los fallos de la API de GitHub se propagan como excepciones sin contexto, lo que dificulta el diagnóstico. Registrar los códigos de estado y mensajes de error facilita la depuración y la recuperación automática.",
-        "como": "En ghRead y ghWrite envolver los fetch en try/catch, registrar el status y lanzar errores con mensajes claros, y opcionalmente reintentar con backoff exponencial."
-      }
-    ],
-    "fecha": "2026-10-19T08:31:14.715Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 13475,
     "fuente": "ia"
   }
 ]
