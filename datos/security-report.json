@@ -1,35 +1,7 @@
 {
-  "fecha": "2026-10-23T09:47:59.655Z",
+  "fecha": "2026-10-24T09:21:16.266Z",
   "analizadoPor": "Ania Security Agent v3",
   "hallazgos": [
-    {
-      "tipo": "dependencia",
-      "paquete": "basesec",
-      "severidad": "alto",
-      "descripcion": "Vulnerabilidad en basesec: CVE desconocido",
-      "solucion": "No hay fix automático"
-    },
-    {
-      "tipo": "dependencia",
-      "paquete": "braces",
-      "severidad": "alto",
-      "descripcion": "Vulnerabilidad en braces: braces vulnerable to stack-exhaustion denial of service through deeply nested patterns",
-      "solucion": "No hay fix automático"
-    },
-    {
-      "tipo": "dependencia",
-      "paquete": "fast-glob",
-      "severidad": "alto",
-      "descripcion": "Vulnerabilidad en fast-glob: CVE desconocido",
-      "solucion": "No hay fix automático"
-    },
-    {
-      "tipo": "dependencia",
-      "paquete": "micromatch",
-      "severidad": "alto",
-      "descripcion": "Vulnerabilidad en micromatch: CVE desconocido",
-      "solucion": "No hay fix automático"
-    },
     {
       "tipo": "dependencia",
       "paquete": "nodemailer",
@@ -52,7 +24,7 @@
   ],
   "resumen": {
     "critico": 2,
-    "alto": 5,
+    "alto": 1,
     "medio": 0,
     "bajo": 0
   }
