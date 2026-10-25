@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Validación estricta de variables de entorno",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "El código lanza avisos cuando faltan variables críticas, pero no detiene la ejecución hasta que se alcanza un punto crítico. Garantizar que todas las variables requeridas existan al arrancar evita vulnerabilidades de configuración y fallos inesperados.",
+        "como": "Implementar una función de validación al inicio que recorra un listado de variables obligatorias y, si alguna falta, muestre un mensaje claro y termine el proceso con exit(1). Utilizar una librería como dotenv para cargar .env y centralizar la validación simplifica el mantenimiento."
+      },
+      {
+        "titulo": "Reemplazo de tokens DIY por JWT estándar",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Los tokens personalizados se crean y verifican manualmente, lo que abre brechas de implementación y dificulta la interoperabilidad. Adoptar JWT permite integrarse con herramientas de revocación y validación externas.",
+        "como": "Instalar la librería jsonwebtoken, generar tokens con jwt.sign({userId, rol}, TOKEN_SECRET, {expiresIn: '30d'}), y verificar con jwt.verify(token, TOKEN_SECRET). Eliminar las funciones makeToken y verifyToken y actualizar los middleware de autenticación."
+      },
+      {
+        "titulo": "Optimizar el caché de GitHub con TTL extendido y fallback local",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "El caché actual expira en 30 000 ms, provocando lecturas frecuentes a la API de GitHub y posibles cuellos de botella. Extender el TTL y proporcionar una copia local como respaldo reduce la latencia y la carga de la red.",
+        "como": "Ajustar GHCache.TTL a 60 000 ms y, cuando la lectura falle, intentar leer desde un archivo local en ./datos/. Si el archivo no existe, generar uno vacío y actualizarlo cuando se recupere la conexión. Añadir logs para indicar cuándo se usa el caché versus la fuente primaria."
+      },
+      {
+        "titulo": "Añadir protección CSRF y configuración estricta de CORS",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "El servidor expone endpoints de autenticación sin protección contra ataques CSRF, y la política de CORS está deshabilitada. Esto abre la puerta a solicitudes maliciosas desde dominios no autorizados.",
+        "como": "Instalar y usar el middleware csurf para generar tokens CSRF en formularios y validarlos en las rutas POST. Configurar cors con opciones específicas: origen permitido, credenciales y método preflight, y desactivar el uso de CORS por defecto para todas las rutas."
+      },
+      {
+        "titulo": "Implementar logging estructurado con Winston",
+        "categoria": "bug",
+        "prioridad": "media",
+        "descripcion": "Los logs actuales se envían a la consola, lo que dificulta el monitoreo a escala y la búsqueda de errores críticos. Un sistema de logging estructurado facilita la correlación y la alerta automática.",
+        "como": "Instalar winston y sus transportes (Console, File, y opcionalmente external como Loggly). Configurar formatos JSON, niveles de log, y rotación de archivos. Reemplazar console.log, console.warn y console.error por winston.log('info', …), winston.warn(…), winston.error(…)."
+      }
+    ],
+    "fecha": "2026-10-25T08:08:27.921Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 23639,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Validar variables de entorno con dotenv y joi",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -185,53 +232,6 @@
       "package.json"
     ],
     "duracionMs": 24792,
-    "fuente": "ia"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Validación temprana de variables de entorno",
-        "categoria": "bug",
-        "prioridad": "alta",
-        "descripcion": "Verificar que todas las variables críticas estén definidas antes de iniciar el servidor evita fallos silenciosos y mejora la trazabilidad.",
-        "como": "Implementar dotenv y lanzar una excepción clara cuando falte ANIA_SECRET, GITHUB_TOKEN o TOKEN_SECRET."
-      },
-      {
-        "titulo": "Migrar a JWT con verificación de firma",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Utilizar jsonwebtoken con HMAC SHA-256 simplifica la gestión de expiración y evita errores de implementación manual.",
-        "como": "Reemplazar makeToken y verifyToken por sign/verify de la librería y almacenar el payload en un formato estándar."
-      },
-      {
-        "titulo": "Actualizar algoritmo de hash de contraseñas",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "El scryptSync bloquea el event loop; bcrypt o argon2 ofrecen mejor rendimiento y resistencia a ataques de GPU.",
-        "como": "Incorporar bcryptjs o argon2 y mover la generación de salt a la librería, garantizando hashes seguros y no bloqueantes."
-      },
-      {
-        "titulo": "Cachear usuarios y memorias en memoria",
-        "categoria": "rendimiento",
-        "prioridad": "alta",
-        "descripcion": "Reducir llamadas a GitHub disminuye latencia y carga de API, especialmente en modo nube.",
-        "como": "Mantener un Map con TTL para los datos de usuarios y memorias, invalidándolo tras actualizaciones."
-      },
-      {
-        "titulo": "Agregar middleware express.json()",
-        "categoria": "bug",
-        "prioridad": "media",
-        "descripcion": "Sin parseo de cuerpos JSON, las rutas POST no reciben datos correctamente.",
-        "como": "Insertar app.use(express.json()) antes de las rutas para que req.body esté disponible y evitar errores 400."
-      }
-    ],
-    "fecha": "2026-10-20T08:13:25.855Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 39753,
     "fuente": "ia"
   }
 ]
