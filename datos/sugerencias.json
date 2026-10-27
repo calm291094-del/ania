@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Validación exhaustiva de variables de entorno",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Verificar la presencia y formato de todas las variables críticas al arrancar la aplicación.",
+        "como": "Implementar un módulo de configuración que utilice joi o dotenv y lance una excepción clara si falta alguna variable."
+      },
+      {
+        "titulo": "Cacheo de archivos locales para reducir I/O",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "Almacenar en memoria las lecturas de archivos cifrados locales para evitar lecturas repetidas del disco.",
+        "como": "Mantener un Map con TTL o usar lru-cache para los datos de usuarios y memorias."
+      },
+      {
+        "titulo": "Manejo de errores más descriptivo en GitHub API",
+        "categoria": "bug",
+        "prioridad": "media",
+        "descripcion": "Los errores de ghRead/ghWrite actualmente devuelven códigos genéricos que dificultan el debug.",
+        "como": "Capturar la respuesta JSON y lanzar excepciones con mensaje de endpoint y código de estado."
+      },
+      {
+        "titulo": "Rate limiter basado en IP real tras proxy",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "El current limiter usa la IP del cliente, pero podría estar alterada por proxies.",
+        "como": "Configurar keyGenerator: (req)=>req.ip y habilitar trust proxy para que express use la IP correcta."
+      },
+      {
+        "titulo": "Habilitar CSP y otras políticas de Helmet",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "Helmet se inicializa con CSP deshabilitado, lo que deja vulnerable a XSS.",
+        "como": "Definir una política CSP conservadora y habilitar la política de recursos de origen cruzado."
+      }
+    ],
+    "fecha": "2026-10-27T08:40:48.711Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 34278,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Rate limiting en login",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -186,52 +233,5 @@
     ],
     "duracionMs": 25817,
     "fuente": "fallback"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Agregar middleware express.json() para parsear cuerpos JSON",
-        "categoria": "bug",
-        "prioridad": "alta",
-        "descripcion": "El servidor no puede leer cuerpos JSON en las peticiones POST, lo que impide el registro y login.",
-        "como": "Colocar app.use(express.json()); antes de las rutas para que el cuerpo se parsee correctamente."
-      },
-      {
-        "titulo": "Implementar política de seguridad de contenido (CSP) con Helmet",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Sin CSP, el sitio es vulnerable a XSS mediante recursos externos.",
-        "como": "Configurar helmet({contentSecurityPolicy:{ ... }}) para permitir solo recursos propios y de confianza."
-      },
-      {
-        "titulo": "Aplicar rate limiting a las rutas críticas (login, registro, cambio de contraseña)",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "La falta de límites permite ataques de fuerza bruta en las credenciales.",
-        "como": "Asignar los middlewares limiterLogin, limiterRegister y limiterPassword a sus respectivas rutas."
-      },
-      {
-        "titulo": "Añadir protección CSRF para formularios y llamadas al backend",
-        "categoria": "seguridad",
-        "prioridad": "media",
-        "descripcion": "Sin protección CSRF, usuarios malintencionados pueden ejecutar acciones en nombre del usuario.",
-        "como": "Incorporar el middleware csurf y enviar el token en un encabezado personalizado en cada petición."
-      },
-      {
-        "titulo": "Implementar caché de usuarios en memoria para reducir llamadas a GitHub",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "Cada carga de usuarios dispara una llamada a GitHub, aumentando latencia y consumo de recursos.",
-        "como": "Almacenar la lista de usuarios en un Map con TTL y verificar el cache antes de realizar ghRead."
-      }
-    ],
-    "fecha": "2026-10-22T08:20:16.968Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 17533,
-    "fuente": "ia"
   }
 ]
