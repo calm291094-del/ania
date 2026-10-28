@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Centralizar el manejo de errores",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Los errores no controlados pueden exponer datos sensibles y romper la experiencia del usuario. Implementar un middleware de error global captura todas las excepciones y devuelve respuestas consistentes.",
+        "como": "Añadir un archivo errorHandler.js y usar app.use(errorHandler) después de todas las rutas; usar express-async-errors para promesas."
+      },
+      {
+        "titulo": "Optimizar la caché de GitHub",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "El TTL fijo de 30 s y el uso de un Map simple limitan la escalabilidad. Una caché LRU con expiración configurable mejora la latencia y el uso de ancho de banda.",
+        "como": "Reemplazar GHCache por node-cache o lru-cache, usar variables de entorno para TTL y tamaño, y limpiar entradas cuando se actualicen archivos."
+      },
+      {
+        "titulo": "Completar las políticas de Helmet",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "El código deja la propiedad crossOriginResourcePolicy con un string incompleto, lo que puede generar errores de configuración. Definir correctamente todas las políticas evita vulnerabilidades de carga cruzada.",
+        "como": "Establecer crossOriginResourcePolicy: { policy:'same-origin' }, habilitar CSP con directivas adecuadas y revisar la configuración de HSTS en helmet."
+      },
+      {
+        "titulo": "Validar y sanitizar todas las entradas de usuario",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Algunos endpoints aceptan datos sin validación, lo que abre puertas a XSS o inyección de datos corruptos. Validar el esquema garantiza integridad y seguridad.",
+        "como": "Usar una librería como joi o express-validator para comprobar campos, tipos y longitudes antes de procesarlos; escapar cualquier dato que se renderice en el frontend."
+      },
+      {
+        "titulo": "Registrar intentos de autenticación fallidos",
+        "categoria": "bug",
+        "prioridad": "media",
+        "descripcion": "Actualmente no se lleva registro de intentos fallidos, dificultando la detección de ataques de fuerza bruta. Un log detallado ayuda a identificar patrones sospechosos.",
+        "como": "Añadir una tabla o archivo de log que guarde IP, usuario, timestamp y resultado; enviar alertas cuando superen umbrales definidos."
+      }
+    ],
+    "fecha": "2026-10-28T09:20:07.500Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 18210,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Validación exhaustiva de variables de entorno",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -186,52 +233,5 @@
     ],
     "duracionMs": 21464,
     "fuente": "ia"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Rate limiting en login",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Sin límite de intentos, un atacante puede probar contraseñas por fuerza bruta. Añadir throttling protege las cuentas.",
-        "como": "Instalar express-rate-limit y aplicar 5 intentos por 15 min por IP en /ania/login. Guardar bloqueos en memoria."
-      },
-      {
-        "titulo": "Validación de email",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Se aceptan correos sin verificar. Un typo bloquea la cuenta para siempre y permite registros falsos.",
-        "como": "Enviar email de confirmación con token temporal al registrarse. Marcar usuario como verificado tras el clic."
-      },
-      {
-        "titulo": "HTTPS forzado en cookies",
-        "categoria": "seguridad",
-        "prioridad": "media",
-        "descripcion": "Los tokens viajan en headers pero no se fuerza HTTPS. En redes públicas podría haber interceptación.",
-        "como": "Añadir middleware que redirija HTTP a HTTPS en producción. En Render ya es automático, pero validar."
-      },
-      {
-        "titulo": "Compresión gzip",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "Las respuestas JSON viajan sin comprimir. Reducir tamaño mejora tiempos de carga en móvil.",
-        "como": "Añadir middleware compression de Express con umbral de 1KB. Beneficio doble si se cachean respuestas."
-      },
-      {
-        "titulo": "Exportar memoria del usuario",
-        "categoria": "feature",
-        "prioridad": "baja",
-        "descripcion": "El usuario no puede descargar sus datos. La portabilidad de datos es un derecho y mejora la confianza.",
-        "como": "Endpoint GET /ania/me/export que devuelva JSON con toda su memoria. Botón en Ajustes."
-      }
-    ],
-    "fecha": "2026-10-23T08:16:54.767Z",
-    "analizadoPor": "Ania Auto-Agent v3 (fallback-local (la IA no respondió))",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 25817,
-    "fuente": "fallback"
   }
 ]
