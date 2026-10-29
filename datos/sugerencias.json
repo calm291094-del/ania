@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Rate limiting en login",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Sin límite de intentos, un atacante puede probar contraseñas por fuerza bruta. Añadir throttling protege las cuentas.",
+        "como": "Instalar express-rate-limit y aplicar 5 intentos por 15 min por IP en /ania/login. Guardar bloqueos en memoria."
+      },
+      {
+        "titulo": "Validación de email",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Se aceptan correos sin verificar. Un typo bloquea la cuenta para siempre y permite registros falsos.",
+        "como": "Enviar email de confirmación con token temporal al registrarse. Marcar usuario como verificado tras el clic."
+      },
+      {
+        "titulo": "HTTPS forzado en cookies",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "Los tokens viajan en headers pero no se fuerza HTTPS. En redes públicas podría haber interceptación.",
+        "como": "Añadir middleware que redirija HTTP a HTTPS en producción. En Render ya es automático, pero validar."
+      },
+      {
+        "titulo": "Compresión gzip",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "Las respuestas JSON viajan sin comprimir. Reducir tamaño mejora tiempos de carga en móvil.",
+        "como": "Añadir middleware compression de Express con umbral de 1KB. Beneficio doble si se cachean respuestas."
+      },
+      {
+        "titulo": "Exportar memoria del usuario",
+        "categoria": "feature",
+        "prioridad": "baja",
+        "descripcion": "El usuario no puede descargar sus datos. La portabilidad de datos es un derecho y mejora la confianza.",
+        "como": "Endpoint GET /ania/me/export que devuelva JSON con toda su memoria. Botón en Ajustes."
+      }
+    ],
+    "fecha": "2026-10-29T09:24:33.673Z",
+    "analizadoPor": "Ania Auto-Agent v3 (fallback-local (la IA no respondió))",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 46552,
+    "fuente": "fallback"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Centralizar el manejo de errores",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -185,53 +232,6 @@
       "package.json"
     ],
     "duracionMs": 23639,
-    "fuente": "ia"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Validar variables de entorno con dotenv y joi",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Falta validación de variables críticas, lo que puede provocar fallos silenciosos.",
-        "como": "Usar dotenv para cargar .env y joi para validar que todas las variables requeridas existen y tienen formato correcto antes de iniciar el servidor."
-      },
-      {
-        "titulo": "Reemplazar algoritmo de hashing de contraseñas por Argon2",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "scrypt es vulnerable a ataques de GPU y no está tan optimizado.",
-        "como": "Integrar argon2id, que ofrece resistencia a ataques de fuerza bruta y permite ajustar memoria y tiempo de ejecución."
-      },
-      {
-        "titulo": "Implementar Content Security Policy con Helmet",
-        "categoria": "seguridad",
-        "prioridad": "media",
-        "descripcion": "Helmet se inicializa sin CSP, dejando vulnerabilidad XSS.",
-        "como": "Configurar helmet.contentSecurityPolicy con directivas adecuadas y permitir solo scripts de dominios de confianza."
-      },
-      {
-        "titulo": "Cachear respuestas de GitHub con TTL dinámico y invalidación inteligente",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "La caché actual siempre invalida después de 30s, generando llamadas innecesarias.",
-        "como": "Usar un TTL basado en la etiqueta ETag de GitHub y invalidar solo cuando el contenido cambia."
-      },
-      {
-        "titulo": "Añadir middleware de parseo JSON y manejo de errores globales",
-        "categoria": "bug",
-        "prioridad": "baja",
-        "descripcion": "El servidor no analiza cuerpos JSON y no captura errores de rutas no definidas.",
-        "como": "Agregar app.use(express.json()) y un middleware catch-all que devuelva 404 con mensaje amigable."
-      }
-    ],
-    "fecha": "2026-10-24T07:54:26.780Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 21464,
     "fuente": "ia"
   }
 ]
