@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Validar variables de entorno al arranque",
+        "categoria": "feature",
+        "prioridad": "alta",
+        "descripcion": "La ausencia de variables críticas puede causar fallos silenciosos o comportamientos inesperados.",
+        "como": "Implementar un módulo de configuración que verifique la presencia y formato de todas las variables antes de iniciar el servidor, abortando con mensajes claros si algo falta."
+      },
+      {
+        "titulo": "Añadir control de caché a los archivos estáticos",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "Sin caché HTTP, los clientes descargan repetidamente los mismos recursos, aumentando el ancho de banda y la latencia.",
+        "como": "Usar express.static con la opción {maxAge:'1d'} y agregar encabezados Cache-Control apropiados para cada recurso."
+      },
+      {
+        "titulo": "Centralizar el manejo de errores y evitar filtrado de stack traces",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Exponer trazas de pila revela información sensible sobre la estructura interna del servidor.",
+        "como": "Añadir un middleware de error final que capture cualquier excepción, registre el error y devuelva una respuesta genérica 500 con mensaje mínimo."
+      },
+      {
+        "titulo": "Validar esquemas de entrada con JSON Schema",
+        "categoria": "bug",
+        "prioridad": "alta",
+        "descripcion": "Datos de entrada malformados pueden romper la lógica o introducir vulnerabilidades.",
+        "como": "Integrar AJV u otra librería de validación y aplicar esquemas a rutas críticas como registro y login antes de procesar la lógica."
+      },
+      {
+        "titulo": "Derivar y verificar la longitud de la clave de cifrado",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "Una clave de longitud incorrecta puede debilitar la encriptación o causar errores de cifrado.",
+        "como": "Usar crypto.scrypt para generar una clave de 32 bytes a partir de ANIA_SECRET y lanzar una excepción si la longitud no coincide."
+      }
+    ],
+    "fecha": "2026-11-02T10:35:08.286Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 34702,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Rate limiting en login",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -186,52 +233,5 @@
     ],
     "duracionMs": 46552,
     "fuente": "fallback"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Centralizar el manejo de errores",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Los errores no controlados pueden exponer datos sensibles y romper la experiencia del usuario. Implementar un middleware de error global captura todas las excepciones y devuelve respuestas consistentes.",
-        "como": "Añadir un archivo errorHandler.js y usar app.use(errorHandler) después de todas las rutas; usar express-async-errors para promesas."
-      },
-      {
-        "titulo": "Optimizar la caché de GitHub",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "El TTL fijo de 30 s y el uso de un Map simple limitan la escalabilidad. Una caché LRU con expiración configurable mejora la latencia y el uso de ancho de banda.",
-        "como": "Reemplazar GHCache por node-cache o lru-cache, usar variables de entorno para TTL y tamaño, y limpiar entradas cuando se actualicen archivos."
-      },
-      {
-        "titulo": "Completar las políticas de Helmet",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "El código deja la propiedad crossOriginResourcePolicy con un string incompleto, lo que puede generar errores de configuración. Definir correctamente todas las políticas evita vulnerabilidades de carga cruzada.",
-        "como": "Establecer crossOriginResourcePolicy: { policy:'same-origin' }, habilitar CSP con directivas adecuadas y revisar la configuración de HSTS en helmet."
-      },
-      {
-        "titulo": "Validar y sanitizar todas las entradas de usuario",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Algunos endpoints aceptan datos sin validación, lo que abre puertas a XSS o inyección de datos corruptos. Validar el esquema garantiza integridad y seguridad.",
-        "como": "Usar una librería como joi o express-validator para comprobar campos, tipos y longitudes antes de procesarlos; escapar cualquier dato que se renderice en el frontend."
-      },
-      {
-        "titulo": "Registrar intentos de autenticación fallidos",
-        "categoria": "bug",
-        "prioridad": "media",
-        "descripcion": "Actualmente no se lleva registro de intentos fallidos, dificultando la detección de ataques de fuerza bruta. Un log detallado ayuda a identificar patrones sospechosos.",
-        "como": "Añadir una tabla o archivo de log que guarde IP, usuario, timestamp y resultado; enviar alertas cuando superen umbrales definidos."
-      }
-    ],
-    "fecha": "2026-10-28T09:20:07.500Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 18210,
-    "fuente": "ia"
   }
 ]
