@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Validación estricta de variables de entorno al arranque",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "El código actualmente solo emite advertencias cuando faltan variables. Una verificación completa y bloqueante evita errores de configuración silenciosa.",
+        "como": "Reunir todas las variables requeridas en una lista y recorrerla al inicio, lanzando una excepción si alguna está ausente. Registrar las variables faltantes antes de terminar el proceso."
+      },
+      {
+        "titulo": "Reemplazar la lógica de JWT manual con la librería jsonwebtoken",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "La implementación actual construye tokens a mano y no incluye el estándar de expiración ni la firma verificable. Utilizar una librería garantiza compatibilidad y auditoría de seguridad.",
+        "como": "Instalar jsonwebtoken, generar tokens con payload + exp, y verificar con verify(). Eliminar las funciones makeToken y verifyToken personalizadas."
+      },
+      {
+        "titulo": "Cachear la carga de usuarios y memorias para reducir llamadas a GitHub",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "Cada petición de usuario lee de GitHub, lo que añade latencia y límites de API. Un caché en memoria con TTL reduce la carga y mejora la respuesta.",
+        "como": "Crear un Map similar a GHCache y almacenar los resultados de loadUsers y loadMemories. Invalide el caché cuando se escriben cambios."
+      },
+      {
+        "titulo": "Aplicar CORS con opciones de origen dinámico y encabezados seguros",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "El código importa cors pero no lo configura, exponiendo todos los orígenes. Definir orígenes permitidos y encabezados reduce el riesgo de ataques CSRF y XSS.",
+        "como": "Usar app.use(cors({ origin: process.env.ALLOWED_ORIGINS.split(','), optionsSuccessStatus: 200 })) y verificar la variable ALLOWED_ORIGINS. Añadir cabeceras de seguridad adicionales si es necesario."
+      },
+      {
+        "titulo": "Mejorar la gestión de errores de la API de GitHub con retry y backoff exponencial",
+        "categoria": "bug",
+        "prioridad": "baja",
+        "descripcion": "Las llamadas a GitHub fallan sin manejar timeouts ni retries, lo que puede interrumpir el servicio. Implementar reintentos con backoff evita interrupciones breves.",
+        "como": "En la función ghRead/ghWrite, envolver la llamada fetch en un loop con contador y delay exponencial. Capturar errores y registrar con contexto antes de lanzar."
+      }
+    ],
+    "fecha": "2026-11-05T10:23:53.551Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 25132,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Añadir middleware express.json() para parseo de cuerpos JSON",
         "categoria": "bug",
         "prioridad": "alta",
@@ -186,52 +233,5 @@
     ],
     "duracionMs": 27144,
     "fuente": "fallback"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Validación estricta de variables de entorno",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Verificar la presencia de todas las variables críticas antes de iniciar el servidor. Evita fallos silenciosos y exponer datos sensibles.",
-        "como": "Crear una función `checkEnv()` que recorra una lista de keys y lance una excepción con mensaje claro si falta alguna. Ejecutarla al inicio del script."
-      },
-      {
-        "titulo": "Parser de cuerpos JSON y URL-encoded",
-        "categoria": "bug",
-        "prioridad": "media",
-        "descripcion": "El servidor no interpreta automáticamente los cuerpos de las peticiones. Esto puede causar errores de 400 o datos incompletos.",
-        "como": "Añadir `app.use(express.json());` y `app.use(express.urlencoded({ extended: true }));` justo después de la configuración de helmet."
-      },
-      {
-        "titulo": "Política de seguridad de contenido (CSP) y HSTS",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Helmet actualmente desactiva CSP, lo que expone a ataques XSS. HSTS también mejora la seguridad de la capa TLS.",
-        "como": "Reactivar `helmet.contentSecurityPolicy()` con directivas adecuadas y habilitar `helmet.hsts({ maxAge: 15552000 })`."
-      },
-      {
-        "titulo": "Reintentos y backoff en llamadas GitHub",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "Las llamadas a la API de GitHub pueden fallar temporalmente; sin reintentos, los datos quedan obsoletos.",
-        "como": "Wrap `ghRead` y `ghWrite` con una función que intente hasta 3 veces con exponencial backoff y registre los fallos."
-      },
-      {
-        "titulo": "Caché GitHub con LRU y TTL ajustable",
-        "categoria": "rendimiento",
-        "prioridad": "alta",
-        "descripcion": "El caché actual utiliza un TTL fijo de 30s; un LRU reduce la memoria y adapta el TTL según la frecuencia de acceso.",
-        "como": "Reemplazar `GHCache` por un LRU-cache (p. ej., `lru-cache` npm) con TTL configurable y purga automática."
-      }
-    ],
-    "fecha": "2026-10-30T09:38:47.594Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 25432,
-    "fuente": "ia"
   }
 ]
