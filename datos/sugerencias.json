@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Validación estricta de variables de entorno",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "El código permite la ejecución sin ANIA_SECRET, lo que expone datos cifrados con una clave débil",
+        "como": "Agregar una verificación al inicio que aborta si ANIA_SECRET no está definido, evitando usar una clave por defecto"
+      },
+      {
+        "titulo": "Manejo robusto de errores de GitHub API",
+        "categoria": "bug",
+        "prioridad": "media",
+        "descripcion": "Los fetch a GitHub no capturan errores de red ni respuestas inesperadas, pudiendo causar promesas sin resolver",
+        "como": "Encapsular ghRead y ghWrite en try/catch, devolver errores claros y limpiar caché en caso de fallos"
+      },
+      {
+        "titulo": "Uso de helmet con CSP adecuada",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "Helmet se configura sin CSP, dejando la app vulnerable a XSS",
+        "como": "Definir una política CSP que permita solo recursos de origen propio y de confianza, reduciendo riesgo de inyección"
+      },
+      {
+        "titulo": "Mejorar la generación de tokens JWT",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Los tokens se crean con payload codificado manualmente, sin verificación de firma robusta",
+        "como": "Utilizar la librería jsonwebtoken para firmar y verificar tokens, incluyendo aud y iss, y expiración en segundos"
+      },
+      {
+        "titulo": "Optimizar la caché de GitHub con TTL dinámico",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "TTL fijo de 30s puede ser insuficiente para datos que cambian con frecuencia",
+        "como": "Permitir que el TTL se ajuste según tipo de archivo o usar ETag de GitHub para invalidar cache solo cuando el contenido cambia"
+      }
+    ],
+    "fecha": "2026-11-07T09:39:15.231Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 30435,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Rate limiting en login",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -186,52 +233,5 @@
     ],
     "duracionMs": 34702,
     "fuente": "ia"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Rate limiting en login",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Sin límite de intentos, un atacante puede probar contraseñas por fuerza bruta. Añadir throttling protege las cuentas.",
-        "como": "Instalar express-rate-limit y aplicar 5 intentos por 15 min por IP en /ania/login. Guardar bloqueos en memoria."
-      },
-      {
-        "titulo": "Validación de email",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Se aceptan correos sin verificar. Un typo bloquea la cuenta para siempre y permite registros falsos.",
-        "como": "Enviar email de confirmación con token temporal al registrarse. Marcar usuario como verificado tras el clic."
-      },
-      {
-        "titulo": "HTTPS forzado en cookies",
-        "categoria": "seguridad",
-        "prioridad": "media",
-        "descripcion": "Los tokens viajan en headers pero no se fuerza HTTPS. En redes públicas podría haber interceptación.",
-        "como": "Añadir middleware que redirija HTTP a HTTPS en producción. En Render ya es automático, pero validar."
-      },
-      {
-        "titulo": "Compresión gzip",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "Las respuestas JSON viajan sin comprimir. Reducir tamaño mejora tiempos de carga en móvil.",
-        "como": "Añadir middleware compression de Express con umbral de 1KB. Beneficio doble si se cachean respuestas."
-      },
-      {
-        "titulo": "Exportar memoria del usuario",
-        "categoria": "feature",
-        "prioridad": "baja",
-        "descripcion": "El usuario no puede descargar sus datos. La portabilidad de datos es un derecho y mejora la confianza.",
-        "como": "Endpoint GET /ania/me/export que devuelva JSON con toda su memoria. Botón en Ajustes."
-      }
-    ],
-    "fecha": "2026-11-01T10:06:53.451Z",
-    "analizadoPor": "Ania Auto-Agent v3 (fallback-local (la IA no respondió))",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 42570,
-    "fuente": "fallback"
   }
 ]
