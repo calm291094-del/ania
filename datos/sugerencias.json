@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Forzar HTTPS en producción",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Detectar NODE_ENV y redirigir cualquier petición HTTP a HTTPS. Evitar exposición de datos sensibles en conexiones no seguras.",
+        "como": "Añadir middleware que compruebe la cabecera X-Forwarded-Proto y redirija a https, usar helmet.hsts para reforzar la política de seguridad."
+      },
+      {
+        "titulo": "Habilitar compresión de respuestas",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "Reducir el tamaño de los payloads enviados al cliente para acelerar la carga. Mejorar la experiencia en conexiones lentas.",
+        "como": "Incluir el middleware compression() antes de las rutas, configurar niveles de compresión y probar con distintos tipos de contenido."
+      },
+      {
+        "titulo": "Validar cuerpos JSON en endpoints",
+        "categoria": "bug",
+        "prioridad": "alta",
+        "descripcion": "Evitar que un cuerpo malformado cause un crash del servidor. Proveer mensajes claros al cliente cuando el JSON sea inválido.",
+        "como": "Añadir express.json() con un manejador de errores que devuelva 400 y un texto explicativo, evitando que la petición llegue al handler."
+      },
+      {
+        "titulo": "Manejo explícito de errores de la API de GitHub",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "Detectar y diferenciar errores 401/403 de la API para indicar problemas de autenticación. No exponer el stack en producción.",
+        "como": "En ghRead y ghWrite capturar los códigos de error y lanzar excepciones con mensajes claros, mapeando a 401/403 en la respuesta HTTP."
+      },
+      {
+        "titulo": "Centralizar logs con Winston y CloudWatch",
+        "categoria": "ux",
+        "prioridad": "baja",
+        "descripcion": "Reemplazar console.log por un logger configurado con transporte CloudWatch para trazabilidad. Facilitar la monitorización y auditoría del sistema.",
+        "como": "Instalar winston, configurar un transport CloudWatch, y sustituir cada console.log/console.error por logger.info/logger.error respectivamente."
+      }
+    ],
+    "fecha": "2026-11-10T10:48:06.402Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 28087,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Rate limiting en login",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -186,52 +233,5 @@
     ],
     "duracionMs": 25293,
     "fuente": "fallback"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Validación estricta de variables de entorno al arranque",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "El código actualmente solo emite advertencias cuando faltan variables. Una verificación completa y bloqueante evita errores de configuración silenciosa.",
-        "como": "Reunir todas las variables requeridas en una lista y recorrerla al inicio, lanzando una excepción si alguna está ausente. Registrar las variables faltantes antes de terminar el proceso."
-      },
-      {
-        "titulo": "Reemplazar la lógica de JWT manual con la librería jsonwebtoken",
-        "categoria": "seguridad",
-        "prioridad": "media",
-        "descripcion": "La implementación actual construye tokens a mano y no incluye el estándar de expiración ni la firma verificable. Utilizar una librería garantiza compatibilidad y auditoría de seguridad.",
-        "como": "Instalar jsonwebtoken, generar tokens con payload + exp, y verificar con verify(). Eliminar las funciones makeToken y verifyToken personalizadas."
-      },
-      {
-        "titulo": "Cachear la carga de usuarios y memorias para reducir llamadas a GitHub",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "Cada petición de usuario lee de GitHub, lo que añade latencia y límites de API. Un caché en memoria con TTL reduce la carga y mejora la respuesta.",
-        "como": "Crear un Map similar a GHCache y almacenar los resultados de loadUsers y loadMemories. Invalide el caché cuando se escriben cambios."
-      },
-      {
-        "titulo": "Aplicar CORS con opciones de origen dinámico y encabezados seguros",
-        "categoria": "seguridad",
-        "prioridad": "media",
-        "descripcion": "El código importa cors pero no lo configura, exponiendo todos los orígenes. Definir orígenes permitidos y encabezados reduce el riesgo de ataques CSRF y XSS.",
-        "como": "Usar app.use(cors({ origin: process.env.ALLOWED_ORIGINS.split(','), optionsSuccessStatus: 200 })) y verificar la variable ALLOWED_ORIGINS. Añadir cabeceras de seguridad adicionales si es necesario."
-      },
-      {
-        "titulo": "Mejorar la gestión de errores de la API de GitHub con retry y backoff exponencial",
-        "categoria": "bug",
-        "prioridad": "baja",
-        "descripcion": "Las llamadas a GitHub fallan sin manejar timeouts ni retries, lo que puede interrumpir el servicio. Implementar reintentos con backoff evita interrupciones breves.",
-        "como": "En la función ghRead/ghWrite, envolver la llamada fetch en un loop con contador y delay exponencial. Capturar errores y registrar con contexto antes de lanzar."
-      }
-    ],
-    "fecha": "2026-11-05T10:23:53.551Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 25132,
-    "fuente": "ia"
   }
 ]
