@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Validación estricta de variables de entorno",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "El servidor continúa operando aunque falten variables críticas, lo que expone a la aplicación a fallos inesperados.",
+        "como": "Al iniciar, comprobar todas las variables requeridas y abortar con un mensaje claro si falta alguna. Añadir un bloque de verificación antes de cualquier operación que dependa de ellas."
+      },
+      {
+        "titulo": "Convertir operaciones de archivo síncronas a asincrónicas",
+        "categoria": "rendimiento",
+        "prioridad": "alta",
+        "descripcion": "El uso de fs y persistencia local bloquea el event loop, reduciendo la capacidad de respuesta bajo carga.",
+        "como": "Reemplazar los métodos síncronos por sus contrapartes promisified (fs.promises) y ajustar la lógica de persistencia para ser completamente asíncrona."
+      },
+      {
+        "titulo": "Centralizar el manejo de errores con middleware",
+        "categoria": "bug",
+        "prioridad": "media",
+        "descripcion": "Los errores se registran en varios lugares, lo que dificulta el seguimiento y la respuesta consistente al cliente.",
+        "como": "Crear un middleware de error que capture excepciones, devuelva respuestas JSON estructuradas y registre el stack de manera uniforme."
+      },
+      {
+        "titulo": "Implementar ETag y cache de respuesta GitHub",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "El caché actual expira cada 30 s, generando llamadas innecesarias a la API de GitHub.",
+        "como": "Utilizar los encabezados ETag de GitHub y almacenar la respuesta con su valor ETag; renovar solo cuando el recurso cambie."
+      },
+      {
+        "titulo": "Ajustar helmet y CSP para producción",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Desactivar CSP y otras políticas de helmet facilita ataques de XSS y otros vectores de seguridad.",
+        "como": "Reactivar las políticas de helmet con directivas adecuadas (script-src, img-src, etc.) y probar el sitio en modo producción para garantizar que los recursos se cargan correctamente."
+      }
+    ],
+    "fecha": "2026-11-12T10:40:47.349Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 29392,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Rate limiting en login",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -186,52 +233,5 @@
     ],
     "duracionMs": 105810,
     "fuente": "fallback"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Validación estricta de variables de entorno",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "El código permite la ejecución sin ANIA_SECRET, lo que expone datos cifrados con una clave débil",
-        "como": "Agregar una verificación al inicio que aborta si ANIA_SECRET no está definido, evitando usar una clave por defecto"
-      },
-      {
-        "titulo": "Manejo robusto de errores de GitHub API",
-        "categoria": "bug",
-        "prioridad": "media",
-        "descripcion": "Los fetch a GitHub no capturan errores de red ni respuestas inesperadas, pudiendo causar promesas sin resolver",
-        "como": "Encapsular ghRead y ghWrite en try/catch, devolver errores claros y limpiar caché en caso de fallos"
-      },
-      {
-        "titulo": "Uso de helmet con CSP adecuada",
-        "categoria": "seguridad",
-        "prioridad": "media",
-        "descripcion": "Helmet se configura sin CSP, dejando la app vulnerable a XSS",
-        "como": "Definir una política CSP que permita solo recursos de origen propio y de confianza, reduciendo riesgo de inyección"
-      },
-      {
-        "titulo": "Mejorar la generación de tokens JWT",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Los tokens se crean con payload codificado manualmente, sin verificación de firma robusta",
-        "como": "Utilizar la librería jsonwebtoken para firmar y verificar tokens, incluyendo aud y iss, y expiración en segundos"
-      },
-      {
-        "titulo": "Optimizar la caché de GitHub con TTL dinámico",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "TTL fijo de 30s puede ser insuficiente para datos que cambian con frecuencia",
-        "como": "Permitir que el TTL se ajuste según tipo de archivo o usar ETag de GitHub para invalidar cache solo cuando el contenido cambia"
-      }
-    ],
-    "fecha": "2026-11-07T09:39:15.231Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 30435,
-    "fuente": "ia"
   }
 ]
