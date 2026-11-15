@@ -37,6 +37,53 @@
         "como": "Endpoint GET /ania/me/export que devuelva JSON con toda su memoria. Botón en Ajustes."
       }
     ],
+    "fecha": "2026-11-15T10:26:05.451Z",
+    "analizadoPor": "Ania Auto-Agent v3 (fallback-local (la IA no respondió))",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 45729,
+    "fuente": "fallback"
+  },
+  {
+    "mejoras": [
+      {
+        "titulo": "Rate limiting en login",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Sin límite de intentos, un atacante puede probar contraseñas por fuerza bruta. Añadir throttling protege las cuentas.",
+        "como": "Instalar express-rate-limit y aplicar 5 intentos por 15 min por IP en /ania/login. Guardar bloqueos en memoria."
+      },
+      {
+        "titulo": "Validación de email",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Se aceptan correos sin verificar. Un typo bloquea la cuenta para siempre y permite registros falsos.",
+        "como": "Enviar email de confirmación con token temporal al registrarse. Marcar usuario como verificado tras el clic."
+      },
+      {
+        "titulo": "HTTPS forzado en cookies",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "Los tokens viajan en headers pero no se fuerza HTTPS. En redes públicas podría haber interceptación.",
+        "como": "Añadir middleware que redirija HTTP a HTTPS en producción. En Render ya es automático, pero validar."
+      },
+      {
+        "titulo": "Compresión gzip",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "Las respuestas JSON viajan sin comprimir. Reducir tamaño mejora tiempos de carga en móvil.",
+        "como": "Añadir middleware compression de Express con umbral de 1KB. Beneficio doble si se cachean respuestas."
+      },
+      {
+        "titulo": "Exportar memoria del usuario",
+        "categoria": "feature",
+        "prioridad": "baja",
+        "descripcion": "El usuario no puede descargar sus datos. La portabilidad de datos es un derecho y mejora la confianza.",
+        "como": "Endpoint GET /ania/me/export que devuelva JSON con toda su memoria. Botón en Ajustes."
+      }
+    ],
     "fecha": "2026-11-14T09:50:32.660Z",
     "analizadoPor": "Ania Auto-Agent v3 (fallback-local (la IA no respondió))",
     "archivosAnalizados": [
@@ -186,52 +233,5 @@
     ],
     "duracionMs": 31140,
     "fuente": "fallback"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Forzar HTTPS en producción",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Detectar NODE_ENV y redirigir cualquier petición HTTP a HTTPS. Evitar exposición de datos sensibles en conexiones no seguras.",
-        "como": "Añadir middleware que compruebe la cabecera X-Forwarded-Proto y redirija a https, usar helmet.hsts para reforzar la política de seguridad."
-      },
-      {
-        "titulo": "Habilitar compresión de respuestas",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "Reducir el tamaño de los payloads enviados al cliente para acelerar la carga. Mejorar la experiencia en conexiones lentas.",
-        "como": "Incluir el middleware compression() antes de las rutas, configurar niveles de compresión y probar con distintos tipos de contenido."
-      },
-      {
-        "titulo": "Validar cuerpos JSON en endpoints",
-        "categoria": "bug",
-        "prioridad": "alta",
-        "descripcion": "Evitar que un cuerpo malformado cause un crash del servidor. Proveer mensajes claros al cliente cuando el JSON sea inválido.",
-        "como": "Añadir express.json() con un manejador de errores que devuelva 400 y un texto explicativo, evitando que la petición llegue al handler."
-      },
-      {
-        "titulo": "Manejo explícito de errores de la API de GitHub",
-        "categoria": "seguridad",
-        "prioridad": "media",
-        "descripcion": "Detectar y diferenciar errores 401/403 de la API para indicar problemas de autenticación. No exponer el stack en producción.",
-        "como": "En ghRead y ghWrite capturar los códigos de error y lanzar excepciones con mensajes claros, mapeando a 401/403 en la respuesta HTTP."
-      },
-      {
-        "titulo": "Centralizar logs con Winston y CloudWatch",
-        "categoria": "ux",
-        "prioridad": "baja",
-        "descripcion": "Reemplazar console.log por un logger configurado con transporte CloudWatch para trazabilidad. Facilitar la monitorización y auditoría del sistema.",
-        "como": "Instalar winston, configurar un transport CloudWatch, y sustituir cada console.log/console.error por logger.info/logger.error respectivamente."
-      }
-    ],
-    "fecha": "2026-11-10T10:48:06.402Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 28087,
-    "fuente": "ia"
   }
 ]
