@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Centralizar la configuración de variables de entorno",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Mover todas las checadas de variables a un módulo de configuración único y exportar un objeto con valores por defecto. Así se evita repetir el mismo bloque de validaciones en cada archivo y se garantiza consistencia en la carga de secretos.",
+        "como": "Crear config.js que lea process.env, aplique defaults, lance error si falta algo crítico y exporte el objeto. Importar en servidor.js y otros módulos."
+      },
+      {
+        "titulo": "Optimizar la caché de GitHub con TTL dinámico",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "El TTL fijo de 30s puede ser demasiado alto para archivos pequeños y demasiado bajo para archivos grandes. Ajustar el tiempo en función del tamaño o tipo de recurso reduce llamadas innecesarias.",
+        "como": "Añadir lógica que calcule TTL = base + (tamano/1000) y usarlo al setear cache. También permitir invalidar manualmente mediante un endpoint de administración."
+      },
+      {
+        "titulo": "Separar las rutas de la lógica de negocio",
+        "categoria": "ux",
+        "prioridad": "media",
+        "descripcion": "Actualmente todo el código de negocio está en servidor.js, lo que dificulta pruebas y mantenimiento. Dividir en routers y controladores mejora la legibilidad y la escalabilidad.",
+        "como": "Crear carpetas routes y controllers, mover cada endpoint a su respectivo archivo, exportar router y usar app.use('/api', router). Añadir documentación de cada ruta."
+      },
+      {
+        "titulo": "Añadir pruebas unitarias y de integración para la capa de persistencia",
+        "categoria": "bug",
+        "prioridad": "alta",
+        "descripcion": "El manejo de persistencia local y GitHub es crítico; sin pruebas se generan errores silenciosos. Implementar tests con Jest y mockear fetch para GitHub garantiza que los cambios se detecten temprano.",
+        "como": "Instalar jest, crear tests en __tests__/persistencia.test.js, mockear fetch, probar leer/escribir en ambos modos, validar cifrado y descifrado."
+      },
+      {
+        "titulo": "Mejorar el manejo de errores de la API de GitHub",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "Las funciones ghRead/ghWrite fallan silenciosamente en caso de error 403/401 y no informan al usuario. Añadir manejo de errores y retries con backoff exponencial aumenta la robustez.",
+        "como": "En ghRead/ghWrite usar try/catch, detectar códigos 401/403, lanzar error con mensaje claro, e implementar un wrapper que reintente 3 veces con delay 500ms, 1s, 2s. Loggear los fallos."
+      }
+    ],
+    "fecha": "2026-11-17T11:30:23.751Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 39542,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Rate limiting en login",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -186,52 +233,5 @@
     ],
     "duracionMs": 45785,
     "fuente": "fallback"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Validación estricta de variables de entorno",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "El servidor continúa operando aunque falten variables críticas, lo que expone a la aplicación a fallos inesperados.",
-        "como": "Al iniciar, comprobar todas las variables requeridas y abortar con un mensaje claro si falta alguna. Añadir un bloque de verificación antes de cualquier operación que dependa de ellas."
-      },
-      {
-        "titulo": "Convertir operaciones de archivo síncronas a asincrónicas",
-        "categoria": "rendimiento",
-        "prioridad": "alta",
-        "descripcion": "El uso de fs y persistencia local bloquea el event loop, reduciendo la capacidad de respuesta bajo carga.",
-        "como": "Reemplazar los métodos síncronos por sus contrapartes promisified (fs.promises) y ajustar la lógica de persistencia para ser completamente asíncrona."
-      },
-      {
-        "titulo": "Centralizar el manejo de errores con middleware",
-        "categoria": "bug",
-        "prioridad": "media",
-        "descripcion": "Los errores se registran en varios lugares, lo que dificulta el seguimiento y la respuesta consistente al cliente.",
-        "como": "Crear un middleware de error que capture excepciones, devuelva respuestas JSON estructuradas y registre el stack de manera uniforme."
-      },
-      {
-        "titulo": "Implementar ETag y cache de respuesta GitHub",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "El caché actual expira cada 30 s, generando llamadas innecesarias a la API de GitHub.",
-        "como": "Utilizar los encabezados ETag de GitHub y almacenar la respuesta con su valor ETag; renovar solo cuando el recurso cambie."
-      },
-      {
-        "titulo": "Ajustar helmet y CSP para producción",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Desactivar CSP y otras políticas de helmet facilita ataques de XSS y otros vectores de seguridad.",
-        "como": "Reactivar las políticas de helmet con directivas adecuadas (script-src, img-src, etc.) y probar el sitio en modo producción para garantizar que los recursos se cargan correctamente."
-      }
-    ],
-    "fecha": "2026-11-12T10:40:47.349Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 29392,
-    "fuente": "ia"
   }
 ]
