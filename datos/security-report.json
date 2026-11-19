@@ -1,40 +1,12 @@
 {
-  "fecha": "2026-11-18T13:43:22.623Z",
+  "fecha": "2026-11-19T14:12:17.085Z",
   "analizadoPor": "Ania Security Agent v3",
   "hallazgos": [
-    {
-      "tipo": "dependencia",
-      "paquete": "basesec",
-      "severidad": "alto",
-      "descripcion": "Vulnerabilidad en basesec: CVE desconocido",
-      "solucion": "Actualizar el paquete"
-    },
-    {
-      "tipo": "dependencia",
-      "paquete": "fdir",
-      "severidad": "alto",
-      "descripcion": "Vulnerabilidad en fdir: CVE desconocido",
-      "solucion": "Actualizar el paquete"
-    },
     {
       "tipo": "dependencia",
       "paquete": "nodemailer",
       "severidad": "alto",
       "descripcion": "Vulnerabilidad en nodemailer: Nodemailer: Email to an unintended domain can occur due to Interpretation Conflict",
-      "solucion": "Actualizar el paquete"
-    },
-    {
-      "tipo": "dependencia",
-      "paquete": "picomatch",
-      "severidad": "alto",
-      "descripcion": "Vulnerabilidad en picomatch: picomatch vulnerable to ReDoS through single-branch repeated extglobs",
-      "solucion": "Actualizar el paquete"
-    },
-    {
-      "tipo": "dependencia",
-      "paquete": "tinyglobby",
-      "severidad": "alto",
-      "descripcion": "Vulnerabilidad en tinyglobby: CVE desconocido",
       "solucion": "Actualizar el paquete"
     },
     {
@@ -52,7 +24,7 @@
   ],
   "resumen": {
     "critico": 2,
-    "alto": 5,
+    "alto": 1,
     "medio": 0,
     "bajo": 0
   }
