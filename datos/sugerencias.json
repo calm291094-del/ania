@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Centralizar la configuración con dotenv",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Mover todas las variables sensibles a un archivo .env y cargar con dotenv, evitando exposición accidental en el código.",
+        "como": "Instalar dotenv, crear .env.example, cargar al inicio y eliminar hard‑coded defaults."
+      },
+      {
+        "titulo": "Implementar HTTPS y HSTS en producción",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Forzar HTTPS y habilitar HSTS para proteger la transmisión de tokens y datos sensibles.",
+        "como": "Usar middleware helmet({ hsts: { maxAge: 31536000 } }) y redirigir HTTP a HTTPS en el servidor."
+      },
+      {
+        "titulo": "Optimizar caché de GitHub con ETag y cache-control",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "Evitar lecturas redundantes al usar ETag de la API de GitHub y establecer cache-control en respuestas locales.",
+        "como": "Al leer ghRead, incluir If-None-Match y guardar ETag; responder con 304 cuando sea válido."
+      },
+      {
+        "titulo": "Añadir pruebas unitarias y de integración con Jest",
+        "categoria": "bug",
+        "prioridad": "media",
+        "descripcion": "Detectar regresiones en la lógica de cifrado, autenticación y persistencia antes de despliegue.",
+        "como": "Configurar Jest, crear tests para encrypt/decrypt, verifyToken, y mockear fetch para GitHub."
+      },
+      {
+        "titulo": "Validar y sanitizar entradas de usuario en endpoints",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "Prevenir ataques de inyección y XSS al sanitizar campos como email, usuario y mensajes.",
+        "como": "Usar express-validator o una función de sanitización personalizada antes de procesar datos."
+      }
+    ],
+    "fecha": "2026-11-23T11:50:13.721Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 7586,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Centralizar la configuración de variables de entorno",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -186,52 +233,5 @@
     ],
     "duracionMs": 10072,
     "fuente": "fallback"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Centralizar la configuración con dotenv",
-        "categoria": "bug",
-        "prioridad": "alta",
-        "descripcion": "Mover todas las variables de entorno a un archivo .env y cargarlo con dotenv. Así se evita la repetición de verificaciones y se garantiza que las claves sensibles no queden en el código.",
-        "como": "Instalar dotenv, crear .env, usar process.env directamente y eliminar bloques de comprobación manual."
-      },
-      {
-        "titulo": "Uso de async/await en la lectura de archivos locales",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "Reemplazar las funciones síncronas de persistencia local por sus versiones async para evitar bloqueos del event loop durante I/O.",
-        "como": "Cambiar persist.leerCifrado y persist.escribirCifrado a versiones async con fs.promises y usar await en leer()/escribir()."
-      },
-      {
-        "titulo": "Implementar caché de respuestas de API externa",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "Almacenar en memoria las respuestas de ghRead y ghWrite para reducir llamadas a GitHub y mejorar latencia.",
-        "como": "Añadir un LRUCache con TTL configurable y envolver ghRead/ghWrite con get/set/invalidate."
-      },
-      {
-        "titulo": "Refactorizar la lógica de autenticación a middleware reutilizable",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Crear un middleware auth que verifique el token y añada req.user, simplificando la lógica de rutas y reduciendo duplicación.",
-        "como": "Mover la función auth a un archivo middleware.js y usar app.use('/api', auth, router) para proteger rutas."
-      },
-      {
-        "titulo": "Agregar pruebas unitarias y cobertura",
-        "categoria": "bug",
-        "prioridad": "media",
-        "descripcion": "Escribir tests con Jest para validar funciones críticas como hashPass, checkPass, encrypt/decrypt y ghRead/ghWrite.",
-        "como": "Instalar jest, crear carpeta __tests__, escribir tests y configurar script test en package.json."
-      }
-    ],
-    "fecha": "2026-11-18T11:10:52.907Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 16000,
-    "fuente": "ia"
   }
 ]
