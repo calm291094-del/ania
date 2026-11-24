@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Centralizar la validación de variables de entorno",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Mover la lógica de chequeo de env. a un módulo dedicado y lanzar error de forma explícita.",
+        "como": "Crear un archivo config.js que exporte los valores y lance excepciones si faltan, y usarlo en todos los módulos."
+      },
+      {
+        "titulo": "Implementar un esquema de logs estructurados",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "Reemplazar console.log con un logger que permita niveles y salida a archivos o servicios externos.",
+        "como": "Usar pino o winston, configurar rotación y exportar métricas de error y rendimiento."
+      },
+      {
+        "titulo": "Optimizar la caché de GitHub con TTL configurable",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "Permitir que el TTL se ajuste por entorno y que se invalide automáticamente al escribir.",
+        "como": "Añadir un parámetro de configuración y usar eventos de escritura para limpiar la cache."
+      },
+      {
+        "titulo": "Refactorizar la generación y verificación de tokens JWT",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Usar la librería jsonwebtoken para manejar exp, aud, sub y firma de forma estándar.",
+        "como": "Reemplazar las funciones makeToken/verifyToken con jwt.sign/jwt.verify y usar un algoritmo RS256."
+      },
+      {
+        "titulo": "Agregar pruebas unitarias para la capa de persistencia",
+        "categoria": "bug",
+        "prioridad": "media",
+        "descripcion": "Evitar regresiones en la lectura/escritura cifrada y en modo nube.",
+        "como": "Utilizar jest o mocha, mockear fetch y el módulo persistencia-local, y cubrir los casos de error y éxito."
+      }
+    ],
+    "fecha": "2026-11-24T13:18:28.098Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 6331,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Centralizar la configuración con dotenv",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -186,52 +233,5 @@
     ],
     "duracionMs": 6264,
     "fuente": "ia"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Rate limiting en login",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Sin límite de intentos, un atacante puede probar contraseñas por fuerza bruta. Añadir throttling protege las cuentas.",
-        "como": "Instalar express-rate-limit y aplicar 5 intentos por 15 min por IP en /ania/login. Guardar bloqueos en memoria."
-      },
-      {
-        "titulo": "Validación de email",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Se aceptan correos sin verificar. Un typo bloquea la cuenta para siempre y permite registros falsos.",
-        "como": "Enviar email de confirmación con token temporal al registrarse. Marcar usuario como verificado tras el clic."
-      },
-      {
-        "titulo": "HTTPS forzado en cookies",
-        "categoria": "seguridad",
-        "prioridad": "media",
-        "descripcion": "Los tokens viajan en headers pero no se fuerza HTTPS. En redes públicas podría haber interceptación.",
-        "como": "Añadir middleware que redirija HTTP a HTTPS en producción. En Render ya es automático, pero validar."
-      },
-      {
-        "titulo": "Compresión gzip",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "Las respuestas JSON viajan sin comprimir. Reducir tamaño mejora tiempos de carga en móvil.",
-        "como": "Añadir middleware compression de Express con umbral de 1KB. Beneficio doble si se cachean respuestas."
-      },
-      {
-        "titulo": "Exportar memoria del usuario",
-        "categoria": "feature",
-        "prioridad": "baja",
-        "descripcion": "El usuario no puede descargar sus datos. La portabilidad de datos es un derecho y mejora la confianza.",
-        "como": "Endpoint GET /ania/me/export que devuelva JSON con toda su memoria. Botón en Ajustes."
-      }
-    ],
-    "fecha": "2026-11-19T11:09:43.391Z",
-    "analizadoPor": "Ania Auto-Agent v3 (fallback-local (la IA no respondió))",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 10072,
-    "fuente": "fallback"
   }
 ]
