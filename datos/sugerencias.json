@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Centralizar la configuración de variables de entorno",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Mover todas las variables de entorno a un archivo .env y usar dotenv para cargarlas, evitando exposición accidental en el código.",
+        "como": "Reemplazar los accesos directos a process.env por const vars = require('dotenv').config().parsed y usar vars.VAR_NAME; limpiar código de comentarios redundantes."
+      },
+      {
+        "titulo": "Implementar validación de entrada con Joi",
+        "categoria": "bug",
+        "prioridad": "alta",
+        "descripcion": "Añadir esquema de validación para los cuerpos de solicitud (registro, login, actualización) para evitar inyecciones y datos corruptos.",
+        "como": "Crear un middleware que valide req.body contra un esquema Joi y responda con 400 si falla, antes de llegar a los handlers."
+      },
+      {
+        "titulo": "Optimizar la caché de GitHub con ETags",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "Usar la cabecera ETag de GitHub para validar cache local, reduciendo llamadas innecesarias y mejorando latencia.",
+        "como": "Al leer un archivo, incluir If-None-Match con el último ETag; si 304, usar caché; si 200, actualizar caché y ETag."
+      },
+      {
+        "titulo": "Añadir middleware de CORS con políticas estrictas",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "Reemplazar la configuración genérica de cors() por una lista blanca de dominios y métodos permitidos.",
+        "como": "Definir corsOptions = { origin: ['https://miapp.com'], methods: ['GET','POST','PUT','DELETE'], credentials: true } y usar app.use(cors(corsOptions))."
+      },
+      {
+        "titulo": "Separar lógica de negocio en módulos independientes",
+        "categoria": "ux",
+        "prioridad": "baja",
+        "descripcion": "Mover funciones de manejo de usuarios, memorias y logs a archivos separados para mejorar mantenibilidad y testabilidad.",
+        "como": "Crear carpetas /services y /controllers, exportar funciones, y en servidor.js importar y usar esas funciones en los routes."
+      }
+    ],
+    "fecha": "2026-11-25T12:09:46.538Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 8826,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Centralizar la validación de variables de entorno",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -185,53 +232,6 @@
       "package.json"
     ],
     "duracionMs": 7136,
-    "fuente": "ia"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Centralizar la configuración de variables de entorno",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Mover todas las variables sensibles a un archivo .env gestionado con dotenv y validar su presencia al inicio del proceso.",
-        "como": "Inyectar dotenv al principio, usar process.env con defaults y lanzar un error explícito si falta una clave crítica."
-      },
-      {
-        "titulo": "Implementar un sistema de logs estructurado",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "Reemplazar console.log/console.warn por un logger con niveles (info, warn, error) y salida JSON para facilitar la ingestión por ELK o Loki.",
-        "como": ""
-      },
-      {
-        "titulo": "Optimizar la caché de GitHub con TTL dinámico",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "Ajustar el TTL según la frecuencia de actualización de cada recurso y expirar manualmente al escribir, evitando lecturas innecesarias.",
-        "como": ""
-      },
-      {
-        "titulo": "Agregar pruebas unitarias y de integración",
-        "categoria": "bug",
-        "prioridad": "alta",
-        "descripcion": "Crear tests con Jest para las funciones de cifrado, autenticación y acceso a GitHub, asegurando la integridad antes de despliegues.",
-        "como": ""
-      },
-      {
-        "titulo": "Mejorar la gestión de errores HTTP con middleware",
-        "categoria": "ux",
-        "prioridad": "baja",
-        "descripcion": "Centralizar el manejo de errores, devolver respuestas JSON consistentes y evitar exponer stack traces en producción.",
-        "como": ""
-      }
-    ],
-    "fecha": "2026-11-20T10:56:26.918Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 6264,
     "fuente": "ia"
   }
 ]
