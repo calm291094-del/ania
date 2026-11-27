@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Eliminar claves criptográficas de reserva",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "Si ANIA_SECRET no está definido, los datos locales se cifran con una clave conocida y predecible, lo que permite descifrarlos. En modo local también se permite firmar sesiones con una clave fija si ANIA_TOKEN_SECRET falta.",
+        "como": "Exige ambas variables secretas en todos los modos y detén el arranque si faltan. Rota las claves expuestas y define un procedimiento para migrar los datos cifrados existentes."
+      },
+      {
+        "titulo": "Evitar operaciones scrypt síncronas",
+        "categoria": "rendimiento",
+        "prioridad": "alta",
+        "descripcion": "scryptSync bloquea el event loop durante el registro y la verificación de contraseñas. Bajo carga, esto puede ralentizar o dejar sin respuesta al resto de solicitudes.",
+        "como": "Usa la versión asíncrona crypto.scrypt y adapta las funciones de registro y autenticación para esperarla. Añade límites de concurrencia y calibra el costo con mediciones en el entorno de producción."
+      },
+      {
+        "titulo": "Serializar las escrituras a GitHub",
+        "categoria": "bug",
+        "prioridad": "alta",
+        "descripcion": "Dos escrituras concurrentes al mismo archivo pueden leer el mismo SHA y competir al actualizarlo. Una puede fallar o sobrescribir cambios recientes, especialmente en usuarios y memorias.",
+        "como": "Implementa bloqueo por archivo o una cola de escrituras para que cada actualización use el SHA más reciente. Gestiona los conflictos de GitHub releyendo el archivo y aplicando una política explícita de reintento o combinación."
+      },
+      {
+        "titulo": "Corregir la caché de respuestas 404",
+        "categoria": "rendimiento",
+        "prioridad": "media",
+        "descripcion": "GHCache.get devuelve null tanto cuando no existe una entrada como cuando se ha almacenado un 404. Por eso ghRead no reconoce el 404 en caché y vuelve a consultar GitHub cada vez.",
+        "como": "Devuelve un indicador de acierto separado del valor, o usa una comprobación explícita de existencia con Map.has. Añade pruebas para distinguir una entrada ausente de una respuesta negativa almacenada."
+      },
+      {
+        "titulo": "Añadir interacción real al frontend",
+        "categoria": "ux",
+        "prioridad": "alta",
+        "descripcion": "El frontend indicado no contiene funciones, solicitudes fetch ni listeners de eventos. Si esas métricas representan el contenido completo, la página no puede comunicarse con el backend ni responder a las acciones del usuario.",
+        "como": "Implementa las interacciones necesarias con addEventListener y conecta los flujos de la interfaz a las rutas de la API. Muestra estados de carga, errores y confirmaciones para que cada acción tenga respuesta visible."
+      }
+    ],
+    "fecha": "2026-11-27T11:47:53.591Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 16644,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Rate limiting en login",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -185,53 +232,6 @@
       "package.json"
     ],
     "duracionMs": 7586,
-    "fuente": "ia"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Centralizar la configuración de variables de entorno",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Mover todas las variables a un archivo .env y usar dotenv para cargarlas, evitando hardcode y mejorando la gestión de secretos.",
-        "como": "Instalar dotenv, crear .env.example, actualizar código para usar process.env sin acceso directo a variables globales, y documentar requisitos."
-      },
-      {
-        "titulo": "Implementar un caché más robusto para GitHub API",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "Reemplazar el Map simple por un LRU cache con expiración configurable, reduciendo llamadas repetitivas y mejorando la latencia.",
-        "como": "Usar la librería lru-cache, configurar TTL dinámico según tipo de recurso y limpiar automáticamente entradas expiradas."
-      },
-      {
-        "titulo": "Añadir pruebas unitarias y de integración",
-        "categoria": "bug",
-        "prioridad": "alta",
-        "descripcion": "Crear tests con Jest para los módulos de cifrado, autenticación y persistencia, asegurando que los cambios futuros no rompan la lógica.",
-        "como": "Instalar jest, crear carpetas __tests__, mockear fetch y fs, y ejecutar con npm test como parte del pipeline CI."
-      },
-      {
-        "titulo": "Mejorar la gestión de errores de GitHub",
-        "categoria": "bug",
-        "prioridad": "media",
-        "descripcion": "Capturar y registrar códigos de error específicos (403, 422) y ofrecer mensajes claros al cliente, evitando caídas por fallos de API.",
-        "como": "Ampliar los bloques try/catch en ghRead/ghWrite, mapear códigos a respuestas HTTP y registrar detalles en logs centralizados."
-      },
-      {
-        "titulo": "Optimizar la generación de tokens JWT",
-        "categoria": "seguridad",
-        "prioridad": "media",
-        "descripcion": "Cambiar la estructura de token a JWT estándar con header, payload y firma, y usar la librería jsonwebtoken para manejo de expiración y revocación.",
-        "como": "Instalar jsonwebtoken, refactorizar makeToken/verifyToken, incluir algoritmo HS256 y añadir campo 'iat' para auditoría."
-      }
-    ],
-    "fecha": "2026-11-22T10:45:05.982Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 11264,
     "fuente": "ia"
   }
 ]
