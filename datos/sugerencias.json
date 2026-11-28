@@ -2,6 +2,53 @@
   {
     "mejoras": [
       {
+        "titulo": "Completar la revisión del servidor y del frontend",
+        "categoria": "bug",
+        "prioridad": "alta",
+        "descripcion": "El código proporcionado termina a mitad de una cadena dentro del middleware Helmet, así que no permite verificar si el servidor puede arrancar ni analizar rutas, CORS y autorización. La descripción del frontend también contradice un frontend funcional: informa 0 funciones, solicitudes y listeners.",
+        "como": "Comparte el resto de servidor.js y revisa que el archivo compile y que cada ruta aplique autenticación y validación adecuadas. Añade pruebas de arranque y de las rutas principales, y confirma cómo se generan las interacciones del frontend."
+      },
+      {
+        "titulo": "Fallar al arrancar si faltan secretos o son inseguros",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "En modo local, ANIA_SECRET ausente deriva la clave de cifrado de la cadena pública fallback, por lo que los datos cifrados no quedan protegidos. TOKEN_SECRET también puede sustituirse por el valor fijo x, haciendo predecibles las firmas de sesión si el servidor se ejecuta sin esa variable.",
+        "como": "Valida al inicio que ANIA_SECRET y TOKEN_SECRET existan y tengan suficiente entropía en todos los modos, y elimina los valores de respaldo. Rota los secretos expuestos o débiles y define un procedimiento para migrar los datos cifrados."
+      },
+      {
+        "titulo": "Verificar tokens con comparación segura y validación estricta",
+        "categoria": "seguridad",
+        "prioridad": "alta",
+        "descripcion": "verifyToken llama a timingSafeEqual con buffers de longitud potencialmente distinta, lo que puede lanzar una excepción; además, no valida el formato, el tipo ni los campos del payload. El token tampoco incluye revocación, así que una sesión robada permanece válida hasta 30 días.",
+        "como": "Comprueba que la firma recibida tenga formato y longitud esperados antes de comparar, y valida explícitamente identidad, rol y expiración del payload. Considera sesiones de menor duración con rotación y revocación, por ejemplo mediante una versión de sesión almacenada por usuario."
+      },
+      {
+        "titulo": "Evitar escrituras concurrentes y conflictos en GitHub",
+        "categoria": "bug",
+        "prioridad": "alta",
+        "descripcion": "ghWrite obtiene el SHA por separado de la escritura y no serializa las operaciones, por lo que dos actualizaciones simultáneas pueden sobrescribirse o fallar con un conflicto. El manejo de errores también descarta el motivo del fallo al devolver solo el código HTTP, lo que dificulta diagnosticar límites de API o problemas de permisos.",
+        "como": "Serializa las escrituras por archivo y reintenta los conflictos HTTP 409/422 leyendo el SHA actualizado antes de volver a guardar. Añade timeout, tratamiento explícito de límites de GitHub y mensajes de error con contexto sin incluir secretos."
+      },
+      {
+        "titulo": "Usar un algoritmo de hash de contraseñas asíncrono y endurecer su validación",
+        "categoria": "seguridad",
+        "prioridad": "media",
+        "descripcion": "scryptSync bloquea el event loop durante el registro y cada intento de inicio de sesión, lo que puede degradar o paralizar el servicio bajo carga. checkPass tampoco verifica de forma explícita el prefijo del formato ni que el hash almacenado tenga la longitud esperada antes de compararlo.",
+        "como": "Cambia a crypto.scrypt asíncrono con parámetros y límites de memoria adecuados, o utiliza Argon2id mediante una biblioteca mantenida. Valida el formato almacenado y añade pruebas de concurrencia y de hashes malformados."
+      }
+    ],
+    "fecha": "2026-11-28T11:23:33.253Z",
+    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
+    "archivosAnalizados": [
+      "servidor.js",
+      "package.json"
+    ],
+    "duracionMs": 9037,
+    "fuente": "ia"
+  },
+  {
+    "mejoras": [
+      {
         "titulo": "Eliminar claves criptográficas de reserva",
         "categoria": "seguridad",
         "prioridad": "alta",
@@ -185,53 +232,6 @@
       "package.json"
     ],
     "duracionMs": 6331,
-    "fuente": "ia"
-  },
-  {
-    "mejoras": [
-      {
-        "titulo": "Centralizar la configuración con dotenv",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Mover todas las variables sensibles a un archivo .env y cargar con dotenv, evitando exposición accidental en el código.",
-        "como": "Instalar dotenv, crear .env.example, cargar al inicio y eliminar hard‑coded defaults."
-      },
-      {
-        "titulo": "Implementar HTTPS y HSTS en producción",
-        "categoria": "seguridad",
-        "prioridad": "alta",
-        "descripcion": "Forzar HTTPS y habilitar HSTS para proteger la transmisión de tokens y datos sensibles.",
-        "como": "Usar middleware helmet({ hsts: { maxAge: 31536000 } }) y redirigir HTTP a HTTPS en el servidor."
-      },
-      {
-        "titulo": "Optimizar caché de GitHub con ETag y cache-control",
-        "categoria": "rendimiento",
-        "prioridad": "media",
-        "descripcion": "Evitar lecturas redundantes al usar ETag de la API de GitHub y establecer cache-control en respuestas locales.",
-        "como": "Al leer ghRead, incluir If-None-Match y guardar ETag; responder con 304 cuando sea válido."
-      },
-      {
-        "titulo": "Añadir pruebas unitarias y de integración con Jest",
-        "categoria": "bug",
-        "prioridad": "media",
-        "descripcion": "Detectar regresiones en la lógica de cifrado, autenticación y persistencia antes de despliegue.",
-        "como": "Configurar Jest, crear tests para encrypt/decrypt, verifyToken, y mockear fetch para GitHub."
-      },
-      {
-        "titulo": "Validar y sanitizar entradas de usuario en endpoints",
-        "categoria": "seguridad",
-        "prioridad": "media",
-        "descripcion": "Prevenir ataques de inyección y XSS al sanitizar campos como email, usuario y mensajes.",
-        "como": "Usar express-validator o una función de sanitización personalizada antes de procesar datos."
-      }
-    ],
-    "fecha": "2026-11-23T11:50:13.721Z",
-    "analizadoPor": "Ania Auto-Agent v3 (openai @ text.pollinations.ai/openai)",
-    "archivosAnalizados": [
-      "servidor.js",
-      "package.json"
-    ],
-    "duracionMs": 7586,
     "fuente": "ia"
   }
 ]
